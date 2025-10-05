@@ -17,7 +17,7 @@ app.use(
 	cors({
 		origin:
 			process.env.NODE_ENV === "production"
-				? ["https://uwh-api.up.railway.app"]
+				? ["https://uwh.vercel.app", "https://uwh-api.up.railway.app"]
 				: ["http://localhost:3100"],
 		credentials: true,
 	}),
