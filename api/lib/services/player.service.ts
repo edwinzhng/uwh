@@ -47,13 +47,21 @@ export class PlayerService {
 
 	async updatePlayer(
 		id: number,
-		playerData: Partial<NewPlayer>,
+		playerData: Omit<NewPlayer, "email" | "parentEmail" | "sporteasyId">,
 	): Promise<Player | null> {
+		const dataToUpdate: Partial<Player> = {
+			...playerData,
+			email: undefined,
+			parentEmail: undefined,
+			sporteasyId: undefined,
+		};
+
 		const result = await db
 			.update(players)
-			.set(playerData)
+			.set(dataToUpdate)
 			.where(eq(players.id, id))
 			.returning();
+
 		return result.at(0) ?? null;
 	}
 
@@ -71,9 +79,7 @@ export class PlayerService {
 					fullName: sql`excluded.full_name`,
 					email: sql`excluded.email`,
 					parentEmail: sql`excluded.parent_email`,
-					positions: sql`excluded.positions`,
-					rating: sql`excluded.rating`,
-					youth: sql`excluded.youth`,
+					// Don't override positions, rating, or youth on update
 				},
 			})
 			.returning();

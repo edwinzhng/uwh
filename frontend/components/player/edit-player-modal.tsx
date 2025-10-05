@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import type { NewPlayer, Player, Position } from "@/lib/api";
 import { isDarkModeAtom } from "@/lib/atoms";
-import { Button } from "./button";
-import { Modal } from "./modal";
+import { Button } from "../shared/button";
+import { Modal } from "../shared/modal";
 
 const POSITIONS = [
 	{ value: "FORWARD", label: "Forward" },
@@ -20,7 +20,6 @@ const playerSchema = z.object({
 		.string()
 		.min(1, "Full name is required")
 		.min(2, "Full name must be at least 2 characters"),
-	email: z.string().min(1, "Email is required").email("Invalid email address"),
 	positions: z
 		.array(z.enum(["FORWARD", "WING", "CENTER", "FULL_BACK"]))
 		.min(1, "At least one position is required"),
@@ -31,23 +30,21 @@ const playerSchema = z.object({
 	youth: z.boolean().optional(),
 });
 
-interface AddPlayerModalProps {
+interface EditPlayerModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onPlayerAdded: (player: NewPlayer) => Promise<void>;
 	onPlayerUpdated: (id: number, player: Partial<NewPlayer>) => Promise<void>;
 	isLoading: boolean;
-	editingPlayer?: Player | null;
+	editingPlayer: Player;
 }
 
-export function AddPlayerModal({
+export function EditPlayerModal({
 	isOpen,
 	onClose,
-	onPlayerAdded,
 	onPlayerUpdated,
 	isLoading,
 	editingPlayer,
-}: AddPlayerModalProps) {
+}: EditPlayerModalProps) {
 	const [isDarkMode] = useAtom(isDarkModeAtom);
 	const [newPlayer, setNewPlayer] = useState<NewPlayer>({
 		fullName: "",
@@ -86,12 +83,7 @@ export function AddPlayerModal({
 		try {
 			const validated = playerSchema.parse(newPlayer);
 			setValidationErrors({});
-
-			if (editingPlayer) {
-				await onPlayerUpdated(editingPlayer.id, validated);
-			} else {
-				await onPlayerAdded(validated);
-			}
+			await onPlayerUpdated(editingPlayer.id, validated);
 
 			// Reset form
 			setNewPlayer({
@@ -177,12 +169,21 @@ export function AddPlayerModal({
 							className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
 						>
 							Email
+							{editingPlayer &&
+								!editingPlayer.email &&
+								editingPlayer.parentEmail && (
+									<span
+										className={`ml-2 text-xs font-normal ${isDarkMode ? "text-gray-500" : "text-gray-400"}`}
+									>
+										(parent)
+									</span>
+								)}
 						</label>
 						<input
 							id="player-email"
 							type="email"
 							placeholder="Enter email"
-							value={newPlayer.email ?? undefined}
+							value={(newPlayer.email || editingPlayer?.parentEmail) ?? ""}
 							disabled={!!editingPlayer}
 							onChange={(e) => {
 								setNewPlayer((prev) => ({ ...prev, email: e.target.value }));

@@ -80,9 +80,9 @@ app.post("/import", async (c) => {
 				email: email,
 				parentEmail: parentEmail,
 				sporteasyId: sportEasyId,
-				positions: ["FORWARD"] as const satisfies Position[], // Default position
-				rating: 5, // Default rating
-				youth: !!parentEmail,
+				positions: ["FORWARD"] as const satisfies Position[], // Default position (only used on insert)
+				rating: 5, // Default rating (only used on insert)
+				youth: !!parentEmail, // Youth based on parent email (only used on insert)
 			});
 		}
 
@@ -114,13 +114,6 @@ app.post("/import-events", async (c) => {
 	try {
 		const events = await sportEasyService.getEvents();
 		const existingPractices = await practiceService.getPractices();
-		const existingSporteasyIds = new Set(
-			existingPractices.map((p) => p.sporteasyId).filter(Boolean),
-		);
-
-		// Get the start of today (midnight)
-		const today = new Date();
-		today.setHours(0, 0, 0, 0);
 
 		const importResults = {
 			total: events.length,
@@ -130,39 +123,64 @@ app.post("/import-events", async (c) => {
 			errors: [] as string[],
 		};
 
+		// Filter events to only today onwards and not cancelled
+		const nonCancelledEvents = events.filter((event) => {
+			return !event.is_cancelled;
+		});
+
+		// Group events by date (YYYY-MM-DD)
+		const eventsByDate = new Map<string, typeof nonCancelledEvents>();
+		for (const event of nonCancelledEvents) {
+			const eventDate = new Date(event.start_at);
+			const dateKey = eventDate.toISOString().split("T")[0]; // YYYY-MM-DD
+
+			if (!eventsByDate.has(dateKey)) {
+				eventsByDate.set(dateKey, []);
+			}
+			eventsByDate.get(dateKey)?.push(event);
+		}
+
 		const toUpsert: NewPractice[] = [];
 
-		for (const event of events) {
-			// Filter: only events ending with "Outdoor Practice" or "Hockey"
-			const nameEndsWithValid =
-				event.name.endsWith("Outdoor Practice") ||
-				event.name.endsWith("Hockey");
+		// Process each date
+		for (const [dateKey, dayEvents] of Array.from(eventsByDate.entries())) {
+			// Find if we already have a practice for this date
+			const practiceDate = new Date(dateKey);
+			const existingPractice = existingPractices.find((p) => {
+				const pDate = new Date(p.date);
+				return pDate.toISOString().split("T")[0] === dateKey;
+			});
 
-			if (!nameEndsWithValid) {
-				importResults.skipped++;
-				continue;
-			}
+			// Find primary event (one that ends with "Outdoor Practice" or "Hockey")
+			const primaryEvent = dayEvents.find(
+				(e) => e.name.endsWith("Outdoor Practice") || e.name.endsWith("Hockey"),
+			);
 
-			// Filter: only events from today onwards
-			const eventDate = new Date(event.start_at);
-			if (eventDate < today) {
-				importResults.skipped++;
-				continue;
-			}
+			// Use primary event's ID if available, otherwise existing practice's ID, otherwise first event's ID
+			const sporteasyId =
+				primaryEvent?.id || existingPractice?.sporteasyId || dayEvents[0].id;
+
+			// Collect all event names for notes
+			const eventNames = dayEvents.map((e) => e.name).join(" | ");
+
+			// Use primary event name if available, otherwise combined names
+			const notes = primaryEvent?.name || eventNames;
 
 			// Track whether this will be an insert or update
-			if (existingSporteasyIds.has(event.id)) {
+			if (existingPractice) {
 				importResults.updated++;
 			} else {
 				importResults.imported++;
 			}
 
 			toUpsert.push({
-				sporteasyId: event.id,
-				date: eventDate,
-				notes: event.name,
+				sporteasyId,
+				date: practiceDate,
+				notes,
 			});
 		}
+
+		importResults.skipped = importResults.total - nonCancelledEvents.length;
 
 		// Single upsert query for all practices
 		if (toUpsert.length > 0) {

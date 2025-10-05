@@ -2,7 +2,7 @@
 
 import { useAtom } from "jotai";
 import Image from "next/image";
-import { DarkModeToggle } from "@/components/dark-mode-toggle";
+import { DarkModeToggle } from "@/components/shared/dark-mode-toggle";
 import { PlayersTab } from "@/components/tab-content/players";
 import { PracticesTab } from "@/components/tab-content/practices";
 import { Tabs } from "@/components/tabs";

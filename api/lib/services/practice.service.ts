@@ -24,6 +24,18 @@ export class PracticeService {
 			.orderBy(asc(practices.date));
 	}
 
+	async getPastPractices(): Promise<Practice[]> {
+		// Get the start of today (midnight)
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		return await db
+			.select()
+			.from(practices)
+			.where(sql`${practices.date} < ${today}`)
+			.orderBy(desc(practices.date));
+	}
+
 	async getPracticeById(id: number): Promise<Practice | null> {
 		const result = await db
 			.select()

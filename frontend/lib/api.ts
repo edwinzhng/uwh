@@ -26,6 +26,24 @@ export interface NewPlayer {
 	youth?: boolean;
 }
 
+// Practice types
+export interface Practice {
+	id: number;
+	date: string;
+	notes: string | null;
+	sporteasyId: number | null;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface SportEasySyncResult {
+	total: number;
+	imported: number;
+	updated: number;
+	skipped: number;
+	errors?: string[];
+}
+
 export class ApiClient {
 	private baseUrl: string;
 
@@ -115,6 +133,36 @@ export class ApiClient {
 
 	async getPlayersByPosition(position: string): Promise<Player[]> {
 		return this.get<Player[]>(`/api/players/position/${position}`);
+	}
+
+	// Practice-specific methods
+	async getPractices(): Promise<Practice[]> {
+		return this.get<Practice[]>("/api/practices");
+	}
+
+	async getPastPractices(): Promise<Practice[]> {
+		return this.get<Practice[]>("/api/practices/past");
+	}
+
+	async createPractice(practice: { date: string; notes?: string }): Promise<Practice> {
+		return this.post<Practice>("/api/practices", practice);
+	}
+
+	async updatePractice(id: number, practice: { date?: string; notes?: string }): Promise<Practice> {
+		return this.put<Practice>(`/api/practices/${id}`, practice);
+	}
+
+	async deletePractice(id: number): Promise<{ message: string }> {
+		return this.delete<{ message: string }>(`/api/practices/${id}`);
+	}
+
+	// SportEasy sync methods
+	async syncSportEasyPlayers(): Promise<SportEasySyncResult> {
+		return this.post<SportEasySyncResult>("/api/sporteasy/import", {});
+	}
+
+	async syncSportEasyEvents(): Promise<SportEasySyncResult> {
+		return this.post<SportEasySyncResult>("/api/sporteasy/import-events", {});
 	}
 }
 

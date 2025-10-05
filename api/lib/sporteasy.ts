@@ -34,6 +34,7 @@ export interface SportEasyEvent {
 	id: number;
 	start_at: string;
 	name: string;
+	is_cancelled: boolean;
 }
 
 export interface SportEasyEventsResponse {

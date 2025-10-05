@@ -14,6 +14,16 @@ app.get("/", async (c) => {
 	}
 });
 
+app.get("/past", async (c) => {
+	try {
+		const practices = await practiceService.getPastPractices();
+		return c.json(practices);
+	} catch (error) {
+		console.error("Error fetching past practices:", error);
+		return c.json({ error: "Failed to fetch past practices" }, 500);
+	}
+});
+
 app.get("/:id", async (c) => {
 	try {
 		const id = parseInt(c.req.param("id"));
