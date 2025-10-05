@@ -14,6 +14,7 @@ export interface Player {
 	positions: Position[];
 	rating: number;
 	youth: boolean;
+	sporteasyId: number | null;
 	createdAt: string;
 }
 
@@ -81,6 +82,21 @@ export interface CoachStatistics {
 	totalHours: number;
 	totalMinutes: number;
 	practiceCount: number;
+}
+
+// SportEasy API types
+export interface SportEasyEventAttendee {
+	attendance_status: "present" | "absent" | "maybe";
+	results: Array<{
+		profile: {
+			id: number;
+		};
+	}>;
+}
+
+export interface SportEasyEventAttendeesResponse {
+	id: number;
+	attendees: SportEasyEventAttendee[];
 }
 
 export class ApiClient {
@@ -236,6 +252,10 @@ export class ApiClient {
 
 	async syncSportEasyEvents(): Promise<SportEasySyncResult> {
 		return this.post<SportEasySyncResult>("/api/sporteasy/import-events", {});
+	}
+
+	async getSportEasyEventAttendees(practiceId: number): Promise<SportEasyEventAttendeesResponse> {
+		return this.get<SportEasyEventAttendeesResponse>(`/api/sporteasy/events/${practiceId}/attendees`);
 	}
 }
 

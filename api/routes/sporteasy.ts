@@ -109,6 +109,30 @@ app.get("/events", async (c) => {
 	}
 });
 
+// Get event attendees from SportEasy
+app.get("/events/:eventId/attendees", async (c) => {
+	try {
+		const practiceId = Number.parseInt(c.req.param("eventId"));
+		
+		// First fetch the practice from our database to get the SportEasy ID
+		const practice = await practiceService.getPracticeById(practiceId);
+		if (!practice) {
+			return c.json({ error: "Practice not found" }, 404);
+		}
+		
+		if (!practice.sporteasyId) {
+			return c.json({ error: "No SportEasy ID associated with this practice" }, 400);
+		}
+		
+		// Now fetch attendees from SportEasy using the stored SportEasy ID
+		const attendees = await sportEasyService.getEventAttendees(practice.sporteasyId);
+		return c.json(attendees);
+	} catch (error) {
+		console.error("Error fetching SportEasy event attendees:", error);
+		return c.json({ error: "Failed to fetch SportEasy event attendees" }, 500);
+	}
+});
+
 // Import events/practices from SportEasy
 app.post("/import-events", async (c) => {
 	try {
@@ -168,11 +192,25 @@ app.post("/import-events", async (c) => {
 			const sporteasyId =
 				primaryEvent?.id || existingPractice?.sporteasyId || dayEvents[0].id;
 
-			// Collect all event names for notes
-			const eventNames = dayEvents.map((e) => e.name).join(" | ");
+			// Helper function to check if event name starts with a day of the week
+			const startsWithDayOfWeek = (name: string) => {
+				const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+				return days.some(day => name.startsWith(day));
+			};
 
-			// Use primary event name if available, otherwise combined names
-			const notes = primaryEvent?.name || eventNames;
+			// Filter out events that start with days of the week
+			const filteredEvents = dayEvents.filter(e => !startsWithDayOfWeek(e.name));
+			
+			// Collect filtered event names for notes
+			const eventNames = filteredEvents.map((e) => e.name).join(" | ");
+
+			// Use primary event name if available and it doesn't start with day of week, otherwise use filtered names
+			let notes = null;
+			if (primaryEvent && !startsWithDayOfWeek(primaryEvent.name)) {
+				notes = primaryEvent.name;
+			} else if (eventNames) {
+				notes = eventNames;
+			}
 
 			// Track whether this will be an insert or update based on sporteasyId
 			if (existingSporteasyIds.has(sporteasyId)) {

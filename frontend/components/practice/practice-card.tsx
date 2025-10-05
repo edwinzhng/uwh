@@ -46,11 +46,6 @@ export function PracticeCard({
 					<p
 						className={`font-medium ${isDarkMode ? "text-white" : "text-gray-900"}`}
 					>
-						{practice.notes || "Practice"}
-					</p>
-					<p
-						className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
-					>
 						{new Date(practice.date).toLocaleDateString("en-US", {
 							weekday: "short",
 							month: "short",
@@ -58,6 +53,13 @@ export function PracticeCard({
 							year: "numeric",
 						})}
 					</p>
+					{practice.notes && (
+						<p
+							className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+						>
+							{practice.notes}
+						</p>
+					)}
 				</div>
 			</div>
 			<div className="flex items-center gap-2">

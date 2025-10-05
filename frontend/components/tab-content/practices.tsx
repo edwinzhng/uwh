@@ -127,6 +127,7 @@ export function PracticesTab() {
 			<MakeTeamsModal
 				isOpen={isTeamsModalOpen}
 				onClose={() => setIsTeamsModalOpen(false)}
+				practiceId={selectedPractice?.id}
 			/>
 
 		<div className="space-y-6">

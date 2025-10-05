@@ -5,6 +5,7 @@ import {
 	SPORTEASY_V2_1_BASE_URL,
 	SPORTEASY_V2_3_BASE_URL,
 	type SportEasyEvent,
+	type SportEasyEventAttendeesResponse,
 	type SportEasyEventsResponse,
 	type SportEasyProfile,
 	type SportEasyProfilesResponse,
@@ -81,6 +82,38 @@ export class SportEasyService {
 			return data.results || [];
 		} catch (error) {
 			console.error("Error fetching SportEasy events:", error);
+			throw error;
+		}
+	}
+
+	async getEventAttendees(
+		eventId: number,
+	): Promise<SportEasyEventAttendeesResponse> {
+		if (!SPORTEASY_COOKIE) {
+			throw new Error("SportEasy cookie is not configured");
+		}
+
+		const url = `${SPORTEASY_V2_1_BASE_URL}/teams/${SPORTEASY_TEAM_ID}/events/${eventId}`;
+
+		try {
+			const response = await fetch(url, {
+				method: "GET",
+				headers: {
+					Cookie: SPORTEASY_COOKIE,
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (!response.ok) {
+				throw new Error(
+					`SportEasy API error: ${response.status} ${response.statusText}`,
+				);
+			}
+
+			const data = await response.json();
+			return data;
+		} catch (error) {
+			console.error("Error fetching SportEasy event attendees:", error);
 			throw error;
 		}
 	}
