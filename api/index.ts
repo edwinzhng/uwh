@@ -62,6 +62,3 @@ app.onError((err, c) => {
 
 // Export for Vercel serverless
 export default app;
-
-// Also export as handler for compatibility
-export const handler = app;
