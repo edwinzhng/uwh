@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { defineConfig } from "drizzle-kit";
+import { drizzle } from "drizzle-orm/postgres-js";
 
 // Database configuration
 const connectionString = process.env.DATABASE_URL;
@@ -7,9 +7,6 @@ if (!connectionString) {
 	throw new Error("Missing DATABASE_URL environment variable.");
 }
 
-export default defineConfig({
-	out: "./drizzle",
-	schema: "./db/schema.ts",
-	dialect: "postgresql",
-	dbCredentials: { url: connectionString },
-});
+// Initialize database connection
+export const db = drizzle(connectionString);
+

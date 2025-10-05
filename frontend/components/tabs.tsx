@@ -43,15 +43,15 @@ export function Tabs({ tabs, defaultTab, className }: TabsProps) {
 						onClick={() => setActiveTab(tab.id)}
 						className={`
                 relative z-10 flex-1 px-6 py-3 text-sm font-medium transition-all duration-300 ease-in-out
-                rounded-xl backdrop-blur-sm cursor-pointer
+                rounded-xl backdrop-blur-sm cursor-pointer border
                 ${
 									activeTab === tab.id
 										? isDarkMode
-											? "text-white bg-gray-800/80 shadow-xl shadow-gray-800/50 border border-gray-700/50"
-											: "text-gray-900 bg-white/80 shadow-xl shadow-white/50 border border-gray-200/50"
+											? "text-white bg-gray-800/80 shadow-xl shadow-gray-800/50 border-gray-700/50"
+											: "text-gray-900 bg-white/80 shadow-xl shadow-white/50 border-gray-200/50"
 										: isDarkMode
-											? "text-gray-400 hover:text-white hover:bg-gray-800/20"
-											: "text-gray-600 hover:text-gray-900 hover:bg-white/20"
+											? "text-gray-400 hover:text-white hover:bg-gray-800/20 border-transparent"
+											: "text-gray-600 hover:text-gray-900 hover:bg-white/20 border-transparent"
 								}
               `}
 					>
@@ -61,7 +61,12 @@ export function Tabs({ tabs, defaultTab, className }: TabsProps) {
 			</div>
 
 			{/* Tab Content */}
-			<div className="mt-6">{activeTabContent}</div>
+			<div 
+				key={activeTab}
+				className="mt-6 animate-in fade-in duration-300"
+			>
+				{activeTabContent}
+			</div>
 		</div>
 	);
 }

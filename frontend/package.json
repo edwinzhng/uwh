@@ -18,7 +18,8 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "tailwind-merge": "^2.2.0",
-    "lucide-react": "^0.303.0"
+    "lucide-react": "^0.303.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "typescript": "^5",

@@ -4,21 +4,24 @@ import { apiBaseUrlAtom, errorAtom, isLoadingAtom } from "./atoms";
 const store = getDefaultStore();
 
 // Player types
+export type Position = 'FORWARD' | 'WING' | 'CENTER' | 'FULL_BACK';
+
 export interface Player {
 	id: number;
 	fullName: string;
 	email: string;
-	sporteasyId?: string;
-	position: 'FORWARD' | 'WING' | 'CENTER' | 'FULL_BACK';
+	positions: Position[];
+	rating: number;
+	youth: boolean;
 	createdAt: string;
-	updatedAt: string;
 }
 
 export interface NewPlayer {
 	fullName: string;
 	email: string;
-	sporteasyId?: string;
-	position: 'FORWARD' | 'WING' | 'CENTER' | 'FULL_BACK';
+	positions: Position[];
+	rating?: number;
+	youth?: boolean;
 }
 
 export class ApiClient {

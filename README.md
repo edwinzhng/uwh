@@ -43,12 +43,29 @@ uwh/
 
 ### Installation
 
-1. Install all dependencies (root, frontend, and backend):
+1. **Set up environment variables:**
+
 ```bash
+cd api
+cp env.example .env
+# Edit .env and add your DATABASE_URL
+```
+
+2. **Install all dependencies:**
+```bash
+cd ..
 bun run install:all
 ```
 
-2. Start both development servers:
+3. **Run database migrations:**
+```bash
+cd api
+bun drizzle-kit generate
+bun drizzle-kit migrate
+cd ..
+```
+
+4. **Start both development servers:**
 ```bash
 bun run dev
 ```
