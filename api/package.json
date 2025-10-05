@@ -1,0 +1,19 @@
+{
+  "name": "uwh-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.0.0",
+  "scripts": {
+    "dev": "bun run index.ts",
+    "build": "bun build index.ts --outdir dist --target bun",
+    "start": "bun run dist/index.js"
+  },
+  "dependencies": {
+    "hono": "^4.0.0",
+    "@hono/node-server": "^1.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
+  }
+}
