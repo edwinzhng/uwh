@@ -113,7 +113,12 @@ app.get("/events", async (c) => {
 app.post("/import-events", async (c) => {
 	try {
 		const events = await sportEasyService.getEvents();
-		const existingPractices = await practiceService.getPractices();
+		// Fetch both future and past practices to properly check what exists
+		const [futurePractices, pastPractices] = await Promise.all([
+			practiceService.getPractices(),
+			practiceService.getPastPractices(),
+		]);
+		const existingPractices = [...futurePractices, ...pastPractices];
 
 		const importResults = {
 			total: events.length,
@@ -141,6 +146,9 @@ app.post("/import-events", async (c) => {
 		}
 
 		const toUpsert: NewPractice[] = [];
+		const existingSporteasyIds = new Set(
+			existingPractices.map((p) => p.sporteasyId).filter(Boolean),
+		);
 
 		// Process each date
 		for (const [dateKey, dayEvents] of Array.from(eventsByDate.entries())) {
@@ -166,8 +174,8 @@ app.post("/import-events", async (c) => {
 			// Use primary event name if available, otherwise combined names
 			const notes = primaryEvent?.name || eventNames;
 
-			// Track whether this will be an insert or update
-			if (existingPractice) {
+			// Track whether this will be an insert or update based on sporteasyId
+			if (existingSporteasyIds.has(sporteasyId)) {
 				importResults.updated++;
 			} else {
 				importResults.imported++;

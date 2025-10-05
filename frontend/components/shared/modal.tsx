@@ -86,20 +86,20 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
 					>
 						{title}
 					</h2>
-					<button
-						type="button"
-						onClick={onClose}
-						className={`
-							p-2 rounded-lg transition-all duration-200
-							${
-								isDarkMode
-									? "hover:bg-gray-800/60 text-gray-400 hover:text-white"
-									: "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
-							}
-						`}
-					>
-						<X className="h-5 w-5" />
-					</button>
+				<button
+					type="button"
+					onClick={onClose}
+					className={`
+						p-2 rounded-lg transition-all duration-200 cursor-pointer
+						${
+							isDarkMode
+								? "hover:bg-gray-800/60 text-gray-400 hover:text-white"
+								: "hover:bg-gray-100 text-gray-600 hover:text-gray-900"
+						}
+					`}
+				>
+					<X className="h-5 w-5" />
+				</button>
 				</div>
 
 				{/* Content */}

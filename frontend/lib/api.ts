@@ -74,6 +74,15 @@ export interface SportEasySyncResult {
 	errors?: string[];
 }
 
+// Coach statistics types
+export interface CoachStatistics {
+	coachId: number;
+	coachName: string;
+	totalHours: number;
+	totalMinutes: number;
+	practiceCount: number;
+}
+
 export class ApiClient {
 	private baseUrl: string;
 
@@ -205,6 +214,10 @@ export class ApiClient {
 
 	async deleteCoach(id: number): Promise<{ message: string }> {
 		return this.delete<{ message: string }>(`/api/coaches/${id}`);
+	}
+
+	async getCoachStatistics(startDate: string, endDate: string): Promise<CoachStatistics[]> {
+		return this.get<CoachStatistics[]>(`/api/coaches/statistics/hours?startDate=${startDate}&endDate=${endDate}`);
 	}
 
 	// Practice Coach methods

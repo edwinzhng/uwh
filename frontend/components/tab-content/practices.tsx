@@ -83,13 +83,14 @@ export function PracticesTab() {
 			const parts = [];
 			if (result.imported > 0) parts.push(`${result.imported} new`);
 			if (result.updated > 0) parts.push(`${result.updated} updated`);
-			if (result.skipped > 0) parts.push(`${result.skipped} skipped`);
 			if (result.errors?.length && result.errors.length > 0)
 				parts.push(`${result.errors.length} errors`);
 
-			setSyncMessage(
-				`Found ${result.total} from SportEasy: ${parts.join(", ")}`,
-			);
+			if (parts.length > 0) {
+				setSyncMessage(parts.join(", "));
+			} else {
+				setSyncMessage("All up to date");
+			}
 
 			// Refresh practice list
 			await fetchPractices();
@@ -140,11 +141,16 @@ export function PracticesTab() {
 								className={`h-5 w-5 ${isDarkMode ? "text-orange-400" : "text-orange-600"}`}
 							/>
 						</div>
-						<h3
-							className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}
+					<h3
+						className={`text-lg font-semibold flex items-center gap-1 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+					>
+						Practices
+						<span 
+							className={`transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
 						>
-							Practices{!isLoading && ` (${practices.length})`}
-						</h3>
+							({practices.length})
+						</span>
+					</h3>
 						{syncMessage && (
 							<p
 								className={`text-sm ${

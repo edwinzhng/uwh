@@ -1,4 +1,7 @@
+import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { Hono } from "hono";
+import { coaches, practiceCoaches, practices } from "../db/schema";
+import { db } from "../lib/db";
 import { coachService } from "../lib/services/coach.service";
 
 const app = new Hono();
@@ -70,6 +73,52 @@ app.delete("/:id", async (c) => {
 	} catch (error) {
 		console.error("Error deleting coach:", error);
 		return c.json({ error: "Failed to delete coach" }, 500);
+	}
+});
+
+// Get coach statistics
+app.get("/statistics/hours", async (c) => {
+	try {
+		const startDateStr = c.req.query("startDate");
+		const endDateStr = c.req.query("endDate");
+
+		if (!startDateStr || !endDateStr) {
+			return c.json(
+				{ error: "startDate and endDate query params are required" },
+				400,
+			);
+		}
+
+		const startDate = new Date(startDateStr);
+		const endDate = new Date(endDateStr);
+
+		// Query to get total hours per coach
+		const results = await db
+			.select({
+				coachId: coaches.id,
+				coachName: coaches.name,
+				totalMinutes: sql<number>`COALESCE(SUM(${practiceCoaches.durationMinutes}), 0)`,
+				practiceCount: sql<number>`COUNT(${practiceCoaches.id})`,
+			})
+			.from(coaches)
+			.leftJoin(practiceCoaches, eq(coaches.id, practiceCoaches.coachId))
+			.leftJoin(practices, eq(practiceCoaches.practiceId, practices.id))
+			.where(and(gte(practices.date, startDate), lte(practices.date, endDate)))
+			.groupBy(coaches.id, coaches.name)
+			.orderBy(coaches.name);
+
+		const statistics = results.map((row) => ({
+			coachId: row.coachId,
+			coachName: row.coachName,
+			totalHours: Number(row.totalMinutes) / 60,
+			totalMinutes: Number(row.totalMinutes),
+			practiceCount: Number(row.practiceCount),
+		}));
+
+		return c.json(statistics);
+	} catch (error) {
+		console.error("Error fetching coach statistics:", error);
+		return c.json({ error: "Failed to fetch coach statistics" }, 500);
 	}
 });
 

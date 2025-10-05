@@ -1,10 +1,10 @@
 "use client";
 
 import { useAtom } from "jotai";
-import { Plus, UserCog, Users } from "lucide-react";
+import { BarChart3, Plus, UserCog, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { apiClient, type Coach, type NewCoach } from "@/lib/api";
+import { apiClient, type Coach, type CoachStatistics, type NewCoach } from "@/lib/api";
 import { isDarkModeAtom, isLoadingAtom } from "@/lib/atoms";
 import { Button } from "../shared/button";
 import { ConfirmationDialog } from "../shared/confirmation-dialog";
@@ -31,6 +31,11 @@ export function CoachesTab() {
 		isActive: true,
 	});
 	const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+	const [statistics, setStatistics] = useState<CoachStatistics[]>([]);
+	const [isLoadingStats, setIsLoadingStats] = useState(false);
+	const [selectedSeason, setSelectedSeason] = useState("2025-2026");
+	const [startDate, setStartDate] = useState("2025-09-01");
+	const [endDate, setEndDate] = useState("2026-08-31");
 
 	const fetchCoaches = async () => {
 		try {
@@ -40,6 +45,34 @@ export function CoachesTab() {
 		} catch (err) {
 			console.error("Failed to fetch coaches:", err);
 		}
+	};
+
+	const getSeasonDates = (season: string) => {
+		const seasons = {
+			"2024-2025": { start: "2024-09-01", end: "2025-08-31" },
+			"2025-2026": { start: "2025-09-01", end: "2026-08-31" },
+			"2026-2027": { start: "2026-09-01", end: "2027-08-31" },
+		};
+		return seasons[season as keyof typeof seasons] || seasons["2025-2026"];
+	};
+
+	const fetchStatistics = async () => {
+		try {
+			setIsLoadingStats(true);
+			const data = await apiClient.getCoachStatistics(startDate, endDate);
+			setStatistics(data);
+		} catch (err) {
+			console.error("Failed to fetch coach statistics:", err);
+		} finally {
+			setIsLoadingStats(false);
+		}
+	};
+
+	const handleSeasonChange = (season: string) => {
+		setSelectedSeason(season);
+		const dates = getSeasonDates(season);
+		setStartDate(dates.start);
+		setEndDate(dates.end);
 	};
 
 	const handleAdd = () => {
@@ -129,7 +162,14 @@ export function CoachesTab() {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: first fetch
 	useEffect(() => {
 		fetchCoaches();
+		fetchStatistics();
 	}, []);
+
+	// Fetch statistics when date range changes
+	// biome-ignore lint/correctness/useExhaustiveDependencies: date change
+	useEffect(() => {
+		fetchStatistics();
+	}, [startDate, endDate]);
 
 	return (
 		<>
@@ -266,11 +306,16 @@ export function CoachesTab() {
 								className={`h-5 w-5 ${isDarkMode ? "text-blue-400" : "text-blue-600"}`}
 							/>
 						</div>
-						<h3
-							className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}
+					<h3
+						className={`text-lg font-semibold flex items-center gap-1 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+					>
+						Coaches
+						<span 
+							className={`transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
 						>
-							Coaches{!isLoading && ` (${coaches.length})`}
-						</h3>
+							({coaches.length})
+						</span>
+					</h3>
 					</div>
 					<Button
 						onClick={handleAdd}
@@ -374,6 +419,130 @@ export function CoachesTab() {
 								</div>
 							</FadeIn>
 						))}
+					</div>
+				)}
+			</GlassCard>
+		</FadeIn>
+
+		{/* Statistics Section */}
+		<FadeIn delay={100}>
+			<GlassCard className="p-6">
+				<div className="flex items-center justify-between mb-6">
+					<div className="flex items-center gap-3">
+						<div
+							className={`p-2 rounded-lg ${isDarkMode ? "bg-purple-900/40" : "bg-purple-100"}`}
+						>
+							<BarChart3
+								className={`h-5 w-5 ${isDarkMode ? "text-purple-400" : "text-purple-600"}`}
+							/>
+						</div>
+						<h3
+							className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}
+						>
+							Coaching Hours
+						</h3>
+					</div>
+				</div>
+
+				{/* Season Filter */}
+				<div className="mb-6">
+					<label
+						htmlFor="season"
+						className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+					>
+						Season
+					</label>
+					<select
+						id="season"
+						value={selectedSeason}
+						onChange={(e) => handleSeasonChange(e.target.value)}
+						className={`
+							w-full px-4 py-2 rounded-xl border transition-all duration-200
+							${isDarkMode
+								? "bg-gray-800/40 border-gray-700/50 text-white"
+								: "bg-white/40 border-gray-200/50 text-gray-900"
+							}
+							backdrop-blur-sm
+						`}
+					>
+						<option value="2024-2025">2024-2025</option>
+						<option value="2025-2026">2025-2026</option>
+						<option value="2026-2027">2026-2027</option>
+					</select>
+				</div>
+
+				{/* Statistics Table */}
+				{isLoadingStats ? (
+					<div className="text-center py-8">
+						<p
+							className={`text-lg ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+						>
+							Loading statistics...
+						</p>
+					</div>
+				) : statistics.length === 0 ? (
+					<div className="text-center py-8">
+						<BarChart3
+							className={`h-12 w-12 mx-auto mb-4 ${isDarkMode ? "text-gray-600" : "text-gray-400"}`}
+						/>
+						<p
+							className={`text-lg font-thin ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+						>
+							No coaching hours recorded
+						</p>
+					</div>
+				) : (
+					<div className="overflow-x-auto">
+						<table className="w-full">
+							<thead>
+								<tr
+									className={`border-b ${isDarkMode ? "border-gray-700/50" : "border-gray-200/50"}`}
+								>
+									<th
+										className={`text-left py-3 px-4 font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+									>
+										Coach
+									</th>
+									<th
+										className={`text-right py-3 px-4 font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+									>
+										Practices
+									</th>
+									<th
+										className={`text-right py-3 px-4 font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+									>
+										Total Hours
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								{statistics.map((stat) => (
+									<tr
+										key={stat.coachId}
+										className={`
+											border-b transition-colors
+											${isDarkMode ? "border-gray-700/30 hover:bg-gray-800/20" : "border-gray-200/30 hover:bg-white/20"}
+										`}
+									>
+										<td
+											className={`py-3 px-4 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+										>
+											{stat.coachName}
+										</td>
+										<td
+											className={`text-right py-3 px-4 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+										>
+											{stat.practiceCount}
+										</td>
+										<td
+											className={`text-right py-3 px-4 font-semibold ${isDarkMode ? "text-purple-400" : "text-purple-600"}`}
+										>
+											{stat.totalHours.toFixed(1)}
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
 					</div>
 				)}
 			</GlassCard>
