@@ -7,7 +7,7 @@ export const userAtom = atom<{ id: number; name: string; email: string } | null>
 // API base URL
 export const apiBaseUrlAtom = atom(
   process.env.NODE_ENV === 'production' 
-    ? 'https://uwh-api.vercel.app' 
+    ? 'https://uwh-api-production.up.railway.app' 
     : 'http://localhost:3101'
 );
 
