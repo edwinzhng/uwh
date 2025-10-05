@@ -18,18 +18,19 @@ export const positionEnum = pgEnum("position", [
 ]);
 
 // Define the practice player status type enum
-export const practicePlayerStatusTypeEnum = pgEnum("practice_player_status_type", [
-	"LAST_MINUTE_ADDITION",
-	"LAST_MINUTE_CANCELLATION",
-	"LATE",
-]);
+export const practicePlayerStatusTypeEnum = pgEnum(
+	"practice_player_status_type",
+	["LAST_MINUTE_ADDITION", "LAST_MINUTE_CANCELLATION", "LATE"],
+);
 
 // Players table
 export const players = pgTable("players", {
 	id: serial("id").primaryKey(),
 	fullName: varchar("full_name", { length: 255 }).notNull(),
-	email: varchar("email", { length: 255 }).notNull().unique(),
-	positions: positionEnum("positions").notNull().array(),
+	email: varchar("email", { length: 255 }).unique(),
+	parentEmail: varchar("parent_email", { length: 255 }),
+	sporteasyId: integer("sporteasy_id").unique(),
+	positions: text("positions").array().notNull(),
 	rating: integer("rating").notNull(),
 	youth: boolean("youth").notNull().default(false),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -46,6 +47,7 @@ export const coaches = pgTable("coaches", {
 // Practices table
 export const practices = pgTable("practices", {
 	id: serial("id").primaryKey(),
+	sporteasyId: integer("sporteasy_id").unique(),
 	date: timestamp("date").notNull(),
 	notes: text("notes"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -93,5 +95,7 @@ export type PracticeCoach = typeof practiceCoaches.$inferSelect;
 export type NewPracticeCoach = typeof practiceCoaches.$inferInsert;
 
 export type PracticePlayerStatus = typeof practicePlayerStatuses.$inferSelect;
-export type NewPracticePlayerStatus = typeof practicePlayerStatuses.$inferInsert;
-export type PracticePlayerStatusType = (typeof practicePlayerStatusTypeEnum.enumValues)[number];
+export type NewPracticePlayerStatus =
+	typeof practicePlayerStatuses.$inferInsert;
+export type PracticePlayerStatusType =
+	(typeof practicePlayerStatusTypeEnum.enumValues)[number];

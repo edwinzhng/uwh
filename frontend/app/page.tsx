@@ -3,7 +3,6 @@
 import { useAtom } from "jotai";
 import Image from "next/image";
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
-import { CoachingHistoryTab } from "@/components/tab-content/coaching-history";
 import { PlayersTab } from "@/components/tab-content/players";
 import { PracticesTab } from "@/components/tab-content/practices";
 import { Tabs } from "@/components/tabs";
@@ -22,11 +21,6 @@ export default function Home() {
 			id: "practices",
 			label: "Practices",
 			content: <PracticesTab />,
-		},
-		{
-			id: "coaching-history",
-			label: "Coaching History",
-			content: <CoachingHistoryTab />,
 		},
 	];
 

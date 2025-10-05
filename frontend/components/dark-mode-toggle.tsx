@@ -16,7 +16,7 @@ export function DarkModeToggle() {
 			type="button"
 			onClick={toggleDarkMode}
 			className={`
-        relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ease-in-out
+        relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ease-in-out cursor-pointer
         ${
 					isDarkMode
 						? "bg-gray-800 shadow-lg shadow-gray-800/50"

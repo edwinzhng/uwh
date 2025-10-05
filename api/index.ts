@@ -7,6 +7,7 @@ import playersRouter from "./routes/players";
 import practiceCoachesRouter from "./routes/practice-coaches";
 import practicePlayerStatusesRouter from "./routes/practice-player-statuses";
 import practicesRouter from "./routes/practices";
+import sportEasyRouter from "./routes/sporteasy";
 
 const app = new Hono();
 
@@ -46,6 +47,7 @@ app.route("/api/coaches", coachesRouter);
 app.route("/api/practices", practicesRouter);
 app.route("/api/practice-coaches", practiceCoachesRouter);
 app.route("/api/practice-player-statuses", practicePlayerStatusesRouter);
+app.route("/api/sporteasy", sportEasyRouter);
 
 // 404 handler
 app.notFound((c) => {

@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { asc, eq, gte, sql } from "drizzle-orm";
 import { type NewPractice, type Practice, practices } from "../../db/schema";
 import { db } from "../db";
 
@@ -13,10 +13,15 @@ export class PracticeService {
 	}
 
 	async getPractices(): Promise<Practice[]> {
+		// Get the start of today (midnight)
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
 		return await db
 			.select()
 			.from(practices)
-			.orderBy(desc(practices.date));
+			.where(gte(practices.date, today))
+			.orderBy(asc(practices.date));
 	}
 
 	async getPracticeById(id: number): Promise<Practice | null> {
@@ -52,6 +57,27 @@ export class PracticeService {
 	async deletePractice(id: number): Promise<boolean> {
 		const result = await db.delete(practices).where(eq(practices.id, id));
 		return result.length > 0;
+	}
+
+	async batchUpsertPractices(practiceData: NewPractice[]): Promise<Practice[]> {
+		if (practiceData.length === 0) {
+			return [];
+		}
+
+		const result = await db
+			.insert(practices)
+			.values(practiceData)
+			.onConflictDoUpdate({
+				target: practices.sporteasyId,
+				set: {
+					date: sql`excluded.date`,
+					notes: sql`excluded.notes`,
+					updatedAt: sql`excluded.updated_at`,
+				},
+			})
+			.returning();
+
+		return result;
 	}
 }
 

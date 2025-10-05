@@ -1,5 +1,10 @@
-import { arrayContains, desc, eq } from "drizzle-orm";
-import { type NewPlayer, type Player, type Position, players } from "../../db/schema";
+import { arrayContains, desc, eq, sql } from "drizzle-orm";
+import {
+	type NewPlayer,
+	type Player,
+	type Position,
+	players,
+} from "../../db/schema";
 import { db } from "../db";
 
 export class PlayerService {
@@ -17,10 +22,8 @@ export class PlayerService {
 			.select()
 			.from(players)
 			.orderBy(desc(players.createdAt));
-		return result.map((player) => ({
-			...player,
-			positions: JSON.parse(player.positions as string),
-		})) as Player[];
+
+		return result;
 	}
 
 	async getPlayerById(id: number): Promise<Player | null> {
@@ -29,49 +32,60 @@ export class PlayerService {
 			.from(players)
 			.where(eq(players.id, id))
 			.limit(1);
-		if (!result[0]) return null;
-		return {
-			...result[0],
-			positions: JSON.parse(result[0].positions as string),
-		} as Player;
+
+		return result.at(0) ?? null;
 	}
 
 	async createPlayer(playerData: NewPlayer): Promise<Player> {
 		const dataToInsert = {
 			...playerData,
-			positions: JSON.stringify(playerData.positions),
+			positions: playerData.positions,
 		};
 		const result = await db.insert(players).values(dataToInsert).returning();
-		return {
-			...result[0],
-			positions: JSON.parse(result[0].positions as string),
-		} as Player;
+		return result.at(0) ?? null;
 	}
 
 	async updatePlayer(
 		id: number,
 		playerData: Partial<NewPlayer>,
 	): Promise<Player | null> {
-		const dataToUpdate: Partial<Player> = {
-			...playerData,
-		};
-		if (playerData.positions) {
-			dataToUpdate.positions = JSON.stringify(playerData.positions);
-		}
 		const result = await db
 			.update(players)
-			.set(dataToUpdate)
+			.set(playerData)
 			.where(eq(players.id, id))
 			.returning();
-		if (!result[0]) return null;
-		return {
-			...result[0],
-			positions: JSON.parse(result[0].positions as string),
-		} as Player;
+		return result.at(0) ?? null;
+	}
+
+	async batchUpsertPlayers(playerData: NewPlayer[]): Promise<Player[]> {
+		if (playerData.length === 0) {
+			return [];
+		}
+
+		const result = await db
+			.insert(players)
+			.values(playerData)
+			.onConflictDoUpdate({
+				target: players.sporteasyId,
+				set: {
+					fullName: sql`excluded.full_name`,
+					email: sql`excluded.email`,
+					parentEmail: sql`excluded.parent_email`,
+					positions: sql`excluded.positions`,
+					rating: sql`excluded.rating`,
+					youth: sql`excluded.youth`,
+				},
+			})
+			.returning();
+
+		return result;
 	}
 
 	async deletePlayer(id: number): Promise<boolean> {
-		const result = await db.delete(players).where(eq(players.id, id));
+		const result = await db
+			.delete(players)
+			.where(eq(players.id, id))
+			.returning();
 		return result.length > 0;
 	}
 
@@ -79,10 +93,9 @@ export class PlayerService {
 		return await db
 			.select()
 			.from(players)
-			.where(arrayContains(players.positions, position))
+			.where(arrayContains(players.positions, [position]))
 			.orderBy(desc(players.createdAt));
 	}
 }
 
 export const playerService = PlayerService.getInstance();
-

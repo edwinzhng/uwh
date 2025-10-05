@@ -1,7 +1,8 @@
 "use client";
 
 import { useAtom } from "jotai";
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { isDarkModeAtom } from "@/lib/atoms";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +19,30 @@ interface TabsProps {
 }
 
 export function Tabs({ tabs, defaultTab, className }: TabsProps) {
-	const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const tabFromUrl = searchParams.get("tab");
+	
+	const [activeTab, setActiveTab] = useState(
+		tabFromUrl || defaultTab || tabs[0]?.id
+	);
 	const [isDarkMode] = useAtom(isDarkModeAtom);
+
+	// Update URL when tab changes
+	const handleTabChange = (tabId: string) => {
+		setActiveTab(tabId);
+		const params = new URLSearchParams(searchParams.toString());
+		params.set("tab", tabId);
+		router.push(`${pathname}?${params.toString()}`, { scroll: false });
+	};
+
+	// Sync state with URL on mount
+	useEffect(() => {
+		if (tabFromUrl && tabs.some((tab) => tab.id === tabFromUrl)) {
+			setActiveTab(tabFromUrl);
+		}
+	}, [tabFromUrl, tabs]);
 
 	const activeTabContent = tabs.find((tab) => tab.id === activeTab)?.content;
 
@@ -40,7 +63,7 @@ export function Tabs({ tabs, defaultTab, className }: TabsProps) {
 					<button
 						type="button"
 						key={tab.id}
-						onClick={() => setActiveTab(tab.id)}
+						onClick={() => handleTabChange(tab.id)}
 						className={`
                 relative z-10 flex-1 px-6 py-3 text-sm font-medium transition-all duration-300 ease-in-out
                 rounded-xl backdrop-blur-sm cursor-pointer border

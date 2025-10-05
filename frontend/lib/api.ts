@@ -9,7 +9,8 @@ export type Position = 'FORWARD' | 'WING' | 'CENTER' | 'FULL_BACK';
 export interface Player {
 	id: number;
 	fullName: string;
-	email: string;
+	email: string | null;
+	parentEmail: string | null;
 	positions: Position[];
 	rating: number;
 	youth: boolean;
@@ -18,7 +19,8 @@ export interface Player {
 
 export interface NewPlayer {
 	fullName: string;
-	email: string;
+	email: string | null;
+	parentEmail?: string | null;
 	positions: Position[];
 	rating?: number;
 	youth?: boolean;

@@ -18,7 +18,6 @@ app.post("/", async (c) => {
 	try {
 		const body = await c.req.json();
 
-		// Validate required fields
 		if (
 			!body.fullName ||
 			!body.email ||
@@ -51,23 +50,26 @@ app.post("/", async (c) => {
 			}
 		}
 
-		// Validate rating if provided
-		if (body.rating !== undefined) {
-			const rating = parseInt(body.rating);
-			if (Number.isNaN(rating) || rating < 1 || rating > 10) {
-				return c.json(
-					{ error: "Rating must be a number between 1 and 10" },
-					400,
-				);
-			}
+		// Validate rating
+		if (body.rating === undefined || body.rating === null) {
+			return c.json({ error: "Rating is required" }, 400);
 		}
 
-		const newPlayer = await playerService.createPlayer({
+		const rating =
+			typeof body.rating === "number" ? body.rating : parseInt(body.rating);
+		if (Number.isNaN(rating) || rating < 1 || rating > 10) {
+			return c.json({ error: "Rating must be a number between 1 and 10" }, 400);
+		}
+
+		const playerData = {
 			fullName: body.fullName,
 			email: body.email,
 			positions: body.positions,
-			rating: body.rating || 5,
-		});
+			rating: rating,
+			youth: body.youth ?? false,
+		};
+
+		const newPlayer = await playerService.createPlayer(playerData);
 
 		return c.json(newPlayer, 201);
 	} catch (error) {
@@ -110,10 +112,7 @@ app.put("/:id", async (c) => {
 		// Validate positions if provided
 		if (body.positions) {
 			if (!Array.isArray(body.positions) || body.positions.length === 0) {
-				return c.json(
-					{ error: "Positions must be a non-empty array" },
-					400,
-				);
+				return c.json({ error: "Positions must be a non-empty array" }, 400);
 			}
 			const validPositions: Position[] = [
 				"FORWARD",
@@ -206,4 +205,3 @@ app.get("/position/:position", async (c) => {
 });
 
 export default app;
-
