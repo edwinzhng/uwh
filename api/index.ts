@@ -58,15 +58,4 @@ app.onError((err, c) => {
 	return c.json({ error: "Internal Server Error" }, 500);
 });
 
-// Start server for development
-const port = process.env.PORT || 3101;
-console.log(`🚀 Server starting on port ${port}`);
-
-Bun.serve({
-	fetch: app.fetch,
-	port: Number(port),
-});
-
-console.log(`✅ Server running at http://localhost:${port}`);
-
 export default app;
