@@ -13,7 +13,7 @@ RUN bun install --frozen-lockfile
 # Copy rest of the files
 COPY . ./
 
-WORKDIR /api
+WORKDIR /app/api
 
 # Build the binary
 RUN bun build index.ts --compile --outfile dist/index.js
