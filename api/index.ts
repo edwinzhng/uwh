@@ -60,4 +60,8 @@ app.onError((err, c) => {
 	return c.json({ error: "Internal Server Error" }, 500);
 });
 
+// Export for Vercel serverless
 export default app;
+
+// Also export as handler for compatibility
+export const handler = app;

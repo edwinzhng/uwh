@@ -8,6 +8,7 @@
     "dev": "bun --watch index.ts",
     "build": "bun build index.ts --outdir dist --target bun",
     "start": "bun run dist/index.js",
+    "vercel-build": "echo 'No build step required for Vercel'",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
