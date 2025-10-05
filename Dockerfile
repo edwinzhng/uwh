@@ -1,7 +1,7 @@
 # Build stage
 FROM oven/bun:1 AS builder
 
-WORKDIR /api
+WORKDIR /app
 
 # Copy package files first for better caching
 COPY package.json bun.lock ./
@@ -13,16 +13,18 @@ RUN bun install --frozen-lockfile
 # Copy rest of the files
 COPY . ./
 
+WORKDIR /api
+
 # Build the binary
 RUN bun build index.ts --compile --outfile dist/index.js
 
 # Final stage
 FROM debian:bookworm-slim
 
-WORKDIR /api
+WORKDIR /app
 
 # Copy only the compiled binary
-COPY --from=builder /api/dist ./dist
+COPY --from=builder /app/api/dist ./dist
 
 # Run the binary
 CMD ["./dist/index.js"]
