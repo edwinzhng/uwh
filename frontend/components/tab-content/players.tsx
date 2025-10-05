@@ -169,11 +169,11 @@ export function PlayersTab() {
 								className={`h-5 w-5 ${isDarkMode ? "text-green-400" : "text-green-600"}`}
 							/>
 						</div>
-						<h3
-							className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}
-						>
-							Players ({players.length})
-						</h3>
+					<h3
+						className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}
+					>
+						Players{!isLoading && ` (${players.length})`}
+					</h3>
 						{syncMessage && (
 							<p
 								className={`text-sm ${
@@ -193,8 +193,8 @@ export function PlayersTab() {
 								cursor-pointer
 								${
 									isDarkMode
-										? "border-purple-500 text-purple-400 hover:bg-purple-900/40"
-										: "border-purple-400 text-purple-600 hover:bg-purple-50"
+										? "bg-transparent border-purple-500 text-purple-400 hover:bg-purple-900/40"
+										: "bg-white/60 border-purple-400 text-purple-600 hover:bg-purple-50"
 								}
 							`}
 						>
@@ -308,8 +308,8 @@ export function PlayersTab() {
 											px-3 py-1.5 h-auto cursor-pointer
 											${
 												isDarkMode
-													? "border-gray-700 text-gray-300 hover:bg-gray-800/40"
-													: "border-gray-200 text-gray-700 hover:bg-white/40"
+													? "bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800/40"
+													: "bg-white/60 border-gray-200 text-gray-700 hover:bg-white/40"
 											}
 										`}
 									>
@@ -322,8 +322,8 @@ export function PlayersTab() {
 											px-3 py-1.5 h-auto cursor-pointer
 											${
 												isDarkMode
-													? "border-red-800 text-red-400 hover:bg-red-800/40"
-													: "border-red-400 text-red-600 hover:bg-red-400/20"
+													? "bg-transparent border-red-800 text-red-400 hover:bg-red-800/40"
+													: "bg-white/60 border-red-400 text-red-600 hover:bg-red-400/20"
 											}
 										`}
 									>

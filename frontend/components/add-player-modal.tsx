@@ -182,13 +182,15 @@ export function AddPlayerModal({
 							id="player-email"
 							type="email"
 							placeholder="Enter email"
-							value={newPlayer.email}
+							value={newPlayer.email ?? undefined}
+							disabled={!!editingPlayer}
 							onChange={(e) => {
 								setNewPlayer((prev) => ({ ...prev, email: e.target.value }));
 								setValidationErrors((prev) => ({ ...prev, email: "" }));
 							}}
 							className={`
 								w-full px-4 py-3 rounded-xl border transition-all duration-200
+								${editingPlayer ? "opacity-60 cursor-not-allowed" : ""}
 								${
 									validationErrors.email
 										? "border-red-500 focus:ring-red-500/20"

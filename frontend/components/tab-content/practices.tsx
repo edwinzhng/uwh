@@ -21,9 +21,11 @@ export function PracticesTab() {
 	const [isDarkMode] = useAtom(isDarkModeAtom);
 	const [isSyncing, setIsSyncing] = useState(false);
 	const [syncMessage, setSyncMessage] = useState<string | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
 
 	const fetchPractices = async () => {
 		try {
+			setIsLoading(true);
 			const response = await fetch(
 				`${process.env.NODE_ENV === "production" ? "https://uwh-api.vercel.app" : "http://localhost:3101"}/api/practices`,
 			);
@@ -31,6 +33,8 @@ export function PracticesTab() {
 			setPractices(data);
 		} catch (err) {
 			console.error("Failed to fetch practices:", err);
+		} finally {
+			setIsLoading(false);
 		}
 	};
 
@@ -96,7 +100,7 @@ export function PracticesTab() {
 					<h3
 						className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}
 					>
-						Practices ({practices.length})
+						Practices{!isLoading && ` (${practices.length})`}
 					</h3>
 					{syncMessage && (
 						<p
@@ -116,8 +120,8 @@ export function PracticesTab() {
 						cursor-pointer
 						${
 							isDarkMode
-								? "border-purple-500 text-purple-400 hover:bg-purple-900/40"
-								: "border-purple-400 text-purple-600 hover:bg-purple-50"
+								? "bg-transparent border-purple-500 text-purple-400 hover:bg-purple-900/40"
+								: "bg-white/60 border-purple-400 text-purple-600 hover:bg-purple-50"
 						}
 					`}
 				>
