@@ -7,13 +7,22 @@
   "scripts": {
     "dev": "bun run index.ts",
     "build": "bun build index.ts --outdir dist --target bun",
-    "start": "bun run dist/index.js"
+    "start": "bun run dist/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "hono": "^4.0.0",
-    "@hono/node-server": "^1.8.0"
+    "@hono/node-server": "^1.8.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "drizzle-orm": "^0.29.0",
+    "postgres": "^3.4.3",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
-    "@types/node": "^20"
+    "@types/bun": "^1.2.23",
+    "@types/node": "^20",
+    "drizzle-kit": "^0.20.0"
   }
 }

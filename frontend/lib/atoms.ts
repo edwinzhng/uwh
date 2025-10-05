@@ -13,3 +13,6 @@ export const apiBaseUrlAtom = atom(
 // Loading states
 export const isLoadingAtom = atom(false);
 export const errorAtom = atom<string | null>(null);
+
+// Dark mode state
+export const isDarkModeAtom = atom(true);

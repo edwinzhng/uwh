@@ -1,164 +1,106 @@
 "use client";
 
 import { useAtom } from "jotai";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/card";
-import { apiClient } from "@/lib/api";
-import { errorAtom, isLoadingAtom } from "@/lib/atoms";
-
-interface User {
-	id: number;
-	name: string;
-	email: string;
-}
+import Image from "next/image";
+import { DarkModeToggle } from "@/components/dark-mode-toggle";
+import { CoachingHistoryTab } from "@/components/tab-content/coaching-history";
+import { PlayersTab } from "@/components/tab-content/players";
+import { PracticesTab } from "@/components/tab-content/practices";
+import { Tabs } from "@/components/tabs";
+import { isDarkModeAtom } from "@/lib/atoms";
 
 export default function Home() {
-	const [users, setUsers] = useState<User[]>([]);
-	const [isLoading] = useAtom(isLoadingAtom);
-	const [error] = useAtom(errorAtom);
-	const [newUser, setNewUser] = useState({ name: "", email: "" });
+	const [isDarkMode] = useAtom(isDarkModeAtom);
 
-	const fetchUsers = async () => {
-		try {
-			const data = await apiClient.get<User[]>("/api/users");
-			setUsers(data);
-		} catch (err) {
-			console.error("Failed to fetch users:", err);
-		}
-	};
-
-	const createUser = async () => {
-		try {
-			const data = await apiClient.post<User>("/api/users", newUser);
-			setUsers((prev) => [...prev, data]);
-			setNewUser({ name: "", email: "" });
-		} catch (err) {
-			console.error("Failed to create user:", err);
-		}
-	};
-
-	const testBackend = async () => {
-		try {
-			const data = await apiClient.get<{ message: string }>("/api/hello");
-			alert(data.message);
-		} catch (err) {
-			console.error("Failed to test backend:", err);
-		}
-	};
-
-	useEffect(() => {
-		fetchUsers();
-	}, []);
+	const tabs = [
+		{
+			id: "players",
+			label: "Players",
+			content: <PlayersTab />,
+		},
+		{
+			id: "practices",
+			label: "Practices",
+			content: <PracticesTab />,
+		},
+		{
+			id: "coaching-history",
+			label: "Coaching History",
+			content: <CoachingHistoryTab />,
+		},
+	];
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-			<div className="max-w-4xl mx-auto space-y-8">
-				<div className="text-center space-y-4">
-					<h1 className="text-4xl font-bold text-gray-900">
-						UWH - Bun + React + Radix + Jotai + Hono
-					</h1>
-					<p className="text-lg text-gray-600">
-						A modern full-stack application with separate deployable frontend
-						and backend
-					</p>
-				</div>
+		<div
+			className={`
+      min-h-screen transition-all duration-500 ease-in-out
+      ${
+				isDarkMode
+					? "bg-gradient-to-br from-gray-900 via-gray-800 to-black"
+					: "bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
+			}
+    `}
+		>
+			{/* Background Effects */}
+			<div className="absolute inset-0 overflow-hidden pointer-events-none">
+				<div
+					className={`
+          absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-20 blur-3xl
+          ${isDarkMode ? "bg-blue-500" : "bg-blue-400"}
+        `}
+				/>
+				<div
+					className={`
+          absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-20 blur-3xl
+          ${isDarkMode ? "bg-purple-500" : "bg-purple-400"}
+        `}
+				/>
+				<div
+					className={`
+          absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-10 blur-3xl
+          ${isDarkMode ? "bg-indigo-500" : "bg-indigo-400"}
+        `}
+				/>
+			</div>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-					<Card>
-						<CardHeader>
-							<CardTitle>Backend Test</CardTitle>
-							<CardDescription>
-								Test the Hono backend connection
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<Button onClick={testBackend} disabled={isLoading}>
-								{isLoading ? "Testing..." : "Test Backend"}
-							</Button>
-							{error && (
-								<div className="text-red-600 text-sm">Error: {error}</div>
-							)}
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader>
-							<CardTitle>Users Management</CardTitle>
-							<CardDescription>
-								Manage users with Jotai state management
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<div className="space-y-2">
-								<input
-									type="text"
-									placeholder="Name"
-									value={newUser.name}
-									onChange={(e) =>
-										setNewUser((prev) => ({ ...prev, name: e.target.value }))
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+			{/* Header */}
+			<div className="relative z-10 p-6">
+				<div className="max-w-7xl mx-auto">
+					<div className="flex items-center justify-between mb-8">
+						<div className="flex items-center gap-4">
+							<div
+								className={`
+                p-3 rounded-2xl backdrop-blur-xl
+                ${
+									isDarkMode
+										? "bg-gray-900/20 border border-gray-700/50 shadow-2xl shadow-gray-900/20"
+										: "bg-white/20 border border-gray-200/50 shadow-2xl shadow-gray-200/20"
+								}
+              `}
+							>
+								<Image
+									src="/crocs.svg"
+									alt="Underwater Hockey"
+									width={32}
+									height={32}
+									className="h-8 w-8"
 								/>
-								<input
-									type="email"
-									placeholder="Email"
-									value={newUser.email}
-									onChange={(e) =>
-										setNewUser((prev) => ({ ...prev, email: e.target.value }))
-									}
-									className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-								/>
-								<Button
-									onClick={createUser}
-									disabled={isLoading || !newUser.name || !newUser.email}
-									className="w-full"
+							</div>
+							<div>
+								<h1
+									className={`text-4xl font-thin ${isDarkMode ? "text-white" : "text-gray-900"}`}
 								>
-									{isLoading ? "Creating..." : "Create User"}
-								</Button>
+									Underwater Hockey
+								</h1>
 							</div>
-						</CardContent>
-					</Card>
-				</div>
+						</div>
+						<DarkModeToggle />
+					</div>
 
-				<Card>
-					<CardHeader>
-						<CardTitle>Users List</CardTitle>
-						<CardDescription>
-							Users fetched from the Hono backend
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
-						{users.length === 0 ? (
-							<p className="text-gray-500 text-center py-4">No users found</p>
-						) : (
-							<div className="space-y-2">
-								{users.map((user) => (
-									<div
-										key={user.id}
-										className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
-									>
-										<div>
-											<p className="font-medium">{user.name}</p>
-											<p className="text-sm text-gray-600">{user.email}</p>
-										</div>
-										<span className="text-xs text-gray-500">ID: {user.id}</span>
-									</div>
-								))}
-							</div>
-						)}
-					</CardContent>
-				</Card>
-
-				<div className="text-center text-sm text-gray-500">
-					<p>Frontend: Next.js + React + Radix UI + Jotai</p>
-					<p>Backend: Hono + Bun (deployable to Vercel)</p>
+					{/* Main Content */}
+					<div className="max-w-6xl mx-auto">
+						<Tabs tabs={tabs} defaultTab="players" />
+					</div>
 				</div>
 			</div>
 		</div>

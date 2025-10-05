@@ -3,6 +3,24 @@ import { apiBaseUrlAtom, errorAtom, isLoadingAtom } from "./atoms";
 
 const store = getDefaultStore();
 
+// Player types
+export interface Player {
+	id: number;
+	fullName: string;
+	email: string;
+	sporteasyId?: string;
+	position: 'FORWARD' | 'WING' | 'CENTER' | 'FULL_BACK';
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface NewPlayer {
+	fullName: string;
+	email: string;
+	sporteasyId?: string;
+	position: 'FORWARD' | 'WING' | 'CENTER' | 'FULL_BACK';
+}
+
 export class ApiClient {
 	private baseUrl: string;
 
@@ -67,6 +85,31 @@ export class ApiClient {
 
 	async delete<T>(endpoint: string): Promise<T> {
 		return this.request<T>(endpoint, { method: "DELETE" });
+	}
+
+	// Player-specific methods
+	async getPlayers(): Promise<Player[]> {
+		return this.get<Player[]>("/api/players");
+	}
+
+	async getPlayer(id: number): Promise<Player> {
+		return this.get<Player>(`/api/players/${id}`);
+	}
+
+	async createPlayer(player: NewPlayer): Promise<Player> {
+		return this.post<Player>("/api/players", player);
+	}
+
+	async updatePlayer(id: number, player: Partial<NewPlayer>): Promise<Player> {
+		return this.put<Player>(`/api/players/${id}`, player);
+	}
+
+	async deletePlayer(id: number): Promise<{ message: string }> {
+		return this.delete<{ message: string }>(`/api/players/${id}`);
+	}
+
+	async getPlayersByPosition(position: string): Promise<Player[]> {
+		return this.get<Player[]>(`/api/players/position/${position}`);
 	}
 }
 
