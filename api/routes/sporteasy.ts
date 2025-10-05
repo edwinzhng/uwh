@@ -6,34 +6,6 @@ import { sportEasyService } from "../lib/services/sporteasy.service";
 
 const app = new Hono();
 
-// Get all profiles from SportEasy
-app.get("/profiles", async (c) => {
-	try {
-		const profiles = await sportEasyService.getProfiles();
-		return c.json(profiles);
-	} catch (error) {
-		console.error("Error fetching SportEasy profiles:", error);
-		return c.json({ error: "Failed to fetch SportEasy profiles" }, 500);
-	}
-});
-
-// Get a specific profile by email
-app.get("/profiles/:email", async (c) => {
-	try {
-		const email = c.req.param("email");
-		const profile = await sportEasyService.getProfileByEmail(email);
-
-		if (!profile) {
-			return c.json({ error: "Profile not found" }, 404);
-		}
-
-		return c.json(profile);
-	} catch (error) {
-		console.error("Error fetching SportEasy profile:", error);
-		return c.json({ error: "Failed to fetch SportEasy profile" }, 500);
-	}
-});
-
 // Import players from SportEasy
 app.post("/import", async (c) => {
 	try {
@@ -95,17 +67,6 @@ app.post("/import", async (c) => {
 	} catch (error) {
 		console.error("Error importing SportEasy profiles:", error);
 		return c.json({ error: "Failed to import SportEasy profiles" }, 500);
-	}
-});
-
-// Get all events from SportEasy
-app.get("/events", async (c) => {
-	try {
-		const events = await sportEasyService.getEvents();
-		return c.json(events);
-	} catch (error) {
-		console.error("Error fetching SportEasy events:", error);
-		return c.json({ error: "Failed to fetch SportEasy events" }, 500);
 	}
 });
 

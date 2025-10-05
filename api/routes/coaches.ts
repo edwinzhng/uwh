@@ -17,23 +17,6 @@ app.get("/", async (c) => {
 	}
 });
 
-// Get a single coach by ID
-app.get("/:id", async (c) => {
-	try {
-		const id = Number.parseInt(c.req.param("id"));
-		const coach = await coachService.getCoachById(id);
-
-		if (!coach) {
-			return c.json({ error: "Coach not found" }, 404);
-		}
-
-		return c.json(coach);
-	} catch (error) {
-		console.error("Error fetching coach:", error);
-		return c.json({ error: "Failed to fetch coach" }, 500);
-	}
-});
-
 // Create a new coach
 app.post("/", async (c) => {
 	try {
