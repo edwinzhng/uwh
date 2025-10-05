@@ -4,7 +4,12 @@ import { useAtom } from "jotai";
 import { Edit, Mail, Trash2, User, UserPlus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { apiClient, type NewPlayer, type Player, type Position } from "@/lib/api";
+import {
+	apiClient,
+	type NewPlayer,
+	type Player,
+	type Position,
+} from "@/lib/api";
 import { isDarkModeAtom, isLoadingAtom } from "@/lib/atoms";
 import { Button } from "../button";
 import { GlassCard } from "../glass-card";
@@ -17,10 +22,18 @@ const POSITIONS = [
 ] as const;
 
 const playerSchema = z.object({
-	fullName: z.string().min(1, "Full name is required").min(2, "Full name must be at least 2 characters"),
+	fullName: z
+		.string()
+		.min(1, "Full name is required")
+		.min(2, "Full name must be at least 2 characters"),
 	email: z.string().min(1, "Email is required").email("Invalid email address"),
-	positions: z.array(z.enum(["FORWARD", "WING", "CENTER", "FULL_BACK"])).min(1, "At least one position is required"),
-	rating: z.number().min(1, "Rating must be at least 1").max(10, "Rating must be at most 10"),
+	positions: z
+		.array(z.enum(["FORWARD", "WING", "CENTER", "FULL_BACK"]))
+		.min(1, "At least one position is required"),
+	rating: z
+		.number()
+		.min(1, "Rating must be at least 1")
+		.max(10, "Rating must be at most 10"),
 	youth: z.boolean().optional(),
 });
 
@@ -36,7 +49,9 @@ export function PlayersTab() {
 		rating: undefined,
 		youth: false,
 	});
-	const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+	const [validationErrors, setValidationErrors] = useState<
+		Record<string, string>
+	>({});
 	const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
 	const fetchPlayers = async () => {
@@ -53,7 +68,7 @@ export function PlayersTab() {
 			// Validate with Zod
 			const validated = playerSchema.parse(newPlayer);
 			setValidationErrors({});
-			
+
 			const data = await apiClient.createPlayer(validated);
 			setPlayers((prev) => [data, ...prev]);
 			setNewPlayer({
@@ -135,7 +150,10 @@ export function PlayersTab() {
 								placeholder="Enter full name"
 								value={newPlayer.fullName}
 								onChange={(e) => {
-									setNewPlayer((prev) => ({ ...prev, fullName: e.target.value }));
+									setNewPlayer((prev) => ({
+										...prev,
+										fullName: e.target.value,
+									}));
 									setValidationErrors((prev) => ({ ...prev, fullName: "" }));
 								}}
 								className={`
@@ -151,7 +169,9 @@ export function PlayersTab() {
 								`}
 							/>
 							{validationErrors.fullName && (
-								<p className="text-red-500 text-xs mt-1">{validationErrors.fullName}</p>
+								<p className="text-red-500 text-xs mt-1">
+									{validationErrors.fullName}
+								</p>
 							)}
 						</div>
 						<div className="lg:col-span-2">
@@ -183,7 +203,9 @@ export function PlayersTab() {
 								`}
 							/>
 							{validationErrors.email && (
-								<p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>
+								<p className="text-red-500 text-xs mt-1">
+									{validationErrors.email}
+								</p>
 							)}
 						</div>
 						<div>
@@ -201,7 +223,10 @@ export function PlayersTab() {
 								placeholder="1-10"
 								value={newPlayer.rating ?? ""}
 								onChange={(e) => {
-									const value = e.target.value === "" ? undefined : parseInt(e.target.value);
+									const value =
+										e.target.value === ""
+											? undefined
+											: parseInt(e.target.value);
 									setNewPlayer((prev) => ({
 										...prev,
 										rating: value,
@@ -221,19 +246,23 @@ export function PlayersTab() {
 								`}
 							/>
 							{validationErrors.rating && (
-								<p className="text-red-500 text-xs mt-1">{validationErrors.rating}</p>
+								<p className="text-red-500 text-xs mt-1">
+									{validationErrors.rating}
+								</p>
 							)}
 						</div>
 					</div>
-					
+
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
 							<label
+								htmlFor="player-positions"
 								className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
 							>
 								Positions
 							</label>
-							<div className={`
+							<div
+								className={`
 								p-4 rounded-xl border backdrop-blur-sm
 								${
 									validationErrors.positions
@@ -242,7 +271,8 @@ export function PlayersTab() {
 											? "bg-gray-800/40 border-gray-700/50"
 											: "bg-white/40 border-gray-200/50"
 								}
-							`}>
+							`}
+							>
 								<div className="grid grid-cols-2 gap-2">
 									{POSITIONS.map((pos) => (
 										<label
@@ -262,7 +292,9 @@ export function PlayersTab() {
 										>
 											<input
 												type="checkbox"
-												checked={newPlayer.positions.includes(pos.value as Position)}
+												checked={newPlayer.positions.includes(
+													pos.value as Position,
+												)}
 												onChange={(e) => {
 													setNewPlayer((prev) => ({
 														...prev,
@@ -270,7 +302,10 @@ export function PlayersTab() {
 															? [...prev.positions, pos.value as Position]
 															: prev.positions.filter((p) => p !== pos.value),
 													}));
-													setValidationErrors((prev) => ({ ...prev, positions: "" }));
+													setValidationErrors((prev) => ({
+														...prev,
+														positions: "",
+													}));
 												}}
 												className="sr-only"
 											/>
@@ -280,12 +315,15 @@ export function PlayersTab() {
 								</div>
 							</div>
 							{validationErrors.positions && (
-								<p className="text-red-500 text-xs mt-1">{validationErrors.positions}</p>
+								<p className="text-red-500 text-xs mt-1">
+									{validationErrors.positions}
+								</p>
 							)}
 						</div>
-						
+
 						<div>
 							<label
+								htmlFor="player-youth"
 								className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
 							>
 								Player Type
@@ -293,7 +331,9 @@ export function PlayersTab() {
 							<div className="flex gap-2 h-12">
 								<button
 									type="button"
-									onClick={() => setNewPlayer((prev) => ({ ...prev, youth: false }))}
+									onClick={() =>
+										setNewPlayer((prev) => ({ ...prev, youth: false }))
+									}
 									className={`
 										flex-1 px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer backdrop-blur-sm
 										${
@@ -311,7 +351,9 @@ export function PlayersTab() {
 								</button>
 								<button
 									type="button"
-									onClick={() => setNewPlayer((prev) => ({ ...prev, youth: true }))}
+									onClick={() =>
+										setNewPlayer((prev) => ({ ...prev, youth: true }))
+									}
 									className={`
 										flex-1 px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer backdrop-blur-sm
 										${

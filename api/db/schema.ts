@@ -17,6 +17,13 @@ export const positionEnum = pgEnum("position", [
 	"FULL_BACK",
 ]);
 
+// Define the practice player status type enum
+export const practicePlayerStatusTypeEnum = pgEnum("practice_player_status_type", [
+	"LAST_MINUTE_ADDITION",
+	"LAST_MINUTE_CANCELLATION",
+	"LATE",
+]);
+
 // Players table
 export const players = pgTable("players", {
 	id: serial("id").primaryKey(),
@@ -58,6 +65,19 @@ export const practiceCoaches = pgTable("practice_coaches", {
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Practice player status join table
+export const practicePlayerStatuses = pgTable("practice_player_statuses", {
+	id: serial("id").primaryKey(),
+	practiceId: integer("practice_id")
+		.notNull()
+		.references(() => practices.id, { onDelete: "cascade" }),
+	playerId: integer("player_id")
+		.notNull()
+		.references(() => players.id, { onDelete: "cascade" }),
+	statusType: practicePlayerStatusTypeEnum("status_type").notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Export types
 export type Player = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;
@@ -71,3 +91,7 @@ export type NewPractice = typeof practices.$inferInsert;
 
 export type PracticeCoach = typeof practiceCoaches.$inferSelect;
 export type NewPracticeCoach = typeof practiceCoaches.$inferInsert;
+
+export type PracticePlayerStatus = typeof practicePlayerStatuses.$inferSelect;
+export type NewPracticePlayerStatus = typeof practicePlayerStatuses.$inferInsert;
+export type PracticePlayerStatusType = (typeof practicePlayerStatusTypeEnum.enumValues)[number];

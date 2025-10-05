@@ -1,9 +1,11 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+
 import coachesRouter from "./routes/coaches";
 import playersRouter from "./routes/players";
 import practiceCoachesRouter from "./routes/practice-coaches";
+import practicePlayerStatusesRouter from "./routes/practice-player-statuses";
 import practicesRouter from "./routes/practices";
 
 const app = new Hono();
@@ -43,6 +45,7 @@ app.route("/api/players", playersRouter);
 app.route("/api/coaches", coachesRouter);
 app.route("/api/practices", practicesRouter);
 app.route("/api/practice-coaches", practiceCoachesRouter);
+app.route("/api/practice-player-statuses", practicePlayerStatusesRouter);
 
 // 404 handler
 app.notFound((c) => {
