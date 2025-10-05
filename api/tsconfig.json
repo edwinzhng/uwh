@@ -1,6 +1,7 @@
 {
   "type": "module",
   "compilerOptions": {
+    "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
     "strict": true,
@@ -11,7 +12,9 @@
     ],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "esModuleInterop": true,
+
   },
   "exclude": ["node_modules"]
 }

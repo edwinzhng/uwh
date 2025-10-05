@@ -80,7 +80,7 @@ app.post("/import", async (c) => {
 				email: email,
 				parentEmail: parentEmail,
 				sporteasyId: sportEasyId,
-				positions: ["FORWARD"] as const satisfies Position[], // Default position (only used on insert)
+				positions: ["FORWARD"] as Position[], // Default position (only used on insert)
 				rating: 5, // Default rating (only used on insert)
 				youth: !!parentEmail, // Youth based on parent email (only used on insert)
 			});
