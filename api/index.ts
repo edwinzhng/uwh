@@ -15,11 +15,24 @@ app.use("*", logger());
 app.use(
 	"*",
 	cors({
-		origin:
-			process.env.NODE_ENV === "production"
-				? ["https://uwh.vercel.app", "https://uwh-api.up.railway.app"]
-				: ["http://localhost:3100"],
+		origin: (origin) => {
+			// Allow requests from Vercel frontend and Railway backend
+			const allowedOrigins = [
+				"https://uwh.vercel.app",
+				"https://uwh-api.up.railway.app",
+				"http://localhost:3100",
+				"http://localhost:3101",
+			];
+
+			if (process.env.NODE_ENV === "production") {
+				return allowedOrigins.includes(origin || "") ? origin : null;
+			}
+
+			return origin;
+		},
 		credentials: true,
+		allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+		allowHeaders: ["Content-Type", "Authorization"],
 	}),
 );
 
