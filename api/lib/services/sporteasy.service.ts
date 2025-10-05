@@ -43,7 +43,7 @@ export class SportEasyService {
 				);
 			}
 
-			const data: SportEasyProfilesResponse = await response.json();
+			const data = (await response.json()) as SportEasyProfilesResponse;
 			return data || [];
 		} catch (error) {
 			console.error("Error fetching SportEasy profiles:", error);
@@ -78,7 +78,7 @@ export class SportEasyService {
 				);
 			}
 
-			const data: SportEasyEventsResponse = await response.json();
+			const data = (await response.json()) as SportEasyEventsResponse;
 			return data.results || [];
 		} catch (error) {
 			console.error("Error fetching SportEasy events:", error);
@@ -110,7 +110,7 @@ export class SportEasyService {
 				);
 			}
 
-			const data = await response.json();
+			const data = (await response.json()) as SportEasyEventAttendeesResponse;
 			return data;
 		} catch (error) {
 			console.error("Error fetching SportEasy event attendees:", error);

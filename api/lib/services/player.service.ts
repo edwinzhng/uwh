@@ -42,7 +42,11 @@ export class PlayerService {
 			positions: playerData.positions,
 		};
 		const result = await db.insert(players).values(dataToInsert).returning();
-		return result.at(0) ?? null;
+		const player = result.at(0);
+		if (!player) {
+			throw new Error("Failed to create player");
+		}
+		return player;
 	}
 
 	async updatePlayer(
