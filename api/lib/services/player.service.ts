@@ -76,10 +76,9 @@ export class PlayerService {
 			.onConflictDoUpdate({
 				target: players.sporteasyId,
 				set: {
-					fullName: sql`excluded.full_name`,
 					email: sql`excluded.email`,
 					parentEmail: sql`excluded.parent_email`,
-					// Don't override positions, rating, or youth on update
+					// Don't override fullName, positions, rating, or youth on update
 				},
 			})
 			.returning();
