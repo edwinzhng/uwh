@@ -4,13 +4,21 @@ import { useAtom } from "jotai";
 import { Calendar } from "lucide-react";
 import type { Practice } from "@/lib/api";
 import { isDarkModeAtom } from "@/lib/atoms";
+import { Button } from "../shared/button";
 
 interface PracticeCardProps {
 	practice: Practice;
 	isPast?: boolean;
+	onUpdateCoaches?: (practice: Practice) => void;
+	onMakeTeams?: (practice: Practice) => void;
 }
 
-export function PracticeCard({ practice, isPast = false }: PracticeCardProps) {
+export function PracticeCard({
+	practice,
+	isPast = false,
+	onUpdateCoaches,
+	onMakeTeams,
+}: PracticeCardProps) {
 	const [isDarkMode] = useAtom(isDarkModeAtom);
 
 	return (
@@ -19,8 +27,8 @@ export function PracticeCard({ practice, isPast = false }: PracticeCardProps) {
 				flex items-center justify-between p-4 rounded-xl transition-all duration-200
 				${
 					isDarkMode
-						? "bg-gray-800/20 hover:bg-gray-800/40 border border-gray-700/30"
-						: "bg-white/20 hover:bg-white/40 border border-gray-200/30"
+						? "bg-gray-800/20 border border-gray-700/30"
+						: "bg-white/20 border border-gray-200/30"
 				}
 				backdrop-blur-sm
 				${isPast ? "opacity-75" : ""}
@@ -43,18 +51,59 @@ export function PracticeCard({ practice, isPast = false }: PracticeCardProps) {
 					<p
 						className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
 					>
-						{new Date(practice.date).toLocaleString("en-US", {
+						{new Date(practice.date).toLocaleDateString("en-US", {
 							weekday: "short",
 							month: "short",
 							day: "numeric",
 							year: "numeric",
-							hour: "numeric",
-							minute: "2-digit",
 						})}
 					</p>
 				</div>
 			</div>
+			<div className="flex items-center gap-2">
+				{practice.practiceCoaches.length > 0 && (
+					<span
+						className={`px-3 py-1 rounded-full text-sm font-medium ${
+							isDarkMode
+								? "bg-blue-900/40 text-blue-300"
+								: "bg-blue-100 text-blue-700"
+						}`}
+					>
+						{practice.practiceCoaches.length}{" "}
+						{practice.practiceCoaches.length === 1 ? "Coach" : "Coaches"}
+					</span>
+				)}
+				<Button
+					variant="outline"
+					onClick={() => onUpdateCoaches?.(practice)}
+					className={`
+						px-3 py-1.5 h-auto
+						${
+							isDarkMode
+								? "bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800/40"
+								: "bg-white/60 border-gray-200 text-gray-700 hover:bg-white/40"
+						}
+					`}
+				>
+					Update Coaches
+				</Button>
+				{!isPast && (
+					<Button
+						variant="outline"
+						onClick={() => onMakeTeams?.(practice)}
+						className={`
+							px-3 py-1.5 h-auto
+							${
+								isDarkMode
+									? "bg-transparent border-green-700 text-green-300 hover:bg-green-800/40"
+									: "bg-white/60 border-green-200 text-green-700 hover:bg-green-50"
+							}
+						`}
+					>
+						Make Teams
+					</Button>
+				)}
+			</div>
 		</div>
 	);
 }
-

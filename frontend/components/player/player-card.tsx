@@ -2,7 +2,7 @@
 
 import { useAtom } from "jotai";
 import { Mail, User } from "lucide-react";
-import type { NewPlayer, Player } from "@/lib/api";
+import type { Player } from "@/lib/api";
 import { isDarkModeAtom } from "@/lib/atoms";
 import { DeletePlayerButton } from "./delete-player-button";
 import { EditPlayerButton } from "./edit-player-button";
@@ -16,16 +16,14 @@ const POSITIONS = [
 
 interface PlayerCardProps {
 	player: Player;
-	onPlayerUpdated: (id: number, playerData: Partial<NewPlayer>) => Promise<void>;
-	onPlayerDeleted: (playerId: number) => Promise<void>;
-	isLoading: boolean;
+	onEdit: (player: Player) => void;
+	onDelete: (player: Player) => void;
 }
 
 export function PlayerCard({
 	player,
-	onPlayerUpdated,
-	onPlayerDeleted,
-	isLoading,
+	onEdit,
+	onDelete,
 }: PlayerCardProps) {
 	const [isDarkMode] = useAtom(isDarkModeAtom);
 
@@ -75,26 +73,6 @@ export function PlayerCard({
 				</div>
 			</div>
 			<div className="flex items-center gap-2 flex-wrap">
-				<span
-					className={`px-2 py-1 rounded-full text-xs font-medium ${
-						isDarkMode
-							? "bg-yellow-900/40 text-yellow-300"
-							: "bg-yellow-100 text-yellow-700"
-					}`}
-				>
-					⭐ {player.rating}/10
-				</span>
-				{player.youth && (
-					<span
-						className={`px-2 py-1 rounded-full text-xs font-medium ${
-							isDarkMode
-								? "bg-purple-900/40 text-purple-300"
-								: "bg-purple-100 text-purple-700"
-						}`}
-					>
-						Youth
-					</span>
-				)}
 				{player.positions.map((position) => (
 					<span
 						key={position}
@@ -107,12 +85,31 @@ export function PlayerCard({
 						{POSITIONS.find((p) => p.value === position)?.label}
 					</span>
 				))}
+				{player.youth && (
+					<span
+						className={`px-2 py-1 rounded-full text-xs font-medium ${
+							isDarkMode
+								? "bg-purple-900/40 text-purple-300"
+								: "bg-purple-100 text-purple-700"
+						}`}
+					>
+						Youth
+					</span>
+				)}
+				<span
+					className={`px-2 py-1 rounded-full text-xs font-medium ${
+						isDarkMode
+							? "bg-yellow-900/40 text-yellow-300"
+							: "bg-yellow-100 text-yellow-700"
+					}`}
+				>
+					⭐ {player.rating}/10
+				</span>
 				<EditPlayerButton
 					player={player}
-					onPlayerUpdated={onPlayerUpdated}
-					isLoading={isLoading}
+					onClick={onEdit}
 				/>
-				<DeletePlayerButton player={player} onDelete={onPlayerDeleted} />
+				<DeletePlayerButton player={player} onClick={onDelete} />
 			</div>
 		</div>
 	);

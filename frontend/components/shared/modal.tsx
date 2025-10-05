@@ -26,10 +26,22 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
 		};
 	}, [isOpen]);
 
+	// Handle Escape key
+	useEffect(() => {
+		const handleEscape = (e: KeyboardEvent) => {
+			if (e.key === "Escape" && isOpen) {
+				onClose();
+			}
+		};
+
+		document.addEventListener("keydown", handleEscape);
+		return () => document.removeEventListener("keydown", handleEscape);
+	}, [isOpen, onClose]);
+
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+		<div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
 		{/* Backdrop */}
 		<div
 			className={`
@@ -50,7 +62,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
 			{/* Modal */}
 			<div
 				className={`
-					relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border backdrop-blur-xl shadow-2xl
+					relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border backdrop-blur-xl shadow-2xl z-10
 					${
 						isDarkMode
 							? "bg-gray-900/95 border-gray-700/50"

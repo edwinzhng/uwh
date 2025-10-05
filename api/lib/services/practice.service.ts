@@ -1,6 +1,24 @@
-import { asc, eq, gte, sql } from "drizzle-orm";
-import { type NewPractice, type Practice, practices } from "../../db/schema";
+import { asc, desc, eq, gte, lt, sql } from "drizzle-orm";
+import {
+	coaches,
+	type NewPractice,
+	type Practice,
+	type PracticeCoach,
+	practiceCoaches,
+	practices,
+} from "../../db/schema";
 import { db } from "../db";
+
+export type PracticeCoachWithDetails = Pick<
+	PracticeCoach,
+	"id" | "coachId" | "durationMinutes"
+> & {
+	coachName: string;
+};
+
+export type PracticeWithCoaches = Practice & {
+	practiceCoaches: PracticeCoachWithDetails[];
+};
 
 export class PracticeService {
 	private static instance: PracticeService;
@@ -12,28 +30,98 @@ export class PracticeService {
 		return PracticeService.instance;
 	}
 
-	async getPractices(): Promise<Practice[]> {
+	async getPractices(): Promise<PracticeWithCoaches[]> {
 		// Get the start of today (midnight)
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
 
-		return await db
-			.select()
+		const rows = await db
+			.select({
+				practice: practices,
+				practiceCoachId: practiceCoaches.id,
+				coachId: practiceCoaches.coachId,
+				coachName: coaches.name,
+				durationMinutes: practiceCoaches.durationMinutes,
+			})
 			.from(practices)
+			.leftJoin(practiceCoaches, eq(practices.id, practiceCoaches.practiceId))
+			.leftJoin(coaches, eq(practiceCoaches.coachId, coaches.id))
 			.where(gte(practices.date, today))
 			.orderBy(asc(practices.date));
+
+		// Group by practice ID and aggregate coaches
+		const practiceMap = new Map<number, PracticeWithCoaches>();
+
+		for (const row of rows) {
+			if (!practiceMap.has(row.practice.id)) {
+				practiceMap.set(row.practice.id, {
+					...row.practice,
+					practiceCoaches: [],
+				});
+			}
+
+			const practice = practiceMap.get(row.practice.id);
+			if (!practice) continue;
+
+			// Only add coach if it exists (left join might return null)
+			if (row.practiceCoachId && row.coachId && row.coachName) {
+				practice.practiceCoaches.push({
+					id: row.practiceCoachId,
+					coachId: row.coachId,
+					coachName: row.coachName,
+					durationMinutes: row.durationMinutes ?? 90,
+				});
+			}
+		}
+
+		return Array.from(practiceMap.values());
 	}
 
-	async getPastPractices(): Promise<Practice[]> {
+	async getPastPractices(): Promise<PracticeWithCoaches[]> {
 		// Get the start of today (midnight)
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
 
-		return await db
-			.select()
+		const rows = await db
+			.select({
+				practice: practices,
+				practiceCoachId: practiceCoaches.id,
+				coachId: practiceCoaches.coachId,
+				coachName: coaches.name,
+				durationMinutes: practiceCoaches.durationMinutes,
+			})
 			.from(practices)
-			.where(sql`${practices.date} < ${today}`)
+			.leftJoin(practiceCoaches, eq(practices.id, practiceCoaches.practiceId))
+			.leftJoin(coaches, eq(practiceCoaches.coachId, coaches.id))
+			.where(lt(practices.date, today))
 			.orderBy(desc(practices.date));
+
+		// Group by practice ID and aggregate coaches
+		const practiceMap = new Map<number, PracticeWithCoaches>();
+
+		for (const row of rows) {
+			if (!practiceMap.has(row.practice.id)) {
+				practiceMap.set(row.practice.id, {
+					...row.practice,
+					practiceCoaches: [],
+				});
+			}
+
+			const practice = practiceMap.get(row.practice.id);
+			if (!practice) continue;
+
+			// Only add coach if it exists (left join might return null)
+			if (row.practiceCoachId && row.coachId && row.coachName) {
+				practice.practiceCoaches.push({
+					id: row.practiceCoachId,
+					coachId: row.coachId,
+					coachName: row.coachName,
+					durationMinutes: row.durationMinutes ?? 90,
+				});
+			}
+		}
+
+		return Array.from(practiceMap.values());
 	}
 
 	async getPracticeById(id: number): Promise<Practice | null> {
@@ -94,4 +182,3 @@ export class PracticeService {
 }
 
 export const practiceService = PracticeService.getInstance();
-

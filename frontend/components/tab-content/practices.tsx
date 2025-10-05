@@ -3,10 +3,13 @@
 import { useAtom } from "jotai";
 import { Calendar, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { apiClient, type Practice } from "@/lib/api";
+import { apiClient, type Coach, type Practice } from "@/lib/api";
 import { isDarkModeAtom } from "@/lib/atoms";
+import { CoachAssignmentModal } from "../practice/coach-assignment-modal";
+import { MakeTeamsModal } from "../practice/make-teams-modal";
 import { PracticeList } from "../practice/practice-list";
 import { Button } from "../shared/button";
+import { FadeIn } from "../shared/fade-in";
 import { GlassCard } from "../shared/glass-card";
 
 export function PracticesTab() {
@@ -17,6 +20,10 @@ export function PracticesTab() {
 	const [syncMessage, setSyncMessage] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [showPast, setShowPast] = useState(false);
+	const [selectedPractice, setSelectedPractice] = useState<Practice | null>(null);
+	const [coaches, setCoaches] = useState<Coach[]>([]);
+	const [isCoachModalOpen, setIsCoachModalOpen] = useState(false);
+	const [isTeamsModalOpen, setIsTeamsModalOpen] = useState(false);
 
 	const fetchPractices = async () => {
 		try {
@@ -37,6 +44,35 @@ export function PracticesTab() {
 		} catch (err) {
 			console.error("Failed to fetch past practices:", err);
 		}
+	};
+
+	const fetchCoaches = async () => {
+		try {
+			const data = await apiClient.getCoaches();
+			setCoaches(data);
+		} catch (err) {
+			console.error("Failed to fetch coaches:", err);
+		}
+	};
+
+	const handleUpdateCoaches = (practice: Practice) => {
+		setSelectedPractice(practice);
+		setIsCoachModalOpen(true);
+	};
+
+	const handleMakeTeams = (practice: Practice) => {
+		setSelectedPractice(practice);
+		setIsTeamsModalOpen(true);
+	};
+
+	const handleSaveCoaches = async (coachIds: number[], durationMinutes: number) => {
+		if (!selectedPractice) return;
+
+		await apiClient.setPracticeCoaches(selectedPractice.id, coachIds, durationMinutes);
+		
+		// Refresh practices to get updated coach data
+		await fetchPractices();
+		await fetchPastPractices();
 	};
 
 	const handleSyncSportEasy = async () => {
@@ -73,11 +109,28 @@ export function PracticesTab() {
 	useEffect(() => {
 		fetchPractices();
 		fetchPastPractices();
+		fetchCoaches();
 	}, []);
 
 	return (
+		<>
+			<CoachAssignmentModal
+				isOpen={isCoachModalOpen}
+				onClose={() => setIsCoachModalOpen(false)}
+				coaches={coaches}
+				selectedCoachIds={selectedPractice?.practiceCoaches.map((pc) => pc.coachId) || []}
+				defaultDuration={selectedPractice?.practiceCoaches[0]?.durationMinutes || 90}
+				onSave={handleSaveCoaches}
+			/>
+
+			<MakeTeamsModal
+				isOpen={isTeamsModalOpen}
+				onClose={() => setIsTeamsModalOpen(false)}
+			/>
+
 		<div className="space-y-6">
-			<GlassCard className="p-6">
+			<FadeIn>
+				<GlassCard className="p-6">
 				<div className="flex items-center justify-between mb-6">
 					<div className="flex items-center gap-3">
 						<div
@@ -122,42 +175,68 @@ export function PracticesTab() {
 					</Button>
 				</div>
 
-				<PracticeList practices={practices} />
+				<PracticeList 
+					practices={practices} 
+					onUpdateCoaches={handleUpdateCoaches}
+					onMakeTeams={handleMakeTeams}
+				/>
 			</GlassCard>
+			</FadeIn>
 
-			{/* Past Practices */}
-			{pastPractices.length > 0 && (
-				<GlassCard className="p-6">
-					<div className="flex items-center justify-between mb-6">
-						<div className="flex items-center gap-3">
-							<div
-								className={`p-2 rounded-lg ${isDarkMode ? "bg-gray-700/40" : "bg-gray-200"}`}
-							>
-								<Calendar
-									className={`h-5 w-5 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
-								/>
-							</div>
-							<h3
-								className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}
-							>
-								Past Practices ({pastPractices.length})
-							</h3>
-						</div>
-						<button
-							type="button"
+		{/* Past Practices */}
+		{pastPractices.length > 0 && (
+			<FadeIn delay={50}>
+					<GlassCard className="p-6">
+						{/** biome-ignore lint/a11y/useSemanticElements: ignore */}
+						<div
+							key="past-practices"
+							tabIndex={0}
+							aria-label="Past Practices"
+							role="button"
 							onClick={() => setShowPast(!showPast)}
-							className={`
-							text-sm font-medium cursor-pointer transition-colors
-							${isDarkMode ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}
-						`}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									setShowPast(!showPast);
+								}
+							}}
+							className={`flex items-center justify-between cursor-pointer ${showPast ? "mb-6" : ""}`}
 						>
-							{showPast ? "Hide" : "Show"}
-						</button>
-					</div>
+							<div className="flex items-center gap-3">
+								<div
+									className={`p-2 rounded-lg ${isDarkMode ? "bg-gray-700/40" : "bg-gray-200"}`}
+								>
+									<Calendar
+										className={`h-5 w-5 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+									/>
+								</div>
+								<h3
+									className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}
+								>
+									Past Practices ({pastPractices.length})
+								</h3>
+							</div>
+							<span
+								className={`
+								text-sm font-medium transition-colors
+								${isDarkMode ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}
+							`}
+							>
+								{showPast ? "Hide" : "Show"}
+							</span>
+						</div>
 
-					{showPast && <PracticeList practices={pastPractices} isPast />}
-				</GlassCard>
+						{showPast && (
+							<PracticeList 
+								practices={pastPractices} 
+								isPast 
+								onUpdateCoaches={handleUpdateCoaches}
+								onMakeTeams={handleMakeTeams}
+							/>
+						)}
+					</GlassCard>
+				</FadeIn>
 			)}
 		</div>
+		</>
 	);
 }

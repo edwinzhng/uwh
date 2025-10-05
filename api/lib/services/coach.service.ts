@@ -1,5 +1,5 @@
-import { desc, eq } from "drizzle-orm";
-import { type Coach, coaches, type NewCoach } from "../../db/schema";
+import { eq } from "drizzle-orm";
+import { type Coach, type NewCoach, coaches } from "../../db/schema";
 import { db } from "../db";
 
 export class CoachService {
@@ -13,15 +13,11 @@ export class CoachService {
 	}
 
 	async getCoaches(): Promise<Coach[]> {
-		return await db.select().from(coaches).orderBy(desc(coaches.createdAt));
+		return await db.select().from(coaches);
 	}
 
 	async getActiveCoaches(): Promise<Coach[]> {
-		return await db
-			.select()
-			.from(coaches)
-			.where(eq(coaches.isActive, true))
-			.orderBy(desc(coaches.createdAt));
+		return await db.select().from(coaches).where(eq(coaches.isActive, true));
 	}
 
 	async getCoachById(id: number): Promise<Coach | null> {

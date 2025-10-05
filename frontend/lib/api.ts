@@ -27,6 +27,13 @@ export interface NewPlayer {
 }
 
 // Practice types
+export interface PracticeCoachDetails {
+	id: number;
+	coachId: number;
+	coachName: string;
+	durationMinutes: number;
+}
+
 export interface Practice {
 	id: number;
 	date: string;
@@ -34,6 +41,29 @@ export interface Practice {
 	sporteasyId: number | null;
 	createdAt: string;
 	updatedAt: string;
+	practiceCoaches: PracticeCoachDetails[];
+}
+
+// Coach types
+export interface Coach {
+	id: number;
+	name: string;
+	isActive: boolean;
+	createdAt: string;
+}
+
+export interface NewCoach {
+	name: string;
+	isActive?: boolean;
+}
+
+// Practice Coach types
+export interface PracticeCoach {
+	id: number;
+	practiceId: number;
+	coachId: number;
+	durationMinutes: number;
+	createdAt: string;
 }
 
 export interface SportEasySyncResult {
@@ -154,6 +184,36 @@ export class ApiClient {
 
 	async deletePractice(id: number): Promise<{ message: string }> {
 		return this.delete<{ message: string }>(`/api/practices/${id}`);
+	}
+
+	// Coach-specific methods
+	async getCoaches(): Promise<Coach[]> {
+		return this.get<Coach[]>("/api/coaches");
+	}
+
+	async getCoach(id: number): Promise<Coach> {
+		return this.get<Coach>(`/api/coaches/${id}`);
+	}
+
+	async createCoach(coach: NewCoach): Promise<Coach> {
+		return this.post<Coach>("/api/coaches", coach);
+	}
+
+	async updateCoach(id: number, coach: Partial<NewCoach>): Promise<Coach> {
+		return this.put<Coach>(`/api/coaches/${id}`, coach);
+	}
+
+	async deleteCoach(id: number): Promise<{ message: string }> {
+		return this.delete<{ message: string }>(`/api/coaches/${id}`);
+	}
+
+	// Practice Coach methods
+	async getPracticeCoaches(practiceId: number): Promise<PracticeCoach[]> {
+		return this.get<PracticeCoach[]>(`/api/practice-coaches/practice/${practiceId}`);
+	}
+
+	async setPracticeCoaches(practiceId: number, coachIds: number[], durationMinutes: number = 90): Promise<PracticeCoach[]> {
+		return this.post<PracticeCoach[]>(`/api/practice-coaches/practice/${practiceId}`, { coachIds, durationMinutes });
 	}
 
 	// SportEasy sync methods

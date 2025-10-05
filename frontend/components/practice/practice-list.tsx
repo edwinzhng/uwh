@@ -4,6 +4,7 @@ import { useAtom } from "jotai";
 import { Calendar } from "lucide-react";
 import type { Practice } from "@/lib/api";
 import { isDarkModeAtom } from "@/lib/atoms";
+import { FadeIn } from "../shared/fade-in";
 import { PracticeCard } from "./practice-card";
 
 interface PracticeListProps {
@@ -11,6 +12,8 @@ interface PracticeListProps {
 	isPast?: boolean;
 	emptyMessage?: string;
 	emptySubMessage?: string;
+	onUpdateCoaches?: (practice: Practice) => void;
+	onMakeTeams?: (practice: Practice) => void;
 }
 
 export function PracticeList({
@@ -18,6 +21,8 @@ export function PracticeList({
 	isPast = false,
 	emptyMessage = "No practices found",
 	emptySubMessage = "Sync with SportEasy to import practice events",
+	onUpdateCoaches,
+	onMakeTeams,
 }: PracticeListProps) {
 	const [isDarkMode] = useAtom(isDarkModeAtom);
 
@@ -43,8 +48,15 @@ export function PracticeList({
 
 	return (
 		<div className="space-y-3">
-			{practices.map((practice) => (
-				<PracticeCard key={practice.id} practice={practice} isPast={isPast} />
+			{practices.map((practice, index) => (
+				<FadeIn key={practice.id} delay={index * 25}>
+					<PracticeCard 
+						practice={practice} 
+						isPast={isPast}
+						onUpdateCoaches={onUpdateCoaches}
+						onMakeTeams={onMakeTeams}
+					/>
+				</FadeIn>
 			))}
 		</div>
 	);

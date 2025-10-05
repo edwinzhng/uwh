@@ -3,6 +3,7 @@ import { coachService } from "../lib/services/coach.service";
 
 const app = new Hono();
 
+// Get all coaches
 app.get("/", async (c) => {
 	try {
 		const coaches = await coachService.getCoaches();
@@ -13,24 +14,12 @@ app.get("/", async (c) => {
 	}
 });
 
-app.get("/active", async (c) => {
-	try {
-		const coaches = await coachService.getActiveCoaches();
-		return c.json(coaches);
-	} catch (error) {
-		console.error("Error fetching active coaches:", error);
-		return c.json({ error: "Failed to fetch active coaches" }, 500);
-	}
-});
-
+// Get a single coach by ID
 app.get("/:id", async (c) => {
 	try {
-		const id = parseInt(c.req.param("id"));
-		if (Number.isNaN(id)) {
-			return c.json({ error: "Invalid coach ID" }, 400);
-		}
-
+		const id = Number.parseInt(c.req.param("id"));
 		const coach = await coachService.getCoachById(id);
+
 		if (!coach) {
 			return c.json({ error: "Coach not found" }, 404);
 		}
@@ -42,59 +31,41 @@ app.get("/:id", async (c) => {
 	}
 });
 
+// Create a new coach
 app.post("/", async (c) => {
 	try {
 		const body = await c.req.json();
-
-		if (!body.name) {
-			return c.json({ error: "Name is required" }, 400);
-		}
-
-		const newCoach = await coachService.createCoach({
-			name: body.name,
-			isActive: body.isActive ?? true,
-		});
-
-		return c.json(newCoach, 201);
+		const coach = await coachService.createCoach(body);
+		return c.json(coach, 201);
 	} catch (error) {
 		console.error("Error creating coach:", error);
 		return c.json({ error: "Failed to create coach" }, 500);
 	}
 });
 
+// Update a coach
 app.put("/:id", async (c) => {
 	try {
-		const id = parseInt(c.req.param("id"));
-		if (Number.isNaN(id)) {
-			return c.json({ error: "Invalid coach ID" }, 400);
-		}
-
+		const id = Number.parseInt(c.req.param("id"));
 		const body = await c.req.json();
-		const updatedCoach = await coachService.updateCoach(id, body);
+		const coach = await coachService.updateCoach(id, body);
 
-		if (!updatedCoach) {
+		if (!coach) {
 			return c.json({ error: "Coach not found" }, 404);
 		}
 
-		return c.json(updatedCoach);
+		return c.json(coach);
 	} catch (error) {
 		console.error("Error updating coach:", error);
 		return c.json({ error: "Failed to update coach" }, 500);
 	}
 });
 
+// Delete a coach
 app.delete("/:id", async (c) => {
 	try {
-		const id = parseInt(c.req.param("id"));
-		if (Number.isNaN(id)) {
-			return c.json({ error: "Invalid coach ID" }, 400);
-		}
-
-		const deleted = await coachService.deleteCoach(id);
-		if (!deleted) {
-			return c.json({ error: "Coach not found" }, 404);
-		}
-
+		const id = Number.parseInt(c.req.param("id"));
+		await coachService.deleteCoach(id);
 		return c.json({ message: "Coach deleted successfully" });
 	} catch (error) {
 		console.error("Error deleting coach:", error);
@@ -103,4 +74,3 @@ app.delete("/:id", async (c) => {
 });
 
 export default app;
-

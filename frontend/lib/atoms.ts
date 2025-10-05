@@ -1,4 +1,5 @@
 import { atom } from 'jotai';
+import { atomWithStorage } from 'jotai/utils';
 
 // User state
 export const userAtom = atom<{ id: number; name: string; email: string } | null>(null);
@@ -14,5 +15,5 @@ export const apiBaseUrlAtom = atom(
 export const isLoadingAtom = atom(false);
 export const errorAtom = atom<string | null>(null);
 
-// Dark mode state
-export const isDarkModeAtom = atom(true);
+// Dark mode state with localStorage persistence
+export const isDarkModeAtom = atomWithStorage('uwh-dark-mode', true);

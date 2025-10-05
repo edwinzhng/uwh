@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
 	boolean,
 	integer,
@@ -79,6 +80,29 @@ export const practicePlayerStatuses = pgTable("practice_player_statuses", {
 	statusType: practicePlayerStatusTypeEnum("status_type").notNull(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Relations
+export const practicesRelations = relations(practices, ({ many }) => ({
+	practiceCoaches: many(practiceCoaches),
+}));
+
+export const coachesRelations = relations(coaches, ({ many }) => ({
+	practiceCoaches: many(practiceCoaches),
+}));
+
+export const practiceCoachesRelations = relations(
+	practiceCoaches,
+	({ one }) => ({
+		practice: one(practices, {
+			fields: [practiceCoaches.practiceId],
+			references: [practices.id],
+		}),
+		coach: one(coaches, {
+			fields: [practiceCoaches.coachId],
+			references: [coaches.id],
+		}),
+	}),
+);
 
 // Export types
 export type Player = typeof players.$inferSelect;
