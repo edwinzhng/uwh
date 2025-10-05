@@ -31,36 +31,39 @@ export default function Home() {
 	];
 
 	return (
-		<div
-			className={`
-      min-h-screen transition-all duration-500 ease-in-out
-      ${
-				isDarkMode
-					? "bg-gradient-to-br from-gray-900 via-gray-800 to-black"
-					: "bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
-			}
-    `}
-		>
-			{/* Background Effects */}
-			<div className="absolute inset-0 overflow-hidden pointer-events-none">
-				<div
-					className={`
-          absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-20 blur-3xl
-          ${isDarkMode ? "bg-blue-500" : "bg-blue-400"}
-        `}
-				/>
-				<div
-					className={`
-          absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-20 blur-3xl
-          ${isDarkMode ? "bg-purple-500" : "bg-purple-400"}
-        `}
-				/>
-				<div
-					className={`
-          absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-10 blur-3xl
-          ${isDarkMode ? "bg-indigo-500" : "bg-indigo-400"}
-        `}
-				/>
+		<div className="min-h-screen relative">
+			{/* Fixed Background */}
+			<div
+				className={`
+					fixed inset-0 transition-all duration-500 ease-in-out -z-10
+					${
+						isDarkMode
+							? "bg-gradient-to-br from-gray-900 via-gray-800 to-black"
+							: "bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
+					}
+				`}
+			>
+				{/* Background Effects */}
+				<div className="absolute inset-0 overflow-hidden pointer-events-none">
+					<div
+						className={`
+							absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-20 blur-3xl
+							${isDarkMode ? "bg-blue-500" : "bg-blue-400"}
+						`}
+					/>
+					<div
+						className={`
+							absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-20 blur-3xl
+							${isDarkMode ? "bg-purple-500" : "bg-purple-400"}
+						`}
+					/>
+					<div
+						className={`
+							absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-10 blur-3xl
+							${isDarkMode ? "bg-indigo-500" : "bg-indigo-400"}
+						`}
+					/>
+				</div>
 			</div>
 
 			{/* Header */}

@@ -10,23 +10,24 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "next": "15.5.4",
     "@radix-ui/react-slot": "^1.0.2",
-    "jotai": "^2.6.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "jotai": "^2.6.0",
+    "lucide-react": "^0.460.0",
+    "next": "15.5.4",
+    "radix-ui": "^1.4.3",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "tailwind-merge": "^2.2.0",
-    "lucide-react": "^0.303.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
