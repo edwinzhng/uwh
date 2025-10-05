@@ -4,7 +4,8 @@ FROM oven/bun:1 AS builder
 WORKDIR /api
 
 # Copy package files first for better caching
-COPY package.json bun.lock ./
+COPY package.json bun.lock api/package.json frontend/package.json ./
+
 RUN bun install --frozen-lockfile
 
 # Copy rest of the files
