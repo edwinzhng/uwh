@@ -430,7 +430,7 @@ export function PlayersTab() {
 
 			<FadeIn>
 				<GlassCard className="p-6">
-					<div className="flex items-center justify-between mb-6">
+					<div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
 						<div className="flex items-center gap-3">
 							<div
 								className={`p-2 rounded-lg ${isDarkMode ? "bg-green-900/40" : "bg-green-100"}`}
@@ -439,25 +439,27 @@ export function PlayersTab() {
 									className={`h-5 w-5 ${isDarkMode ? "text-green-400" : "text-green-600"}`}
 								/>
 							</div>
-						<h3
-							className={`text-lg font-semibold flex items-center gap-1 ${isDarkMode ? "text-white" : "text-gray-900"}`}
-						>
-							Players
-							<span 
-								className={`transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
-							>
-								({players.length})
-							</span>
-						</h3>
-							{syncMessage && (
-								<p
-									className={`text-sm ${
-										isDarkMode ? "text-green-400" : "text-green-600"
-									}`}
+							<div>
+								<h3
+									className={`text-lg font-semibold flex items-center gap-1 ${isDarkMode ? "text-white" : "text-gray-900"}`}
 								>
-									{syncMessage}
-								</p>
-							)}
+									Players
+									<span 
+										className={`transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
+									>
+										({players.length})
+									</span>
+								</h3>
+								{syncMessage && (
+									<p
+										className={`text-sm ${
+											isDarkMode ? "text-green-400" : "text-green-600"
+										}`}
+									>
+										{syncMessage}
+									</p>
+								)}
+							</div>
 						</div>
 						<div className="flex gap-2">
 							<Button
@@ -465,7 +467,7 @@ export function PlayersTab() {
 								disabled={isSyncing}
 								variant="outline"
 								className={`
-									cursor-pointer
+									cursor-pointer whitespace-nowrap
 									${
 										isDarkMode
 											? "bg-transparent border-purple-500 text-purple-400 hover:bg-purple-900/40"

@@ -30,7 +30,7 @@ export function PlayerCard({
 	return (
 		<div
 			className={`
-				flex items-center justify-between p-4 rounded-xl transition-all duration-200
+				p-4 rounded-xl transition-all duration-200
 				${
 					isDarkMode
 						? "bg-gray-800/20 hover:bg-gray-800/40 border border-gray-700/30"
@@ -39,17 +39,18 @@ export function PlayerCard({
 				backdrop-blur-sm
 			`}
 		>
-			<div className="flex items-center gap-4">
+			{/* Player info row */}
+			<div className="flex items-start gap-4 mb-4">
 				<div
-					className={`p-2 rounded-lg ${isDarkMode ? "bg-gray-700/40" : "bg-gray-100"}`}
+					className={`p-2 rounded-lg flex-shrink-0 ${isDarkMode ? "bg-gray-700/40" : "bg-gray-100"}`}
 				>
 					<User
 						className={`h-4 w-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
 					/>
 				</div>
-				<div>
+				<div className="flex-1 min-w-0">
 					<p
-						className={`font-medium ${isDarkMode ? "text-white" : "text-gray-900"}`}
+						className={`font-medium mb-1 ${isDarkMode ? "text-white" : "text-gray-900"}`}
 					>
 						{player.fullName}
 					</p>
@@ -72,7 +73,9 @@ export function PlayerCard({
 					</div>
 				</div>
 			</div>
-			<div className="flex items-center gap-2 flex-wrap">
+			
+			{/* Tags row */}
+			<div className="flex items-center gap-2 flex-wrap mb-4">
 				{player.positions.map((position) => (
 					<span
 						key={position}
@@ -105,6 +108,10 @@ export function PlayerCard({
 				>
 					⭐ {player.rating}/10
 				</span>
+			</div>
+			
+			{/* Action buttons row */}
+			<div className="flex items-center gap-2 flex-wrap">
 				<EditPlayerButton
 					player={player}
 					onClick={onEdit}

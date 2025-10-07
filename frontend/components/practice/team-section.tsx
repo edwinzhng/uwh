@@ -165,28 +165,29 @@ export function TeamSection({
 								onDragStart={(e) => onDragStart(e, player)}
 								onDragEnd={onDragEnd}
 								className={`
-									flex items-center justify-between p-2 rounded-lg border-l-2 border-orange-500 transition-colors w-full
+									p-3 rounded-lg border-l-2 border-orange-500 transition-colors w-full
 									${isDarkMode ? "bg-gray-800/30" : "bg-gray-100/50"}
 								`}
 							>
-								<div className="flex-1 min-w-0">
-									<p
-										className={`font-medium text-sm truncate ${isDarkMode ? "text-white" : "text-gray-900"}`}
-									>
-										{player.fullName}
-									</p>
-									<p
-										className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} truncate`}
-									>
-										<span className="font-medium text-orange-500">
-											{getPositionAbbreviation("FORWARD")}
-										</span>
-										{" • "}
-										{player.positions.map(getPositionAbbreviation).join(", ")} •
-										Rating: {player.rating}
-									</p>
-								</div>
-								<div className="flex items-center gap-1 flex-shrink-0">
+								{/* Player info row */}
+								<div className="flex items-start gap-3 mb-3">
+									<div className="flex-1 min-w-0">
+										<p
+											className={`font-medium text-sm mb-1 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+										>
+											{player.fullName}
+										</p>
+										<p
+											className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+										>
+											<span className="font-medium text-orange-500">
+												{getPositionAbbreviation("FORWARD")}
+											</span>
+											{" • "}
+											{player.positions.map(getPositionAbbreviation).join(", ")} •
+											Rating: {player.rating}
+										</p>
+									</div>
 									{player.youth && (
 										<span
 											className={`px-1 py-0.5 rounded-full text-xs font-medium ${
@@ -198,7 +199,10 @@ export function TeamSection({
 											Youth
 										</span>
 									)}
-									{/* Position buttons */}
+								</div>
+								
+								{/* Position buttons row */}
+								<div className="flex items-center gap-2 flex-wrap mb-3">
 									<button
 										type="button"
 										onClick={(e) => {
@@ -213,6 +217,10 @@ export function TeamSection({
 									>
 										Make Back
 									</button>
+								</div>
+								
+								{/* Team assignment buttons row */}
+								<div className="flex items-center gap-2 flex-wrap">
 									<button
 										type="button"
 										onClick={(e) => {
@@ -280,38 +288,38 @@ export function TeamSection({
 								);
 							})
 							.map((player) => (
-								<button
+								<div
 									key={player.id}
-									type="button"
 									draggable
 									onDragStart={(e) => onDragStart(e, player)}
 									onDragEnd={onDragEnd}
 									className={`
-										flex items-center justify-between p-2 rounded-lg border-l-2 border-blue-500 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-left
-										${isDarkMode ? "bg-gray-800/30 hover:bg-gray-800/50" : "bg-gray-100/50 hover:bg-gray-100/70"}
+										p-3 rounded-lg border-l-2 border-blue-500 transition-colors w-full
+										${isDarkMode ? "bg-gray-800/30" : "bg-gray-100/50"}
 									`}
 								>
-									<div className="flex-1 min-w-0">
-										<p
-											className={`font-medium text-sm truncate ${isDarkMode ? "text-white" : "text-gray-900"}`}
-										>
-											{player.fullName}
-										</p>
-										<p
-											className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"} truncate`}
-										>
-											<span className="font-medium text-blue-500">
-												{player.assignedPositions
-													?.map(getPositionAbbreviation)
-													.join(", ") || getPositionAbbreviation("WING")}
-											</span>
-											{" • "}
-											{player.positions.map(getPositionAbbreviation).join(", ")}
-											{" • Rating: "}
-											{player.rating}
-										</p>
-									</div>
-									<div className="flex items-center gap-1 flex-shrink-0">
+									{/* Player info row */}
+									<div className="flex items-start gap-3 mb-3">
+										<div className="flex-1 min-w-0">
+											<p
+												className={`font-medium text-sm mb-1 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+											>
+												{player.fullName}
+											</p>
+											<p
+												className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+											>
+												<span className="font-medium text-blue-500">
+													{player.assignedPositions
+														?.map(getPositionAbbreviation)
+														.join(", ") || getPositionAbbreviation("WING")}
+												</span>
+												{" • "}
+												{player.positions.map(getPositionAbbreviation).join(", ")}
+												{" • Rating: "}
+												{player.rating}
+											</p>
+										</div>
 										{player.youth && (
 											<span
 												className={`px-1 py-0.5 rounded-full text-xs font-medium ${
@@ -323,7 +331,10 @@ export function TeamSection({
 												Youth
 											</span>
 										)}
-										{/* Position buttons */}
+									</div>
+									
+									{/* Position buttons row */}
+									<div className="flex items-center gap-2 flex-wrap mb-3">
 										{["WING", "CENTER", "FULL_BACK"].map((position) => (
 											<button
 												key={position}
@@ -362,6 +373,10 @@ export function TeamSection({
 										>
 											Make Forward
 										</button>
+									</div>
+									
+									{/* Team assignment buttons row */}
+									<div className="flex items-center gap-2 flex-wrap">
 										<button
 											type="button"
 											onClick={(e) => {
@@ -395,7 +410,7 @@ export function TeamSection({
 											<X className="h-3 w-3" />
 										</button>
 									</div>
-								</button>
+								</div>
 							))}
 					</div>
 				</section>

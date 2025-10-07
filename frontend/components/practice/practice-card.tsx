@@ -24,7 +24,7 @@ export function PracticeCard({
 	return (
 		<div
 			className={`
-				flex items-center justify-between p-4 rounded-xl transition-all duration-200
+				p-4 rounded-xl transition-all duration-200
 				${
 					isDarkMode
 						? "bg-gray-800/20 border border-gray-700/30"
@@ -34,7 +34,8 @@ export function PracticeCard({
 				${isPast ? "opacity-75" : ""}
 			`}
 		>
-			<div className="flex items-center gap-4">
+			{/* Practice info row */}
+			<div className="flex items-center gap-4 mb-3">
 				<div
 					className={`p-2 rounded-lg ${isDarkMode ? "bg-gray-700/40" : "bg-gray-100"}`}
 				>
@@ -42,7 +43,7 @@ export function PracticeCard({
 						className={`h-4 w-4 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
 					/>
 				</div>
-				<div>
+				<div className="flex-1 min-w-0">
 					<p
 						className={`font-medium ${isDarkMode ? "text-white" : "text-gray-900"}`}
 					>
@@ -62,49 +63,58 @@ export function PracticeCard({
 					)}
 				</div>
 			</div>
-			<div className="flex items-center gap-2">
+			
+			{/* Coach count and buttons row */}
+			<div className="flex flex-col gap-3">
+				{/* Coach count row */}
 				{practice.practiceCoaches.length > 0 && (
-					<span
-						className={`px-3 py-1 rounded-full text-sm font-medium ${
-							isDarkMode
-								? "bg-blue-900/40 text-blue-300"
-								: "bg-blue-100 text-blue-700"
-						}`}
-					>
-						{practice.practiceCoaches.length}{" "}
-						{practice.practiceCoaches.length === 1 ? "Coach" : "Coaches"}
-					</span>
+					<div className="flex items-center">
+						<span
+							className={`px-3 py-1 rounded-full text-sm font-medium ${
+								isDarkMode
+									? "bg-blue-900/40 text-blue-300"
+									: "bg-blue-100 text-blue-700"
+							}`}
+						>
+							{practice.practiceCoaches.length}{" "}
+							{practice.practiceCoaches.length === 1 ? "Coach" : "Coaches"}
+						</span>
+					</div>
 				)}
-				<Button
-					variant="outline"
-					onClick={() => onUpdateCoaches?.(practice)}
-					className={`
-						px-3 py-1.5 h-auto
-						${
-							isDarkMode
-								? "bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800/40"
-								: "bg-white/60 border-gray-200 text-gray-700 hover:bg-white/40"
-						}
-					`}
-				>
-					Update Coaches
-				</Button>
-				{!isPast && (
+				
+				{/* Action buttons row */}
+				<div className="flex items-center gap-2 flex-wrap">
 					<Button
 						variant="outline"
-						onClick={() => onMakeTeams?.(practice)}
+						onClick={() => onUpdateCoaches?.(practice)}
 						className={`
 							px-3 py-1.5 h-auto
 							${
 								isDarkMode
-									? "bg-transparent border-green-700 text-green-300 hover:bg-green-800/40"
-									: "bg-white/60 border-green-200 text-green-700 hover:bg-green-50"
+									? "bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800/40"
+									: "bg-white/60 border-gray-200 text-gray-700 hover:bg-white/40"
 							}
 						`}
 					>
-						Make Teams
+						Update Coaches
 					</Button>
-				)}
+					{!isPast && (
+						<Button
+							variant="outline"
+							onClick={() => onMakeTeams?.(practice)}
+							className={`
+								px-3 py-1.5 h-auto
+								${
+									isDarkMode
+										? "bg-transparent border-green-700 text-green-300 hover:bg-green-800/40"
+										: "bg-white/60 border-green-200 text-green-700 hover:bg-green-50"
+								}
+							`}
+						>
+							Make Teams
+						</Button>
+					)}
+				</div>
 			</div>
 		</div>
 	);
