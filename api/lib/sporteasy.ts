@@ -43,11 +43,7 @@ export interface SportEasyEventsResponse {
 
 export interface SportEasyEventAttendee {
 	attendance_status: "present" | "absent" | "maybe";
-	results: Array<{
-		profile: {
-			id: number;
-		};
-	}>;
+	results: Array<{ profile: { id: number } }>;
 }
 
 export interface SportEasyEventAttendeesResponse {

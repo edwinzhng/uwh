@@ -207,7 +207,7 @@ export function TeamSection({
 										type="button"
 										onClick={(e) => {
 											e.stopPropagation();
-											onAssignPlayerPosition(player.id, "FORWARD");
+											onAssignPlayerPosition(player.id, "WING");
 										}}
 										className={`px-3 py-1 text-xs rounded border transition-colors cursor-pointer ${
 											isDarkMode
