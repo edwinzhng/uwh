@@ -96,7 +96,7 @@ export function EditPlayerModal({
 		} catch (err) {
 			if (err instanceof z.ZodError) {
 				const errors: Record<string, string> = {};
-				err.errors.forEach((error) => {
+				err.issues.forEach((error) => {
 					if (error.path[0]) {
 						errors[error.path[0].toString()] = error.message;
 					}

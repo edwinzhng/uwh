@@ -63,6 +63,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 			>
 				{loading ? (
 					<>
+						{/** biome-ignore lint/a11y/noSvgWithoutTitle: skip */}
 						<svg
 							aria-label="Loading"
 							className="animate-spin -ml-1 mr-2 h-4 w-4"
