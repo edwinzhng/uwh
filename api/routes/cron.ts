@@ -4,35 +4,34 @@ import { practiceService } from "../lib/services/practice.service";
 
 const app = new Hono();
 
-// Send hockey practice reminders for tomorrow's events
+// Send hockey practice reminders for events in the next 48 hours
 app.get("/send-hockey-reminders", async (c) => {
 	try {
-		// Get tomorrow's date range
-		const tomorrow = new Date();
-		tomorrow.setDate(tomorrow.getDate() + 1);
-		tomorrow.setHours(0, 0, 0, 0);
-
-		const dayAfterTomorrow = new Date(tomorrow);
-		dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+		const now = new Date();
+		const in48Hours = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
 		// Get all future practices
 		const practices = await practiceService.getPractices();
 
-		// Filter for tomorrow's practices that contain "Hockey" in notes (case-insensitive)
-		const tomorrowHockeyPractices = practices.filter((practice) => {
+		// Filter for practices in next 48 hours that contain "Hockey" in notes
+		const upcomingHockeyPractices = practices.filter((practice) => {
 			const practiceDate = new Date(practice.date);
-			const isBetweenTomorrowAndDayAfterTomorrow =
-				practiceDate >= new Date() && practiceDate < dayAfterTomorrow;
+			const isInNext48Hours = practiceDate >= now && practiceDate <= in48Hours;
 			const hasHockey =
 				practice.notes?.toLowerCase().includes("hockey") ?? false;
 
-			return isBetweenTomorrowAndDayAfterTomorrow && hasHockey;
+			return isInNext48Hours && hasHockey;
 		});
 
-		if (tomorrowHockeyPractices.length === 0) {
+		console.info(
+			`Found ${upcomingHockeyPractices.length} hockey practices in next 48 hours`,
+			{ upcomingHockeyPractices, now, in48Hours, practices },
+		);
+
+		if (upcomingHockeyPractices.length === 0) {
 			return c.json({
 				success: true,
-				message: "No hockey practices found for tomorrow",
+				message: "No hockey practices found in next 48 hours",
 				practicesFound: 0,
 			});
 		}
@@ -44,7 +43,7 @@ app.get("/send-hockey-reminders", async (c) => {
 		return c.json({
 			success: true,
 			message: "Reminder sent successfully",
-			practicesFound: tomorrowHockeyPractices.length,
+			practicesFound: upcomingHockeyPractices.length,
 		});
 	} catch (error) {
 		console.error("Error sending hockey reminders:", error);
