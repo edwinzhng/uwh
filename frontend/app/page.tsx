@@ -103,7 +103,7 @@ export default function Home() {
 								</div>
 								<div>
 									<h1
-										className={`text-4xl font-thin ${isDarkMode ? "text-white" : "text-gray-900"}`}
+										className={`text-4xl font-thin tracking-tight ${isDarkMode ? "text-white" : "text-gray-900"}`}
 									>
 										Underwater Hockey
 									</h1>
