@@ -21,11 +21,12 @@ app.get("/send-hockey-reminders", async (c) => {
 		// Filter for tomorrow's practices that contain "Hockey" in notes (case-insensitive)
 		const tomorrowHockeyPractices = practices.filter((practice) => {
 			const practiceDate = new Date(practice.date);
-			const isOnTomorrow =
-				practiceDate >= tomorrow && practiceDate < dayAfterTomorrow;
+			const isBetweenTomorrowAndDayAfterTomorrow =
+				practiceDate >= new Date() && practiceDate < dayAfterTomorrow;
 			const hasHockey =
 				practice.notes?.toLowerCase().includes("hockey") ?? false;
-			return isOnTomorrow && hasHockey;
+
+			return isBetweenTomorrowAndDayAfterTomorrow && hasHockey;
 		});
 
 		if (tomorrowHockeyPractices.length === 0) {
@@ -37,8 +38,7 @@ app.get("/send-hockey-reminders", async (c) => {
 		}
 
 		// Send reminder message to Discord
-		const message =
-			"Reminder: Please create teams for tomorrow's hockey practice";
+		const message = "Reminder: create teams for hockey practice tomorrow";
 		await discordService.sendMessage(message);
 
 		return c.json({
@@ -59,4 +59,3 @@ app.get("/send-hockey-reminders", async (c) => {
 });
 
 export default app;
-
