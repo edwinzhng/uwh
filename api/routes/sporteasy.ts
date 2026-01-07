@@ -162,15 +162,28 @@ app.post("/import-events", async (c) => {
 			// Filter out events that start with days of the week
 			const filteredEvents = dayEvents.filter(e => !startsWithDayOfWeek(e.name));
 			
-			// Collect filtered event names for notes
-			const eventNames = filteredEvents.map((e) => e.name).join(" | ");
+			// Collect filtered event names for display
+			const filteredNames = filteredEvents.map((e) => e.name).join(" | ");
+			
+			// Collect ALL event names (including day-of-week ones) for reference
+			const allEventNames = dayEvents.map((e) => e.name).join(" · ");
 
-			// Use primary event name if available and it doesn't start with day of week, otherwise use filtered names
+			// Build notes: filtered names (or primary event name) + middot + all event names
 			let notes = null;
+			let displayName = null;
 			if (primaryEvent && !startsWithDayOfWeek(primaryEvent.name)) {
-				notes = primaryEvent.name;
-			} else if (eventNames) {
-				notes = eventNames;
+				displayName = primaryEvent.name;
+			} else if (filteredNames) {
+				displayName = filteredNames;
+			}
+			
+			// Combine display name with all event names using middot
+			if (displayName && allEventNames && displayName !== allEventNames) {
+				notes = `${displayName} · ${allEventNames}`;
+			} else if (allEventNames) {
+				notes = allEventNames;
+			} else if (displayName) {
+				notes = displayName;
 			}
 
 			// Track whether this will be an insert or update based on sporteasyId

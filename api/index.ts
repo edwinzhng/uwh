@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
 import coachesRouter from "./routes/coaches";
+import cronRouter from "./routes/cron";
 import playersRouter from "./routes/players";
 import practiceCoachesRouter from "./routes/practice-coaches";
 import practicesRouter from "./routes/practices";
@@ -59,6 +60,7 @@ app.route("/api/coaches", coachesRouter);
 app.route("/api/practices", practicesRouter);
 app.route("/api/practice-coaches", practiceCoachesRouter);
 app.route("/api/sporteasy", sportEasyRouter);
+app.route("/api/cron", cronRouter);
 
 // 404 handler
 app.notFound((c) => {
