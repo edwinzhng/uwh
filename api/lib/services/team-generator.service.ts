@@ -167,9 +167,49 @@ export class TeamGeneratorService {
 	}
 
 	/**
+	 * Get display name for a player, including last name if there are duplicate first names
+	 */
+	private getDisplayName(player: PlayerWithTeam, duplicateFirstNames: Set<string>): string {
+		const nameParts = player.fullName.split(" ");
+		const firstName = nameParts[0];
+		
+		if (duplicateFirstNames.has(firstName.toLowerCase())) {
+			// Include last name for disambiguation
+			return player.fullName;
+		}
+		
+		return firstName;
+	}
+
+	/**
+	 * Find first names that appear multiple times across all players
+	 */
+	private findDuplicateFirstNames(allPlayers: PlayerWithTeam[]): Set<string> {
+		const firstNameCounts = new Map<string, number>();
+		
+		for (const player of allPlayers) {
+			const firstName = player.fullName.split(" ")[0].toLowerCase();
+			firstNameCounts.set(firstName, (firstNameCounts.get(firstName) || 0) + 1);
+		}
+		
+		const duplicates = new Set<string>();
+		for (const [firstName, count] of firstNameCounts) {
+			if (count > 1) {
+				duplicates.add(firstName);
+			}
+		}
+		
+		return duplicates;
+	}
+
+	/**
 	 * Format a team for Discord/text output
 	 */
-	formatTeamForDiscord(team: PlayerWithTeam[], teamName: string): string {
+	formatTeamForDiscord(
+		team: PlayerWithTeam[],
+		teamName: string,
+		duplicateFirstNames: Set<string>,
+	): string {
 		const forwardPlayers = team.filter((p) =>
 			p.assignedPositions?.includes("FORWARD"),
 		);
@@ -191,8 +231,8 @@ export class TeamGeneratorService {
 		for (const [position, positionPlayers] of Object.entries(positionGroups)) {
 			const positionAbbr = POSITION_ABBREVIATIONS[position] || position;
 			for (const player of positionPlayers) {
-				const firstName = player.fullName.split(" ")[0];
-				teamText += `${positionAbbr} - ${firstName}\n`;
+				const displayName = this.getDisplayName(player, duplicateFirstNames);
+				teamText += `${positionAbbr} - ${displayName}\n`;
 			}
 		}
 
@@ -203,8 +243,12 @@ export class TeamGeneratorService {
 	 * Format both teams for Discord message
 	 */
 	formatTeamsMessage(teams: GeneratedTeams): string {
-		const blackTeamText = this.formatTeamForDiscord(teams.blackTeam, "Black");
-		const whiteTeamText = this.formatTeamForDiscord(teams.whiteTeam, "White");
+		// Find duplicate first names across both teams
+		const allPlayers = [...teams.blackTeam, ...teams.whiteTeam];
+		const duplicateFirstNames = this.findDuplicateFirstNames(allPlayers);
+
+		const blackTeamText = this.formatTeamForDiscord(teams.blackTeam, "Black", duplicateFirstNames);
+		const whiteTeamText = this.formatTeamForDiscord(teams.whiteTeam, "White", duplicateFirstNames);
 
 		return `${blackTeamText}\n${whiteTeamText}`;
 	}

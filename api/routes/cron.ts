@@ -95,20 +95,12 @@ app.get("/send-hockey-reminders", async (c) => {
 				const teams = teamGeneratorService.generateTeams(presentPlayers);
 				const teamsMessage = teamGeneratorService.formatTeamsMessage(teams);
 
-				// Format practice date
-				const practiceDate = new Date(practice.date);
-				const dateStr = practiceDate.toLocaleDateString("en-US", {
-					weekday: "long",
-					month: "short",
-					day: "numeric",
-				});
-
 				// Send reminder message first
-				const reminderMessage = `Reminder: create teams for hockey practice tomorrow (${dateStr})`;
+				const reminderMessage = "Reminder: create teams for hockey practice tomorrow";
 				await discordService.sendMessage(reminderMessage);
 
 				// Then send the auto-generated teams
-				const teamsMessageFull = `🏒 **Generated teams - ${dateStr}**\n\n${teamsMessage}`;
+				const teamsMessageFull = `🏒 **Generated teams**\n\n${teamsMessage}`;
 				await discordService.sendMessage(teamsMessageFull);
 
 				results.push({
