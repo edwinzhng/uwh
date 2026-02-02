@@ -1,6 +1,6 @@
 import {
 	SPORTEASY_COOKIE,
-	SPORTEASY_SEASON_IDS,
+	SPORTEASY_SEASON_ID,
 	SPORTEASY_TEAM_ID,
 	SPORTEASY_V2_1_BASE_URL,
 	SPORTEASY_V2_3_BASE_URL,
@@ -61,39 +61,28 @@ export class SportEasyService {
 			throw new Error("SportEasy cookie is not configured");
 		}
 
-		const cookie = SPORTEASY_COOKIE;
+		if (!SPORTEASY_SEASON_ID) {
+			throw new Error("SportEasy season ID is not configured");
+		}
 
 		try {
-			const allResults = await Promise.all(
-				SPORTEASY_SEASON_IDS.map(async (seasonId) => {
-					const url = `${SPORTEASY_V2_1_BASE_URL}/teams/${SPORTEASY_TEAM_ID}/events/?season_id=${seasonId}`;
-					const response = await fetch(url, {
-						method: "GET",
-						headers: {
-							Cookie: cookie,
-							"Content-Type": "application/json",
-						},
-					});
+			const url = `${SPORTEASY_V2_1_BASE_URL}/teams/${SPORTEASY_TEAM_ID}/events/?season_id=${SPORTEASY_SEASON_ID}`;
+			const response = await fetch(url, {
+				method: "GET",
+				headers: {
+					Cookie: SPORTEASY_COOKIE,
+					"Content-Type": "application/json",
+				},
+			});
 
-					if (!response.ok) {
-						throw new Error(
-							`SportEasy API error: ${response.status} ${response.statusText}`,
-						);
-					}
-
-					const data = (await response.json()) as SportEasyEventsResponse;
-					return data.results || [];
-				}),
-			);
-
-			// Flatten and deduplicate by event id
-			const eventsMap = new Map<number, SportEasyEvent>();
-			for (const events of allResults) {
-				for (const event of events) {
-					eventsMap.set(event.id, event);
-				}
+			if (!response.ok) {
+				throw new Error(
+					`SportEasy API error: ${response.status} ${response.statusText}`,
+				);
 			}
-			return Array.from(eventsMap.values());
+
+			const data = (await response.json()) as SportEasyEventsResponse;
+			return data.results || [];
 		} catch (error) {
 			console.error("Error fetching SportEasy events:", error);
 			throw error;

@@ -4,15 +4,16 @@ import "dotenv/config";
 export const SPORTEASY_V2_3_BASE_URL = "https://api.sporteasy.net/v2.3";
 export const SPORTEASY_V2_1_BASE_URL = "https://api.sporteasy.net/v2.1";
 export const SPORTEASY_TEAM_ID = "2307567";
-export const SPORTEASY_SEASON_IDS = [
-	2195139, // 2025-2026
-	2633771, // 2026-2026
-];
+export const SPORTEASY_SEASON_ID = process.env.SPORTEASY_SEASON_ID;
 
 export const SPORTEASY_COOKIE = process.env.SPORTEASY_COOKIE;
 
 if (!SPORTEASY_COOKIE) {
 	console.warn("Warning: SPORTEASY_COOKIE environment variable is not set");
+}
+
+if (!SPORTEASY_SEASON_ID) {
+	console.warn("Warning: SPORTEASY_SEASON_ID environment variable is not set");
 }
 
 // SportEasy API types
