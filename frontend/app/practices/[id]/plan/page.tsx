@@ -53,52 +53,50 @@ interface Assignment {
 
 type RosterState = Assignment[];
 
-// ─── Auto-assign ────────────────────────────────────────────────────────────
+// ─── Auto-assign helpers ──────────────────────────────────────────────────
 
-function autoAssign(players: Player[]): RosterState {
-	const assignments: RosterState = [];
-	// Each player uses their primary position only; sorted by rating desc
-	const sorted = [...players].sort((a, b) => b.rating - a.rating);
+const mapTeam = (teamObj: Player[], teamColor: TeamColor): RosterState => {
+	return teamObj.map((player) => ({
+		playerId: player.id,
+		team: teamColor,
+		position:
+			(player as Player & { assignedPositions?: Position[] })
+				.assignedPositions?.[0] ||
+			player.positions?.[0] ||
+			"FORWARD",
+	}));
+};
 
-	const byPos = new Map<Position, Player[]>();
-	for (const pos of POSITIONS) byPos.set(pos.key, []);
-	for (const p of sorted) {
-		const primary = p.positions[0] ?? "FORWARD";
-		// biome-ignore lint/style/noNonNullAssertion: we initialize all keys above
-		byPos.get(primary)!.push(p);
-	}
-
-	for (const pos of POSITIONS) {
-		const group = byPos.get(pos.key) ?? [];
-		for (let i = 0; i < group.length; i++) {
-			assignments.push({
-				playerId: group[i].id,
-				team: i % 2 === 0 ? "BLACK" : "WHITE",
-				position: pos.key,
-			});
-		}
-	}
-	return assignments;
-}
+const convertTeams = (teamsGroup: {
+	blackTeam: Player[];
+	whiteTeam: Player[];
+}) => {
+	return [
+		...mapTeam(teamsGroup.blackTeam, "BLACK"),
+		...mapTeam(teamsGroup.whiteTeam, "WHITE"),
+	];
+};
 
 // ─── Rating helpers ──────────────────────────────────────────────────────────
 
 function teamRatings(roster: RosterState, team: TeamColor, players: Player[]) {
-	const assigned = roster
-		.filter((a) => a.team === team)
-		.map((a) => players.find((p) => p.id === a.playerId))
-		.filter(Boolean) as Player[];
+	const assigned = roster.filter((a) => a.team === team);
+
+	const getPlayerRating = (playerId: number) => {
+		const p = players.find((p) => p.id === playerId);
+		return p ? p.rating : 0;
+	};
 
 	const fwd = assigned
-		.filter((p) => p.positions.includes("FORWARD"))
-		.reduce((s, p) => s + p.rating, 0);
+		.filter((a) => a.position === "FORWARD")
+		.reduce((s, a) => s + getPlayerRating(a.playerId), 0);
+
 	const back = assigned
-		.filter((p) =>
-			p.positions.some((pos) =>
-				(["WING", "CENTER", "FULL_BACK"] as Position[]).includes(pos),
-			),
+		.filter((a) =>
+			(["WING", "CENTER", "FULL_BACK"] as Position[]).includes(a.position),
 		)
-		.reduce((s, p) => s + p.rating, 0);
+		.reduce((s, a) => s + getPlayerRating(a.playerId), 0);
+
 	return { fwd, back };
 }
 
@@ -723,6 +721,7 @@ export default function PlanPage() {
 	const [practice, setPractice] = useState<Practice | null>(null);
 	const [allPlayers, setAllPlayers] = useState<Player[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [isRegenerating, setIsRegenerating] = useState(false);
 	const [gameType, setGameType] = useState<GameType>("MAIN");
 	const [youthCollapsed, setYouthCollapsed] = useState(false);
 
@@ -773,47 +772,31 @@ export default function PlanPage() {
 	);
 
 	const fetchGeneratedTeams = useCallback(
-		async (p: Practice, excludes: Set<number>) => {
+		async (
+			p: Practice | null,
+			excludes: Set<number>,
+			combineYouth: boolean,
+		) => {
 			try {
-				const result = await apiClient.generateTeamsForPractice(
-					p.id,
-					Array.from(excludes),
-				);
-				setAllPlayers(result.presentPlayers);
+				if (p?.sporteasyId) {
+					const result = await apiClient.generateTeamsForPractice(
+						p.id,
+						Array.from(excludes),
+						combineYouth,
+					);
+					setAllPlayers(result.presentPlayers);
 
-				const mapTeam = (
-					teamObj: Player[],
-					teamColor: TeamColor,
-				): RosterState => {
-					return teamObj.map((player) => ({
-						playerId: player.id,
-						team: teamColor,
-						position:
-							(player as Player & { assignedPositions?: Position[] })
-								.assignedPositions?.[0] ||
-							player.positions?.[0] ||
-							"FORWARD",
-					}));
-				};
+					const adultsRoster = convertTeams(result.adults);
+					const youthRosterTemp = convertTeams(result.youth);
 
-				const convertTeams = (teamsGroup: {
-					blackTeam: Player[];
-					whiteTeam: Player[];
-				}) => {
-					return [
-						...mapTeam(teamsGroup.blackTeam, "BLACK"),
-						...mapTeam(teamsGroup.whiteTeam, "WHITE"),
-					];
-				};
-
-				const adultsRoster = convertTeams(result.adults);
-				const youthRosterTemp = convertTeams(result.youth);
-
-				setMainRoster(adultsRoster);
-				if (youthRosterTemp.length > 0) setYouthRoster(youthRosterTemp);
+					setMainRoster(adultsRoster);
+					if (youthRosterTemp.length > 0) setYouthRoster(youthRosterTemp);
+				}
 			} catch (e) {
 				console.error("Backend generate teams failed", e);
-				setAllPlayers([]);
+				if (p?.sporteasyId) {
+					setAllPlayers([]);
+				}
 				setMainRoster([]);
 				setYouthRoster([]);
 			}
@@ -822,28 +805,11 @@ export default function PlanPage() {
 	);
 
 	const runAutoAssign = useCallback(() => {
-		if (practice) {
-			setLoading(true);
-			if (practice.sporteasyId) {
-				fetchGeneratedTeams(practice, excludedIds).finally(() =>
-					setLoading(false),
-				);
-			} else {
-				const eligible = activePlayers.filter((p) => !excludedIds.has(p.id));
-				const newRoster = autoAssign(eligible);
-				if (gameType === "MAIN" || youthCollapsed) setMainRoster(newRoster);
-				else setYouthRoster(newRoster);
-				setLoading(false);
-			}
-		}
-	}, [
-		practice,
-		excludedIds,
-		fetchGeneratedTeams,
-		activePlayers,
-		gameType,
-		youthCollapsed,
-	]);
+		setIsRegenerating(true);
+		fetchGeneratedTeams(practice, excludedIds, youthCollapsed).finally(() =>
+			setIsRegenerating(false),
+		);
+	}, [practice, excludedIds, fetchGeneratedTeams, youthCollapsed]);
 
 	// Copy Teams
 	const [copied, setCopied] = useState(false);
@@ -874,13 +840,9 @@ export default function PlanPage() {
 				setPractice(found);
 
 				if (found?.sporteasyId) {
-					await fetchGeneratedTeams(found, new Set());
+					await fetchGeneratedTeams(found, new Set(), youthCollapsed);
 				} else {
 					setAllPlayers(playerList);
-					const adults = playerList.filter((p) => !p.youth);
-					const youth = playerList.filter((p) => p.youth);
-					setMainRoster(autoAssign(adults));
-					if (youth.length > 0) setYouthRoster(autoAssign(youth));
 				}
 			} catch (err) {
 				console.error(err);
@@ -888,9 +850,9 @@ export default function PlanPage() {
 				setLoading(false);
 			}
 		}
+
 		load();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [practiceIdFromRoute, fetchGeneratedTeams]);
+	}, [practiceIdFromRoute, fetchGeneratedTeams, youthCollapsed]);
 
 	// DnD handler
 	function handleDragEnd(e: DragEndEvent) {
@@ -969,8 +931,18 @@ export default function PlanPage() {
 				title={practice ? getPracticeTitle(practice) : "Team Builder"}
 				actions={
 					<div className="flex items-center gap-2">
-						<Button variant="outline" size="sm" onClick={runAutoAssign}>
-							<RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={runAutoAssign}
+							disabled={isRegenerating}
+						>
+							<RefreshCw
+								className={cn(
+									"h-3.5 w-3.5 mr-1.5",
+									isRegenerating && "animate-spin",
+								)}
+							/>
 							Regenerate
 						</Button>
 						<Button
@@ -1025,27 +997,15 @@ export default function PlanPage() {
 								{hasYouth && (
 									<button
 										type="button"
-										onClick={() => {
+										onClick={async () => {
 											const next = !youthCollapsed;
+											setIsRegenerating(true);
 											setYouthCollapsed(next);
-											if (next)
-												setMainRoster(
-													autoAssign(
-														allPlayers.filter((p) => !excludedIds.has(p.id)),
-													),
-												);
-											else {
-												setMainRoster(
-													autoAssign(
-														adultPlayers.filter((p) => !excludedIds.has(p.id)),
-													),
-												);
-												setYouthRoster(
-													autoAssign(
-														youthPlayers.filter((p) => !excludedIds.has(p.id)),
-													),
-												);
+											if (!next) {
+												setGameType("MAIN");
 											}
+											await fetchGeneratedTeams(practice, excludedIds, next);
+											setIsRegenerating(false);
 										}}
 										className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#8aab8a] hover:text-[#021e00] cursor-pointer underline"
 									>
@@ -1068,7 +1028,8 @@ export default function PlanPage() {
 										BLACK
 									</p>
 									<p className="text-[10px] font-semibold text-[#4a8a40] tracking-[0.08em]">
-										Fwd: {blackRating.fwd} · Back: {blackRating.back}
+										Total: {blackRating.fwd + blackRating.back} · Fwd:{" "}
+										{blackRating.fwd} · Back: {blackRating.back}
 									</p>
 								</div>
 								<div className="flex-1 px-4 py-3 flex items-center bg-white gap-3">
@@ -1076,7 +1037,8 @@ export default function PlanPage() {
 										WHITE
 									</p>
 									<p className="text-[10px] font-semibold text-[#8aab8a] tracking-[0.08em]">
-										Fwd: {whiteRating.fwd} · Back: {whiteRating.back}
+										Total: {whiteRating.fwd + whiteRating.back} · Fwd:{" "}
+										{whiteRating.fwd} · Back: {whiteRating.back}
 									</p>
 								</div>
 							</div>

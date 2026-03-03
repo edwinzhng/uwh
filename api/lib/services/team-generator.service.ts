@@ -17,6 +17,8 @@ const POSITION_ABBREVIATIONS: Record<string, string> = {
 	FULL_BACK: "FB",
 };
 
+type Position = "FORWARD" | "WING" | "CENTER" | "FULL_BACK";
+
 export class TeamGeneratorService {
 	private static instance: TeamGeneratorService;
 
@@ -25,151 +27,6 @@ export class TeamGeneratorService {
 			TeamGeneratorService.instance = new TeamGeneratorService();
 		}
 		return TeamGeneratorService.instance;
-	}
-
-	/**
-	 * Assign positions to a team of players based on their preferences
-	 */
-	private assignPositionsToTeam(
-		teamPlayers: PlayerWithTeam[],
-	): PlayerWithTeam[] {
-		const positionRequirements = {
-			FORWARD: 2,
-			WING: 2,
-			CENTER: 1,
-			FULL_BACK: 1,
-		};
-
-		// Sort players by preference: single position players first, then by rating
-		const sortedPlayers = [...teamPlayers].sort((a, b) => {
-			if (a.positions.length !== b.positions.length) {
-				return a.positions.length - b.positions.length;
-			}
-			return b.rating - a.rating;
-		});
-
-		const assignedPlayers: PlayerWithTeam[] = [];
-		const positionCounts = { FORWARD: 0, WING: 0, CENTER: 0, FULL_BACK: 0 };
-
-		// First pass: assign players who can only play one position
-		for (const player of sortedPlayers) {
-			if (player.positions.length === 1) {
-				const position = player.positions[0];
-				if (
-					positionCounts[position as keyof typeof positionCounts] <
-					positionRequirements[position as keyof typeof positionRequirements]
-				) {
-					assignedPlayers.push({ ...player, assignedPositions: [position] });
-					positionCounts[position as keyof typeof positionCounts]++;
-				}
-			}
-		}
-
-		// Second pass: assign remaining players to fill required positions
-		for (const player of sortedPlayers) {
-			if (
-				player.positions.length > 1 &&
-				!assignedPlayers.find((p) => p.id === player.id)
-			) {
-				for (const position of player.positions) {
-					if (
-						positionCounts[position as keyof typeof positionCounts] <
-						positionRequirements[position as keyof typeof positionRequirements]
-					) {
-						assignedPlayers.push({ ...player, assignedPositions: [position] });
-						positionCounts[position as keyof typeof positionCounts]++;
-						break;
-					}
-				}
-			}
-		}
-
-		// Third pass: round robin for remaining players
-		const unassignedPlayers = sortedPlayers.filter(
-			(player) => !assignedPlayers.find((p) => p.id === player.id),
-		);
-		const roundRobinPositions = ["FORWARD", "WING", "CENTER", "FULL_BACK"];
-		let positionIndex = 0;
-
-		for (const player of unassignedPlayers) {
-			let assigned = false;
-			for (let i = 0; i < roundRobinPositions.length && !assigned; i++) {
-				const position =
-					roundRobinPositions[(positionIndex + i) % roundRobinPositions.length];
-				if (player.positions.includes(position)) {
-					assignedPlayers.push({ ...player, assignedPositions: [position] });
-					positionCounts[position as keyof typeof positionCounts]++;
-					positionIndex = (positionIndex + i + 1) % roundRobinPositions.length;
-					assigned = true;
-				}
-			}
-
-			// If no position found, assign to first available position
-			if (!assigned && player.positions.length > 0) {
-				const position = player.positions[0];
-				assignedPlayers.push({ ...player, assignedPositions: [position] });
-				positionCounts[position as keyof typeof positionCounts]++;
-			}
-		}
-
-		return assignedPlayers;
-	}
-
-	/**
-	 * Generate balanced teams from a list of players
-	 */
-	generateTeams(players: Player[]): GeneratedTeams {
-		if (players.length === 0) {
-			return { blackTeam: [], whiteTeam: [] };
-		}
-
-		// Sort players by rating (descending)
-		const sortedPlayers = [...players].sort((a, b) => b.rating - a.rating);
-
-		// Assign teams alternating by player order
-		const blackTeam: PlayerWithTeam[] = [];
-		const whiteTeam: PlayerWithTeam[] = [];
-
-		sortedPlayers.forEach((player, index) => {
-			const playerWithTeam: PlayerWithTeam = { ...player, team: null };
-			if (index % 2 === 0) {
-				playerWithTeam.team = "black";
-				blackTeam.push(playerWithTeam);
-			} else {
-				playerWithTeam.team = "white";
-				whiteTeam.push(playerWithTeam);
-			}
-		});
-
-		// Balance teams by rating if needed
-		const blackRating = blackTeam.reduce((sum, p) => sum + p.rating, 0);
-		const whiteRating = whiteTeam.reduce((sum, p) => sum + p.rating, 0);
-
-		if (
-			Math.abs(blackRating - whiteRating) > 2 &&
-			blackTeam.length > 0 &&
-			whiteTeam.length > 0
-		) {
-			const blackHighest = blackTeam.reduce((max, p) =>
-				p.rating > max.rating ? p : max,
-			);
-			const whiteHighest = whiteTeam.reduce((max, p) =>
-				p.rating > max.rating ? p : max,
-			);
-
-			// Swap teams for these players
-			blackHighest.team = "white";
-			whiteHighest.team = "black";
-		}
-
-		// Assign positions to each team
-		const blackTeamWithPositions = this.assignPositionsToTeam(blackTeam);
-		const whiteTeamWithPositions = this.assignPositionsToTeam(whiteTeam);
-
-		return {
-			blackTeam: blackTeamWithPositions,
-			whiteTeam: whiteTeamWithPositions,
-		};
 	}
 
 	/**
@@ -183,7 +40,6 @@ export class TeamGeneratorService {
 		const firstName = nameParts[0];
 
 		if (duplicateFirstNames.has(firstName.toLowerCase())) {
-			// Include last name for disambiguation
 			return player.fullName;
 		}
 
@@ -193,7 +49,7 @@ export class TeamGeneratorService {
 	/**
 	 * Find first names that appear multiple times across all players
 	 */
-	private findDuplicateFirstNames(allPlayers: PlayerWithTeam[]): Set<string> {
+	private findDuplicateFirstNames(allPlayers: Player[]): Set<string> {
 		const firstNameCounts = new Map<string, number>();
 
 		for (const player of allPlayers) {
@@ -209,6 +65,246 @@ export class TeamGeneratorService {
 		}
 
 		return duplicates;
+	}
+
+	/**
+	 * Build a sorted queue for a position.
+	 * Sort order: single-position players first (preference), then by rating descending within each group.
+	 */
+	private buildPositionQueue(players: Player[], position: Position): Player[] {
+		return players
+			.filter((p) => p.positions.includes(position))
+			.sort((a, b) => {
+				const aExclusive = a.positions.length === 1 ? 0 : 1;
+				const bExclusive = b.positions.length === 1 ? 0 : 1;
+				if (aExclusive !== bExclusive) return aExclusive - bExclusive;
+				return b.rating - a.rating;
+			});
+	}
+
+	/**
+	 * Pull the next unassigned player from a queue.
+	 * Returns the player and their index, or null if the queue is exhausted.
+	 */
+	private pullFromQueue(queue: Player[], assigned: Set<number>): Player | null {
+		for (const player of queue) {
+			if (!assigned.has(player.id)) {
+				return player;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Generate balanced teams from a list of players.
+	 *
+	 * Strategy:
+	 *   Phase 1 – Fill base slots (1C, 1FB, 2F, 2W per team). CENTER and FULL_BACK
+	 *             are filled first so versatile players aren't consumed by FORWARD/WING
+	 *             before the harder-to-fill positions get their pick. Within each
+	 *             position, single-position players are preferred over multi-position.
+	 *             Falls back to related positions if the primary queue is exhausted.
+	 *   Phase 2 – Fill extra slots (1 more C/FB, 2 more F/W per team) using the
+	 *             same queue/fallback logic.
+	 *   Phase 3 – Any remaining unassigned players are round-robined between
+	 *             FORWARD and WING regardless of listed positions.
+	 *
+	 * Balance rule: for each pair of assignments (one per team), the higher-rated
+	 * player goes to whichever team currently has the lower total rating (black on a tie).
+	 */
+	generateTeams(players: Player[]): GeneratedTeams {
+		if (players.length === 0) return { blackTeam: [], whiteTeam: [] };
+
+		const queues: Record<Position, Player[]> = {
+			FORWARD: this.buildPositionQueue(players, "FORWARD"),
+			WING: this.buildPositionQueue(players, "WING"),
+			CENTER: this.buildPositionQueue(players, "CENTER"),
+			FULL_BACK: this.buildPositionQueue(players, "FULL_BACK"),
+		};
+
+		const fallbacks: Record<Position, Position[]> = {
+			FORWARD: ["WING", "CENTER", "FULL_BACK"],
+			WING: ["FORWARD", "CENTER", "FULL_BACK"],
+			CENTER: ["FULL_BACK", "WING", "FORWARD"],
+			FULL_BACK: ["CENTER", "WING", "FORWARD"],
+		};
+
+		const assigned = new Set<number>();
+		const blackTeam: PlayerWithTeam[] = [];
+		const whiteTeam: PlayerWithTeam[] = [];
+
+		const teamRating = (team: PlayerWithTeam[]) =>
+			team.reduce((sum, p) => sum + p.rating, 0);
+
+		const pullForPositionWithFallback = (
+			position: Position,
+		): [Player, Position] | null => {
+			const primary = this.pullFromQueue(queues[position], assigned);
+			if (primary) return [primary, position];
+			for (const fb of fallbacks[position]) {
+				const candidate = this.pullFromQueue(queues[fb], assigned);
+				if (candidate) return [candidate, fb];
+			}
+			return null;
+		};
+
+		const positionPriority: Position[] = [
+			"FULL_BACK",
+			"CENTER",
+			"WING",
+			"FORWARD",
+		];
+
+		const pullAny = (): [Player, Position] | null => {
+			const remaining = players
+				.filter((p) => !assigned.has(p.id))
+				.sort((a, b) => b.rating - a.rating);
+
+			for (const player of remaining) {
+				// Find the position this player can fill that is most needed
+				const pos =
+					positionPriority.find((pos) => {
+						const blackCount = blackTeam.filter((p) =>
+							p.assignedPositions?.includes(pos),
+						).length;
+						const whiteCount = whiteTeam.filter((p) =>
+							p.assignedPositions?.includes(pos),
+						).length;
+						return blackCount !== whiteCount;
+					}) ??
+					positionPriority.find((pos) => {
+						const blackCount = blackTeam.filter((p) =>
+							p.assignedPositions?.includes(pos),
+						).length;
+						const whiteCount = whiteTeam.filter((p) =>
+							p.assignedPositions?.includes(pos),
+						).length;
+						return blackCount < 2 || whiteCount < 2;
+					}) ??
+					"FORWARD";
+				return [player, pos];
+			}
+			return null;
+		};
+
+		const assignPair = (
+			first: [Player, Position],
+			second: [Player, Position],
+		) => {
+			const [playerA, playerB] =
+				first[0].rating >= second[0].rating ? [first, second] : [second, first];
+
+			const weakTeam: "black" | "white" =
+				teamRating(blackTeam) <= teamRating(whiteTeam) ? "black" : "white";
+			const strongTeam: "black" | "white" =
+				weakTeam === "black" ? "white" : "black";
+
+			(weakTeam === "black" ? blackTeam : whiteTeam).push({
+				...playerA[0],
+				team: weakTeam,
+				assignedPositions: [playerA[1]],
+			});
+			(strongTeam === "black" ? blackTeam : whiteTeam).push({
+				...playerB[0],
+				team: strongTeam,
+				assignedPositions: [playerB[1]],
+			});
+		};
+
+		const assignSingle = (player: [Player, Position]) => {
+			const blackCount = blackTeam.filter((p) =>
+				p.assignedPositions?.includes(player[1]),
+			).length;
+			const whiteCount = whiteTeam.filter((p) =>
+				p.assignedPositions?.includes(player[1]),
+			).length;
+			const targetTeam: "black" | "white" =
+				blackCount <= whiteCount
+					? teamRating(blackTeam) <= teamRating(whiteTeam)
+						? "black"
+						: "white"
+					: blackCount < whiteCount
+						? "black"
+						: "white";
+			(targetTeam === "black" ? blackTeam : whiteTeam).push({
+				...player[0],
+				team: targetTeam,
+				assignedPositions: [player[1]],
+			});
+		};
+
+		const fillSlot = (position: Position) => {
+			const first = pullForPositionWithFallback(position);
+			if (!first) return;
+			assigned.add(first[0].id);
+
+			const second = pullForPositionWithFallback(position);
+			if (!second) {
+				assignSingle(first);
+				return;
+			}
+			assigned.add(second[0].id);
+			assignPair(first, second);
+		};
+
+		const fillSlotAny = (position: Position) => {
+			const first = pullForPositionWithFallback(position) ?? pullAny();
+			if (!first) return;
+			assigned.add(first[0].id);
+
+			const second = pullForPositionWithFallback(position) ?? pullAny();
+			if (!second) {
+				assignSingle(first);
+				return;
+			}
+			assigned.add(second[0].id);
+			assignPair(first, second);
+		};
+
+		// Phase 1: FULL_BACK and CENTER first to protect versatile players
+		fillSlot("FULL_BACK");
+		fillSlot("CENTER");
+		fillSlot("FORWARD");
+		fillSlot("FORWARD");
+		fillSlot("WING");
+		fillSlot("WING");
+
+		// Phase 2: extra slots (doubles the base)
+		fillSlot("FULL_BACK");
+		fillSlot("CENTER");
+		fillSlot("FORWARD");
+		fillSlot("FORWARD");
+		fillSlot("WING");
+		fillSlot("WING");
+
+		// Phase 2b: absorb any remaining players into back positions first,
+		// ignoring position eligibility — any unassigned player can fill any slot
+		fillSlotAny("FULL_BACK");
+		fillSlotAny("CENTER");
+		fillSlotAny("WING");
+		fillSlotAny("FORWARD");
+
+		// Phase 3: truly leftover round-robin F/W
+		const unassigned = players
+			.filter((p) => !assigned.has(p.id))
+			.sort((a, b) => b.rating - a.rating);
+
+		const rrPositions: Position[] = ["FORWARD", "WING"];
+		let rrIdx = 0;
+
+		for (const player of unassigned) {
+			const assignedPos = rrPositions[rrIdx++ % rrPositions.length];
+			const targetTeam: "black" | "white" =
+				teamRating(blackTeam) <= teamRating(whiteTeam) ? "black" : "white";
+			assigned.add(player.id);
+			(targetTeam === "black" ? blackTeam : whiteTeam).push({
+				...player,
+				team: targetTeam,
+				assignedPositions: [assignedPos],
+			});
+		}
+
+		return { blackTeam, whiteTeam };
 	}
 
 	/**
@@ -254,7 +350,6 @@ export class TeamGeneratorService {
 	 * Format both teams for Discord message
 	 */
 	formatTeamsMessage(teams: GeneratedTeams): string {
-		// Find duplicate first names across both teams
 		const allPlayers = [...teams.blackTeam, ...teams.whiteTeam];
 		const duplicateFirstNames = this.findDuplicateFirstNames(allPlayers);
 

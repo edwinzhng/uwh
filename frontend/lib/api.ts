@@ -310,13 +310,17 @@ export class ApiClient {
 	async generateTeamsForPractice(
 		practiceId: number,
 		excludedIds: number[] = [],
+		combineYouth = false,
 	): Promise<{
 		adults: { blackTeam: Player[]; whiteTeam: Player[] };
 		youth: { blackTeam: Player[]; whiteTeam: Player[] };
 		presentPlayers: Player[];
 	}> {
-		const query =
-			excludedIds.length > 0 ? `?exclude=${excludedIds.join(",")}` : "";
+		const queryArgs = [];
+		if (excludedIds.length > 0)
+			queryArgs.push(`exclude=${excludedIds.join(",")}`);
+		if (combineYouth) queryArgs.push("combineYouth=true");
+		const query = queryArgs.length > 0 ? `?${queryArgs.join("&")}` : "";
 		return this.get(`/api/sporteasy/events/${practiceId}/teams${query}`);
 	}
 

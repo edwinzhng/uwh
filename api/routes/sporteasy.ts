@@ -151,6 +151,9 @@ app.get("/events/:eventId/teams", async (c) => {
 			excludeParam ? excludeParam.split(",").map(Number) : [],
 		);
 
+		const combineYouthParam = c.req.query("combineYouth");
+		const combineYouth = combineYouthParam === "true";
+
 		const allPlayers = await playerService.getPlayers();
 		const presentPlayers = allPlayers.filter(
 			(player) =>
@@ -159,12 +162,21 @@ app.get("/events/:eventId/teams", async (c) => {
 				!excludedIds.has(player.id),
 		);
 
-		const adults = presentPlayers.filter((p) => !p.youth);
-		const youth = presentPlayers.filter((p) => p.youth);
+		let adultTeams: ReturnType<typeof teamGeneratorService.generateTeams>;
+		let youthTeams: ReturnType<typeof teamGeneratorService.generateTeams>;
 
-		// Generate the teams using backend logic
-		const adultTeams = teamGeneratorService.generateTeams(adults);
-		const youthTeams = teamGeneratorService.generateTeams(youth);
+		if (combineYouth) {
+			// Generate the teams using backend logic, all players combined
+			adultTeams = teamGeneratorService.generateTeams(presentPlayers);
+			youthTeams = { blackTeam: [], whiteTeam: [] };
+		} else {
+			const adults = presentPlayers.filter((p) => !p.youth);
+			const youth = presentPlayers.filter((p) => p.youth);
+
+			// Generate the teams using backend logic
+			adultTeams = teamGeneratorService.generateTeams(adults);
+			youthTeams = teamGeneratorService.generateTeams(youth);
+		}
 
 		return c.json({
 			adults: adultTeams,
@@ -307,6 +319,33 @@ app.post("/import-events", async (c) => {
 	} catch (error) {
 		console.error("Error importing SportEasy events:", error);
 		return c.json({ error: "Failed to import SportEasy events" }, 500);
+	}
+});
+
+// Generate teams from a list of player IDs
+app.post("/generate-teams", async (c) => {
+	try {
+		const { playerIds } = (await c.req.json()) as { playerIds: number[] };
+		if (!playerIds || !Array.isArray(playerIds)) {
+			return c.json({ error: "playerIds must be an array of numbers" }, 400);
+		}
+
+		const allPlayers = await playerService.getPlayers();
+		const eligiblePlayers = allPlayers.filter((p) => playerIds.includes(p.id));
+
+		const adults = eligiblePlayers.filter((p) => !p.youth);
+		const youth = eligiblePlayers.filter((p) => p.youth);
+
+		const adultTeams = teamGeneratorService.generateTeams(adults);
+		const youthTeams = teamGeneratorService.generateTeams(youth);
+
+		return c.json({
+			adults: adultTeams,
+			youth: youthTeams,
+		});
+	} catch (error) {
+		console.error("Error generating local teams:", error);
+		return c.json({ error: "Failed to generate local teams" }, 500);
 	}
 });
 
