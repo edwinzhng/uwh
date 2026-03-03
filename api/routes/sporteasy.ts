@@ -3,6 +3,7 @@ import type { NewPlayer, NewPractice, Position } from "../db/schema";
 import { playerService } from "../lib/services/player.service";
 import { practiceService } from "../lib/services/practice.service";
 import { sportEasyService } from "../lib/services/sporteasy.service";
+import { teamGeneratorService } from "../lib/services/team-generator.service";
 
 const app = new Hono();
 
@@ -74,23 +75,93 @@ app.post("/import", async (c) => {
 app.get("/events/:eventId/attendees", async (c) => {
 	try {
 		const practiceId = Number.parseInt(c.req.param("eventId"));
-		
+
 		// First fetch the practice from our database to get the SportEasy ID
 		const practice = await practiceService.getPracticeById(practiceId);
 		if (!practice) {
 			return c.json({ error: "Practice not found" }, 404);
 		}
-		
+
 		if (!practice.sporteasyId) {
-			return c.json({ error: "No SportEasy ID associated with this practice" }, 400);
+			return c.json(
+				{ error: "No SportEasy ID associated with this practice" },
+				400,
+			);
 		}
-		
+
 		// Now fetch attendees from SportEasy using the stored SportEasy ID
-		const attendees = await sportEasyService.getEventAttendees(practice.sporteasyId);
+		const attendees = await sportEasyService.getEventAttendees(
+			practice.sporteasyId,
+		);
 		return c.json(attendees);
 	} catch (error) {
 		console.error("Error fetching SportEasy event attendees:", error);
 		return c.json({ error: "Failed to fetch SportEasy event attendees" }, 500);
+	}
+});
+
+// Generate balanced teams for an event's attendees
+app.get("/events/:eventId/teams", async (c) => {
+	try {
+		const practiceId = Number.parseInt(c.req.param("eventId"));
+
+		// Fetch the practice to get the SportEasy ID
+		const practice = await practiceService.getPracticeById(practiceId);
+		if (!practice) {
+			return c.json({ error: "Practice not found" }, 404);
+		}
+
+		if (!practice.sporteasyId) {
+			return c.json(
+				{ error: "No SportEasy ID associated with this practice" },
+				400,
+			);
+		}
+
+		// Fetch attendees from SportEasy
+		const eventResponse = await sportEasyService.getEventAttendees(
+			practice.sporteasyId,
+		);
+
+		// Find present players by matching SportEasy IDs
+		const presentSportEasyIds = new Set<number>();
+		for (const attendee of eventResponse.attendees) {
+			if (attendee.attendance_status === "present") {
+				for (const result of attendee.results) {
+					presentSportEasyIds.add(result.profile.id);
+				}
+			}
+		}
+
+		// Get all players and filter by presence and exclusions
+		const excludeParam = c.req.query("exclude");
+		const excludedIds = new Set(
+			excludeParam ? excludeParam.split(",").map(Number) : [],
+		);
+
+		const allPlayers = await playerService.getPlayers();
+		const presentPlayers = allPlayers.filter(
+			(player) =>
+				player.sporteasyId &&
+				presentSportEasyIds.has(player.sporteasyId) &&
+				!excludedIds.has(player.id),
+		);
+
+		const adults = presentPlayers.filter((p) => !p.youth);
+		const youth = presentPlayers.filter((p) => p.youth);
+
+		// Generate the teams using backend logic
+		const adultTeams = teamGeneratorService.generateTeams(adults);
+		const youthTeams = teamGeneratorService.generateTeams(youth);
+
+		return c.json({
+			adults: adultTeams,
+			youth: youthTeams,
+			presentPlayers,
+		});
+	} catch (error) {
+		console.error("Error generating teams for SportEasy event:", error);
+		return c.json({ error: "Failed to generate teams" }, 500);
 	}
 });
 
@@ -137,17 +208,20 @@ app.post("/import-events", async (c) => {
 
 		// Process each date
 		for (const [dateKey, dayEvents] of Array.from(eventsByDate.entries())) {
-			// Find if we already have a practice for this date
-			const practiceDate = new Date(dateKey);
-			const existingPractice = existingPractices.find((p) => {
-				const pDate = new Date(p.date);
-				return pDate.toISOString().split("T")[0] === dateKey;
-			});
-
 			// Find primary event (one that ends with "Outdoor Practice" or "Hockey")
 			const primaryEvent = dayEvents.find(
 				(e) => e.name.endsWith("Outdoor Practice") || e.name.endsWith("Hockey"),
 			);
+
+			// Find if we already have a practice for this date
+			// Use the actual event start_at instead of dateKey to preserve the exact time
+			const practiceDate = new Date(
+				primaryEvent?.start_at || dayEvents[0].start_at,
+			);
+			const existingPractice = existingPractices.find((p) => {
+				const pDate = new Date(p.date);
+				return pDate.toISOString().split("T")[0] === dateKey;
+			});
 
 			// Use primary event's ID if available, otherwise existing practice's ID, otherwise first event's ID
 			const sporteasyId =
@@ -155,16 +229,26 @@ app.post("/import-events", async (c) => {
 
 			// Helper function to check if event name starts with a day of the week
 			const startsWithDayOfWeek = (name: string) => {
-				const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-				return days.some(day => name.startsWith(day));
+				const days = [
+					"Monday",
+					"Tuesday",
+					"Wednesday",
+					"Thursday",
+					"Friday",
+					"Saturday",
+					"Sunday",
+				];
+				return days.some((day) => name.startsWith(day));
 			};
 
 			// Filter out events that start with days of the week
-			const filteredEvents = dayEvents.filter(e => !startsWithDayOfWeek(e.name));
-			
+			const filteredEvents = dayEvents.filter(
+				(e) => !startsWithDayOfWeek(e.name),
+			);
+
 			// Collect filtered event names for display
 			const filteredNames = filteredEvents.map((e) => e.name).join(" | ");
-			
+
 			// Collect ALL event names (including day-of-week ones) for reference
 			const allEventNames = dayEvents.map((e) => e.name).join(" · ");
 
@@ -176,7 +260,7 @@ app.post("/import-events", async (c) => {
 			} else if (filteredNames) {
 				displayName = filteredNames;
 			}
-			
+
 			// Combine display name with all event names using middot
 			if (displayName && allEventNames && displayName !== allEventNames) {
 				notes = `${displayName} · ${allEventNames}`;

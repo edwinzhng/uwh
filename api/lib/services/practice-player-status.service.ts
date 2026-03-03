@@ -17,7 +17,9 @@ export class PracticePlayerStatusService {
 		return PracticePlayerStatusService.instance;
 	}
 
-	async getPracticePlayerStatuses(practiceId: number): Promise<PracticePlayerStatus[]> {
+	async getPracticePlayerStatuses(
+		practiceId: number,
+	): Promise<PracticePlayerStatus[]> {
 		return await db
 			.select()
 			.from(practicePlayerStatuses)
@@ -25,7 +27,9 @@ export class PracticePlayerStatusService {
 			.orderBy(desc(practicePlayerStatuses.createdAt));
 	}
 
-	async getPracticePlayerStatusesByPlayer(playerId: number): Promise<PracticePlayerStatus[]> {
+	async getPracticePlayerStatusesByPlayer(
+		playerId: number,
+	): Promise<PracticePlayerStatus[]> {
 		return await db
 			.select()
 			.from(practicePlayerStatuses)
@@ -78,7 +82,9 @@ export class PracticePlayerStatusService {
 		return result.length > 0;
 	}
 
-	async deletePracticePlayerStatusesByPractice(practiceId: number): Promise<boolean> {
+	async deletePracticePlayerStatusesByPractice(
+		practiceId: number,
+	): Promise<boolean> {
 		const result = await db
 			.delete(practicePlayerStatuses)
 			.where(eq(practicePlayerStatuses.practiceId, practiceId));
@@ -86,4 +92,5 @@ export class PracticePlayerStatusService {
 	}
 }
 
-export const practicePlayerStatusService = PracticePlayerStatusService.getInstance();
+export const practicePlayerStatusService =
+	PracticePlayerStatusService.getInstance();

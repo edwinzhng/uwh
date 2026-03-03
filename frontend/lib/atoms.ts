@@ -1,13 +1,6 @@
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
-// User state
-export const userAtom = atom<{
-	id: number;
-	name: string;
-	email: string;
-} | null>(null);
-
 // API base URL
 export const apiBaseUrlAtom = atom(
 	process.env.NODE_ENV === "production"
@@ -19,5 +12,8 @@ export const apiBaseUrlAtom = atom(
 export const isLoadingAtom = atom(false);
 export const errorAtom = atom<string | null>(null);
 
-// Dark mode state with localStorage persistence
-export const isDarkModeAtom = atomWithStorage("uwh-dark-mode", true);
+// Active tab/page state
+export const activeTabAtom = atomWithStorage("uwh-active-tab", "practices");
+
+// Selected coach for detail view
+export const selectedCoachIdAtom = atom<number | null>(null);

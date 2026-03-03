@@ -11,7 +11,8 @@ app.get("/practice/:practiceId", async (c) => {
 			return c.json({ error: "Invalid practice ID" }, 400);
 		}
 
-		const practiceCoaches = await practiceCoachService.getPracticeCoaches(practiceId);
+		const practiceCoaches =
+			await practiceCoachService.getPracticeCoaches(practiceId);
 		return c.json(practiceCoaches);
 	} catch (error) {
 		console.error("Error fetching practice coaches:", error);
@@ -28,7 +29,10 @@ app.post("/practice/:practiceId", async (c) => {
 		}
 
 		const body = await c.req.json();
-		const { coachIds, durationMinutes = 90 } = body as { coachIds: number[], durationMinutes?: number };
+		const { coachIds, durationMinutes = 90 } = body as {
+			coachIds: number[];
+			durationMinutes?: number;
+		};
 
 		// Delete existing practice coaches
 		await practiceCoachService.deletePracticeCoachesByPractice(practiceId);
@@ -52,4 +56,3 @@ app.post("/practice/:practiceId", async (c) => {
 });
 
 export default app;
-

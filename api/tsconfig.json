@@ -1,20 +1,17 @@
 {
-  "type": "module",
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "strict": true,
-    "verbatimModuleSyntax": true,
-    "skipLibCheck": true,
-    "types": [
-      "node"
-    ],
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
-    "outDir": "./dist",
-    "esModuleInterop": true,
-
-  },
-  "exclude": ["node_modules"]
+	"type": "module",
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "node",
+		"strict": true,
+		"verbatimModuleSyntax": true,
+		"skipLibCheck": true,
+		"types": ["node"],
+		"jsx": "react-jsx",
+		"jsxImportSource": "hono/jsx",
+		"outDir": "./dist",
+		"esModuleInterop": true
+	},
+	"exclude": ["node_modules"]
 }

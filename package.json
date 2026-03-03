@@ -1,24 +1,24 @@
 {
-  "name": "uwh-monorepo",
-  "version": "0.1.0",
-  "private": true,
-  "packageManager": "bun@1.0.0",
-  "workspaces": [
-    "frontend",
-    "api"
-  ],
-  "scripts": {
-    "dev": "concurrently \"bun run dev:frontend\" \"bun run dev:backend\"",
-    "dev:frontend": "cd frontend && bun run dev",
-    "dev:backend": "cd api && bun run dev",
-    "build": "bun run build:frontend && bun run build:backend",
-    "build:frontend": "cd frontend && bun run build",
-    "build:backend": "cd api && bun run build",
-    "start:backend": "cd api && bun run start",
-    "install:all": "bun install && cd frontend && bun install && cd ../api && bun install",
-    "clean": "rm -rf node_modules frontend/node_modules api/node_modules frontend/.next api/dist"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
-  }
+	"name": "uwh-monorepo",
+	"version": "0.1.0",
+	"private": true,
+	"packageManager": "bun@1.0.0",
+	"workspaces": [
+		"frontend",
+		"api"
+	],
+	"scripts": {
+		"dev": "concurrently \"bun run dev:frontend\" \"bun run dev:backend\"",
+		"dev:frontend": "cd frontend && bun run dev",
+		"dev:backend": "cd api && bun run dev",
+		"build": "bun run build:frontend && bun run build:backend",
+		"build:frontend": "cd frontend && bun run build",
+		"build:backend": "cd api && bun run build",
+		"start:backend": "cd api && bun run start",
+		"install:all": "bun install && cd frontend && bun install && cd ../api && bun install",
+		"clean": "rm -rf node_modules frontend/node_modules api/node_modules frontend/.next api/dist"
+	},
+	"devDependencies": {
+		"concurrently": "^8.2.2"
+	}
 }

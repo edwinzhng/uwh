@@ -96,7 +96,8 @@ app.get("/send-hockey-reminders", async (c) => {
 				const teamsMessage = teamGeneratorService.formatTeamsMessage(teams);
 
 				// Send reminder message first
-				const reminderMessage = "Reminder: create teams for hockey practice tomorrow";
+				const reminderMessage =
+					"Reminder: create teams for hockey practice tomorrow";
 				await discordService.sendMessage(reminderMessage);
 
 				// Then send the auto-generated teams

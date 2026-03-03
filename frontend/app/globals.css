@@ -1,56 +1,116 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@layer base {
+	:root {
+		--color-primary-dark: #021e00;
+		--color-primary-green: #298a29;
+		--color-accent-green: #4a8a40;
+		--color-border: #cbdbcc;
+		--color-bg-tint: #eef4f1;
+		--color-white: #ffffff;
+		--color-text-primary: #021e00;
+		--color-text-secondary: #4a8a40;
+		--color-text-muted: #8aab8a;
+		--color-sidebar-bg: #021e00;
+		--color-sidebar-active: #298a29;
+		--color-sidebar-text: #eef4f1;
+		--color-sidebar-muted: #8aab8a;
+		--color-tag-youth: #c7dcf0;
+		--color-tag-youth-text: #2a5c8a;
+		--color-tag-coach: #f0c7c7;
+		--color-tag-coach-text: #8a2a2a;
+		--color-capt-bg: #f0a040;
+		--color-capt-text: #ffffff;
+		--color-ref-bg: #f0a040;
+		--color-ref-text: #ffffff;
+		--font-sans: "Inter", system-ui, -apple-system, sans-serif;
+	}
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@layer base {
+	* {
+		box-sizing: border-box;
+	}
+
+	html {
+		font-family: var(--font-sans);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	body {
+		background-color: var(--color-bg-tint);
+		color: var(--color-text-primary);
+		min-height: 100vh;
+		margin: 0;
+		padding: 0;
+	}
+
+	/* Custom scrollbar */
+	::-webkit-scrollbar {
+		width: 4px;
+		height: 4px;
+	}
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	::-webkit-scrollbar-thumb {
+		background: var(--color-border);
+	}
+
+	/* Range input styling */
+	input[type="range"] {
+		-webkit-appearance: none;
+		appearance: none;
+		background: transparent;
+		cursor: pointer;
+	}
+	input[type="range"]::-webkit-slider-runnable-track {
+		height: 4px;
+		background: var(--color-border);
+	}
+	input[type="range"]::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		height: 18px;
+		width: 18px;
+		background: var(--color-primary-dark);
+		margin-top: -7px;
+		border: 2px solid var(--color-primary-green);
+	}
+	input[type="range"]:focus::-webkit-slider-thumb {
+		outline: 2px solid var(--color-primary-green);
+		outline-offset: 2px;
+	}
+
+	/* Make sure every interactive element has a cursor pointer */
+	button,
+	a,
+	[role="button"],
+	[tabindex="0"],
+	label {
+		cursor: pointer;
+	}
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Smooth theme transitions */
-body[data-theme] {
-  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
-}
-
-body[data-theme] * {
-  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out, border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
-
-/* Optimize animations for mobile */
-@media (prefers-reduced-motion: reduce) {
-  body[data-theme],
-  body[data-theme] * {
-    transition: none !important;
-    animation: none !important;
-  }
-}
-
-/* Fade-in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Design system utilities */
+@layer utilities {
+	.sidebar-bg {
+		background-color: var(--color-sidebar-bg);
+	}
+	.content-bg {
+		background-color: var(--color-bg-tint);
+	}
+	.text-ds-primary {
+		color: var(--color-text-primary);
+	}
+	.text-ds-secondary {
+		color: var(--color-text-secondary);
+	}
+	.text-ds-muted {
+		color: var(--color-text-muted);
+	}
+	.border-ds {
+		border-color: var(--color-border);
+	}
 }

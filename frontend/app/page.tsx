@@ -1,128 +1,67 @@
-"use client";
-
-import { useAtom } from "jotai";
 import Image from "next/image";
-import { Suspense, useEffect } from "react";
-import { DarkModeToggle } from "@/components/shared/dark-mode-toggle";
-import { FadeIn } from "@/components/shared/fade-in";
-import { CoachesTab } from "@/components/tab-content/coaches";
-import { PlayersTab } from "@/components/tab-content/players";
-import { PracticesTab } from "@/components/tab-content/practices";
-import { Tabs } from "@/components/tabs";
-import { isDarkModeAtom } from "@/lib/atoms";
 
 export default function Home() {
-	const [isDarkMode] = useAtom(isDarkModeAtom);
-
-	// Update data-theme attribute for smooth transitions
-	useEffect(() => {
-		document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
-	}, [isDarkMode]);
-
-	const tabs = [
-		{
-			id: "players",
-			label: "Players",
-			content: <PlayersTab />,
-		},
-		{
-			id: "practices",
-			label: "Practices",
-			content: <PracticesTab />,
-		},
-		{
-			id: "coaches",
-			label: "Coaches",
-			content: <CoachesTab />,
-		},
-	];
-
 	return (
-		<div className="min-h-screen relative">
-			{/* Fixed Background */}
-			<div
-				className={`
-					fixed inset-0 -z-10 transition-colors duration-300 ease-in-out
-					${
-						isDarkMode
-							? "bg-gradient-to-br from-gray-900 via-gray-800 to-black"
-							: "bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
-					}
-				`}
-				style={{ willChange: 'background' }}
-			>
-				{/* Background Effects - Using transform for better GPU acceleration */}
-				<div className="absolute inset-0 overflow-hidden pointer-events-none">
-					<div
-						className={`
-							absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-20 blur-3xl transition-colors duration-300
-							${isDarkMode ? "bg-blue-500" : "bg-blue-400"}
-						`}
-						style={{ willChange: 'background-color' }}
-					/>
-					<div
-						className={`
-							absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-20 blur-3xl transition-colors duration-300
-							${isDarkMode ? "bg-purple-500" : "bg-purple-400"}
-						`}
-						style={{ willChange: 'background-color' }}
-					/>
-					<div
-						className={`
-							absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-10 blur-3xl transition-colors duration-300
-							${isDarkMode ? "bg-indigo-500" : "bg-indigo-400"}
-						`}
-						style={{ willChange: 'background-color' }}
-					/>
-				</div>
-			</div>
-
-			{/* Header */}
-			<div className="relative z-10 p-6">
-				<div className="max-w-7xl mx-auto">
-					<FadeIn>
-						<div className="flex items-center justify-between mb-8">
-							<div className="flex items-center gap-4">
-								<div
-									className={`
-	                p-3 rounded-2xl backdrop-blur-xl
-	                ${
-										isDarkMode
-											? "bg-gray-900/20 border border-gray-700/50 shadow-2xl shadow-gray-900/20"
-											: "bg-white/20 border border-gray-200/50 shadow-2xl shadow-gray-200/20"
-									}
-	              `}
-								>
-									<Image
-										src="/crocs.svg"
-										alt="Underwater Hockey"
-										width={32}
-										height={32}
-										className="h-8 w-8"
-									/>
-								</div>
-								<div>
-									<h1
-										className={`text-4xl font-thin tracking-tight ${isDarkMode ? "text-white" : "text-gray-900"}`}
-									>
-										Underwater Hockey
-									</h1>
-								</div>
-							</div>
-							<DarkModeToggle />
-						</div>
-					</FadeIn>
-
-					{/* Main Content */}
-					<div className="max-w-6xl mx-auto">
-						<Suspense
-							fallback={<div className="text-center py-8">Loading...</div>}
+		<div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+			<main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+				<Image
+					className="dark:invert"
+					src="/next.svg"
+					alt="Next.js logo"
+					width={100}
+					height={20}
+					priority
+				/>
+				<div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+					<h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+						To get started, edit the page.tsx file.
+					</h1>
+					<p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+						Looking for a starting point or more instructions? Head over to{""}
+						<a
+							href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+							className="font-medium text-zinc-950 dark:text-zinc-50"
 						>
-							<Tabs tabs={tabs} defaultTab="players" />
-						</Suspense>
-					</div>
+							Templates
+						</a>
+						{""}
+						or the{""}
+						<a
+							href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+							className="font-medium text-zinc-950 dark:text-zinc-50"
+						>
+							Learning
+						</a>
+						{""}
+						center.
+					</p>
 				</div>
-			</div>
+				<div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+					<a
+						className="flex h-12 w-full items-center justify-center gap-2 bg-foreground px-5 text-background  hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
+						href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<Image
+							className="dark:invert"
+							src="/vercel.svg"
+							alt="Vercel logomark"
+							width={16}
+							height={16}
+						/>
+						Deploy Now
+					</a>
+					<a
+						className="flex h-12 w-full items-center justify-center border border-solid border-black/[.08] px-5  hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
+						href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						Documentation
+					</a>
+				</div>
+			</main>
 		</div>
 	);
 }

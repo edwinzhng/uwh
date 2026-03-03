@@ -21,18 +21,27 @@ export class SportEasyService {
 		return SportEasyService.instance;
 	}
 
-	async getProfiles(): Promise<SportEasyProfile[]> {
-		if (!SPORTEASY_COOKIE) {
-			throw new Error("SportEasy cookie is not configured");
+	private async getCookie(): Promise<string> {
+		const { settingsService } = await import("./settings.service");
+		const dbCookie = await settingsService.getSettingByKey("sporteasy_cookie");
+		const cookie = dbCookie?.value || SPORTEASY_COOKIE;
+
+		if (!cookie) {
+			throw new Error("SportEasy cookie is not configured in settings or env");
 		}
 
+		return cookie;
+	}
+
+	async getProfiles(): Promise<SportEasyProfile[]> {
+		const cookie = await this.getCookie();
 		const url = `${SPORTEASY_V2_3_BASE_URL}/teams/${SPORTEASY_TEAM_ID}/profiles/`;
 
 		try {
 			const response = await fetch(url, {
 				method: "GET",
 				headers: {
-					Cookie: SPORTEASY_COOKIE,
+					Cookie: cookie,
 					"Content-Type": "application/json",
 				},
 			});
@@ -57,9 +66,7 @@ export class SportEasyService {
 	}
 
 	async getEvents(): Promise<SportEasyEvent[]> {
-		if (!SPORTEASY_COOKIE) {
-			throw new Error("SportEasy cookie is not configured");
-		}
+		const cookie = await this.getCookie();
 
 		if (!SPORTEASY_SEASON_ID) {
 			throw new Error("SportEasy season ID is not configured");
@@ -70,7 +77,7 @@ export class SportEasyService {
 			const response = await fetch(url, {
 				method: "GET",
 				headers: {
-					Cookie: SPORTEASY_COOKIE,
+					Cookie: cookie,
 					"Content-Type": "application/json",
 				},
 			});
@@ -92,17 +99,14 @@ export class SportEasyService {
 	async getEventAttendees(
 		eventId: number,
 	): Promise<SportEasyEventAttendeesResponse> {
-		if (!SPORTEASY_COOKIE) {
-			throw new Error("SportEasy cookie is not configured");
-		}
-
+		const cookie = await this.getCookie();
 		const url = `${SPORTEASY_V2_1_BASE_URL}/teams/${SPORTEASY_TEAM_ID}/events/${eventId}`;
 
 		try {
 			const response = await fetch(url, {
 				method: "GET",
 				headers: {
-					Cookie: SPORTEASY_COOKIE,
+					Cookie: cookie,
 					"Content-Type": "application/json",
 				},
 			});

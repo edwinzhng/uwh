@@ -7,6 +7,7 @@ import cronRouter from "./routes/cron";
 import playersRouter from "./routes/players";
 import practiceCoachesRouter from "./routes/practice-coaches";
 import practicesRouter from "./routes/practices";
+import settingsRouter from "./routes/settings";
 import sportEasyRouter from "./routes/sporteasy";
 
 const app = new Hono();
@@ -61,6 +62,7 @@ app.route("/api/practices", practicesRouter);
 app.route("/api/practice-coaches", practiceCoachesRouter);
 app.route("/api/sporteasy", sportEasyRouter);
 app.route("/api/cron", cronRouter);
+app.route("/api/settings", settingsRouter);
 
 // 404 handler
 app.notFound((c) => {

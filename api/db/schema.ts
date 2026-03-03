@@ -123,3 +123,13 @@ export type NewPracticePlayerStatus =
 	typeof practicePlayerStatuses.$inferInsert;
 export type PracticePlayerStatusType =
 	(typeof practicePlayerStatusTypeEnum.enumValues)[number];
+
+// Settings table for global configuration (like SportEasy cookie)
+export const settings = pgTable("settings", {
+	key: varchar("key", { length: 255 }).primaryKey(),
+	value: text("value").notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type Setting = typeof settings.$inferSelect;
+export type NewSetting = typeof settings.$inferInsert;

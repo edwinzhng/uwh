@@ -6,4 +6,3 @@ export * from "./practice-coach.service";
 export * from "./practice-player-status.service";
 export * from "./sporteasy.service";
 export * from "./team-generator.service";
-

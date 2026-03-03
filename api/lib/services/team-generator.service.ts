@@ -30,7 +30,9 @@ export class TeamGeneratorService {
 	/**
 	 * Assign positions to a team of players based on their preferences
 	 */
-	private assignPositionsToTeam(teamPlayers: PlayerWithTeam[]): PlayerWithTeam[] {
+	private assignPositionsToTeam(
+		teamPlayers: PlayerWithTeam[],
+	): PlayerWithTeam[] {
 		const positionRequirements = {
 			FORWARD: 2,
 			WING: 2,
@@ -143,7 +145,11 @@ export class TeamGeneratorService {
 		const blackRating = blackTeam.reduce((sum, p) => sum + p.rating, 0);
 		const whiteRating = whiteTeam.reduce((sum, p) => sum + p.rating, 0);
 
-		if (Math.abs(blackRating - whiteRating) > 2 && blackTeam.length > 0 && whiteTeam.length > 0) {
+		if (
+			Math.abs(blackRating - whiteRating) > 2 &&
+			blackTeam.length > 0 &&
+			whiteTeam.length > 0
+		) {
 			const blackHighest = blackTeam.reduce((max, p) =>
 				p.rating > max.rating ? p : max,
 			);
@@ -169,15 +175,18 @@ export class TeamGeneratorService {
 	/**
 	 * Get display name for a player, including last name if there are duplicate first names
 	 */
-	private getDisplayName(player: PlayerWithTeam, duplicateFirstNames: Set<string>): string {
+	private getDisplayName(
+		player: PlayerWithTeam,
+		duplicateFirstNames: Set<string>,
+	): string {
 		const nameParts = player.fullName.split(" ");
 		const firstName = nameParts[0];
-		
+
 		if (duplicateFirstNames.has(firstName.toLowerCase())) {
 			// Include last name for disambiguation
 			return player.fullName;
 		}
-		
+
 		return firstName;
 	}
 
@@ -186,19 +195,19 @@ export class TeamGeneratorService {
 	 */
 	private findDuplicateFirstNames(allPlayers: PlayerWithTeam[]): Set<string> {
 		const firstNameCounts = new Map<string, number>();
-		
+
 		for (const player of allPlayers) {
 			const firstName = player.fullName.split(" ")[0].toLowerCase();
 			firstNameCounts.set(firstName, (firstNameCounts.get(firstName) || 0) + 1);
 		}
-		
+
 		const duplicates = new Set<string>();
 		for (const [firstName, count] of firstNameCounts) {
 			if (count > 1) {
 				duplicates.add(firstName);
 			}
 		}
-		
+
 		return duplicates;
 	}
 
@@ -220,7 +229,9 @@ export class TeamGeneratorService {
 		const positionGroups = {
 			FORWARD: forwardPlayers,
 			WING: backPlayers.filter((p) => p.assignedPositions?.includes("WING")),
-			CENTER: backPlayers.filter((p) => p.assignedPositions?.includes("CENTER")),
+			CENTER: backPlayers.filter((p) =>
+				p.assignedPositions?.includes("CENTER"),
+			),
 			FULL_BACK: backPlayers.filter((p) =>
 				p.assignedPositions?.includes("FULL_BACK"),
 			),
@@ -247,12 +258,19 @@ export class TeamGeneratorService {
 		const allPlayers = [...teams.blackTeam, ...teams.whiteTeam];
 		const duplicateFirstNames = this.findDuplicateFirstNames(allPlayers);
 
-		const blackTeamText = this.formatTeamForDiscord(teams.blackTeam, "Black", duplicateFirstNames);
-		const whiteTeamText = this.formatTeamForDiscord(teams.whiteTeam, "White", duplicateFirstNames);
+		const blackTeamText = this.formatTeamForDiscord(
+			teams.blackTeam,
+			"Black",
+			duplicateFirstNames,
+		);
+		const whiteTeamText = this.formatTeamForDiscord(
+			teams.whiteTeam,
+			"White",
+			duplicateFirstNames,
+		);
 
 		return `${blackTeamText}\n${whiteTeamText}`;
 	}
 }
 
 export const teamGeneratorService = TeamGeneratorService.getInstance();
-

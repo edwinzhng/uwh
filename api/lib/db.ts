@@ -9,4 +9,3 @@ if (!connectionString) {
 
 // Initialize database connection
 export const db = drizzle(connectionString);
-

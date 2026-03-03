@@ -4,7 +4,7 @@ import { apiBaseUrlAtom, errorAtom, isLoadingAtom } from "./atoms";
 const store = getDefaultStore();
 
 // Player types
-export type Position = 'FORWARD' | 'WING' | 'CENTER' | 'FULL_BACK';
+export type Position = "FORWARD" | "WING" | "CENTER" | "FULL_BACK";
 
 export interface Player {
 	id: number;
@@ -43,6 +43,7 @@ export interface Practice {
 	createdAt: string;
 	updatedAt: string;
 	practiceCoaches: PracticeCoachDetails[];
+	attendingCount?: number;
 }
 
 // Coach types
@@ -99,6 +100,28 @@ export interface SportEasyEventAttendeesResponse {
 	attendees: SportEasyEventAttendee[];
 }
 
+// Settings type
+export interface Setting {
+	key: string;
+	value: string;
+	updatedAt: string;
+}
+
+// Team builder types
+export interface TeamAssignment {
+	practiceId: number;
+	gameType: "MAIN" | "YOUTH";
+	blackTeam: TeamSlot[];
+	whiteTeam: TeamSlot[];
+}
+
+export type TeamColor = "BLACK" | "WHITE";
+
+export interface TeamSlot {
+	position: Position;
+	playerId: number | null;
+}
+
 export class ApiClient {
 	private baseUrl: string;
 
@@ -111,7 +134,6 @@ export class ApiClient {
 		options: RequestInit = {},
 	): Promise<T> {
 		const url = `${this.baseUrl}${endpoint}`;
-		console.log(`🌐 API Request: ${url}`);
 
 		store.set(isLoadingAtom, true);
 		store.set(errorAtom, null);
@@ -130,7 +152,6 @@ export class ApiClient {
 			}
 
 			const data = await response.json();
-			console.log(`✅ API Response:`, data);
 			return data;
 		} catch (error) {
 			console.error(`❌ API Error:`, error);
@@ -199,11 +220,17 @@ export class ApiClient {
 		return this.get<Practice[]>("/api/practices/past");
 	}
 
-	async createPractice(practice: { date: string; notes?: string }): Promise<Practice> {
+	async createPractice(practice: {
+		date: string;
+		notes?: string;
+	}): Promise<Practice> {
 		return this.post<Practice>("/api/practices", practice);
 	}
 
-	async updatePractice(id: number, practice: { date?: string; notes?: string }): Promise<Practice> {
+	async updatePractice(
+		id: number,
+		practice: { date?: string; notes?: string },
+	): Promise<Practice> {
 		return this.put<Practice>(`/api/practices/${id}`, practice);
 	}
 
@@ -232,17 +259,31 @@ export class ApiClient {
 		return this.delete<{ message: string }>(`/api/coaches/${id}`);
 	}
 
-	async getCoachStatistics(startDate: string, endDate: string): Promise<CoachStatistics[]> {
-		return this.get<CoachStatistics[]>(`/api/coaches/statistics/hours?startDate=${startDate}&endDate=${endDate}`);
+	async getCoachStatistics(
+		startDate: string,
+		endDate: string,
+	): Promise<CoachStatistics[]> {
+		return this.get<CoachStatistics[]>(
+			`/api/coaches/statistics/hours?startDate=${startDate}&endDate=${endDate}`,
+		);
 	}
 
 	// Practice Coach methods
 	async getPracticeCoaches(practiceId: number): Promise<PracticeCoach[]> {
-		return this.get<PracticeCoach[]>(`/api/practice-coaches/practice/${practiceId}`);
+		return this.get<PracticeCoach[]>(
+			`/api/practice-coaches/practice/${practiceId}`,
+		);
 	}
 
-	async setPracticeCoaches(practiceId: number, coachIds: number[], durationMinutes: number = 90): Promise<PracticeCoach[]> {
-		return this.post<PracticeCoach[]>(`/api/practice-coaches/practice/${practiceId}`, { coachIds, durationMinutes });
+	async setPracticeCoaches(
+		practiceId: number,
+		coachIds: number[],
+		durationMinutes: number = 90,
+	): Promise<PracticeCoach[]> {
+		return this.post<PracticeCoach[]>(
+			`/api/practice-coaches/practice/${practiceId}`,
+			{ coachIds, durationMinutes },
+		);
 	}
 
 	// SportEasy sync methods
@@ -254,8 +295,34 @@ export class ApiClient {
 		return this.post<SportEasySyncResult>("/api/sporteasy/import-events", {});
 	}
 
-	async getSportEasyEventAttendees(practiceId: number): Promise<SportEasyEventAttendeesResponse> {
-		return this.get<SportEasyEventAttendeesResponse>(`/api/sporteasy/events/${practiceId}/attendees`);
+	async getSportEasyEventAttendees(
+		practiceId: number,
+	): Promise<SportEasyEventAttendeesResponse> {
+		return this.get<SportEasyEventAttendeesResponse>(
+			`/api/sporteasy/events/${practiceId}/attendees`,
+		);
+	}
+
+	async generateTeamsForPractice(
+		practiceId: number,
+		excludedIds: number[] = [],
+	): Promise<{
+		adults: { blackTeam: Player[]; whiteTeam: Player[] };
+		youth: { blackTeam: Player[]; whiteTeam: Player[] };
+		presentPlayers: Player[];
+	}> {
+		const query =
+			excludedIds.length > 0 ? `?exclude=${excludedIds.join(",")}` : "";
+		return this.get(`/api/sporteasy/events/${practiceId}/teams${query}`);
+	}
+
+	// Settings methods
+	async getSetting(key: string): Promise<Setting> {
+		return this.get<Setting>(`/api/settings/${key}`);
+	}
+
+	async upsertSetting(key: string, value: string): Promise<Setting> {
+		return this.put<Setting>(`/api/settings/${key}`, { value });
 	}
 }
 

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { type Coach, type NewCoach, coaches } from "../../db/schema";
+import { type Coach, coaches, type NewCoach } from "../../db/schema";
 import { db } from "../db";
 
 export class CoachService {
