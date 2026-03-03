@@ -1,12 +1,10 @@
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
+import { API_BASE_URL } from "@/lib/config";
+
 // API base URL
-export const apiBaseUrlAtom = atom(
-	process.env.NODE_ENV === "production"
-		? "https://uwh-api.up.railway.app"
-		: "http://localhost:3101",
-);
+export const apiBaseUrlAtom = atom(API_BASE_URL);
 
 // Loading states
 export const isLoadingAtom = atom(false);
