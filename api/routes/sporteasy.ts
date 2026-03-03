@@ -220,9 +220,9 @@ app.post("/import-events", async (c) => {
 
 		// Process each date
 		for (const [dateKey, dayEvents] of Array.from(eventsByDate.entries())) {
-			// Find primary event (one that ends with "Outdoor Practice" or "Hockey")
-			const primaryEvent = dayEvents.find(
-				(e) => e.name.endsWith("Outdoor Practice") || e.name.endsWith("Hockey"),
+			// Find primary event (one that matches practice keywords)
+			const primaryEvent = dayEvents.find((e) =>
+				practiceService.isPracticeEvent(e.name),
 			);
 
 			// Find if we already have a practice for this date

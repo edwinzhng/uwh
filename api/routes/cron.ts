@@ -24,15 +24,14 @@ app.get("/send-hockey-reminders", async (c) => {
 		// Get all future practices
 		const practices = await practiceService.getPractices();
 
-		// Filter for practices in next 48 hours that contain "Hockey" in notes
+		// Filter for practices in next 48 hours that are actual practices
 		const upcomingHockeyPractices = practices.filter((practice) => {
 			const practiceDate = new Date(practice.date);
 			const isInNext48Hours = practiceDate >= now && practiceDate <= in48Hours;
-			const hasHockey =
-				practice.notes?.toLowerCase().includes("hockey") ?? false;
+			const isPractice = practiceService.isPracticeEvent(practice.notes);
 			const notSentYet = !practice.discordReminderSentAt;
 
-			return isInNext48Hours && hasHockey && notSentYet;
+			return isInNext48Hours && isPractice && notSentYet;
 		});
 
 		console.info(

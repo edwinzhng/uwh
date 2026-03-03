@@ -30,6 +30,13 @@ export class PracticeService {
 		return PracticeService.instance;
 	}
 
+	isPracticeEvent(text: string | null | undefined): boolean {
+		if (!text) return false;
+		const lowerText = text.toLowerCase();
+		const keywords = ["training", "hockey", "practice"];
+		return keywords.some((keyword) => lowerText.includes(keyword));
+	}
+
 	async getPractices(): Promise<PracticeWithCoaches[]> {
 		// Get the start of today (midnight)
 		const today = new Date();
