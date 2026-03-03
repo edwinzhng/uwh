@@ -53,6 +53,7 @@ export const practices = pgTable("practices", {
 	notes: text("notes"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	discordReminderSentAt: timestamp("discord_reminder_sent_at"),
 });
 
 // Practice coaches join table

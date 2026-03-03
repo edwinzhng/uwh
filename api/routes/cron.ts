@@ -5,6 +5,14 @@ import { practiceService } from "../lib/services/practice.service";
 import { sportEasyService } from "../lib/services/sporteasy.service";
 import { teamGeneratorService } from "../lib/services/team-generator.service";
 
+const WEEKLY_SKILLS = [
+	"Curling",
+	"Flicking & stick control",
+	"Tackling",
+	"Positioning",
+	"Team skills (2 on 1, weave, etc.)",
+];
+
 const app = new Hono();
 
 // Send hockey practice reminders for events in the next 48 hours
@@ -22,8 +30,9 @@ app.get("/send-hockey-reminders", async (c) => {
 			const isInNext48Hours = practiceDate >= now && practiceDate <= in48Hours;
 			const hasHockey =
 				practice.notes?.toLowerCase().includes("hockey") ?? false;
+			const notSentYet = !practice.discordReminderSentAt;
 
-			return isInNext48Hours && hasHockey;
+			return isInNext48Hours && hasHockey && notSentYet;
 		});
 
 		console.info(
@@ -100,9 +109,19 @@ app.get("/send-hockey-reminders", async (c) => {
 					"Reminder: create teams for hockey practice tomorrow";
 				await discordService.sendMessage(reminderMessage);
 
+				// Get skill of the week based on week of month (1-5)
+				const practiceDate = new Date(practice.date);
+				const weekNumber = Math.ceil(practiceDate.getDate() / 7);
+				const skill = WEEKLY_SKILLS[weekNumber - 1] || "";
+
 				// Then send the auto-generated teams
-				const teamsMessageFull = `🏒 **Generated teams**\n\n${teamsMessage}`;
+				const teamsMessageFull = `🏒 **Generated teams**\n\n${teamsMessage}\n\n**Skill of the week:** ${skill}`;
 				await discordService.sendMessage(teamsMessageFull);
+
+				// Mark reminder as sent
+				await practiceService.updatePractice(practice.id, {
+					discordReminderSentAt: new Date(),
+				});
 
 				results.push({
 					practiceId: practice.id,
