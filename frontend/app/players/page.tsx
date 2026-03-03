@@ -54,39 +54,29 @@ export default function PlayersPage() {
 				title="Players"
 				subtitle={`${players.length} players · ${youthCount} youth`}
 				actions={
-					<div className="hidden md:block">
-						<Input
-							placeholder="Search players..."
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-							prefix={<Search className="h-4 w-4" />}
-							className="w-52"
+					<>
+						<SegmentedControl
+							options={[
+								{ label: "All", value: "ALL" },
+								{ label: "Adult", value: "ADULT" },
+								{ label: "Youth", value: "YOUTH" },
+							]}
+							value={filter}
+							onChange={(v) => setFilter(v as Filter)}
+							size="sm"
 						/>
-					</div>
+						<div className="flex-1 md:flex-none">
+							<Input
+								placeholder="Search players..."
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+								prefix={<Search className="h-3.5 w-3.5" />}
+								className="md:w-52 text-xs font-medium !h-[34px]"
+							/>
+						</div>
+					</>
 				}
 			/>
-
-			{/* Filter bar */}
-			<div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-[#cbdbcc] bg-[#eef4f1] gap-3">
-				<SegmentedControl
-					options={[
-						{ label: "All", value: "ALL" },
-						{ label: "Adult", value: "ADULT" },
-						{ label: "Youth", value: "YOUTH" },
-					]}
-					value={filter}
-					onChange={(v) => setFilter(v as Filter)}
-					size="sm"
-				/>
-				<div className="md:hidden flex-1 max-w-xs">
-					<Input
-						placeholder="Search players..."
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-						prefix={<Search className="h-4 w-4" />}
-					/>
-				</div>
-			</div>
 
 			{/* Column headers — desktop */}
 			<div className="hidden md:grid grid-cols-[1fr_200px_120px_80px] px-6 py-3 border-b border-[#cbdbcc]">

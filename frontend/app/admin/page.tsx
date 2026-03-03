@@ -14,6 +14,10 @@ export default function AdminPage() {
 	} | null>(null);
 	const [updatingCookie, setUpdatingCookie] = useState(false);
 	const [testingConnection, setTestingConnection] = useState(false);
+	const [testConnectionStatus, setTestConnectionStatus] = useState<{
+		ok: boolean;
+		message: string;
+	} | null>(null);
 
 	const [importPlayersStatus, setImportPlayersStatus] = useState<string | null>(
 		null,
@@ -63,7 +67,20 @@ export default function AdminPage() {
 
 	const handleTestConnection = async () => {
 		setTestingConnection(true);
-		setTimeout(() => setTestingConnection(false), 2000);
+		setTestConnectionStatus(null);
+		try {
+			const result = await apiClient.testSportEasyConnection();
+			setTestConnectionStatus(
+				result.ok
+					? { ok: true, message: "Connection successful" }
+					: { ok: false, message: result.error ?? "Connection failed" },
+			);
+		} catch {
+			setTestConnectionStatus({ ok: false, message: "Connection failed" });
+		} finally {
+			setTestingConnection(false);
+			setTimeout(() => setTestConnectionStatus(null), 6000);
+		}
 	};
 
 	const handleImportPlayers = async () => {
@@ -187,24 +204,44 @@ export default function AdminPage() {
 							/>
 						</div>
 
-						<div className="flex gap-3">
-							<Button
-								onClick={handleUpdateCookie}
-								loading={updatingCookie}
-								disabled={!cookiePaste.trim()}
-								size="md"
-							>
-								Update Cookie
-							</Button>
-							<Button
-								variant="outline"
-								onClick={handleTestConnection}
-								loading={testingConnection}
-								size="md"
-							>
-								{!testingConnection && <RefreshCw className="h-4 w-4 mr-1.5" />}
-								Test Connection
-							</Button>
+						<div className="flex flex-col gap-3">
+							<div className="flex gap-3">
+								<Button
+									onClick={handleUpdateCookie}
+									loading={updatingCookie}
+									disabled={!cookiePaste.trim()}
+									size="md"
+								>
+									Update Cookie
+								</Button>
+								<Button
+									variant="outline"
+									onClick={handleTestConnection}
+									loading={testingConnection}
+									size="md"
+								>
+									{!testingConnection && (
+										<RefreshCw className="h-4 w-4 mr-1.5" />
+									)}
+									Test Connection
+								</Button>
+							</div>
+							{testConnectionStatus && (
+								<div
+									className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border ${
+										testConnectionStatus.ok
+											? "bg-[#eef4f1] border-[#cbdbcc] text-[#021e00]"
+											: "bg-red-50 border-red-200 text-red-700"
+									}`}
+								>
+									<span
+										className={`h-2 w-2 flex-shrink-0 ${
+											testConnectionStatus.ok ? "bg-[#298a29]" : "bg-red-500"
+										}`}
+									/>
+									{testConnectionStatus.message}
+								</div>
+							)}
 						</div>
 					</div>
 				</div>

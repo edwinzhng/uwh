@@ -973,7 +973,11 @@ export default function PlanPage() {
 							<RefreshCw className="h-3.5 w-3.5 mr-1.5" />
 							Regenerate
 						</Button>
-						<Button size="sm" onClick={copyTeams}>
+						<Button
+							size="sm"
+							onClick={copyTeams}
+							className="whitespace-nowrap flex-shrink-0"
+						>
 							{copied ? (
 								<Check className="h-3.5 w-3.5 mr-1.5" />
 							) : (

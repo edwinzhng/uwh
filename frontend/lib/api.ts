@@ -295,6 +295,10 @@ export class ApiClient {
 		return this.post<SportEasySyncResult>("/api/sporteasy/import-events", {});
 	}
 
+	async testSportEasyConnection(): Promise<{ ok: boolean; error?: string }> {
+		return this.get<{ ok: boolean; error?: string }>("/api/sporteasy/test");
+	}
+
 	async getSportEasyEventAttendees(
 		practiceId: number,
 	): Promise<SportEasyEventAttendeesResponse> {

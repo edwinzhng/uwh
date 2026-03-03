@@ -39,9 +39,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 						ref={ref}
 						id={inputId}
 						className={cn(
-							"w-full h-11  border bg-white px-3 text-sm text-[#021e00]",
+							"w-full h-11 border bg-white px-3 text-sm text-[#021e00]",
 							"placeholder:text-[#8aab8a]",
-							" ",
 							"focus:outline-none focus:border-[#298a29] focus:ring-0",
 							error
 								? "border-red-400"

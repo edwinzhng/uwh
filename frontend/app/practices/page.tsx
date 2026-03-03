@@ -264,7 +264,7 @@ function PracticeRow({
 					<div className="flex-1">
 						<div className="flex items-center gap-2 mb-0.5">
 							<span className="text-[#021e00] font-bold text-sm">
-								{dateStr.split("")[0]} {dateStr.split("")[1]}
+								{dateStr}
 							</span>
 							<span className="text-[#8aab8a] text-xs">
 								{dayTime.split("· ")[0]}

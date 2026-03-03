@@ -44,15 +44,14 @@ const DialogContent = React.forwardRef<
 		<DialogPrimitive.Content
 			ref={ref}
 			className={cn(
-				"fixed z-50 bg-white shadow-xl",
+				"fixed z-50 bg-white shadow-xl h-fit max-h-[90dvh] overflow-y-auto",
 				"data-[state=open]: data-[state=closed]:",
 				"data-[state=closed]: data-[state=open]:",
 				"data-[state=closed]: data-[state=open]:",
-				// Mobile: full screen
-				"inset-0 h-[100dvh]",
-				"sm:bottom-auto sm:inset-auto sm:left-1/2 sm:-translate-x-1/2 sm:top-1/2 sm:-translate-y-1/2",
-				"sm: sm:max-w-lg sm:w-full",
-				"sm:max-h-[90vh] overflow-y-auto",
+				// Mobile: bottom sheet
+				"left-0 right-0 bottom-0 top-auto w-full",
+				// Desktop: centered modal
+				"sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-lg",
 				className,
 			)}
 			{...props}

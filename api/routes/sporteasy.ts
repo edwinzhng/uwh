@@ -7,6 +7,18 @@ import { teamGeneratorService } from "../lib/services/team-generator.service";
 
 const app = new Hono();
 
+// Test SportEasy connection
+app.get("/test", async (c) => {
+	try {
+		await sportEasyService.getProfiles();
+		return c.json({ ok: true }, 200);
+	} catch (error) {
+		const message =
+			error instanceof Error ? error.message : "Connection failed";
+		return c.json({ ok: false, error: message }, 200);
+	}
+});
+
 // Import players from SportEasy
 app.post("/import", async (c) => {
 	try {

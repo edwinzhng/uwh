@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { cn, getInitials } from "@/lib/utils";
 
 interface AvatarProps {
