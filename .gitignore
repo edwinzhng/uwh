@@ -38,5 +38,9 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
 # migration data
 /data/
+
+# convex generated
+/convex/_generated/
