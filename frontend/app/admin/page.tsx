@@ -1,10 +1,11 @@
 "use client";
 
+import { api } from "@backend/convex/_generated/api";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { apiClient } from "@/lib/api";
 
 export default function AdminPage() {
 	const [cookiePaste, setCookiePaste] = useState("");
@@ -33,29 +34,32 @@ export default function AdminPage() {
 	const [importingPractices, setImportingPractices] = useState(false);
 	const [syncingAttendance, setSyncingAttendance] = useState(false);
 
-	const fetchSettings = useCallback(async () => {
-		try {
-			const setting = await apiClient.getSetting("sporteasy_cookie");
-			if (setting?.value) {
-				setCookieStatus({
-					active: true,
-					lastSynced: setting.updatedAt,
-				});
-			}
-		} catch {
-			// No cookie set yet
-		}
-	}, []);
+	const dbCookie = useQuery(api.settings.getSettingByKey, {
+		key: "sporteasy_cookie",
+	});
+	const setSettingMutation = useMutation(api.settings.setSetting);
+
+	const testConnectionAction = useAction(api.sporteasy.testConnection);
+	const importProfilesAction = useAction(api.sporteasy.importProfiles);
+	const importEventsAction = useAction(api.sporteasy.importEvents);
 
 	useEffect(() => {
-		fetchSettings();
-	}, [fetchSettings]);
+		if (dbCookie !== undefined && dbCookie !== null) {
+			setCookieStatus({
+				active: true,
+				lastSynced: new Date(dbCookie._creationTime).toISOString(),
+			});
+		}
+	}, [dbCookie]);
 
 	const handleUpdateCookie = async () => {
 		if (!cookiePaste.trim()) return;
 		setUpdatingCookie(true);
 		try {
-			await apiClient.upsertSetting("sporteasy_cookie", cookiePaste.trim());
+			await setSettingMutation({
+				key: "sporteasy_cookie",
+				value: cookiePaste.trim(),
+			});
 			setCookieStatus({ active: true, lastSynced: new Date().toISOString() });
 			setCookiePaste("");
 		} catch (err) {
@@ -69,7 +73,7 @@ export default function AdminPage() {
 		setTestingConnection(true);
 		setTestConnectionStatus(null);
 		try {
-			const result = await apiClient.testSportEasyConnection();
+			const result = await testConnectionAction();
 			setTestConnectionStatus(
 				result.ok
 					? { ok: true, message: "Connection successful" }
@@ -87,7 +91,7 @@ export default function AdminPage() {
 		setImportingPlayers(true);
 		setImportPlayersStatus(null);
 		try {
-			const result = await apiClient.syncSportEasyPlayers();
+			const result = await importProfilesAction();
 			const parts = [];
 			if (result.imported > 0) parts.push(`${result.imported} imported`);
 			if (result.updated > 0) parts.push(`${result.updated} updated`);
@@ -108,7 +112,7 @@ export default function AdminPage() {
 		setImportingPractices(true);
 		setImportPracticesStatus(null);
 		try {
-			const result = await apiClient.syncSportEasyEvents();
+			const result = await importEventsAction();
 			const parts = [];
 			if (result.imported > 0) parts.push(`${result.imported} imported`);
 			if (result.updated > 0) parts.push(`${result.updated} updated`);

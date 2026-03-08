@@ -1,10 +1,15 @@
 "use client";
 
+import { api } from "@backend/convex/_generated/api";
+import type { Doc } from "@backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
-import { apiClient, type Player, type Position } from "@/lib/api";
 import { cn } from "@/lib/utils";
+
+export type Player = Doc<"players">;
+export type Position = "FORWARD" | "WING" | "CENTER" | "FULL_BACK";
 
 const POSITIONS: {
 	value: Position;
@@ -42,6 +47,8 @@ export function EditPlayerModal({
 		);
 	};
 
+	const updatePlayer = useMutation(api.players.updatePlayer);
+
 	const handleSave = async () => {
 		const errs: Record<string, string> = {};
 		if (!fullName.trim()) errs.fullName = "Name is required";
@@ -52,13 +59,20 @@ export function EditPlayerModal({
 		}
 		setSaving(true);
 		try {
-			const updated = await apiClient.updatePlayer(player.id, {
+			await updatePlayer({
+				id: player._id,
 				fullName: fullName.trim(),
 				positions,
 				rating,
 				youth,
 			});
-			onSaved(updated);
+			onSaved({
+				...player,
+				fullName: fullName.trim(),
+				positions,
+				rating,
+				youth,
+			});
 		} catch (err) {
 			console.error(err);
 			setSaving(false);

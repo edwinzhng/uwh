@@ -1,15 +1,23 @@
 "use client";
 
+import { api } from "@backend/convex/_generated/api";
+import type { Doc, Id } from "@backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
 import { useState } from "react";
+import type { CoachWithPlayer } from "@/components/coaches/add-edit-coach-modal";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
-import { apiClient, type Coach, type Practice } from "@/lib/api";
 import { cn, formatMonthDay } from "@/lib/utils";
 
+export type PracticeCoachJoin = Doc<"practiceCoaches"> & { coachName: string };
+export type PracticeWithCoaches = Doc<"practices"> & {
+	practiceCoaches: PracticeCoachJoin[];
+};
+
 interface AddCoachModalProps {
-	practice: Practice;
-	coaches: Coach[];
+	practice: PracticeWithCoaches;
+	coaches: CoachWithPlayer[];
 	onClose: () => void;
 	onSaved: () => void;
 }
@@ -20,11 +28,17 @@ export function AddCoachModal({
 	onClose,
 	onSaved,
 }: AddCoachModalProps) {
-	const assignedCoachIds = practice.practiceCoaches.map((pc) => pc.coachId);
-	const [selectedIds, setSelectedIds] = useState<number[]>(assignedCoachIds);
+	const assignedCoachIds = practice.practiceCoaches.map(
+		(pc: PracticeCoachJoin) => pc.coachId,
+	);
+	const [selectedIds, setSelectedIds] = useState<Id<"coaches">[]>(
+		assignedCoachIds as Id<"coaches">[],
+	);
 	const [saving, setSaving] = useState(false);
 
-	const toggle = (id: number) => {
+	const setPracticeCoaches = useMutation(api.practices.setPracticeCoaches);
+
+	const toggle = (id: Id<"coaches">) => {
 		setSelectedIds((prev) =>
 			prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
 		);
@@ -33,7 +47,10 @@ export function AddCoachModal({
 	const handleSave = async () => {
 		setSaving(true);
 		try {
-			await apiClient.setPracticeCoaches(practice.id, selectedIds);
+			await setPracticeCoaches({
+				practiceId: practice._id as Id<"practices">,
+				coachIds: selectedIds as Id<"coaches">[],
+			});
 			onSaved();
 		} catch (err) {
 			console.error(err);
@@ -56,10 +73,11 @@ export function AddCoachModal({
 							Currently Assigned
 						</p>
 						{selectedIds.map((id) => {
-							const coach = coaches.find((c) => c.id === id);
+							const coach = coaches.find((c) => c._id === id);
 							if (!coach) return null;
-							const firstName = coach.name.split(" ")[0];
-							const lastInitial = coach.name.split(" ")[1]?.[0] ?? "";
+							const name = coach.player?.fullName || "Coach";
+							const firstName = name.split(" ")[0];
+							const lastInitial = name.split(" ")[1]?.[0] ?? "";
 							return (
 								<button
 									key={id}
@@ -81,17 +99,21 @@ export function AddCoachModal({
 					{coaches
 						.filter((c) => c.isActive)
 						.map((coach) => {
-							const assigned = selectedIds.includes(coach.id);
+							const assigned = selectedIds.includes(coach._id);
 							return (
 								<div
-									key={coach.id}
+									key={coach._id}
 									className="flex items-center justify-between px-6 py-4"
 								>
 									<div className="flex items-center gap-3">
-										<Avatar name={coach.name} size="sm" />
+										<Avatar
+											name={coach.player?.fullName ?? ""}
+											size="sm"
+											bgClass={assigned ? "bg-[#021e00]" : undefined}
+										/>
 										<div>
 											<p className="text-[#021e00] font-medium text-sm">
-												{coach.name}
+												{coach.player?.fullName ?? ""}
 											</p>
 											<p className="text-[#8aab8a] text-xs">
 												{/* Could show stats here */}
@@ -100,7 +122,7 @@ export function AddCoachModal({
 									</div>
 									<button
 										type="button"
-										onClick={() => toggle(coach.id)}
+										onClick={() => toggle(coach._id)}
 										className={cn(
 											"h-8 px-4 text-xs font-semibold tracking-[0.08em] uppercase  ",
 											assigned

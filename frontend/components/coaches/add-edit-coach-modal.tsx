@@ -1,13 +1,20 @@
 "use client";
 
+import { api } from "@backend/convex/_generated/api";
+import type { Doc, Id } from "@backend/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
-import { apiClient, type Coach } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
+export type CoachWithPlayer = Doc<"coaches"> & {
+	player: Doc<"players"> | null;
+};
+
 interface AddEditCoachModalProps {
-	coach: Coach | null;
+	coach: CoachWithPlayer | null;
 	onClose: () => void;
 	onSaved: () => void;
 }
@@ -17,26 +24,36 @@ export function AddEditCoachModal({
 	onClose,
 	onSaved,
 }: AddEditCoachModalProps) {
-	const [name, setName] = useState(coach?.name ?? "");
+	const [playerId, setPlayerId] = useState<string>("");
 	const [isActive, setIsActive] = useState(coach?.isActive ?? true);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState("");
 
+	const players = useQuery(api.players.getPlayers);
+	const coaches = useQuery(api.coaches.getCoaches);
+	const createCoach = useMutation(api.coaches.createCoach);
+	const updateCoach = useMutation(api.coaches.updateCoach);
+
+	const availablePlayers = (players ?? [])
+		.filter((p) => !coaches?.some((c) => c.playerId === p._id))
+		.sort((a, b) => a.fullName.localeCompare(b.fullName));
+
 	const handleSave = async () => {
-		if (!name.trim()) {
-			setError("Name is required");
+		if (!coach && !playerId) {
+			setError("Select a player first");
 			return;
 		}
 		setSaving(true);
 		try {
 			if (coach) {
-				await apiClient.updateCoach(coach.id, { name: name.trim(), isActive });
+				await updateCoach({ id: coach._id, isActive });
 			} else {
-				await apiClient.createCoach({ name: name.trim(), isActive });
+				await createCoach({ playerId: playerId as Id<"players">, isActive });
 			}
 			onSaved();
 		} catch (err) {
 			console.error(err);
+			setError(err instanceof Error ? err.message : "An error occurred");
 			setSaving(false);
 		}
 	};
@@ -50,21 +67,40 @@ export function AddEditCoachModal({
 				<div className="px-6 pt-5 pb-4 space-y-5">
 					<div>
 						<label
-							htmlFor="coachName"
+							htmlFor="coachPlayer"
 							className="block text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-1.5"
 						>
-							Name
+							Player
 						</label>
-						<input
-							id="coachName"
-							value={name}
-							onChange={(e) => {
-								setName(e.target.value);
-								setError("");
-							}}
-							placeholder="Coach name"
-							className="w-full h-11  border border-[#cbdbcc] bg-white px-3 text-sm text-[#021e00] focus:outline-none focus:border-[#298a29]"
-						/>
+						{coach ? (
+							<div className="flex items-center gap-3 px-4 py-3 bg-[#eef4f1] border border-[#cbdbcc]">
+								<Avatar name={coach.player?.fullName ?? ""} size="sm" />
+								<div>
+									<p className="text-[#021e00] text-sm font-semibold">
+										{coach.player?.fullName}
+									</p>
+								</div>
+							</div>
+						) : (
+							<select
+								id="coachPlayer"
+								value={playerId}
+								onChange={(e) => {
+									setPlayerId(e.target.value);
+									setError("");
+								}}
+								className="w-full h-11 border border-[#cbdbcc] bg-white px-3 text-sm text-[#021e00] focus:outline-none focus:border-[#298a29]"
+							>
+								<option value="" disabled>
+									Select a player
+								</option>
+								{availablePlayers.map((p) => (
+									<option key={p._id} value={p._id}>
+										{p.fullName}
+									</option>
+								))}
+							</select>
+						)}
 						{error && <p className="text-red-500 text-xs mt-1">{error}</p>}
 					</div>
 

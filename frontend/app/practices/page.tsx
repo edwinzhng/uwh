@@ -1,12 +1,17 @@
 "use client";
 
+import { api } from "@backend/convex/_generated/api";
+import { useQuery } from "convex/react";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { AddCoachModal } from "@/components/practices/add-coach-modal";
+import {
+	AddCoachModal,
+	type PracticeCoachJoin,
+	type PracticeWithCoaches,
+} from "@/components/practices/add-coach-modal";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { apiClient, type Coach, type Practice } from "@/lib/api";
 import {
 	cn,
 	formatDayTime,
@@ -15,36 +20,21 @@ import {
 } from "@/lib/utils";
 
 export default function PracticesPage() {
-	const [practices, setPractices] = useState<Practice[]>([]);
-	const [pastPractices, setPastPractices] = useState<Practice[]>([]);
-	const [coaches, setCoaches] = useState<Coach[]>([]);
+	const upcomingRaw = useQuery(api.practices.getUpcomingPractices);
+	const pastRaw = useQuery(api.practices.getPastPractices);
+	const coachesRaw = useQuery(api.coaches.getCoaches);
+
+	const loading =
+		upcomingRaw === undefined ||
+		pastRaw === undefined ||
+		coachesRaw === undefined;
+	const practices = upcomingRaw ?? [];
+	const pastPractices = pastRaw ?? [];
+	const coaches = coachesRaw ?? [];
+
 	const [view, setView] = useState<"UPCOMING" | "PAST">("UPCOMING");
-	const [loading, setLoading] = useState(true);
-	const [addCoachPractice, setAddCoachPractice] = useState<Practice | null>(
-		null,
-	);
-
-	const fetchAll = useCallback(async () => {
-		setLoading(true);
-		try {
-			const [upcoming, past, coachList] = await Promise.all([
-				apiClient.getPractices(),
-				apiClient.getPastPractices(),
-				apiClient.getCoaches(),
-			]);
-			setPractices(upcoming);
-			setPastPractices(past);
-			setCoaches(coachList);
-		} catch (err) {
-			console.error(err);
-		} finally {
-			setLoading(false);
-		}
-	}, []);
-
-	useEffect(() => {
-		fetchAll();
-	}, [fetchAll]);
+	const [addCoachPractice, setAddCoachPractice] =
+		useState<PracticeWithCoaches | null>(null);
 
 	const displayed = view === "UPCOMING" ? practices : pastPractices;
 	const nextPractice = practices[0] ?? null;
@@ -82,23 +72,25 @@ export default function PracticesPage() {
 							</p>
 							<div className="flex flex-wrap gap-1.5 mt-2">
 								{nextPractice.practiceCoaches.length > 0
-									? nextPractice.practiceCoaches.map((pc) => (
-											<span
-												key={pc.id}
-												className="text-xs px-2 py-0.5 bg-[#cbdbcc] text-[#4a8a40] font-medium"
-											>
-												{pc.coachName.split(" ")[0]}
-												{pc.coachName.split(" ")[1]
-													? ` ${pc.coachName.split(" ")[1][0]}.`
-													: ""}
-											</span>
-										))
+									? nextPractice.practiceCoaches.map(
+											(pc: PracticeCoachJoin) => (
+												<span
+													key={pc._id}
+													className="text-xs px-2 py-0.5 bg-[#cbdbcc] text-[#4a8a40] font-medium"
+												>
+													{pc.coachName.split(" ")[0]}
+													{pc.coachName.split(" ")[1]
+														? ` ${pc.coachName.split(" ")[1][0]}.`
+														: ""}
+												</span>
+											),
+										)
 									: null}
 							</div>
 						</div>
 						<div className="text-right">
 							<Link
-								href={`/practices/${nextPractice.id}/plan`}
+								href={`/practices/${nextPractice._id}/plan`}
 								className="mt-2 inline-flex items-center justify-center h-9 px-4 bg-transparent border border-[#021e00] text-[#021e00] text-xs font-semibold tracking-[0.08em] uppercase hover:bg-[#021e00] hover:text-[#eef4f1] "
 							>
 								Plan
@@ -139,7 +131,7 @@ export default function PracticesPage() {
 				<div>
 					{displayed.map((practice, i) => (
 						<PracticeRow
-							key={practice.id}
+							key={practice._id}
 							practice={practice}
 							isFirst={i === 0 && view === "UPCOMING"}
 							onAddCoach={() => setAddCoachPractice(practice)}
@@ -155,7 +147,6 @@ export default function PracticesPage() {
 					onClose={() => setAddCoachPractice(null)}
 					onSaved={() => {
 						setAddCoachPractice(null);
-						fetchAll();
 					}}
 				/>
 			)}
@@ -168,7 +159,7 @@ function PracticeRow({
 	isFirst,
 	onAddCoach,
 }: {
-	practice: Practice;
+	practice: PracticeWithCoaches;
 	isFirst: boolean;
 	onAddCoach: () => void;
 }) {
@@ -204,9 +195,9 @@ function PracticeRow({
 				{/* Coaches */}
 				<div className="flex flex-wrap gap-1.5 items-center">
 					{practice.practiceCoaches.length > 0 ? (
-						practice.practiceCoaches.map((pc) => (
+						practice.practiceCoaches.map((pc: PracticeCoachJoin) => (
 							<span
-								key={pc.id}
+								key={pc._id}
 								className="inline-flex items-center px-2 py-1 bg-[#cbdbcc] text-[#4a8a40] text-xs font-medium"
 							>
 								{pc.coachName.split(" ")[0]}
@@ -240,7 +231,7 @@ function PracticeRow({
 				{/* Action */}
 				<div className="flex justify-end">
 					<Link
-						href={`/practices/${practice.id}/plan`}
+						href={`/practices/${practice._id}/plan`}
 						className={cn(
 							"inline-flex items-center justify-center h-9 px-4 text-xs font-semibold tracking-[0.08em] uppercase ",
 							isFirst
@@ -283,7 +274,7 @@ function PracticeRow({
 							) : (
 								practice.practiceCoaches.map((pc) => (
 									<span
-										key={pc.id}
+										key={pc._id}
 										className="text-[10px] px-1.5 py-0.5 bg-[#cbdbcc] text-[#4a8a40] "
 									>
 										{pc.coachName.split(" ")[0]}
@@ -296,7 +287,7 @@ function PracticeRow({
 						</div>
 					</div>
 					<Link
-						href={`/practices/${practice.id}/plan`}
+						href={`/practices/${practice._id}/plan`}
 						className="ml-4 inline-flex items-center justify-center h-9 px-4 border border-[#021e00] text-[#021e00] text-xs font-semibold tracking-[0.08em] uppercase "
 					>
 						Plan

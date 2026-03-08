@@ -14,8 +14,8 @@ export function getInitials(name: string): string {
 		.slice(0, 2);
 }
 
-export function formatDate(dateStr: string): string {
-	const date = new Date(dateStr);
+export function formatDate(dateVal: string | number): string {
+	const date = new Date(dateVal);
 	return date.toLocaleDateString("en-US", {
 		month: "short",
 		day: "2-digit",
@@ -23,13 +23,13 @@ export function formatDate(dateStr: string): string {
 	});
 }
 
-export function formatDateShort(dateStr: string): string {
-	const date = new Date(dateStr);
+export function formatDateShort(dateVal: string | number): string {
+	const date = new Date(dateVal);
 	return date.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
 }
 
-export function formatDayTime(dateStr: string): string {
-	const date = new Date(dateStr);
+export function formatDayTime(dateVal: string | number): string {
+	const date = new Date(dateVal);
 	const day = date.toLocaleDateString("en-US", { weekday: "short" });
 	const time = date.toLocaleTimeString("en-US", {
 		hour: "numeric",
@@ -38,15 +38,15 @@ export function formatDayTime(dateStr: string): string {
 	return `${day} · ${time}`;
 }
 
-export function formatMonthDay(dateStr: string): string {
-	const date = new Date(dateStr);
+export function formatMonthDay(dateVal: string | number): string {
+	const date = new Date(dateVal);
 	return date
 		.toLocaleDateString("en-US", { month: "short", day: "2-digit" })
 		.toUpperCase();
 }
 
 export function getPracticeTitle(practice: {
-	date: string;
+	date: string | number;
 	notes?: string | null;
 }): string {
 	if (practice.notes) {
@@ -78,5 +78,5 @@ export function getSeasonLabel(start: string, end: string): string {
 	const e = new Date(end);
 	const sy = s.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 	const ey = e.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-	return `${sy} – ${ey}`;
+	return `${sy} - ${ey}`;
 }

@@ -23,8 +23,15 @@
 ## React Usage
 
 - Use declarative JSX
-- Use jotai for state management
+- Use Convex generated types and queries when possible, which provides automatic reactive UI updates, and see `CONVEX.md` for specific examples
+- Use jotai for state management when Convex is not used
 - Create subcomponents for complex UI elements, avoid massive monolithic components
 - Separate out query logic into reusable hooks
 - Use proper TypeScript discriminated unions for message types
 - Prefer one React component per file
+- Sort imports when saving and remove all unused imports
+
+## Backend Usage
+
+- The backend uses [Convex](https://docs.convex.dev/home)
+- If anything about Convex is unclear or you are unsure how to use a specific feature, go to the docs site (https://docs.convex.dev/home) to search and read the official documentation before proceeding

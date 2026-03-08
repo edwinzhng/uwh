@@ -1,1 +1,0 @@
-ALTER TABLE "practices" ADD COLUMN "discord_reminder_sent_at" timestamp;
