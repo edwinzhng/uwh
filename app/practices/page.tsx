@@ -1,6 +1,5 @@
 "use client";
 
-import { api } from "@backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Plus } from "lucide-react";
 import Link from "next/link";
@@ -12,6 +11,7 @@ import {
 	type PracticeWithCoaches,
 } from "@/components/practices/add-coach-modal";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { api } from "@/convex/_generated/api";
 import {
 	cn,
 	formatDayTime,

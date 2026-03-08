@@ -1,11 +1,11 @@
 "use client";
 
-import { api } from "@backend/convex/_generated/api";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { api } from "@/convex/_generated/api";
 
 export default function AdminPage() {
 	const [cookiePaste, setCookiePaste] = useState("");

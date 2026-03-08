@@ -1,13 +1,13 @@
 "use client";
 
-import { api } from "@backend/convex/_generated/api";
-import type { Doc, Id } from "@backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import type { CoachWithPlayer } from "@/components/coaches/add-edit-coach-modal";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { api } from "@/convex/_generated/api";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { cn, formatMonthDay } from "@/lib/utils";
 
 export type PracticeCoachJoin = Doc<"practiceCoaches"> & { coachName: string };

@@ -1,6 +1,5 @@
 "use client";
 
-import { api } from "@backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useAtom } from "jotai";
 import { Plus } from "lucide-react";
@@ -14,6 +13,7 @@ import { PracticeHistoryList } from "@/components/coaches/practice-history-list"
 import { type Season, SeasonPicker } from "@/components/coaches/season-picker";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { api } from "@/convex/_generated/api";
 import { selectedCoachIdAtom } from "@/lib/atoms";
 
 function generateSeasons(): Season[] {

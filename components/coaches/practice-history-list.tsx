@@ -1,4 +1,4 @@
-import type { Doc } from "@backend/convex/_generated/dataModel";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { formatMonthDay, getPracticeTitle } from "@/lib/utils";
 
 export function PracticeHistoryList({

@@ -1,12 +1,12 @@
 "use client";
 
-import { api } from "@backend/convex/_generated/api";
-import type { Doc, Id } from "@backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { api } from "@/convex/_generated/api";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 
 export type CoachWithPlayer = Doc<"coaches"> & {

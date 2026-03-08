@@ -1,6 +1,6 @@
-import type { Doc } from "@backend/convex/_generated/dataModel";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge, PositionBadge } from "@/components/ui/badge";
+import type { Doc } from "@/convex/_generated/dataModel";
 
 export type Player = Doc<"players">;
 

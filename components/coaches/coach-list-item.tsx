@@ -1,5 +1,5 @@
-import type { Doc } from "@backend/convex/_generated/dataModel";
 import { Avatar } from "@/components/ui/avatar";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 
 export function CoachListItem({

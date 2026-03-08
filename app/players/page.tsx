@@ -1,6 +1,5 @@
 "use client";
 
-import { api } from "@backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Search } from "lucide-react";
 import { useState } from "react";
@@ -10,6 +9,7 @@ import type { Player } from "@/components/players/player-row";
 import { PlayerRow } from "@/components/players/player-row";
 import { Input } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { api } from "@/convex/_generated/api";
 
 type Filter = "ALL" | "ADULT" | "YOUTH";
 

@@ -1,7 +1,5 @@
 "use client";
 
-import { api } from "@backend/convex/_generated/api";
-import type { Id } from "@backend/convex/_generated/dataModel";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { useAction, useQuery } from "convex/react";
 import { Check, Copy, RefreshCw } from "lucide-react";
@@ -24,6 +22,8 @@ import {
 } from "@/components/practices/plan/types";
 import { Button } from "@/components/ui/button";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { cn, formatMonthDay, getPracticeTitle } from "@/lib/utils";
 
 const mapTeam = (teamObj: Player[], teamColor: TeamColor): RosterState => {
