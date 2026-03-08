@@ -35,6 +35,17 @@ export const getCoachById = query({
   },
 });
 
+export const getCoachByPlayerId = query({
+  args: { playerId: v.id("players") },
+  handler: async (ctx, args) => {
+    const coach = await ctx.db
+      .query("coaches")
+      .withIndex("by_playerId", (q) => q.eq("playerId", args.playerId))
+      .first();
+    return coach;
+  },
+});
+
 export const createCoach = mutation({
   args: {
     playerId: v.id("players"),

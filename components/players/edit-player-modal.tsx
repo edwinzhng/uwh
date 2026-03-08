@@ -2,8 +2,8 @@
 
 import { api } from "@backend/convex/_generated/api";
 import type { Doc } from "@backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -38,8 +38,18 @@ export function EditPlayerModal({
 	const [rating, setRating] = useState(player.rating);
 	const [positions, setPositions] = useState<Position[]>([...player.positions]);
 	const [youth, setYouth] = useState(player.youth);
+	const [isCoach, setIsCoach] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
+
+	// Coach check
+	const coach = useQuery(api.coaches.getCoachByPlayerId, {
+		playerId: player._id,
+	});
+
+	useEffect(() => {
+		if (coach) setIsCoach(true);
+	}, [coach]);
 
 	const togglePosition = (pos: Position) => {
 		setPositions((prev) =>
@@ -48,6 +58,8 @@ export function EditPlayerModal({
 	};
 
 	const updatePlayer = useMutation(api.players.updatePlayer);
+	const createCoach = useMutation(api.coaches.createCoach);
+	const deleteCoach = useMutation(api.coaches.deleteCoach);
 
 	const handleSave = async () => {
 		const errs: Record<string, string> = {};
@@ -66,6 +78,14 @@ export function EditPlayerModal({
 				rating,
 				youth,
 			});
+
+			// Handle coach status
+			if (isCoach && !coach) {
+				await createCoach({ playerId: player._id });
+			} else if (!isCoach && coach) {
+				await deleteCoach({ id: coach._id });
+			}
+
 			onSaved({
 				...player,
 				fullName: fullName.trim(),
@@ -233,6 +253,33 @@ export function EditPlayerModal({
 								Youth
 							</button>
 						</div>
+					</div>
+
+					{/* Coach toggle */}
+					<div className="flex items-center justify-between py-2.5 px-4 border border-[#cbdbcc] bg-[#f8faf9]">
+						<div className="flex flex-col">
+							<span className="text-[10px] font-bold tracking-[0.1em] uppercase text-[#4a8a40]">
+								Coach Status
+							</span>
+							<span className="text-[10px] text-[#8aab8a]">
+								Register this player as a coach
+							</span>
+						</div>
+						<button
+							type="button"
+							onClick={() => setIsCoach(!isCoach)}
+							className={cn(
+								"relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+								isCoach ? "bg-[#298a29]" : "bg-[#cbdbcc]",
+							)}
+						>
+							<span
+								className={cn(
+									"inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+									isCoach ? "translate-x-6" : "translate-x-1",
+								)}
+							/>
+						</button>
 					</div>
 				</div>
 

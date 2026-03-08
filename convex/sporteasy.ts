@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
+
 
 export interface SportEasySyncResult {
 	total: number;
@@ -171,11 +173,14 @@ export const internalSyncProfiles = internalMutation({
 					(p) => p.sporteasyId === sportEasyId,
 				);
 				if (existingPlayer) {
-					await ctx.db.patch(existingPlayer._id, {
-						fullName,
-						email,
-						parentEmail,
-					});
+					const patch: Partial<Doc<"players">> = {};
+					if (!existingPlayer.fullName) patch.fullName = fullName;
+					if (!existingPlayer.email) patch.email = email;
+					if (!existingPlayer.parentEmail) patch.parentEmail = parentEmail;
+
+					if (Object.keys(patch).length > 0) {
+						await ctx.db.patch(existingPlayer._id, patch);
+					}
 				}
 			} else {
 				importResults.imported++;

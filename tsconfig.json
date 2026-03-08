@@ -20,7 +20,7 @@
 		],
 		"paths": {
 			"@/*": ["./*"],
-			"@backend/*": ["../backend/*"]
+			"@backend/*": ["./convex/*"]
 		}
 	},
 	"include": [

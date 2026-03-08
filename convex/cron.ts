@@ -1,6 +1,6 @@
 import { cronJobs } from "convex/server";
 import { v } from "convex/values";
-import { internal, api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import {
 	internalAction,
 	internalMutation,
@@ -74,12 +74,12 @@ export const sendHockeyReminders = internalAction({
 				}
 
 				// Get attendees using the action we defined in sporteasy.ts
-				const eventResponse = await ctx.runAction(
+				const eventResponse = (await ctx.runAction(
 					api.sporteasy.getEventAttendees,
 					{
 						practiceId: practice._id,
 					},
-				) as SportEasyEventDetail;
+				)) as SportEasyEventDetail;
 
 				const presentSportEasyIds = new Set<number>();
 				for (const attendee of eventResponse.attendees) {

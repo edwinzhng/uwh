@@ -4,43 +4,34 @@ Web app for the Calgary Underwater Hockey Club, built on Convex and Next.js.
 
 ## Tech Stack
 
-### Frontend
-- Next.js, Radix UI, Tailwind, Jotai
-
-### Backend
+### Frontend & Backend
+- Next.js (App Router)
 - Convex
+- Radix UI, Tailwind CSS
+- Jotai
 
 ### Tooling
 - Biome, Bun
 
 ## Getting Started
 
-### Prerequisites
-- [Bun](https://bun.sh) installed globally
-- Node.js 18+ (for Next.js compatibility)
+1. **Install dependencies:**
+   ```bash
+   bun install
+   ```
 
-### Installation
+2. **Start the development environment:**
+   ```bash
+   bun run dev
+   ```
+   This command starts both the Convex backend and the Next.js dev server.
 
-1. **Set up environment variables:**
+3. **Deployment:**
+   This project is configured for deployment on **Vercel** with the **Convex** integration.
 
-```bash
-cd api
-cp env.example .env.local
-```
-
-2. **Install dependencies:**
-```bash
-cd ..
-bun install
-```
-
-3. **Start development servers:**
-```bash
-bun dev
-```
-
-This will start both the Next.js frontend (http://localhost:3000) and Convex backend (http://localhost:3210) concurrently.
-
-## License
-
-MIT
+## Project Structure
+- `app/`: Next.js application routes and pages
+- `components/`: React components
+- `convex/`: Backend logic and data model
+- `lib/`: Utility functions
+- `public/`: Static assets
