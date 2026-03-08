@@ -118,11 +118,11 @@ function formatForDiscord(
 
 export default function PlanPage() {
 	const params = useParams();
-	const practiceIdString = params.id as Id<"practices"> | undefined;
+	const idOrSporteasyId = params.id as string | undefined;
 
 	const practice = useQuery(
-		api.practices.getPracticeById,
-		practiceIdString ? { id: practiceIdString } : "skip",
+		api.practices.getPracticeByUrlId,
+		idOrSporteasyId ? { idOrSporteasyId } : "skip",
 	);
 
 	const allPlayersData = useQuery(api.players.getPlayers);
@@ -225,11 +225,11 @@ export default function PlanPage() {
 	const runAutoAssign = useCallback(() => {
 		setIsRegenerating(true);
 		fetchGeneratedTeams(
-			practiceIdString || null,
+			practice?._id || null,
 			excludedIds,
 			youthCollapsed,
 		).finally(() => setIsRegenerating(false));
-	}, [practiceIdString, excludedIds, fetchGeneratedTeams, youthCollapsed]);
+	}, [practice?._id, excludedIds, fetchGeneratedTeams, youthCollapsed]);
 
 	// Copy Teams
 	const [copied, setCopied] = useState(false);

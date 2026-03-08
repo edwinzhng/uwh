@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
+import { internalQuery, mutation, query } from "./_generated/server";
 
 export const getPlayers = query({
 	args: {},
@@ -116,5 +117,20 @@ export const deletePlayer = mutation({
 	handler: async (ctx, args) => {
 		await ctx.db.delete(args.id);
 		return { success: true };
+	},
+});
+
+export const getPlayersBySportEasyIds = internalQuery({
+	args: { sporteasyIds: v.array(v.number()) },
+	handler: async (ctx, args) => {
+		const players = await Promise.all(
+			args.sporteasyIds.map(async (sid) => {
+				return await ctx.db
+					.query("players")
+					.withIndex("by_sporteasyId", (q) => q.eq("sporteasyId", sid))
+					.unique();
+			}),
+		);
+		return players.filter((p): p is Doc<"players"> => p !== null);
 	},
 });

@@ -12,6 +12,7 @@ export interface SportEasySyncResult {
 import {
 	type ActionCtx,
 	action,
+	internalAction,
 	internalMutation,
 	internalQuery,
 } from "./_generated/server";
@@ -200,7 +201,7 @@ export const internalSyncProfiles = internalMutation({
 	},
 });
 
-export const getEventAttendees = action({
+export const getEventAttendees = internalAction({
 	args: { practiceId: v.id("practices") },
 	handler: async (ctx, args): Promise<SportEasyEventDetail> => {
 		const practice = await ctx.runQuery(

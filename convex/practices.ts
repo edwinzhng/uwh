@@ -1,5 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
+import type { QueryCtx } from "./_generated/server";
+import { internalQuery, mutation, query } from "./_generated/server";
 
 export const getPractices = query({
 	args: {},
@@ -92,56 +94,106 @@ export const getPracticeById = query({
 	},
 });
 
+export const getPracticeByUrlId = query({
+	args: { idOrSporteasyId: v.string() },
+	handler: async (ctx, args) => {
+		const practiceId = ctx.db.normalizeId("practices", args.idOrSporteasyId);
+		if (practiceId) {
+			return await ctx.db.get(practiceId);
+		}
+
+		const sporteasyId = Number.parseInt(args.idOrSporteasyId, 10);
+		if (!Number.isNaN(sporteasyId)) {
+			return await ctx.db
+				.query("practices")
+				.withIndex("by_sporteasyId", (q) => q.eq("sporteasyId", sporteasyId))
+				.unique();
+		}
+
+		return null;
+	},
+});
+
 export const getPracticeDetails = query({
 	args: { id: v.id("practices") },
 	handler: async (ctx, args) => {
 		const practice = await ctx.db.get(args.id);
 		if (!practice) return null;
 
-		// Get coaches
-		const practiceCoaches = await ctx.db
-			.query("practiceCoaches")
-			.withIndex("by_practiceId", (q) => q.eq("practiceId", args.id))
-			.collect();
-
-		const coachesWithDetails = await Promise.all(
-			practiceCoaches.map(async (pc) => {
-				const coach = await ctx.db.get(pc.coachId);
-				if (!coach) return null;
-				const player = await ctx.db.get(coach.playerId);
-				return {
-					...pc,
-					coach: {
-						...coach,
-						player,
-					},
-				};
-			}),
-		);
-
-		// Get player statuses
-		const playerStatuses = await ctx.db
-			.query("practicePlayerStatuses")
-			.withIndex("by_practiceId", (q) => q.eq("practiceId", args.id))
-			.collect();
-
-		const statusesWithPlayers = await Promise.all(
-			playerStatuses.map(async (ps) => {
-				const player = await ctx.db.get(ps.playerId);
-				return {
-					...ps,
-					player,
-				};
-			}),
-		);
-
-		return {
-			...practice,
-			coaches: coachesWithDetails.filter(Boolean),
-			playerStatuses: statusesWithPlayers,
-		};
+		return await getFullPracticeDetails(ctx, practice);
 	},
 });
+
+export const getPracticeDetailsByUrlId = query({
+	args: { idOrSporteasyId: v.string() },
+	handler: async (ctx, args) => {
+		const practiceId = ctx.db.normalizeId("practices", args.idOrSporteasyId);
+		let practice: Doc<"practices"> | null = null;
+		if (practiceId) {
+			practice = await ctx.db.get(practiceId);
+		} else {
+			const sporteasyId = Number.parseInt(args.idOrSporteasyId, 10);
+			if (!Number.isNaN(sporteasyId)) {
+				practice = await ctx.db
+					.query("practices")
+					.withIndex("by_sporteasyId", (q) => q.eq("sporteasyId", sporteasyId))
+					.unique();
+			}
+		}
+
+		if (!practice) return null;
+		return await getFullPracticeDetails(ctx, practice);
+	},
+});
+
+async function getFullPracticeDetails(
+	ctx: QueryCtx,
+	practice: Doc<"practices">,
+) {
+	const practiceId = practice._id;
+	// Get coaches
+	const practiceCoaches = await ctx.db
+		.query("practiceCoaches")
+		.withIndex("by_practiceId", (q) => q.eq("practiceId", practiceId))
+		.collect();
+
+	const coachesWithDetails = await Promise.all(
+		practiceCoaches.map(async (pc) => {
+			const coach = await ctx.db.get(pc.coachId);
+			if (!coach) return null;
+			const player = await ctx.db.get(coach.playerId);
+			return {
+				...pc,
+				coach: {
+					...coach,
+					player,
+				},
+			};
+		}),
+	);
+
+	// Get player statuses
+	const playerStatuses = await ctx.db
+		.query("practicePlayerStatuses")
+		.withIndex("by_practiceId", (q) => q.eq("practiceId", practiceId))
+		.collect();
+
+	const statusesWithPlayers = await Promise.all(
+		playerStatuses.map(async (ps) => {
+			const player = await ctx.db.get(ps.playerId);
+			return {
+				...ps,
+				player,
+			};
+		}),
+	);
+
+	return {
+		...practice,
+		coaches: coachesWithDetails.filter(Boolean),
+		playerStatuses: statusesWithPlayers,
+	};
+}
 
 export const createPractice = mutation({
 	args: {
@@ -212,79 +264,24 @@ export const deletePractice = mutation({
 	},
 });
 
-export const addCoachToPractice = mutation({
-	args: {
-		practiceId: v.id("practices"),
-		coachId: v.id("coaches"),
-		durationMinutes: v.optional(v.number()),
-	},
-	handler: async (ctx, args) => {
-		const existing = await ctx.db
-			.query("practiceCoaches")
-			.withIndex("by_practiceId_and_coachId", (q) =>
-				q.eq("practiceId", args.practiceId).eq("coachId", args.coachId),
-			)
-			.unique();
+export const getUpcomingWeeklyPractices = internalQuery({
+	args: {},
+	handler: async (ctx: QueryCtx) => {
+		const now = Date.now();
+		const in48Hours = now + 48 * 60 * 60 * 1000;
 
-		if (existing) {
-			throw new Error("Coach already assigned to this practice");
-		}
-
-		return await ctx.db.insert("practiceCoaches", {
-			practiceId: args.practiceId,
-			coachId: args.coachId,
-			durationMinutes: args.durationMinutes ?? 90,
-		});
-	},
-});
-
-export const removeCoachFromPractice = mutation({
-	args: {
-		practiceId: v.id("practices"),
-		coachId: v.id("coaches"),
-	},
-	handler: async (ctx, args) => {
-		const existing = await ctx.db
-			.query("practiceCoaches")
-			.withIndex("by_practiceId_and_coachId", (q) =>
-				q.eq("practiceId", args.practiceId).eq("coachId", args.coachId),
-			)
-			.unique();
-
-		if (existing) {
-			await ctx.db.delete(existing._id);
-		}
-		return { success: true };
-	},
-});
-
-export const setPracticeCoaches = mutation({
-	args: {
-		practiceId: v.id("practices"),
-		coachIds: v.array(v.id("coaches")),
-		durationMinutes: v.optional(v.number()),
-	},
-	handler: async (ctx, args) => {
-		// Remove existing
-		const existing = await ctx.db
-			.query("practiceCoaches")
-			.withIndex("by_practiceId", (q) => q.eq("practiceId", args.practiceId))
+		const allPractices = await ctx.db
+			.query("practices")
+			.withIndex("by_date", (q) => q.gte("date", now).lte("date", in48Hours))
 			.collect();
 
-		for (const pc of existing) {
-			await ctx.db.delete(pc._id);
-		}
-
-		// Add new ones
-		for (const coachId of args.coachIds) {
-			await ctx.db.insert("practiceCoaches", {
-				practiceId: args.practiceId,
-				coachId: coachId,
-				durationMinutes: args.durationMinutes ?? 90,
-			});
-		}
-
-		return { success: true };
+		return allPractices.filter((p) => {
+			const isPractice =
+				p.notes?.toLowerCase().includes("training") ||
+				p.notes?.toLowerCase().includes("hockey") ||
+				p.notes?.toLowerCase().includes("practice");
+			return isPractice && !p.discordReminderSentAt;
+		});
 	},
 });
 

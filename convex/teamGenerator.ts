@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 
@@ -318,9 +318,12 @@ export const generateTeams = action({
 		combineYouth: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args): Promise<GenerateTeamsResult> => {
-		const eventDetail = await ctx.runAction(api.sporteasy.getEventAttendees, {
-			practiceId: args.practiceId,
-		});
+		const eventDetail = await ctx.runAction(
+			internal.sporteasy.getEventAttendees,
+			{
+				practiceId: args.practiceId,
+			},
+		);
 
 		const attendingSporteasyIds = new Set(
 			eventDetail.attendees

@@ -90,7 +90,7 @@ export default function PracticesPage() {
 						</div>
 						<div className="text-right">
 							<Link
-								href={`/practices/${nextPractice._id}/plan`}
+								href={`/practices/${nextPractice.sporteasyId ?? nextPractice._id}/plan`}
 								className="mt-2 inline-flex items-center justify-center h-9 px-4 bg-transparent border border-[#021e00] text-[#021e00] text-xs font-semibold tracking-[0.08em] uppercase hover:bg-[#021e00] hover:text-[#eef4f1] "
 							>
 								Plan
@@ -231,7 +231,7 @@ function PracticeRow({
 				{/* Action */}
 				<div className="flex justify-end">
 					<Link
-						href={`/practices/${practice._id}/plan`}
+						href={`/practices/${practice.sporteasyId ?? practice._id}/plan`}
 						className={cn(
 							"inline-flex items-center justify-center h-9 px-4 text-xs font-semibold tracking-[0.08em] uppercase ",
 							isFirst
@@ -287,7 +287,7 @@ function PracticeRow({
 						</div>
 					</div>
 					<Link
-						href={`/practices/${practice._id}/plan`}
+						href={`/practices/${practice.sporteasyId ?? practice._id}/plan`}
 						className="ml-4 inline-flex items-center justify-center h-9 px-4 border border-[#021e00] text-[#021e00] text-xs font-semibold tracking-[0.08em] uppercase "
 					>
 						Plan

@@ -36,7 +36,9 @@ export function AddCoachModal({
 	);
 	const [saving, setSaving] = useState(false);
 
-	const setPracticeCoaches = useMutation(api.practices.setPracticeCoaches);
+	const setPracticeCoaches = useMutation(
+		api.practiceCoaches.setPracticeCoaches,
+	);
 
 	const toggle = (id: Id<"coaches">) => {
 		setSelectedIds((prev) =>
