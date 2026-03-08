@@ -6,7 +6,7 @@
 		"dev:frontend": "next dev",
 		"dev:backend": "convex dev",
 		"dev": "concurrently \"bun run dev:frontend\" \"bun run dev:backend\"",
-		"build": "next build",
+		"build": "convex codegen && next build",
 		"start": "next start",
 		"lint": "biome check --write .",
 		"prepare": "husky"
