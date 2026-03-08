@@ -3,11 +3,11 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev:frontend": "bun --bun next dev",
+		"dev:frontend": "next dev",
 		"dev:backend": "convex dev",
 		"dev": "concurrently \"bun run dev:frontend\" \"bun run dev:backend\"",
-		"build": "bun --bun next build",
-		"start": "bun --bun next start",
+		"build": "next build",
+		"start": "next start",
 		"lint": "biome check --write .",
 		"prepare": "husky"
 	},

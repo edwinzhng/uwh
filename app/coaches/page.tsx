@@ -24,19 +24,19 @@ function generateSeasons(): Season[] {
 
 	return [
 		{
-			label: `${seasonStartYear + 1}–${seasonStartYear + 2} Season`,
+			label: `${seasonStartYear + 1}-${seasonStartYear + 2} Season`,
 			value: `${seasonStartYear + 1}-${seasonStartYear + 2}`,
 			start: `${seasonStartYear + 1}-09-01`,
 			end: `${seasonStartYear + 2}-08-31`,
 		},
 		{
-			label: `${seasonStartYear}–${seasonStartYear + 1} Season`,
+			label: `${seasonStartYear}-${seasonStartYear + 1} Season`,
 			value: `${seasonStartYear}-${seasonStartYear + 1}`,
 			start: `${seasonStartYear}-09-01`,
 			end: `${seasonStartYear + 1}-08-31`,
 		},
 		{
-			label: `${seasonStartYear - 1}–${seasonStartYear} Season`,
+			label: `${seasonStartYear - 1}-${seasonStartYear} Season`,
 			value: `${seasonStartYear - 1}-${seasonStartYear}`,
 			start: `${seasonStartYear - 1}-09-01`,
 			end: `${seasonStartYear}-08-31`,
