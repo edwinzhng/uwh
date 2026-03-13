@@ -214,7 +214,47 @@ export const getEventAttendees = internalAction({
 			throw new Error("No SportEasy ID associated with this practice");
 
 		const cookie = await getCookie(ctx);
-		const url = `${SPORTEASY_V2_1_BASE_URL}/teams/${SPORTEASY_TEAM_ID}/events/${practice.sporteasyId}`;
+
+		let targetEventId = practice.sporteasyId;
+
+		try {
+			const eventsUrl = `${SPORTEASY_V2_1_BASE_URL}/teams/${SPORTEASY_TEAM_ID}/events/?season_id=${SPORTEASY_SEASON_ID}`;
+			const eventsResponse = await fetch(eventsUrl, {
+				method: "GET",
+				headers: {
+					Cookie: cookie,
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (eventsResponse.ok) {
+				const data = (await eventsResponse.json()) as {
+					results: SportEasyEvent[];
+				};
+				const events = data.results || [];
+
+				const practiceDateObj = new Date(practice.date);
+				const dateKey = practiceDateObj.toISOString().split("T")[0];
+
+				const dayEvents = events.filter((e) => {
+					if (e.is_cancelled) return false;
+					return new Date(e.start_at).toISOString().split("T")[0] === dateKey;
+				});
+
+				if (dayEvents.length > 1) {
+					const hockeyEvent = dayEvents.find((e) =>
+						e.name.trim().toLowerCase().endsWith("hockey"),
+					);
+					if (hockeyEvent) {
+						targetEventId = hockeyEvent.id;
+					}
+				}
+			}
+		} catch (e) {
+			console.error("Failed to fetch events for filtering:", e);
+		}
+
+		const url = `${SPORTEASY_V2_1_BASE_URL}/teams/${SPORTEASY_TEAM_ID}/events/${targetEventId}`;
 
 		const response = await fetch(url, {
 			method: "GET",
