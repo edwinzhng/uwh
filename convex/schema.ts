@@ -2,6 +2,42 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+	fitnessTests: defineTable({
+		archivedAt: v.optional(v.number()),
+		name: v.string(),
+		unit: v.union(
+			v.literal("TIME"),
+			v.literal("COUNT"),
+			v.literal("PASS_FAIL"),
+		),
+		updatedAt: v.number(),
+	})
+		.index("by_archivedAt_and_name", ["archivedAt", "name"])
+		.index("by_name", ["name"])
+		.index("by_updatedAt", ["updatedAt"]),
+
+	fitnessTestSessions: defineTable({
+		fitnessTestId: v.id("fitnessTests"),
+		date: v.number(),
+		updatedAt: v.number(),
+	})
+		.index("by_fitnessTestId", ["fitnessTestId"])
+		.index("by_fitnessTestId_and_date", ["fitnessTestId", "date"]),
+
+	fitnessTestResults: defineTable({
+		fitnessTestSessionId: v.id("fitnessTestSessions"),
+		playerId: v.id("players"),
+		value: v.string(),
+		notes: v.optional(v.string()),
+		updatedAt: v.number(),
+	})
+		.index("by_fitnessTestSessionId", ["fitnessTestSessionId"])
+		.index("by_playerId", ["playerId"])
+		.index("by_playerId_and_fitnessTestSessionId", [
+			"playerId",
+			"fitnessTestSessionId",
+		]),
+
 	players: defineTable({
 		fullName: v.string(),
 		email: v.optional(v.string()),

@@ -3,7 +3,9 @@
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import type { ReactNode } from "react";
 
-const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "http://localhost:3210";
+const rawConvexUrl =
+	process.env.NEXT_PUBLIC_CONVEX_URL ?? "http://localhost:3210";
+const convexUrl = rawConvexUrl.split(/\s+/).at(0) ?? "http://localhost:3210";
 
 const convex = new ConvexReactClient(convexUrl);
 
