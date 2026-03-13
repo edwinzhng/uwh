@@ -51,6 +51,61 @@ export const getFitnessTestValuePlaceholder = (
 	return "";
 };
 
+export const sanitizeFitnessResultInput = (
+	unit: FitnessTestUnit,
+	value: string,
+): string => {
+	if (unit === fitnessTestUnits.COUNT) {
+		return value.replace(/\D/g, "");
+	}
+
+	if (unit === fitnessTestUnits.TIME) {
+		const cleaned = value.replace(/[^\d:]/g, "");
+		const [minutes = "", ...secondsParts] = cleaned.split(":");
+		if (secondsParts.length === 0) {
+			return minutes;
+		}
+
+		return `${minutes}:${secondsParts.join("").slice(0, 2)}`;
+	}
+
+	return value;
+};
+
+export const normalizeFitnessResultValue = (
+	unit: FitnessTestUnit,
+	value: string,
+): string => {
+	const trimmedValue = value.trim();
+	if (!trimmedValue) return "";
+
+	if (unit === fitnessTestUnits.COUNT) {
+		if (!/^\d+$/.test(trimmedValue)) {
+			throw new Error("Count results must be whole numbers");
+		}
+
+		return `${Number(trimmedValue)}`;
+	}
+
+	if (unit === fitnessTestUnits.TIME) {
+		const paddedValue = /^\d+$/.test(trimmedValue)
+			? `${trimmedValue}:00`
+			: /^\d+:$/.test(trimmedValue)
+				? `${trimmedValue}00`
+				: /^\d+:\d$/.test(trimmedValue)
+					? trimmedValue.replace(/:(\d)$/, ":0$1")
+					: trimmedValue;
+
+		if (!/^\d+:\d{2}$/.test(paddedValue)) {
+			throw new Error("Time results must be minutes or minutes:seconds");
+		}
+
+		return paddedValue;
+	}
+
+	return trimmedValue;
+};
+
 export const getFitnessTestBestLabel = (
 	value: string | undefined,
 	unit: FitnessTestUnit,

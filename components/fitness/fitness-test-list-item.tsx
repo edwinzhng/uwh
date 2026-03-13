@@ -18,7 +18,7 @@ export const FitnessTestListItem = ({
 	onSelect,
 }: FitnessTestListItemProps): React.JSX.Element => {
 	const latestSessionLabel = fitnessTest.latestSessionDate
-		? `Last session ${formatDate(fitnessTest.latestSessionDate)} · ${fitnessTest.latestSessionResultCount} players`
+		? `Last: ${formatDate(fitnessTest.latestSessionDate)} · ${fitnessTest.latestSessionResultCount} players`
 		: "No results yet";
 
 	return (
@@ -32,18 +32,11 @@ export const FitnessTestListItem = ({
 					: "bg-transparent",
 			)}
 		>
-			<div className="flex items-start justify-between gap-3">
-				<div>
-					<p className="text-[#021e00] text-[28px] leading-none font-medium md:text-lg">
-						{fitnessTest.name}
-					</p>
-					<p className="mt-2 text-xs text-[#6c866d]">{latestSessionLabel}</p>
-				</div>
-				{isSelected && (
-					<span className="bg-[#edf6ed] px-2 py-1 text-[10px] font-semibold tracking-[0.08em] uppercase text-[#298a29]">
-						Selected
-					</span>
-				)}
+			<div>
+				<p className="text-[#021e00] text-[28px] leading-none font-medium md:text-lg">
+					{fitnessTest.name}
+				</p>
+				<p className="mt-2 text-xs text-[#6c866d]">{latestSessionLabel}</p>
 			</div>
 		</button>
 	);

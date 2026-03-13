@@ -17,9 +17,9 @@ export function Sidebar() {
 	const pathname = usePathname();
 
 	return (
-		<aside className="hidden md:flex flex-col w-[210px] min-h-screen bg-[#021e00] flex-shrink-0 border-r border-[#1a3a00]">
+		<aside className="hidden md:flex min-h-screen w-[196px] flex-shrink-0 flex-col border-r border-[#1a3a00] bg-[#021e00]">
 			{/* Brand */}
-			<div className="px-5 pt-6 pb-8">
+			<div className="px-4 pt-5 pb-7">
 				<p className="text-[#8aab8a] text-[10px] font-semibold tracking-[0.15em] uppercase mb-1">
 					Calgary
 				</p>
@@ -32,7 +32,7 @@ export function Sidebar() {
 			</div>
 
 			{/* Nav */}
-			<nav className="flex-1 px-3 space-y-0.5">
+			<nav className="flex-1 space-y-0.5 px-2.5">
 				{navItems.map(({ href, label, icon: Icon }) => {
 					const active =
 						pathname === href ||
@@ -43,7 +43,7 @@ export function Sidebar() {
 							key={href}
 							href={href}
 							className={cn(
-								"flex items-center gap-3 px-3 py-2.5  text-sm font-medium ",
+								"flex items-center gap-2.5 px-2.5 py-2 text-sm font-medium",
 								active
 									? "bg-[#298a29] text-white"
 									: "text-[#8aab8a] hover:text-[#eef4f1] hover:bg-white/5",

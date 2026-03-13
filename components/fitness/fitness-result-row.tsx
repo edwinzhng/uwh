@@ -2,13 +2,14 @@ import type { Doc } from "@/convex/_generated/dataModel";
 import {
 	type FitnessTestUnit,
 	fitnessTestUnits,
+	normalizeFitnessResultValue,
 	type PassFailResultValue,
 	passFailResultValues,
+	sanitizeFitnessResultInput,
 } from "@/lib/fitness";
 import { cn, getInitials } from "@/lib/utils";
 
 export interface FitnessResultDraft {
-	notes: string;
 	value: string;
 }
 
@@ -16,7 +17,6 @@ interface FitnessResultRowProps {
 	bestResult: string;
 	draft: FitnessResultDraft;
 	layout: "desktop" | "mobile";
-	onNotesChange: (notes: string) => void;
 	onValueChange: (value: string) => void;
 	player: Doc<"players">;
 	unit: FitnessTestUnit;
@@ -68,8 +68,14 @@ const renderValueControl = ({
 	return (
 		<input
 			value={draft.value}
-			onChange={(event) => onValueChange(event.target.value)}
+			onBlur={(event) =>
+				onValueChange(normalizeFitnessResultValue(unit, event.target.value))
+			}
+			onChange={(event) =>
+				onValueChange(sanitizeFitnessResultInput(unit, event.target.value))
+			}
 			placeholder={unit === fitnessTestUnits.TIME ? "e.g. 5:24" : "e.g. 42"}
+			inputMode="numeric"
 			className={cn(
 				"h-10 border px-3 text-[#021e00] focus:outline-none focus:border-[#298a29]",
 				layout === "desktop" ? "w-full max-w-[160px]" : "w-full",
@@ -85,7 +91,6 @@ export const FitnessResultRow = ({
 	bestResult,
 	draft,
 	layout,
-	onNotesChange,
 	onValueChange,
 	player,
 	unit,
@@ -94,35 +99,27 @@ export const FitnessResultRow = ({
 		return (
 			<div className="border-b border-[#cbdbcc] bg-white px-4 py-4">
 				<div className="flex items-center gap-3">
-					<div className="flex h-9 w-9 items-center justify-center bg-[#dde6dd] text-sm text-[#284628]">
+					<div className="flex h-9 w-9 shrink-0 items-center justify-center bg-[#dde6dd] text-sm text-[#284628]">
 						{getInitials(player.fullName)}
 					</div>
 					<div>
 						<p className="text-sm font-medium text-[#021e00]">
 							{player.fullName}
 						</p>
-						<p className="text-xs text-[#8aab8a]">Best {bestResult}</p>
+						<p className="text-xs text-[#8aab8a]">Personal best {bestResult}</p>
 					</div>
 				</div>
-				<div className="mt-3 flex gap-2">
-					<div className="flex-1">
-						{renderValueControl({ draft, layout, onValueChange, unit })}
-					</div>
-					<input
-						value={draft.notes}
-						onChange={(event) => onNotesChange(event.target.value)}
-						placeholder="Optional note"
-						className="h-10 w-[122px] border border-[#cbdbcc] bg-white px-3 text-xs text-[#021e00] focus:outline-none focus:border-[#298a29]"
-					/>
+				<div className="mt-3">
+					{renderValueControl({ draft, layout, onValueChange, unit })}
 				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="grid grid-cols-[minmax(0,1.8fr)_minmax(90px,0.7fr)_minmax(140px,0.9fr)_minmax(160px,1fr)] items-center gap-4 border-x border-b border-[#cbdbcc] bg-white px-4 py-3">
+		<div className="grid grid-cols-[minmax(136px,1.16fr)_minmax(72px,0.64fr)_minmax(140px,1fr)] items-center gap-4 border-x border-b border-[#cbdbcc] bg-white px-4 py-3">
 			<div className="flex min-w-0 items-center gap-3">
-				<div className="flex h-9 w-9 items-center justify-center bg-[#dde6dd] text-sm text-[#284628]">
+				<div className="flex h-9 w-9 shrink-0 items-center justify-center bg-[#dde6dd] text-sm text-[#284628]">
 					{getInitials(player.fullName)}
 				</div>
 				<div className="min-w-0">
@@ -138,12 +135,6 @@ export const FitnessResultRow = ({
 			<div className="min-w-0">
 				{renderValueControl({ draft, layout, onValueChange, unit })}
 			</div>
-			<input
-				value={draft.notes}
-				onChange={(event) => onNotesChange(event.target.value)}
-				placeholder="Optional note"
-				className="h-10 w-full min-w-0 border border-[#cbdbcc] bg-white px-3 text-sm text-[#021e00] focus:outline-none focus:border-[#298a29]"
-			/>
 		</div>
 	);
 };

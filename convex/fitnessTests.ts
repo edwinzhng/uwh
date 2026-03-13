@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { fitnessTestUnits } from "../lib/fitness";
+import { fitnessTestUnits, normalizeFitnessResultValue } from "../lib/fitness";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 
@@ -32,6 +32,26 @@ const formatValueForUnit = (
 		: Number.isInteger(value)
 			? `${value}`
 			: value.toFixed(1);
+
+const formatSummaryPeople = (
+	names: string[],
+): { secondary: string; secondaryTitle?: string } => {
+	if (names.length === 0) {
+		return { secondary: "Pending" };
+	}
+
+	if (names.length === 1) {
+		return {
+			secondary: names[0],
+			secondaryTitle: names[0],
+		};
+	}
+
+	return {
+		secondary: `${names[0]} +${names.length - 1}`,
+		secondaryTitle: names.join(", "),
+	};
+};
 
 const isBetterResult = (
 	unit: (typeof fitnessTestUnits)[keyof typeof fitnessTestUnits],
@@ -174,6 +194,20 @@ export const getFitnessTestWorkspace = query({
 			}))
 			.sort((left, right) => right.date - left.date);
 
+		const playerIds = [...new Set(allResults.map((result) => result.playerId))];
+		const playerNameById = new Map(
+			(
+				await Promise.all(
+					playerIds.map(async (playerId) => {
+						const player = await ctx.db.get(playerId);
+						return player ? [playerId, player.fullName] : undefined;
+					}),
+				)
+			).filter(
+				(entry): entry is [Id<"players">, string] => entry !== undefined,
+			),
+		);
+
 		const summaryCards = (() => {
 			if (allResults.length === 0) {
 				return fitnessTest.unit === fitnessTestUnits.PASS_FAIL
@@ -231,6 +265,38 @@ export const getFitnessTestWorkspace = query({
 			const average =
 				numericValues.reduce((sum, value) => sum + value, 0) /
 				numericValues.length;
+			const lowestValue = Math.min(...numericValues);
+			const highestValue = Math.max(...numericValues);
+			const lowestNames = [
+				...new Set(
+					allResults
+						.filter((result) => {
+							const numericValue =
+								fitnessTest.unit === fitnessTestUnits.TIME
+									? getTimeValueInSeconds(result.value)
+									: Number(result.value);
+							return numericValue === lowestValue;
+						})
+						.map((result) => playerNameById.get(result.playerId))
+						.filter((name): name is string => name !== undefined),
+				),
+			];
+			const highestNames = [
+				...new Set(
+					allResults
+						.filter((result) => {
+							const numericValue =
+								fitnessTest.unit === fitnessTestUnits.TIME
+									? getTimeValueInSeconds(result.value)
+									: Number(result.value);
+							return numericValue === highestValue;
+						})
+						.map((result) => playerNameById.get(result.playerId))
+						.filter((name): name is string => name !== undefined),
+				),
+			];
+			const lowestSummary = formatSummaryPeople(lowestNames);
+			const highestSummary = formatSummaryPeople(highestNames);
 
 			return [
 				{
@@ -243,19 +309,15 @@ export const getFitnessTestWorkspace = query({
 				},
 				{
 					label: "Lowest",
-					secondary: `${allResults.length} recorded results`,
-					value: formatValueForUnit(
-						fitnessTest.unit,
-						Math.min(...numericValues),
-					),
+					secondary: lowestSummary.secondary,
+					secondaryTitle: lowestSummary.secondaryTitle,
+					value: formatValueForUnit(fitnessTest.unit, lowestValue),
 				},
 				{
 					label: "Highest",
-					secondary: `${allResults.length} recorded results`,
-					value: formatValueForUnit(
-						fitnessTest.unit,
-						Math.max(...numericValues),
-					),
+					secondary: highestSummary.secondary,
+					secondaryTitle: highestSummary.secondaryTitle,
+					value: formatValueForUnit(fitnessTest.unit, highestValue),
 				},
 			];
 		})();
@@ -370,10 +432,15 @@ export const saveFitnessTestSession = mutation({
 			throw new Error("Fitness test session not found");
 		}
 
+		const fitnessTest = await ctx.db.get(session.fitnessTestId);
+		if (!fitnessTest) {
+			throw new Error("Fitness test not found");
+		}
+
 		const cleanedEntries = args.entries
 			.map((entry) => ({
 				playerId: entry.playerId,
-				value: entry.value.trim(),
+				value: normalizeFitnessResultValue(fitnessTest.unit, entry.value),
 				notes: entry.notes?.trim() || undefined,
 			}))
 			.filter((entry) => entry.value);

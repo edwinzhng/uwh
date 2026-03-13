@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { Pencil, Plus, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { AddFitnessPlayerRow } from "@/components/fitness/add-fitness-player-row";
 import { EditFitnessTestModal } from "@/components/fitness/edit-fitness-test-modal";
 import { EditFitnessTestSessionModal } from "@/components/fitness/edit-fitness-test-session-modal";
 import {
@@ -38,7 +39,6 @@ const buildDraftMap = (
 		(results ?? []).map((result) => [
 			result.playerId,
 			{
-				notes: result.notes ?? "",
 				value: result.value,
 			},
 		]),
@@ -47,7 +47,6 @@ const buildDraftMap = (
 const normalizeDraftValue = (
 	draft: FitnessResultDraft | undefined,
 ): FitnessResultDraft => ({
-	notes: draft?.notes.trim() ?? "",
 	value: draft?.value.trim() ?? "",
 });
 
@@ -59,10 +58,7 @@ const hasDraftChanges = (
 	playerIds.some((playerId) => {
 		const currentDraft = normalizeDraftValue(currentDrafts[playerId]);
 		const nextDraft = normalizeDraftValue(nextDrafts[playerId]);
-		return (
-			currentDraft.notes !== nextDraft.notes ||
-			currentDraft.value !== nextDraft.value
-		);
+		return currentDraft.value !== nextDraft.value;
 	});
 
 export default function FitnessPage(): React.JSX.Element {
@@ -78,6 +74,10 @@ export default function FitnessPage(): React.JSX.Element {
 	const [search, setSearch] = useState("");
 	const [playerFilter, setPlayerFilter] = useState<PlayerFilter>("ALL");
 	const [drafts, setDrafts] = useState<FitnessDraftMap>({});
+	const [sessionPlayerIds, setSessionPlayerIds] = useState<
+		Array<Id<"players">>
+	>([]);
+	const [isTestMenuOpen, setIsTestMenuOpen] = useState(false);
 	const [isSessionMenuOpen, setIsSessionMenuOpen] = useState(false);
 	const [testModalMode, setTestModalMode] = useState<"create" | "edit">();
 	const [sessionModalMode, setSessionModalMode] = useState<"create" | "edit">();
@@ -103,6 +103,8 @@ export default function FitnessPage(): React.JSX.Element {
 
 	useEffect(() => {
 		if (selectedTestId === undefined) {
+			setIsTestMenuOpen(false);
+			setSessionPlayerIds([]);
 			setSelectedSessionId(undefined);
 			setIsSessionMenuOpen(false);
 			setDrafts({});
@@ -112,6 +114,8 @@ export default function FitnessPage(): React.JSX.Element {
 			return;
 		}
 
+		setIsTestMenuOpen(false);
+		setSessionPlayerIds([]);
 		setSelectedSessionId(undefined);
 		setIsSessionMenuOpen(false);
 		setDrafts({});
@@ -150,6 +154,9 @@ export default function FitnessPage(): React.JSX.Element {
 	}, [selectedSessionId, workspace]);
 
 	useEffect(() => {
+		setSessionPlayerIds(
+			(workspace?.results ?? []).map((result) => result.playerId),
+		);
 		setDrafts(buildDraftMap(workspace?.results));
 		setSaveState({
 			isSaving: false,
@@ -168,16 +175,17 @@ export default function FitnessPage(): React.JSX.Element {
 		[search, tests],
 	);
 
-	const players = useMemo(
+	const allPlayers = useMemo(
 		(): Array<Doc<"players">> =>
-			[...playersData]
-				.sort((left, right) => left.fullName.localeCompare(right.fullName))
-				.filter((player) => {
-					if (playerFilter === "ADULT") return !player.youth;
-					if (playerFilter === "YOUTH") return player.youth;
-					return true;
-				}),
-		[playerFilter, playersData],
+			[...playersData].sort((left, right) =>
+				left.fullName.localeCompare(right.fullName),
+			),
+		[playersData],
+	);
+	const playersById = useMemo(
+		(): Record<string, Doc<"players">> =>
+			Object.fromEntries(allPlayers.map((player) => [player._id, player])),
+		[allPlayers],
 	);
 
 	const bestResultsByPlayerId = useMemo(
@@ -206,6 +214,27 @@ export default function FitnessPage(): React.JSX.Element {
 
 	const selectedTest = tests.find((test) => test._id === selectedTestId);
 	const selectedSession = workspace?.selectedSession;
+	const sessionPlayers = useMemo(
+		(): Array<Doc<"players">> =>
+			sessionPlayerIds
+				.map((playerId) => playersById[playerId])
+				.filter((player): player is Doc<"players"> => player !== undefined),
+		[playersById, sessionPlayerIds],
+	);
+	const visibleSessionPlayers = useMemo(
+		(): Array<Doc<"players">> =>
+			sessionPlayers.filter((player) => {
+				if (playerFilter === "ADULT") return !player.youth;
+				if (playerFilter === "YOUTH") return player.youth;
+				return true;
+			}),
+		[playerFilter, sessionPlayers],
+	);
+	const availablePlayers = useMemo(
+		(): Array<Doc<"players">> =>
+			allPlayers.filter((player) => !sessionPlayerIds.includes(player._id)),
+		[allPlayers, sessionPlayerIds],
+	);
 
 	const updateDraft = (
 		playerId: Id<"players">,
@@ -215,10 +244,22 @@ export default function FitnessPage(): React.JSX.Element {
 		setDrafts((currentDrafts) => ({
 			...currentDrafts,
 			[playerId]: {
-				notes: currentDrafts[playerId]?.notes ?? "",
-				value: currentDrafts[playerId]?.value ?? "",
 				[key]: value,
 			},
+		}));
+		setSaveState({
+			isSaving: false,
+		});
+	};
+	const handleAddPlayer = (playerId: Id<"players">): void => {
+		setSessionPlayerIds((currentPlayerIds) =>
+			currentPlayerIds.includes(playerId)
+				? currentPlayerIds
+				: [...currentPlayerIds, playerId],
+		);
+		setDrafts((currentDrafts) => ({
+			...currentDrafts,
+			[playerId]: currentDrafts[playerId] ?? { value: "" },
 		}));
 		setSaveState({
 			isSaving: false,
@@ -240,10 +281,9 @@ export default function FitnessPage(): React.JSX.Element {
 
 		try {
 			await saveFitnessTestSession({
-				entries: playersData.map((player) => ({
-					notes: drafts[player._id]?.notes.trim() || undefined,
-					playerId: player._id,
-					value: drafts[player._id]?.value.trim() ?? "",
+				entries: sessionPlayerIds.map((playerId) => ({
+					playerId,
+					value: drafts[playerId]?.value.trim() ?? "",
 				})),
 				sessionId: selectedSessionId,
 			});
@@ -265,6 +305,12 @@ export default function FitnessPage(): React.JSX.Element {
 		);
 		setSelectedSessionId(nextSession?._id);
 		setIsSessionMenuOpen(false);
+	};
+
+	const handleTestChange = (testValue: string): void => {
+		const nextTest = tests.find((test) => test._id === testValue);
+		setSelectedTestId(nextTest?._id);
+		setIsTestMenuOpen(false);
 	};
 
 	const headerSubtitle = loadingTests
@@ -289,7 +335,7 @@ export default function FitnessPage(): React.JSX.Element {
 			/>
 
 			<div className="hidden min-h-[calc(100vh-115px)] md:flex">
-				<div className="flex min-h-full w-[360px] flex-shrink-0 flex-col border-r border-[#cbdbcc] bg-[#fbfcfb]">
+				<div className="flex min-h-full w-[300px] flex-shrink-0 flex-col border-r border-[#cbdbcc] bg-[#fbfcfb]">
 					<div className="border-b border-[#cbdbcc] bg-[#eef4f1] px-5 py-4">
 						<Input
 							placeholder="Search tests..."
@@ -337,110 +383,116 @@ export default function FitnessPage(): React.JSX.Element {
 								</div>
 							</div>
 
-							<div className="px-7 py-5">
-								<div className="flex flex-wrap items-end justify-between gap-5">
-									<div className="min-w-[280px] flex-1">
-										<label
-											className="block text-xs font-semibold tracking-[0.08em] uppercase text-[#4a8a40]"
-											htmlFor="fitness-session-trigger"
-										>
-											Sessions
-										</label>
-										<div className="relative mt-2">
-											<button
-												id="fitness-session-trigger"
-												type="button"
-												onClick={() =>
-													setIsSessionMenuOpen((currentOpen) => !currentOpen)
-												}
-												className="flex h-9 items-center gap-1 border border-[#cbdbcc] px-3 text-xs font-medium text-[#021e00] hover:border-[#021e00]"
+							<div className="py-5">
+								<div className="px-7">
+									<div className="flex flex-wrap items-end justify-between gap-5">
+										<div className="min-w-[280px] flex-1">
+											<label
+												className="block text-xs font-semibold tracking-[0.08em] uppercase text-[#4a8a40]"
+												htmlFor="fitness-session-trigger"
 											>
-												{selectedSession
-													? formatDate(selectedSession.date)
-													: "Select a session"}{" "}
-												▾
-											</button>
-											{isSessionMenuOpen ? (
-												<div className="absolute left-0 top-full z-20 mt-1 min-w-[180px] border border-[#cbdbcc] bg-white shadow-lg">
-													{workspace.sessions.length === 0 ? (
-														<div className="px-4 py-2.5 text-sm text-[#6c866d]">
-															No sessions yet
-														</div>
-													) : (
-														workspace.sessions.map((session) => (
-															<button
-																key={session._id}
-																type="button"
-																onClick={() => handleSessionChange(session._id)}
-																className={cn(
-																	"block w-full px-4 py-2.5 text-left text-sm hover:bg-[#eef4f1]",
-																	session._id === selectedSessionId
-																		? "font-medium text-[#298a29]"
-																		: "text-[#021e00]",
-																)}
-															>
-																{formatDate(session.date)}
-															</button>
-														))
-													)}
-												</div>
-											) : null}
+												Sessions
+											</label>
+											<div className="relative mt-2">
+												<button
+													id="fitness-session-trigger"
+													type="button"
+													onClick={() =>
+														setIsSessionMenuOpen((currentOpen) => !currentOpen)
+													}
+													className="flex h-9 items-center gap-1 border border-[#cbdbcc] px-3 text-xs font-medium text-[#021e00] hover:border-[#021e00]"
+												>
+													{selectedSession
+														? formatDate(selectedSession.date)
+														: "Select a session"}{" "}
+													▾
+												</button>
+												{isSessionMenuOpen ? (
+													<div className="absolute left-0 top-full z-20 mt-1 min-w-[180px] border border-[#cbdbcc] bg-white shadow-lg">
+														{workspace.sessions.length === 0 ? (
+															<div className="px-4 py-2.5 text-sm text-[#6c866d]">
+																No sessions yet
+															</div>
+														) : (
+															workspace.sessions.map((session) => (
+																<button
+																	key={session._id}
+																	type="button"
+																	onClick={() =>
+																		handleSessionChange(session._id)
+																	}
+																	className={cn(
+																		"block w-full px-4 py-2.5 text-left text-sm hover:bg-[#eef4f1]",
+																		session._id === selectedSessionId
+																			? "font-medium text-[#298a29]"
+																			: "text-[#021e00]",
+																	)}
+																>
+																	{formatDate(session.date)}
+																</button>
+															))
+														)}
+													</div>
+												) : null}
+											</div>
 										</div>
-									</div>
 
-									<div className="flex flex-wrap items-center gap-3">
-										<Button
-											className="whitespace-nowrap px-5"
-											size="sm"
-											variant="outline"
-											onClick={() => setSessionModalMode("create")}
-										>
-											<Plus className="mr-1.5 h-4 w-4" />
-											New Session
-										</Button>
+										<div className="flex flex-wrap items-center gap-3">
+											<Button
+												className="whitespace-nowrap px-5"
+												size="sm"
+												variant="outline"
+												onClick={() => setSessionModalMode("create")}
+											>
+												<Plus className="mr-1.5 h-4 w-4" />
+												New Session
+											</Button>
+										</div>
 									</div>
 								</div>
 
-								<div className="-mx-7 mt-5 border-t border-[#cbdbcc] px-7 pt-5 flex flex-wrap items-center justify-between gap-5">
-									<div className="max-w-full">
-										<SegmentedControl
-											options={[
-												{ label: "All", value: "ALL" },
-												{ label: "Adult", value: "ADULT" },
-												{ label: "Youth", value: "YOUTH" },
-											]}
-											size="sm"
-											value={playerFilter}
-											onChange={(value) => setPlayerFilter(value)}
-										/>
-									</div>
+								<div className="mt-5 border-t border-[#cbdbcc]">
+									<div className="flex flex-wrap items-center justify-between gap-5 px-7 pt-5">
+										<div className="max-w-full">
+											<SegmentedControl
+												options={[
+													{ label: "All", value: "ALL" },
+													{ label: "Adult", value: "ADULT" },
+													{ label: "Youth", value: "YOUTH" },
+												]}
+												size="sm"
+												value={playerFilter}
+												onChange={(value) => setPlayerFilter(value)}
+											/>
+										</div>
 
-									<div className="flex flex-wrap items-center gap-3">
-										<Button
-											className="whitespace-nowrap px-4"
-											disabled={!selectedSession}
-											size="sm"
-											variant="outline"
-											onClick={() => setSessionModalMode("edit")}
-										>
-											Edit
-										</Button>
-										<Button
-											className="min-w-[126px] whitespace-nowrap"
-											disabled={!selectedSession || !hasUnsavedChanges}
-											loading={saveState.isSaving}
-											size="sm"
-											onClick={() => void handleSaveSession()}
-										>
-											Save Changes
-										</Button>
+										<div className="flex flex-wrap items-center gap-3">
+											<Button
+												className="whitespace-nowrap px-4"
+												disabled={!selectedSession}
+												size="sm"
+												variant="outline"
+												onClick={() => setSessionModalMode("edit")}
+											>
+												Edit
+											</Button>
+											<Button
+												className="min-w-[126px] whitespace-nowrap"
+												disabled={!selectedSession || !hasUnsavedChanges}
+												loading={saveState.isSaving}
+												size="sm"
+												onClick={() => void handleSaveSession()}
+											>
+												Save Changes
+											</Button>
+										</div>
 									</div>
 								</div>
 
 								{saveState.message || saveState.error ? (
 									<p
 										className={cn(
-											"mt-4 text-sm",
+											"mt-4 px-7 text-sm",
 											saveState.error ? "text-red-600" : "text-[#298a29]",
 										)}
 									>
@@ -451,41 +503,46 @@ export default function FitnessPage(): React.JSX.Element {
 
 							<div className="flex-1 px-7 py-5">
 								{selectedSession ? (
-									<>
-										<div className="grid grid-cols-[minmax(0,1.8fr)_minmax(90px,0.7fr)_minmax(140px,0.9fr)_minmax(160px,1fr)] gap-4 border border-[#cbdbcc] bg-[#eef4f1] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
-											<span>Player</span>
-											<span>Best Result</span>
-											<span>Today</span>
-											<span>Notes</span>
-										</div>
-										{players.length === 0 ? (
-											<div className="border-x border-b border-[#cbdbcc] bg-white px-4 py-10 text-center">
-												<p className="text-base font-medium text-[#021e00]">
-													No results
-												</p>
+									<div className="overflow-x-auto">
+										<div className="min-w-[700px]">
+											<div className="grid grid-cols-[minmax(136px,1.16fr)_minmax(72px,0.64fr)_minmax(140px,1fr)] gap-4 border border-[#cbdbcc] bg-[#eef4f1] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
+												<span>Player</span>
+												<span>Personal Best</span>
+												<span>Session Result</span>
 											</div>
-										) : (
-											players.map((player) => (
-												<FitnessResultRow
-													key={player._id}
-													bestResult={getFitnessTestBestLabel(
-														bestResultsByPlayerId[player._id],
-														selectedTest.unit,
-													)}
-													draft={drafts[player._id] ?? { notes: "", value: "" }}
-													layout="desktop"
-													onNotesChange={(value) =>
-														updateDraft(player._id, "notes", value)
-													}
-													onValueChange={(value) =>
-														updateDraft(player._id, "value", value)
-													}
-													player={player}
-													unit={selectedTest.unit}
-												/>
-											))
-										)}
-									</>
+											{visibleSessionPlayers.length === 0 ? (
+												<div className="border-x border-b border-[#cbdbcc] bg-white px-4 py-10 text-center">
+													<p className="text-base font-medium text-[#021e00]">
+														{sessionPlayerIds.length === 0
+															? "No results"
+															: "No players in this filter"}
+													</p>
+												</div>
+											) : (
+												visibleSessionPlayers.map((player) => (
+													<FitnessResultRow
+														key={player._id}
+														bestResult={getFitnessTestBestLabel(
+															bestResultsByPlayerId[player._id],
+															selectedTest.unit,
+														)}
+														draft={drafts[player._id] ?? { value: "" }}
+														layout="desktop"
+														onValueChange={(value) =>
+															updateDraft(player._id, "value", value)
+														}
+														player={player}
+														unit={selectedTest.unit}
+													/>
+												))
+											)}
+											<AddFitnessPlayerRow
+												candidates={availablePlayers}
+												layout="desktop"
+												onAddPlayer={handleAddPlayer}
+											/>
+										</div>
+									</div>
 								) : (
 									<div className="border border-[#cbdbcc] bg-white px-6 py-12 text-center">
 										<p className="text-xl font-medium text-[#021e00]">
@@ -509,7 +566,10 @@ export default function FitnessPage(): React.JSX.Element {
 											<p className="mt-2 text-xl font-medium leading-tight text-[#021e00]">
 												{card.value}
 											</p>
-											<p className="mt-2 text-sm text-[#6c866d]">
+											<p
+												className="mt-2 text-sm text-[#6c866d]"
+												title={card.secondaryTitle}
+											>
 												{card.secondary}
 											</p>
 										</div>
@@ -538,6 +598,49 @@ export default function FitnessPage(): React.JSX.Element {
 
 			<div className="md:hidden">
 				<div className="border-b border-[#cbdbcc] bg-[#eef4f1] px-4 py-4">
+					<div className="pb-4">
+						<label
+							className="block text-xs font-semibold tracking-[0.08em] uppercase text-[#4a8a40]"
+							htmlFor="fitness-test-trigger-mobile"
+						>
+							Tests
+						</label>
+						<div className="relative mt-2">
+							<button
+								id="fitness-test-trigger-mobile"
+								type="button"
+								onClick={() => setIsTestMenuOpen((currentOpen) => !currentOpen)}
+								className="flex h-9 items-center gap-1 border border-[#cbdbcc] px-3 text-xs font-medium text-[#021e00] hover:border-[#021e00]"
+							>
+								{selectedTest?.name ?? "Select a test"} ▾
+							</button>
+							{isTestMenuOpen ? (
+								<div className="absolute left-0 top-full z-20 mt-1 min-w-[165px] border border-[#cbdbcc] bg-white shadow-lg">
+									{filteredTests.length === 0 ? (
+										<div className="px-4 py-2.5 text-sm text-[#6c866d]">
+											No tests found
+										</div>
+									) : (
+										filteredTests.map((test) => (
+											<button
+												key={test._id}
+												type="button"
+												onClick={() => handleTestChange(test._id)}
+												className={cn(
+													"block w-full px-4 py-2.5 text-left text-sm hover:bg-[#eef4f1]",
+													test._id === selectedTestId
+														? "font-medium text-[#298a29]"
+														: "text-[#021e00]",
+												)}
+											>
+												{test.name}
+											</button>
+										))
+									)}
+								</div>
+							) : null}
+						</div>
+					</div>
 					{selectedTest ? (
 						<div className="flex items-center gap-2 pb-4">
 							<p className="min-w-0 text-3xl font-medium leading-none text-[#021e00]">
@@ -667,40 +770,50 @@ export default function FitnessPage(): React.JSX.Element {
 						</div>
 					) : selectedTest ? (
 						selectedSession ? (
-							players.length === 0 ? (
+							visibleSessionPlayers.length === 0 ? (
 								<div className="px-4 py-5">
-									<div className="grid grid-cols-[minmax(0,1.8fr)_minmax(90px,0.7fr)_minmax(140px,0.9fr)_minmax(160px,1fr)] gap-4 border border-[#cbdbcc] bg-[#eef4f1] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
+									<div className="grid grid-cols-[minmax(0,1.7fr)_minmax(90px,0.75fr)_minmax(140px,0.95fr)] gap-4 border border-[#cbdbcc] bg-[#eef4f1] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
 										<span>Player</span>
-										<span>Best Result</span>
-										<span>Today</span>
-										<span>Notes</span>
+										<span>Personal Best</span>
+										<span>Session Result</span>
 									</div>
 									<div className="border-x border-b border-[#cbdbcc] bg-white px-4 py-10 text-center">
 										<p className="text-base font-medium text-[#021e00]">
-											No results
+											{sessionPlayerIds.length === 0
+												? "No results"
+												: "No players in this filter"}
 										</p>
 									</div>
+									<AddFitnessPlayerRow
+										candidates={availablePlayers}
+										layout="mobile"
+										onAddPlayer={handleAddPlayer}
+									/>
 								</div>
 							) : (
-								players.map((player) => (
-									<FitnessResultRow
-										key={player._id}
-										bestResult={getFitnessTestBestLabel(
-											bestResultsByPlayerId[player._id],
-											selectedTest.unit,
-										)}
-										draft={drafts[player._id] ?? { notes: "", value: "" }}
+								<>
+									{visibleSessionPlayers.map((player) => (
+										<FitnessResultRow
+											key={player._id}
+											bestResult={getFitnessTestBestLabel(
+												bestResultsByPlayerId[player._id],
+												selectedTest.unit,
+											)}
+											draft={drafts[player._id] ?? { value: "" }}
+											layout="mobile"
+											onValueChange={(value) =>
+												updateDraft(player._id, "value", value)
+											}
+											player={player}
+											unit={selectedTest.unit}
+										/>
+									))}
+									<AddFitnessPlayerRow
+										candidates={availablePlayers}
 										layout="mobile"
-										onNotesChange={(value) =>
-											updateDraft(player._id, "notes", value)
-										}
-										onValueChange={(value) =>
-											updateDraft(player._id, "value", value)
-										}
-										player={player}
-										unit={selectedTest.unit}
+										onAddPlayer={handleAddPlayer}
 									/>
-								))
+								</>
 							)
 						) : (
 							<div className="px-5 py-10 text-center">
@@ -734,7 +847,12 @@ export default function FitnessPage(): React.JSX.Element {
 								<p className="mt-2 text-xl font-medium leading-tight text-[#021e00]">
 									{card.value}
 								</p>
-								<p className="mt-2 text-sm text-[#6c866d]">{card.secondary}</p>
+								<p
+									className="mt-2 text-sm text-[#6c866d]"
+									title={card.secondaryTitle}
+								>
+									{card.secondary}
+								</p>
 							</div>
 						))}
 					</div>
