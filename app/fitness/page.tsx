@@ -8,7 +8,7 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { api } from "@/convex/_generated/api";
-import { fitnessTestUnitLabels, fitnessTestUnits } from "@/lib/fitness";
+import { fitnessTestUnits } from "@/lib/fitness";
 import { cn } from "@/lib/utils";
 
 type OverviewQuery = FunctionReturnType<
@@ -243,9 +243,10 @@ export default function FitnessOverviewPage(): React.JSX.Element {
 	const loading = overviewData === undefined;
 	const tests = overviewData ?? [];
 	const [playerFilter, setPlayerFilter] = useState<PlayerFilter>("ALL");
+	const [activeTabId, setActiveTabId] = useState<string | undefined>(undefined);
 
-	const testsWithResults = tests.filter((t) => t.playerStats.length > 0);
-	const testsWithoutResults = tests.filter((t) => t.playerStats.length === 0);
+	const activeTab =
+		tests.find((t) => t.test._id === activeTabId) ?? tests.at(0);
 
 	return (
 		<div>
@@ -282,7 +283,7 @@ export default function FitnessOverviewPage(): React.JSX.Element {
 
 			{loading ? (
 				<div className="flex min-h-[50vh] items-center justify-center">
-					<div className="h-6 w-6 rounded-full border-2 border-[#298a29] border-t-transparent animate-spin" />
+					<div className="h-6 w-6 animate-spin rounded-full border-2 border-[#298a29] border-t-transparent" />
 				</div>
 			) : tests.length === 0 ? (
 				<div className="flex min-h-[50vh] flex-col items-center justify-center px-8 text-center">
@@ -301,38 +302,59 @@ export default function FitnessOverviewPage(): React.JSX.Element {
 					</Link>
 				</div>
 			) : (
-				<div className="px-6 py-6 space-y-8">
-					{testsWithResults.map((testStat) => (
-						<section key={testStat.test._id}>
-							<div className="mb-3 flex items-baseline gap-3">
-								<h2 className="text-lg font-semibold text-[#021e00]">
-									{testStat.test.name}
-								</h2>
-								<span className="text-xs font-medium uppercase tracking-[0.1em] text-[#8aab8a]">
-									{fitnessTestUnitLabels[testStat.test.unit]}
-								</span>
-							</div>
-							<ExerciseTable testStat={testStat} playerFilter={playerFilter} />
-						</section>
-					))}
+				<div>
+					{/* Tab strip */}
+					<div className="flex overflow-x-auto border-b border-[#cbdbcc] px-6">
+						{tests.map((testStat) => {
+							const isActive = testStat.test._id === activeTab?.test._id;
+							const hasData = testStat.playerStats.length > 0;
+							return (
+								<button
+									key={testStat.test._id}
+									type="button"
+									onClick={() => setActiveTabId(testStat.test._id)}
+									className={cn(
+										"relative shrink-0 whitespace-nowrap pb-3 pr-6 pt-4 text-left transition-colors",
+										isActive
+											? "text-[#021e00]"
+											: hasData
+												? "text-[#6c866d] hover:text-[#021e00]"
+												: "text-[#aec7ae] hover:text-[#8aab8a]",
+									)}
+								>
+									<span className="text-sm font-semibold">
+										{testStat.test.name}
+									</span>
+									{isActive && (
+										<span className="absolute bottom-0 left-0 right-6 h-0.5 bg-[#021e00]" />
+									)}
+								</button>
+							);
+						})}
+					</div>
 
-					{testsWithoutResults.length > 0 && (
-						<section>
-							<h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.1em] text-[#8aab8a]">
-								No results recorded
-							</h2>
-							<div className="flex flex-wrap gap-2">
-								{testsWithoutResults.map((t) => (
-									<div
-										key={t.test._id}
-										className="border border-[#cbdbcc] bg-white px-4 py-2 text-sm text-[#6c866d]"
-									>
-										{t.test.name}
-									</div>
-								))}
-							</div>
-						</section>
-					)}
+					{/* Active tab content */}
+					<div className="px-6 py-6">
+						{activeTab ? (
+							activeTab.playerStats.length > 0 ? (
+								<ExerciseTable
+									testStat={activeTab}
+									playerFilter={playerFilter}
+								/>
+							) : (
+								<div className="flex min-h-[30vh] flex-col items-center justify-center text-center">
+									<p className="text-lg font-medium text-[#021e00]">
+										No results recorded
+									</p>
+									<p className="mt-1 text-sm text-[#6c866d]">
+										Record a session for{" "}
+										<span className="font-medium">{activeTab.test.name}</span>{" "}
+										to see stats here.
+									</p>
+								</div>
+							)
+						) : null}
+					</div>
 				</div>
 			)}
 		</div>
