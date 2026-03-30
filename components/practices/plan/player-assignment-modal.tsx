@@ -121,7 +121,7 @@ export function PlayerAssignmentModal({
 						</div>
 						<span className="text-[#021e00] font-bold text-xl shrink-0">
 							{player.rating}
-							<span className="text-[#8aab8a] text-xs font-normal"> /10</span>
+							<span className="text-[#8aab8a] text-xs font-normal"> /100</span>
 						</span>
 					</div>
 

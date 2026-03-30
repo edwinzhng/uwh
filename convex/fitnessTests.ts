@@ -113,6 +113,134 @@ export const getFitnessTests = query({
 	},
 });
 
+const getTimeValueInSecondsForOverview = (value: string): number => {
+	const [minutes = "0", seconds = "0"] = value.split(":");
+	return Number(minutes) * 60 + Number(seconds);
+};
+
+const formatAverageTimeValueForOverview = (totalSeconds: number): string => {
+	const roundedTotalSeconds = Math.round(totalSeconds);
+	const minutes = Math.floor(roundedTotalSeconds / 60);
+	const seconds = `${roundedTotalSeconds % 60}`.padStart(2, "0");
+	return `${minutes}:${seconds}`;
+};
+
+const formatValueForOverview = (
+	unit: (typeof fitnessTestUnits)[keyof typeof fitnessTestUnits],
+	value: number,
+): string =>
+	unit === fitnessTestUnits.TIME
+		? formatAverageTimeValueForOverview(value)
+		: Number.isInteger(value)
+			? `${value}`
+			: value.toFixed(1);
+
+export const getFitnessOverview = query({
+	args: {},
+	handler: async (ctx) => {
+		const tests = await ctx.db
+			.query("fitnessTests")
+			.withIndex("by_archivedAt_and_name", (q) => q.eq("archivedAt", undefined))
+			.collect();
+
+		const players = await ctx.db.query("players").collect();
+		const playerNameById = new Map(
+			players.map((player) => [player._id, player.fullName]),
+		);
+
+		const allResults = await ctx.db.query("fitnessTestResults").collect();
+
+		const testStats = await Promise.all(
+			tests.map(async (test) => {
+				const sessionIds = (
+					await ctx.db
+						.query("fitnessTestSessions")
+						.withIndex("by_fitnessTestId", (q) =>
+							q.eq("fitnessTestId", test._id),
+						)
+						.collect()
+				).map((s) => s._id);
+
+				const testResults = allResults.filter((r) =>
+					sessionIds.includes(r.fitnessTestSessionId),
+				);
+
+				const playerIds = [...new Set(testResults.map((r) => r.playerId))];
+
+				const playerStats = playerIds
+					.map((playerId) => {
+						const playerResults = testResults.filter(
+							(r) => r.playerId === playerId,
+						);
+						const playerName = playerNameById.get(playerId);
+						if (!playerName) return undefined;
+
+						if (test.unit === fitnessTestUnits.PASS_FAIL) {
+							const passCount = playerResults.filter(
+								(r) => r.value === "PASS",
+							).length;
+							const passRate = Math.round(
+								(passCount / playerResults.length) * 100,
+							);
+							const bestValue = passCount > 0 ? "PASS" : "FAIL";
+							return {
+								playerId,
+								playerName,
+								best: bestValue,
+								average: `${passRate}% pass`,
+								resultCount: playerResults.length,
+							};
+						}
+
+						const numericValues = playerResults.map((r) =>
+							test.unit === fitnessTestUnits.TIME
+								? getTimeValueInSecondsForOverview(r.value)
+								: Number(r.value),
+						);
+
+						const average =
+							numericValues.reduce((sum, v) => sum + v, 0) /
+							numericValues.length;
+
+						const bestNumeric =
+							test.unit === fitnessTestUnits.TIME
+								? Math.min(...numericValues)
+								: Math.max(...numericValues);
+
+						return {
+							playerId,
+							playerName,
+							best: formatValueForOverview(test.unit, bestNumeric),
+							average: formatValueForOverview(test.unit, average),
+							resultCount: playerResults.length,
+						};
+					})
+					.filter((s): s is NonNullable<typeof s> => s !== undefined);
+
+				const rankedStats = [...playerStats].sort((a, b) => {
+					if (test.unit === fitnessTestUnits.TIME) {
+						return (
+							getTimeValueInSecondsForOverview(a.best) -
+							getTimeValueInSecondsForOverview(b.best)
+						);
+					}
+					if (test.unit === fitnessTestUnits.COUNT) {
+						return Number(b.best) - Number(a.best);
+					}
+					return a.playerName.localeCompare(b.playerName);
+				});
+
+				return {
+					test,
+					playerStats: rankedStats,
+				};
+			}),
+		);
+
+		return testStats;
+	},
+});
+
 export const getFitnessTestWorkspace = query({
 	args: {
 		fitnessTestId: v.id("fitnessTests"),

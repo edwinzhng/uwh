@@ -82,7 +82,7 @@ export function ExcludedPlayerModal({
 						</div>
 						<span className="text-[#021e00] font-bold text-xl shrink-0">
 							{player.rating}
-							<span className="text-[#8aab8a] text-xs font-normal"> /10</span>
+							<span className="text-[#8aab8a] text-xs font-normal"> /100</span>
 						</span>
 					</div>
 					<div className="px-5 pb-6 border-t-2 border-[#021e00] pt-4">

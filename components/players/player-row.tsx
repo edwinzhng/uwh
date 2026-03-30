@@ -36,7 +36,7 @@ export function PlayerRow({
 					<span className="text-[#021e00] text-lg font-bold">
 						{player.rating}
 					</span>
-					<span className="text-[#8aab8a] text-xs">/10</span>
+					<span className="text-[#8aab8a] text-xs">/100</span>
 					<div className="flex gap-1 ml-2">
 						{player.positions.map((pos) => (
 							<PositionBadge key={pos} position={pos} />
@@ -86,7 +86,7 @@ export function PlayerRow({
 				<div className="flex items-center gap-3 ml-2">
 					<div className="text-right">
 						<span className="text-[#021e00] font-bold">{player.rating}</span>
-						<span className="text-[#8aab8a] text-xs">/10</span>
+						<span className="text-[#8aab8a] text-xs">/100</span>
 					</div>
 					<button
 						type="button"

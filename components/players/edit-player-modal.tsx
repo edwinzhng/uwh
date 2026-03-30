@@ -140,24 +140,24 @@ export function EditPlayerModal({
 								id="rating"
 								type="range"
 								min={1}
-								max={10}
+								max={100}
 								value={rating}
 								onChange={(e) => setRating(Number(e.target.value))}
 								className="flex-1 h-1 bg-[#cbdbcc] appearance-none cursor-pointer"
 								style={{
-									background: `linear-gradient(to right, #021e00 0%, #021e00 ${(rating - 1) * 11.11}%, #cbdbcc ${(rating - 1) * 11.11}%, #cbdbcc 100%)`,
+									background: `linear-gradient(to right, #021e00 0%, #021e00 ${((rating - 1) / 99) * 100}%, #cbdbcc ${((rating - 1) / 99) * 100}%, #cbdbcc 100%)`,
 								}}
 							/>
 							<div className="flex items-baseline gap-0.5">
 								<span className="text-[#021e00] text-2xl font-bold">
 									{rating}
 								</span>
-								<span className="text-[#8aab8a] text-sm">/10</span>
+								<span className="text-[#8aab8a] text-sm">/100</span>
 							</div>
 						</div>
 						<div className="flex justify-between mt-1">
 							<span className="text-[10px] text-[#8aab8a]">1 — Beginner</span>
-							<span className="text-[10px] text-[#8aab8a]">10 — Elite</span>
+							<span className="text-[10px] text-[#8aab8a]">100 — Elite</span>
 						</div>
 					</div>
 

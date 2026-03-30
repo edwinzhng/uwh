@@ -36,8 +36,13 @@ export function Sidebar() {
 				{navItems.map(({ href, label, icon: Icon }) => {
 					const active =
 						pathname === href ||
-						(href !== "/practices" && pathname.startsWith(href)) ||
-						(href === "/practices" && pathname.startsWith("/practices"));
+						(href !== "/practices" &&
+							href !== "/fitness" &&
+							pathname.startsWith(href)) ||
+						(href === "/practices" && pathname.startsWith("/practices")) ||
+						(href === "/fitness" &&
+							(pathname.startsWith("/fitness") ||
+								pathname.startsWith("/fitness/sessions")));
 					return (
 						<Link
 							key={href}
