@@ -155,15 +155,18 @@ export function EditPlayerModal({
 							/>
 							<div className="flex items-baseline gap-0.5">
 								<input
-									type="number"
-									min={1}
-									max={100}
+									type="text"
+									inputMode="numeric"
+									pattern="[0-9]*"
 									value={ratingText}
-									onChange={(e) => setRatingText(e.target.value)}
-									onBlur={(e) => {
+									onChange={(e) => {
+										const raw = e.target.value.replace(/[^0-9]/g, "");
+										setRatingText(raw);
+									}}
+									onBlur={() => {
 										const v = Math.min(
 											100,
-											Math.max(1, Number(e.target.value) || 1),
+											Math.max(1, Number(ratingText) || 1),
 										);
 										setRating(v);
 										setRatingText(String(v));
