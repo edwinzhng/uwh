@@ -2,251 +2,170 @@
 
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { BarChart2, TrendingUp } from "lucide-react";
+import { BarChart2, Star, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { api } from "@/convex/_generated/api";
-import { fitnessTestUnits } from "@/lib/fitness";
+import type { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 
 type OverviewQuery = FunctionReturnType<
 	typeof api.fitnessTests.getFitnessOverview
 >;
-type TestStat = NonNullable<OverviewQuery>[number];
-type PlayerStat = TestStat["playerStats"][number];
 
 type PlayerFilter = "ALL" | "ADULT" | "YOUTH";
 
-const PassFailBadge = ({ value }: { value: string }) => (
-	<span
-		className={cn(
-			"inline-flex items-center px-2 py-0.5 text-[10px] font-bold tracking-[0.1em] uppercase",
-			value === "PASS"
-				? "bg-[#d4f0d4] text-[#1a6b1a]"
-				: "bg-[#fde8e8] text-[#9b1c1c]",
-		)}
-	>
-		{value}
-	</span>
-);
+type PivotedPlayer = {
+	playerId: Id<"players">;
+	playerName: string;
+	isYouth: boolean | undefined;
+	results: Map<string, { best: string; average: string }>;
+};
 
-const RankBadge = ({ rank }: { rank: number }) => (
-	<span className="text-[10px] font-semibold text-[#8aab8a]">{rank}</span>
-);
+const pivotData = (tests: NonNullable<OverviewQuery>): PivotedPlayer[] => {
+	const playerMap = new Map<string, PivotedPlayer>();
 
-const ExerciseTable = ({
-	testStat,
+	for (const testStat of tests) {
+		for (const stat of testStat.playerStats) {
+			if (!playerMap.has(stat.playerId)) {
+				playerMap.set(stat.playerId, {
+					playerId: stat.playerId,
+					playerName: stat.playerName,
+					isYouth: undefined,
+					results: new Map(),
+				});
+			}
+			playerMap.get(stat.playerId)?.results.set(testStat.test._id, {
+				best: stat.best,
+				average: stat.average,
+			});
+		}
+	}
+
+	return [...playerMap.values()].sort((a, b) =>
+		a.playerName.localeCompare(b.playerName),
+	);
+};
+
+const OverviewTable = ({
+	tests,
 	playerFilter,
+	playersQuery,
 }: {
-	testStat: TestStat;
+	tests: NonNullable<OverviewQuery>;
 	playerFilter: PlayerFilter;
+	playersQuery: { _id: string; youth: boolean | undefined }[];
 }) => {
-	const { test, playerStats } = testStat;
-	const isPassFail = test.unit === fitnessTestUnits.PASS_FAIL;
-	const isTime = test.unit === fitnessTestUnits.TIME;
+	const playerYouthById = new Map(playersQuery.map((p) => [p._id, p.youth]));
+	const allPlayers = pivotData(tests).map((p) => ({
+		...p,
+		isYouth: playerYouthById.get(p.playerId),
+	}));
 
-	const playersQuery = useQuery(api.players.getPlayers) ?? [];
-	const playerTypeById = new Map(playersQuery.map((p) => [p._id, p.youth]));
-
-	const filtered = playerStats.filter((s) => {
-		const isYouth = playerTypeById.get(s.playerId);
-		if (playerFilter === "ADULT") return !isYouth;
-		if (playerFilter === "YOUTH") return isYouth;
+	const players = allPlayers.filter((p) => {
+		if (playerFilter === "ADULT") return !p.isYouth;
+		if (playerFilter === "YOUTH") return p.isYouth;
 		return true;
 	});
 
-	if (filtered.length === 0) {
+	if (players.length === 0) {
 		return (
-			<div className="border border-[#cbdbcc] bg-white px-6 py-8 text-center">
-				<p className="text-sm text-[#6c866d]">No results recorded yet</p>
+			<div className="flex min-h-[30vh] items-center justify-center text-center">
+				<p className="text-sm text-[#6c866d]">No players match this filter.</p>
 			</div>
 		);
 	}
 
-	const passFailMeta = isPassFail
-		? (() => {
-				const totalResults = filtered.reduce(
-					(sum, s) => sum + s.resultCount,
-					0,
-				);
-				const passCount = filtered.filter((s) => s.best === "PASS").length;
-				return { passCount, totalPlayers: filtered.length, totalResults };
-			})()
-		: undefined;
-
-	const allBestNums = isPassFail
-		? []
-		: filtered.map((s) =>
-				isTime
-					? (() => {
-							const [m = "0", sec = "0"] = s.best.split(":");
-							return Number(m) * 60 + Number(sec);
-						})()
-					: Number(s.best),
+	// All players tied for the best result per test
+	const recordHolders = new Map<string, Set<string>>(
+		tests.map((t) => {
+			const topValue = t.playerStats.at(0)?.best;
+			const holders = new Set(
+				topValue !== undefined
+					? t.playerStats
+							.filter((s) => s.best === topValue)
+							.map((s) => s.playerId)
+					: [],
 			);
-
-	const overallBest =
-		allBestNums.length > 0
-			? isTime
-				? Math.min(...allBestNums)
-				: Math.max(...allBestNums)
-			: undefined;
-
-	const overallAvgNums = isPassFail
-		? []
-		: filtered.map((s) =>
-				isTime
-					? (() => {
-							const [m = "0", sec = "0"] = s.average.split(":");
-							return Number(m) * 60 + Number(sec);
-						})()
-					: Number(s.average),
-			);
-	const overallAvg =
-		overallAvgNums.length > 0
-			? overallAvgNums.reduce((sum, v) => sum + v, 0) / overallAvgNums.length
-			: undefined;
-
-	const formatAvg = (val: number) => {
-		if (!isTime) return Number.isInteger(val) ? `${val}` : val.toFixed(1);
-		const secs = Math.round(val);
-		const m = Math.floor(secs / 60);
-		const s = `${secs % 60}`.padStart(2, "0");
-		return `${m}:${s}`;
-	};
+			return [t.test._id, holders];
+		}),
+	);
 
 	return (
-		<div className="border border-[#cbdbcc] bg-white">
-			{/* Summary strip */}
-			<div className="grid grid-cols-3 border-b border-[#cbdbcc] divide-x divide-[#cbdbcc] bg-[#f5faf5]">
-				<div className="px-4 py-3">
-					<p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
-						Players
-					</p>
-					<p className="mt-0.5 text-lg font-bold text-[#021e00]">
-						{filtered.length}
-					</p>
-				</div>
-				{isPassFail && passFailMeta ? (
-					<>
-						<div className="px-4 py-3">
-							<p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
-								Passed
-							</p>
-							<p className="mt-0.5 text-lg font-bold text-[#021e00]">
-								{passFailMeta.passCount}
-								<span className="text-sm font-normal text-[#8aab8a]">
-									/{passFailMeta.totalPlayers}
-								</span>
-							</p>
-						</div>
-						<div className="px-4 py-3">
-							<p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
-								Pass Rate
-							</p>
-							<p className="mt-0.5 text-lg font-bold text-[#021e00]">
-								{Math.round(
-									(passFailMeta.passCount / passFailMeta.totalPlayers) * 100,
+		<div className="overflow-x-auto">
+			<table className="w-full border-collapse text-sm">
+				<thead>
+					<tr className="border-b border-[#cbdbcc] bg-[#eef4f1]">
+						<th className="sticky left-0 z-10 min-w-[140px] bg-[#eef4f1] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
+							Player
+						</th>
+						{tests.map((t) => (
+							<th
+								key={t.test._id}
+								className="min-w-[110px] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]"
+							>
+								{t.test.name}
+							</th>
+						))}
+					</tr>
+				</thead>
+				<tbody>
+					{players.map((player, i) => (
+						<tr
+							key={player.playerId}
+							className={cn(
+								"border-b border-[#cbdbcc]",
+								i % 2 === 0 ? "bg-white" : "bg-[#fafcfa]",
+							)}
+						>
+							<td
+								className={cn(
+									"sticky left-0 z-10 min-w-[140px] px-4 py-3 font-medium text-[#021e00]",
+									i % 2 === 0 ? "bg-white" : "bg-[#fafcfa]",
 								)}
-								%
-							</p>
-						</div>
-					</>
-				) : (
-					<>
-						<div className="px-4 py-3">
-							<p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
-								Best
-							</p>
-							<p className="mt-0.5 text-lg font-bold text-[#021e00]">
-								{overallBest !== undefined ? formatAvg(overallBest) : "—"}
-							</p>
-						</div>
-						<div className="px-4 py-3">
-							<p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
-								Team Average
-							</p>
-							<p className="mt-0.5 text-lg font-bold text-[#021e00]">
-								{overallAvg !== undefined ? formatAvg(overallAvg) : "—"}
-							</p>
-						</div>
-					</>
-				)}
-			</div>
-
-			{/* Column headers */}
-			<div
-				className={cn(
-					"grid gap-2 border-b border-[#cbdbcc] bg-[#eef4f1] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]",
-					isPassFail
-						? "grid-cols-[24px_1fr_80px_80px]"
-						: "grid-cols-[24px_1fr_80px_80px_60px]",
-				)}
-			>
-				<span>#</span>
-				<span>Player</span>
-				<span>Best</span>
-				<span>Average</span>
-				{!isPassFail && <span className="text-right">Results</span>}
-			</div>
-
-			{/* Rows */}
-			{filtered.map((stat, index) => (
-				<PlayerStatRow
-					key={stat.playerId}
-					stat={stat}
-					rank={index + 1}
-					isPassFail={isPassFail}
-				/>
-			))}
+							>
+								{player.playerName}
+							</td>
+							{tests.map((t) => {
+								const result = player.results.get(t.test._id);
+								const isRecord =
+									recordHolders.get(t.test._id)?.has(player.playerId) ?? false;
+								return (
+									<td key={t.test._id} className="min-w-[110px] px-4 py-3">
+										{result ? (
+											<div className="flex flex-col gap-0.5">
+												<span className="flex items-center gap-1 font-semibold text-[#021e00]">
+													{result.best}
+													{isRecord && (
+														<Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+													)}
+												</span>
+												<span className="text-xs text-[#8aab8a]">
+													{result.average}
+												</span>
+											</div>
+										) : (
+											<span className="text-[#cbdbcc]">—</span>
+										)}
+									</td>
+								);
+							})}
+						</tr>
+					))}
+				</tbody>
+			</table>
 		</div>
 	);
 };
 
-const PlayerStatRow = ({
-	stat,
-	rank,
-	isPassFail,
-}: {
-	stat: PlayerStat;
-	rank: number;
-	isPassFail: boolean;
-}) => (
-	<div
-		className={cn(
-			"grid items-center gap-2 border-b border-[#cbdbcc] px-4 py-3 last:border-b-0 hover:bg-[#f9fcf9]",
-			isPassFail
-				? "grid-cols-[24px_1fr_80px_80px]"
-				: "grid-cols-[24px_1fr_80px_80px_60px]",
-		)}
-	>
-		<RankBadge rank={rank} />
-		<span className="min-w-0 truncate text-sm font-medium text-[#021e00]">
-			{stat.playerName}
-		</span>
-		<span className="text-sm font-semibold text-[#021e00]">
-			{isPassFail ? <PassFailBadge value={stat.best} /> : stat.best}
-		</span>
-		<span className="text-sm text-[#4a8a40]">{stat.average}</span>
-		{!isPassFail && (
-			<span className="text-right text-xs text-[#8aab8a]">
-				{stat.resultCount}
-			</span>
-		)}
-	</div>
-);
-
 export default function FitnessOverviewPage(): React.JSX.Element {
 	const overviewData = useQuery(api.fitnessTests.getFitnessOverview);
+	const playersQuery = useQuery(api.players.getPlayers) ?? [];
 	const loading = overviewData === undefined;
 	const tests = overviewData ?? [];
 	const [playerFilter, setPlayerFilter] = useState<PlayerFilter>("ALL");
-	const [activeTabId, setActiveTabId] = useState<string | undefined>(undefined);
-
-	const activeTab =
-		tests.find((t) => t.test._id === activeTabId) ?? tests.at(0);
 
 	return (
 		<div>
@@ -302,59 +221,12 @@ export default function FitnessOverviewPage(): React.JSX.Element {
 					</Link>
 				</div>
 			) : (
-				<div>
-					{/* Tab strip */}
-					<div className="flex overflow-x-auto border-b border-[#cbdbcc] px-6">
-						{tests.map((testStat) => {
-							const isActive = testStat.test._id === activeTab?.test._id;
-							const hasData = testStat.playerStats.length > 0;
-							return (
-								<button
-									key={testStat.test._id}
-									type="button"
-									onClick={() => setActiveTabId(testStat.test._id)}
-									className={cn(
-										"relative shrink-0 whitespace-nowrap pb-3 pr-6 pt-4 text-left transition-colors",
-										isActive
-											? "text-[#021e00]"
-											: hasData
-												? "text-[#6c866d] hover:text-[#021e00]"
-												: "text-[#aec7ae] hover:text-[#8aab8a]",
-									)}
-								>
-									<span className="text-sm font-semibold">
-										{testStat.test.name}
-									</span>
-									{isActive && (
-										<span className="absolute bottom-0 left-0 right-6 h-0.5 bg-[#021e00]" />
-									)}
-								</button>
-							);
-						})}
-					</div>
-
-					{/* Active tab content */}
-					<div className="px-6 py-6">
-						{activeTab ? (
-							activeTab.playerStats.length > 0 ? (
-								<ExerciseTable
-									testStat={activeTab}
-									playerFilter={playerFilter}
-								/>
-							) : (
-								<div className="flex min-h-[30vh] flex-col items-center justify-center text-center">
-									<p className="text-lg font-medium text-[#021e00]">
-										No results recorded
-									</p>
-									<p className="mt-1 text-sm text-[#6c866d]">
-										Record a session for{" "}
-										<span className="font-medium">{activeTab.test.name}</span>{" "}
-										to see stats here.
-									</p>
-								</div>
-							)
-						) : null}
-					</div>
+				<div className="py-6">
+					<OverviewTable
+						tests={tests}
+						playerFilter={playerFilter}
+						playersQuery={playersQuery}
+					/>
 				</div>
 			)}
 		</div>

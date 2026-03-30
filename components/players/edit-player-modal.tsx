@@ -36,6 +36,7 @@ export function EditPlayerModal({
 }: EditPlayerModalProps) {
 	const [fullName, setFullName] = useState(player.fullName);
 	const [rating, setRating] = useState(player.rating);
+	const [ratingText, setRatingText] = useState(String(player.rating));
 	const [positions, setPositions] = useState<Position[]>([...player.positions]);
 	const [youth, setYouth] = useState(player.youth);
 	const [isCoach, setIsCoach] = useState(false);
@@ -142,16 +143,33 @@ export function EditPlayerModal({
 								min={1}
 								max={100}
 								value={rating}
-								onChange={(e) => setRating(Number(e.target.value))}
+								onChange={(e) => {
+									const v = Number(e.target.value);
+									setRating(v);
+									setRatingText(String(v));
+								}}
 								className="flex-1 h-1 bg-[#cbdbcc] appearance-none cursor-pointer"
 								style={{
 									background: `linear-gradient(to right, #021e00 0%, #021e00 ${((rating - 1) / 99) * 100}%, #cbdbcc ${((rating - 1) / 99) * 100}%, #cbdbcc 100%)`,
 								}}
 							/>
 							<div className="flex items-baseline gap-0.5">
-								<span className="text-[#021e00] text-2xl font-bold">
-									{rating}
-								</span>
+								<input
+									type="number"
+									min={1}
+									max={100}
+									value={ratingText}
+									onChange={(e) => setRatingText(e.target.value)}
+									onBlur={(e) => {
+										const v = Math.min(
+											100,
+											Math.max(1, Number(e.target.value) || 1),
+										);
+										setRating(v);
+										setRatingText(String(v));
+									}}
+									className="w-14 text-right text-[#021e00] text-2xl font-bold bg-transparent border-b border-transparent hover:border-[#cbdbcc] focus:border-[#021e00] focus:outline-none"
+								/>
 								<span className="text-[#8aab8a] text-sm">/100</span>
 							</div>
 						</div>
