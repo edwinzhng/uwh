@@ -25,6 +25,12 @@ const SEASONS: Season[] = [
 	},
 ];
 
+function rateColor(rate: number) {
+	if (rate >= 75) return "text-[#298a29]";
+	if (rate < 25) return "text-amber-600";
+	return "text-[#021e00]";
+}
+
 type MonthGroup = {
 	key: string; // "2025-09"
 	label: string; // "Sep"
@@ -257,11 +263,7 @@ export default function AttendancePage() {
 												<span
 													className={cn(
 														"text-xs font-semibold",
-														rate >= 70
-															? "text-[#298a29]"
-															: rate >= 40
-																? "text-amber-600"
-																: "text-red-500",
+														rateColor(rate),
 													)}
 												>
 													{rate}%
@@ -278,11 +280,7 @@ export default function AttendancePage() {
 														<span
 															className={cn(
 																"text-xs font-semibold",
-																attended / total >= 0.7
-																	? "text-[#298a29]"
-																	: attended / total >= 0.4
-																		? "text-amber-600"
-																		: "text-red-500",
+																rateColor(Math.round((attended / total) * 100)),
 															)}
 														>
 															{attended}/{total}
