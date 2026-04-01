@@ -1,31 +1,75 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
+import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { useToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
-function formatShortDate(ts: number) {
-	return new Date(ts).toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-	});
-}
+type Season = {
+	label: string;
+	start: number;
+	end: number;
+};
 
-function formatDayOfWeek(ts: number) {
-	return new Date(ts).toLocaleDateString("en-US", { weekday: "short" });
+const SEASONS: Season[] = [
+	{
+		label: "2025–26",
+		start: new Date("2025-09-01").getTime(),
+		end: new Date("2026-09-01").getTime(),
+	},
+];
+
+type MonthGroup = {
+	key: string; // "2025-09"
+	label: string; // "Sep"
+	practiceIds: Id<"practices">[];
+};
+
+function groupPracticesByMonth(
+	practices: Array<{ _id: Id<"practices">; date: number }>,
+): MonthGroup[] {
+	const map = new Map<string, MonthGroup>();
+	for (const p of practices) {
+		const d = new Date(p.date);
+		const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+		if (!map.has(key)) {
+			map.set(key, {
+				key,
+				label: d.toLocaleDateString("en-US", { month: "short" }),
+				practiceIds: [],
+			});
+		}
+		const group = map.get(key);
+		if (group) group.practiceIds.push(p._id);
+	}
+	return [...map.values()];
 }
 
 export default function AttendancePage() {
-	const data = useQuery(api.attendance.getAttendanceOverview);
+	const toast = useToast();
 	const [filter, setFilter] = useState<"ALL" | "ADULT" | "YOUTH">("ALL");
+	const [seasonIndex, setSeasonIndex] = useState(0);
+	const [syncing, setSyncing] = useState(false);
+
+	const season = SEASONS[seasonIndex];
+	const syncAllAttendance = useAction(api.attendance.syncAllAttendance);
+
+	const data = useQuery(api.attendance.getAttendanceOverview, {
+		seasonStart: season.start,
+		seasonEnd: season.end,
+	});
 
 	const loading = data === undefined;
-
 	const practices = data?.practices ?? [];
 	const allPlayers = data?.players ?? [];
+
+	const months = groupPracticesByMonth(practices);
 
 	const players = allPlayers.filter((p) => {
 		if (filter === "ADULT") return !p.youth;
@@ -33,25 +77,58 @@ export default function AttendancePage() {
 		return true;
 	});
 
-	// Per-practice attendance rate (across all players)
-	const practiceRates = practices.map((p) => {
-		const present = allPlayers.filter(
-			(pl) =>
-				pl.attendance.find((a) => a.practiceId === p._id)?.attended === true,
-		).length;
-		const recorded = allPlayers.filter(
-			(pl) =>
-				pl.attendance.find((a) => a.practiceId === p._id)?.attended !== null,
-		).length;
-		return recorded > 0 ? Math.round((present / recorded) * 100) : null;
+	// Attendance count for a player in a month: { attended, total }
+	const monthCount = (
+		player: (typeof allPlayers)[0],
+		month: MonthGroup,
+	): { attended: number; total: number } => {
+		let attended = 0;
+		let total = 0;
+		for (const pid of month.practiceIds) {
+			const a = player.attendance.find((x) => x.practiceId === pid);
+			if (a?.attended === true) {
+				attended++;
+				total++;
+			} else if (a?.attended === false) {
+				total++;
+			}
+			// null = unrecorded, don't count toward total
+		}
+		return { attended, total };
+	};
+
+	// Per-month session rate across all players
+	const monthRates = months.map((month) => {
+		let totalAttended = 0;
+		let totalRecorded = 0;
+		for (const player of allPlayers) {
+			const { attended, total } = monthCount(player, month);
+			totalAttended += attended;
+			totalRecorded += total;
+		}
+		return totalRecorded > 0
+			? Math.round((totalAttended / totalRecorded) * 100)
+			: null;
 	});
 
-	// Per-player attendance rate
+	// Per-player overall attendance rate
 	const playerRate = (player: (typeof players)[0]) => {
 		const recorded = player.attendance.filter((a) => a.attended !== null);
 		if (recorded.length === 0) return null;
 		const present = recorded.filter((a) => a.attended === true).length;
 		return Math.round((present / recorded.length) * 100);
+	};
+
+	const handleResync = async () => {
+		setSyncing(true);
+		try {
+			const result = await syncAllAttendance();
+			toast.success(`Synced ${result.synced} records`);
+		} catch {
+			toast.error("Sync failed");
+		} finally {
+			setSyncing(false);
+		}
 	};
 
 	return (
@@ -60,15 +137,44 @@ export default function AttendancePage() {
 				eyebrow="Team"
 				title="Attendance"
 				actions={
-					<SegmentedControl
-						options={[
-							{ label: "All", value: "ALL" },
-							{ label: "Adult", value: "ADULT" },
-							{ label: "Youth", value: "YOUTH" },
-						]}
-						value={filter}
-						onChange={(v) => setFilter(v as "ALL" | "ADULT" | "YOUTH")}
-					/>
+					<div className="flex items-center gap-2">
+						{SEASONS.length > 1 ? (
+							<select
+								value={seasonIndex}
+								onChange={(e) => setSeasonIndex(Number(e.target.value))}
+								className="h-9 border border-[#cbdbcc] bg-white px-2 text-xs text-[#021e00] focus:outline-none focus:border-[#298a29]"
+							>
+								{SEASONS.map((s, i) => (
+									<option key={s.label} value={i}>
+										{s.label}
+									</option>
+								))}
+							</select>
+						) : (
+							<span className="text-xs text-[#8aab8a] font-medium px-1">
+								{season.label}
+							</span>
+						)}
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handleResync}
+							loading={syncing}
+							className="text-[10px] px-3"
+						>
+							{!syncing && <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+							Resync
+						</Button>
+						<SegmentedControl
+							options={[
+								{ label: "All", value: "ALL" },
+								{ label: "Adult", value: "ADULT" },
+								{ label: "Youth", value: "YOUTH" },
+							]}
+							value={filter}
+							onChange={(v) => setFilter(v as "ALL" | "ADULT" | "YOUTH")}
+						/>
+					</div>
 				}
 			/>
 
@@ -76,11 +182,9 @@ export default function AttendancePage() {
 				<div className="flex items-center justify-center py-24">
 					<div className="h-6 w-6 border-2 border-[#298a29] border-t-transparent rounded-full animate-spin" />
 				</div>
-			) : practices.length === 0 ? (
+			) : months.length === 0 ? (
 				<div className="flex flex-col items-center justify-center py-24 text-center">
-					<p className="text-[#021e00] text-lg font-medium">
-						No past practices
-					</p>
+					<p className="text-[#021e00] text-lg font-medium">No practices yet</p>
 					<p className="text-[#8aab8a] text-sm mt-1">
 						Attendance will appear here once practices have passed.
 					</p>
@@ -90,39 +194,37 @@ export default function AttendancePage() {
 					<table className="min-w-full border-collapse">
 						<thead>
 							<tr className="bg-[#eef4f1] border-b border-[#cbdbcc]">
-								{/* Player name column */}
 								<th className="sticky left-0 z-10 bg-[#eef4f1] px-4 py-3 text-left text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a] min-w-[160px] border-r border-[#cbdbcc]">
 									Player
 								</th>
-								{/* Rate column */}
 								<th className="px-3 py-3 text-center text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a] w-16 border-r border-[#cbdbcc]">
 									Rate
 								</th>
-								{/* Practice columns */}
-								{practices.map((p) => (
+								{months.map((m) => (
 									<th
-										key={p._id}
-										className="px-2 py-3 text-center min-w-[52px]"
+										key={m.key}
+										className="px-3 py-3 text-center min-w-[64px]"
 									>
 										<p className="text-[10px] font-semibold text-[#8aab8a]">
-											{formatDayOfWeek(p.date)}
+											{m.label}
 										</p>
 										<p className="text-[9px] text-[#cbdbcc] mt-0.5">
-											{formatShortDate(p.date)}
+											{m.practiceIds.length}{" "}
+											{m.practiceIds.length === 1 ? "session" : "sessions"}
 										</p>
 									</th>
 								))}
 							</tr>
 						</thead>
 						<tbody>
-							{/* Per-practice rate row */}
+							{/* Per-month rate row */}
 							<tr className="border-b-2 border-[#cbdbcc] bg-white">
 								<td className="sticky left-0 z-10 bg-white px-4 py-2 text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] border-r border-[#cbdbcc]">
-									Session Rate
+									Month Rate
 								</td>
 								<td className="border-r border-[#cbdbcc]" />
-								{practiceRates.map((rate, i) => (
-									<td key={practices[i]._id} className="px-2 py-2 text-center">
+								{monthRates.map((rate, i) => (
+									<td key={months[i].key} className="px-3 py-2 text-center">
 										{rate !== null ? (
 											<span
 												className={cn(
@@ -177,23 +279,25 @@ export default function AttendancePage() {
 												<span className="text-[#cbdbcc] text-xs">—</span>
 											)}
 										</td>
-										{practices.map((p) => {
-											const att = player.attendance.find(
-												(a) => a.practiceId === p._id,
-											);
-											const attended = att?.attended ?? null;
+										{months.map((month) => {
+											const { attended, total } = monthCount(player, month);
 											return (
-												<td key={p._id} className="px-2 py-3 text-center">
-													{attended === true ? (
-														<span className="inline-block h-5 w-5 bg-[#298a29] text-white text-[10px] font-bold leading-5 text-center mx-auto">
-															✓
-														</span>
-													) : attended === false ? (
-														<span className="inline-block h-5 w-5 bg-red-100 text-red-500 text-[10px] font-bold leading-5 text-center mx-auto">
-															✗
+												<td key={month.key} className="px-3 py-3 text-center">
+													{total > 0 ? (
+														<span
+															className={cn(
+																"text-xs font-semibold",
+																attended / total >= 0.7
+																	? "text-[#298a29]"
+																	: attended / total >= 0.4
+																		? "text-amber-600"
+																		: "text-red-500",
+															)}
+														>
+															{attended}/{total}
 														</span>
 													) : (
-														<span className="text-[#cbdbcc] text-sm">—</span>
+														<span className="text-[#cbdbcc] text-xs">—</span>
 													)}
 												</td>
 											);

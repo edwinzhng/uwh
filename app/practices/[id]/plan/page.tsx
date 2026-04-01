@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useToast } from "@/lib/toast";
 import { cn, formatMonthDay, getPracticeTitle } from "@/lib/utils";
 
 const mapTeam = (teamObj: Player[], teamColor: TeamColor): RosterState => {
@@ -140,7 +141,7 @@ export default function PlanPage() {
 	// Excluded player IDs
 	const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
 
-	// Actions
+	const toast = useToast();
 	const generateTeamsAction = useAction(api.teamGenerator.generateTeams);
 
 	// Modals
@@ -211,15 +212,15 @@ export default function PlanPage() {
 					setMainRoster(adultsRoster);
 					if (youthRosterTemp.length > 0) setYouthRoster(youthRosterTemp);
 				}
-			} catch (e) {
-				console.error("Backend generate teams failed", e);
+			} catch (_e) {
+				toast.error("Team generation failed");
 				setMainRoster([]);
 				setYouthRoster([]);
 			} finally {
 				setIsRegenerating(false);
 			}
 		},
-		[generateTeamsAction],
+		[generateTeamsAction, toast.error],
 	);
 
 	const runAutoAssign = useCallback(() => {

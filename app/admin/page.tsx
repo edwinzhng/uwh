@@ -53,10 +53,8 @@ export default function AdminPage() {
 			setCookieStatus({ active: true, lastSynced: new Date().toISOString() });
 			setCookiePaste("");
 			toast.success("Cookie updated");
-		} catch (err) {
-			toast.error(
-				err instanceof Error ? err.message : "Failed to update cookie.",
-			);
+		} catch (_err) {
+			toast.error("Cookie update failed");
 		} finally {
 			setUpdatingCookie(false);
 		}
@@ -67,7 +65,7 @@ export default function AdminPage() {
 		try {
 			const result = await testConnectionAction();
 			if (result.ok) {
-				toast.success("Connection successful");
+				toast.success("Connected");
 			} else {
 				toast.error(result.error ?? "Connection failed");
 			}
@@ -90,7 +88,7 @@ export default function AdminPage() {
 				`Players: ${parts.length > 0 ? parts.join(", ") : "up to date"}`,
 			);
 		} catch {
-			toast.error("Failed to import players.");
+			toast.error("Player import failed");
 		} finally {
 			setImportingPlayers(false);
 		}
@@ -107,7 +105,7 @@ export default function AdminPage() {
 				`Practices: ${parts.length > 0 ? parts.join(", ") : "up to date"}`,
 			);
 		} catch {
-			toast.error("Failed to import practices.");
+			toast.error("Practice import failed");
 		} finally {
 			setImportingPractices(false);
 		}
@@ -117,13 +115,9 @@ export default function AdminPage() {
 		setSyncingAttendance(true);
 		try {
 			const result = await syncAllAttendanceAction();
-			toast.success(
-				`Attendance synced: ${result.synced} records across ${result.practices} practices`,
-			);
-		} catch (err) {
-			toast.error(
-				err instanceof Error ? err.message : "Failed to sync attendance.",
-			);
+			toast.success(`Synced ${result.synced} records`);
+		} catch {
+			toast.error("Sync failed");
 		} finally {
 			setSyncingAttendance(false);
 		}

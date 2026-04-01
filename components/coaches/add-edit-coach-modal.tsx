@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
+import { useToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 export type CoachWithPlayer = Doc<"coaches"> & {
@@ -24,6 +25,7 @@ export function AddEditCoachModal({
 	onClose,
 	onSaved,
 }: AddEditCoachModalProps) {
+	const toast = useToast();
 	const [playerId, setPlayerId] = useState<string>("");
 	const [isActive, setIsActive] = useState(coach?.isActive ?? true);
 	const [saving, setSaving] = useState(false);
@@ -47,13 +49,14 @@ export function AddEditCoachModal({
 		try {
 			if (coach) {
 				await updateCoach({ id: coach._id, isActive });
+				toast.success("Coach updated");
 			} else {
 				await createCoach({ playerId: playerId as Id<"players">, isActive });
+				toast.success("Coach added");
 			}
 			onSaved();
 		} catch (err) {
-			console.error(err);
-			setError(err instanceof Error ? err.message : "An error occurred");
+			toast.error(err instanceof Error ? err.message : "An error occurred");
 			setSaving(false);
 		}
 	};

@@ -20,6 +20,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { getFitnessTestBestLabel } from "@/lib/fitness";
+import { useToast } from "@/lib/toast";
 import { cn, formatDate } from "@/lib/utils";
 
 type PlayerFilter = "ALL" | "ADULT" | "YOUTH";
@@ -82,13 +83,8 @@ export default function FitnessPage(): React.JSX.Element {
 	const [isSessionMenuOpen, setIsSessionMenuOpen] = useState(false);
 	const [testModalMode, setTestModalMode] = useState<"create" | "edit">();
 	const [sessionModalMode, setSessionModalMode] = useState<"create" | "edit">();
-	const [saveState, setSaveState] = useState<{
-		error?: string;
-		isSaving: boolean;
-		message?: string;
-	}>({
-		isSaving: false,
-	});
+	const [isSaving, setIsSaving] = useState(false);
+	const toast = useToast();
 
 	useEffect(() => {
 		if (tests.length === 0) {
@@ -109,9 +105,7 @@ export default function FitnessPage(): React.JSX.Element {
 			setSelectedSessionId(undefined);
 			setIsSessionMenuOpen(false);
 			setDrafts({});
-			setSaveState({
-				isSaving: false,
-			});
+			setIsSaving(false);
 			return;
 		}
 
@@ -120,9 +114,7 @@ export default function FitnessPage(): React.JSX.Element {
 		setSelectedSessionId(undefined);
 		setIsSessionMenuOpen(false);
 		setDrafts({});
-		setSaveState({
-			isSaving: false,
-		});
+		setIsSaving(false);
 	}, [selectedTestId]);
 
 	const workspaceQuery = useQuery(
@@ -166,9 +158,7 @@ export default function FitnessPage(): React.JSX.Element {
 			(workspace?.results ?? []).map((result) => result.playerId),
 		);
 		setDrafts(buildDraftMap(workspace?.results));
-		setSaveState({
-			isSaving: false,
-		});
+		setIsSaving(false);
 	}, [workspace?.results]);
 
 	const saveFitnessTestSession = useMutation(
@@ -252,9 +242,6 @@ export default function FitnessPage(): React.JSX.Element {
 				[key]: value,
 			},
 		}));
-		setSaveState({
-			isSaving: false,
-		});
 	};
 	const handleAddPlayer = (playerId: Id<"players">): void => {
 		setSessionPlayerIds((currentPlayerIds) =>
@@ -266,23 +253,15 @@ export default function FitnessPage(): React.JSX.Element {
 			...currentDrafts,
 			[playerId]: currentDrafts[playerId] ?? { value: "" },
 		}));
-		setSaveState({
-			isSaving: false,
-		});
 	};
 
 	const handleSaveSession = async (): Promise<void> => {
 		if (!selectedSessionId) {
-			setSaveState({
-				error: "Create or select a session first",
-				isSaving: false,
-			});
+			toast.error("Create or select a session first");
 			return;
 		}
 
-		setSaveState({
-			isSaving: true,
-		});
+		setIsSaving(true);
 
 		try {
 			await saveFitnessTestSession({
@@ -292,15 +271,11 @@ export default function FitnessPage(): React.JSX.Element {
 				})),
 				sessionId: selectedSessionId,
 			});
-			setSaveState({
-				isSaving: false,
-				message: "Session saved",
-			});
+			toast.success("Session saved");
 		} catch {
-			setSaveState({
-				error: "Unable to save session",
-				isSaving: false,
-			});
+			toast.error("Unable to save session");
+		} finally {
+			setIsSaving(false);
 		}
 	};
 
@@ -492,8 +467,10 @@ export default function FitnessPage(): React.JSX.Element {
 											</Button>
 											<Button
 												className="min-w-[126px] whitespace-nowrap"
-												disabled={!selectedSession || !hasUnsavedChanges}
-												loading={saveState.isSaving}
+												disabled={
+													!selectedSession || !hasUnsavedChanges || isSaving
+												}
+												loading={isSaving}
 												size="sm"
 												onClick={() => void handleSaveSession()}
 											>
@@ -502,17 +479,6 @@ export default function FitnessPage(): React.JSX.Element {
 										</div>
 									</div>
 								</div>
-
-								{saveState.message || saveState.error ? (
-									<p
-										className={cn(
-											"mt-4 px-7 text-sm",
-											saveState.error ? "text-red-600" : "text-[#298a29]",
-										)}
-									>
-										{saveState.error ?? saveState.message}
-									</p>
-								) : null}
 							</div>
 
 							<div className="flex-1 px-7 py-5">
@@ -754,8 +720,8 @@ export default function FitnessPage(): React.JSX.Element {
 									Edit
 								</Button>
 								<Button
-									disabled={!selectedSession || !hasUnsavedChanges}
-									loading={saveState.isSaving}
+									disabled={!selectedSession || !hasUnsavedChanges || isSaving}
+									loading={isSaving}
 									size="sm"
 									className="min-w-[126px]"
 									onClick={() => void handleSaveSession()}
@@ -765,16 +731,6 @@ export default function FitnessPage(): React.JSX.Element {
 							</div>
 						</div>
 					</div>
-					{saveState.message || saveState.error ? (
-						<p
-							className={cn(
-								"mt-3 text-sm",
-								saveState.error ? "text-red-600" : "text-[#298a29]",
-							)}
-						>
-							{saveState.error ?? saveState.message}
-						</p>
-					) : null}
 				</div>
 
 				<div>

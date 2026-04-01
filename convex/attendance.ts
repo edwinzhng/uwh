@@ -32,14 +32,20 @@ export const getPracticeAttendance = query({
 /** Returns every practice (past) with attendance counts, and every player with
  *  their per-practice attended flag — for the stats grid page. */
 export const getAttendanceOverview = query({
-	args: {},
-	handler: async (ctx) => {
+	args: {
+		seasonStart: v.optional(v.number()),
+		seasonEnd: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
 		const now = Date.now();
+		const rangeEnd = Math.min(args.seasonEnd ?? now, now);
 
-		// All past practices, ordered oldest first for the grid columns
+		// All past practices in the season range, ordered oldest first
 		const practices = await ctx.db
 			.query("practices")
-			.withIndex("by_date", (q) => q.lt("date", now))
+			.withIndex("by_date", (q) =>
+				q.gte("date", args.seasonStart ?? 0).lt("date", rangeEnd),
+			)
 			.order("asc")
 			.collect();
 

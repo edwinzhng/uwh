@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { formatDateInputValue, parseDateInputValue } from "@/lib/fitness";
+import { useToast } from "@/lib/toast";
 
 type FitnessSession = {
 	_id: Id<"fitnessTestSessions">;
@@ -29,18 +30,17 @@ export const EditFitnessTestSessionModal = ({
 	onSaved,
 	session,
 }: EditFitnessTestSessionModalProps): React.JSX.Element => {
+	const toast = useToast();
 	const [date, setDate] = useState(
 		formatDateInputValue(session?.date ?? Date.now()),
 	);
 	const [confirmingDelete, setConfirmingDelete] = useState(false);
-	const [error, setError] = useState<string>();
 	const [saving, setSaving] = useState(false);
 	const [deleting, setDeleting] = useState(false);
 
 	useEffect(() => {
 		setConfirmingDelete(false);
 		setDate(formatDateInputValue(session?.date ?? Date.now()));
-		setError(undefined);
 	}, [session]);
 
 	const createFitnessTestSession = useMutation(
@@ -55,7 +55,6 @@ export const EditFitnessTestSessionModal = ({
 
 	const handleSave = async (): Promise<void> => {
 		setSaving(true);
-		setError(undefined);
 
 		try {
 			if (session) {
@@ -63,6 +62,7 @@ export const EditFitnessTestSessionModal = ({
 					date: parseDateInputValue(date),
 					sessionId: session._id,
 				});
+				toast.success("Session saved");
 				onSaved(sessionId);
 				return;
 			}
@@ -71,11 +71,10 @@ export const EditFitnessTestSessionModal = ({
 				date: parseDateInputValue(date),
 				fitnessTestId,
 			});
+			toast.success("Session created");
 			onSaved(sessionId);
-		} catch (error) {
-			setError(
-				error instanceof Error ? error.message : "Unable to save session",
-			);
+		} catch (_error) {
+			toast.error("Save failed");
 			setSaving(false);
 		}
 	};
@@ -84,18 +83,14 @@ export const EditFitnessTestSessionModal = ({
 		if (!session) return;
 
 		setDeleting(true);
-		setError(undefined);
 
 		try {
-			await deleteFitnessTestSession({
-				sessionId: session._id,
-			});
+			await deleteFitnessTestSession({ sessionId: session._id });
+			toast.success("Session deleted");
 			setConfirmingDelete(false);
 			onDeleted?.();
-		} catch (error) {
-			setError(
-				error instanceof Error ? error.message : "Unable to delete session",
-			);
+		} catch {
+			toast.error("Delete failed");
 			setDeleting(false);
 		}
 	};
@@ -116,7 +111,6 @@ export const EditFitnessTestSessionModal = ({
 						<div className="px-6 py-5">
 							<Input
 								autoFocus
-								error={error}
 								label="Session Date"
 								type="date"
 								value={date}

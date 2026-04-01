@@ -1,7 +1,7 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { Plus } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -13,9 +13,11 @@ import {
 import { AddPracticeModal } from "@/components/practices/add-practice-modal";
 import { AttendanceModal } from "@/components/practices/attendance-modal";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useToast } from "@/lib/toast";
 import {
 	cn,
 	formatDayTime,
@@ -36,6 +38,9 @@ export default function PracticesPage() {
 	const pastPractices = pastRaw ?? [];
 	const coaches = coachesRaw ?? [];
 
+	const toast = useToast();
+	const deletePractice = useMutation(api.practices.deletePractice);
+
 	const [view, setView] = useState<"UPCOMING" | "PAST">("UPCOMING");
 	const [addCoachPractice, setAddCoachPractice] =
 		useState<PracticeWithCoaches | null>(null);
@@ -44,6 +49,27 @@ export default function PracticesPage() {
 		id: Id<"practices">;
 		date: number;
 	} | null>(null);
+	const [deletingPractice, setDeletingPractice] = useState<{
+		id: Id<"practices">;
+		title: string;
+	} | null>(null);
+	const [deleteLoading, setDeleteLoading] = useState(false);
+
+	const handleDelete = async () => {
+		if (!deletingPractice) return;
+		setDeleteLoading(true);
+		try {
+			await deletePractice({ id: deletingPractice.id });
+			toast.success("Practice deleted");
+			setDeletingPractice(null);
+		} catch (err) {
+			toast.error(
+				err instanceof Error ? err.message : "Failed to delete practice",
+			);
+		} finally {
+			setDeleteLoading(false);
+		}
+	};
 
 	const displayed = view === "UPCOMING" ? practices : pastPractices;
 	const nextPractice = practices[0] ?? null;
@@ -58,6 +84,7 @@ export default function PracticesPage() {
 						<Button
 							variant="outline"
 							size="sm"
+							className="h-7 px-2.5 text-[10px]"
 							onClick={() => setShowAddPractice(true)}
 						>
 							+ Add Practice
@@ -159,6 +186,12 @@ export default function PracticesPage() {
 									date: practice.date,
 								})
 							}
+							onDelete={() =>
+								setDeletingPractice({
+									id: practice._id,
+									title: getPracticeTitle(practice),
+								})
+							}
 						/>
 					))}
 				</div>
@@ -189,6 +222,17 @@ export default function PracticesPage() {
 					onClose={() => setAttendancePractice(null)}
 				/>
 			)}
+
+			<ConfirmDialog
+				open={deletingPractice !== null}
+				title="Delete Practice"
+				description={`Delete "${deletingPractice?.title}"? This will also remove all associated attendance records and cannot be undone.`}
+				confirmLabel="Delete"
+				destructive
+				loading={deleteLoading}
+				onConfirm={handleDelete}
+				onCancel={() => setDeletingPractice(null)}
+			/>
 		</div>
 	);
 }
@@ -198,11 +242,13 @@ function PracticeRow({
 	isFirst,
 	onAddCoach,
 	onAttendance,
+	onDelete,
 }: {
 	practice: PracticeWithCoaches;
 	isFirst: boolean;
 	onAddCoach: () => void;
 	onAttendance: () => void;
+	onDelete: () => void;
 }) {
 	const dateStr = formatMonthDay(practice.date);
 	const dayTime = formatDayTime(practice.date);
@@ -289,6 +335,13 @@ function PracticeRow({
 					>
 						Plan
 					</Link>
+					<button
+						type="button"
+						onClick={onDelete}
+						className="inline-flex items-center justify-center h-9 w-9 border border-[#cbdbcc] text-[#8aab8a] hover:border-red-300 hover:text-red-500"
+					>
+						<Trash2 className="h-4 w-4" />
+					</button>
 				</div>
 			</div>
 
@@ -347,6 +400,13 @@ function PracticeRow({
 							className="inline-flex items-center justify-center h-8 px-3 border border-[#cbdbcc] text-[#4a8a40] text-[10px] font-semibold tracking-[0.08em] uppercase"
 						>
 							Attendance
+						</button>
+						<button
+							type="button"
+							onClick={onDelete}
+							className="inline-flex items-center justify-center h-8 w-full border border-[#cbdbcc] text-[#8aab8a] hover:border-red-300 hover:text-red-500"
+						>
+							<Trash2 className="h-3.5 w-3.5" />
 						</button>
 					</div>
 				</div>

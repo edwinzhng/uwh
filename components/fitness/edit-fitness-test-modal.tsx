@@ -12,6 +12,7 @@ import {
 	fitnessTestUnitOptions,
 	fitnessTestUnits,
 } from "@/lib/fitness";
+import { useToast } from "@/lib/toast";
 
 export type FitnessTest = Doc<"fitnessTests">;
 
@@ -28,9 +29,10 @@ export const EditFitnessTestModal = ({
 	onClose,
 	onSaved,
 }: EditFitnessTestModalProps): React.JSX.Element => {
+	const toast = useToast();
 	const [confirmingArchive, setConfirmingArchive] = useState(false);
 	const [name, setName] = useState(fitnessTest?.name ?? "");
-	const [error, setError] = useState<string>();
+	const [nameError, setNameError] = useState<string>();
 	const [saving, setSaving] = useState(false);
 	const [archiving, setArchiving] = useState(false);
 	const [unit, setUnit] = useState(fitnessTest?.unit ?? fitnessTestUnits.TIME);
@@ -39,7 +41,7 @@ export const EditFitnessTestModal = ({
 		setConfirmingArchive(false);
 		setName(fitnessTest?.name ?? "");
 		setUnit(fitnessTest?.unit ?? fitnessTestUnits.TIME);
-		setError(undefined);
+		setNameError(undefined);
 	}, [fitnessTest]);
 
 	const createFitnessTest = useMutation(api.fitnessTests.createFitnessTest);
@@ -49,19 +51,17 @@ export const EditFitnessTestModal = ({
 	const handleSave = async (): Promise<void> => {
 		const trimmedName = name.trim();
 		if (!trimmedName) {
-			setError("Name is required");
+			setNameError("Name is required");
 			return;
 		}
 
 		setSaving(true);
-		setError(undefined);
+		setNameError(undefined);
 
 		try {
 			if (fitnessTest) {
-				await updateFitnessTest({
-					id: fitnessTest._id,
-					name: trimmedName,
-				});
+				await updateFitnessTest({ id: fitnessTest._id, name: trimmedName });
+				toast.success("Test saved");
 				onSaved(fitnessTest._id);
 				return;
 			}
@@ -70,11 +70,10 @@ export const EditFitnessTestModal = ({
 				name: trimmedName,
 				unit,
 			});
+			toast.success("Test created");
 			onSaved(createdFitnessTestId);
-		} catch (error) {
-			setError(
-				error instanceof Error ? error.message : "Unable to save fitness test",
-			);
+		} catch (_error) {
+			toast.error("Save failed");
 			setSaving(false);
 		}
 	};
@@ -83,16 +82,14 @@ export const EditFitnessTestModal = ({
 		if (!fitnessTest) return;
 
 		setArchiving(true);
-		setError(undefined);
 
 		try {
-			await archiveFitnessTest({
-				id: fitnessTest._id,
-			});
+			await archiveFitnessTest({ id: fitnessTest._id });
+			toast.success("Test archived");
 			setConfirmingArchive(false);
 			onArchived?.();
 		} catch {
-			setError("Unable to archive fitness test");
+			toast.error("Archive failed");
 			setArchiving(false);
 		}
 	};
@@ -113,7 +110,7 @@ export const EditFitnessTestModal = ({
 						<div className="px-6 py-5">
 							<Input
 								autoFocus
-								error={error}
+								error={nameError}
 								label="Test Name"
 								value={name}
 								onChange={(event) => setName(event.target.value)}
