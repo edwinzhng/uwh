@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
+import { useToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 export type Player = Doc<"players">;
@@ -42,6 +43,7 @@ export function EditPlayerModal({
 	const [isCoach, setIsCoach] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const toast = useToast();
 
 	// Coach check
 	const coach = useQuery(api.coaches.getCoachByPlayerId, {
@@ -87,6 +89,7 @@ export function EditPlayerModal({
 				await deleteCoach({ id: coach._id });
 			}
 
+			toast.success("Player saved");
 			onSaved({
 				...player,
 				fullName: fullName.trim(),
@@ -95,7 +98,9 @@ export function EditPlayerModal({
 				youth,
 			});
 		} catch (err) {
-			console.error(err);
+			toast.error(
+				err instanceof Error ? err.message : "Failed to save player.",
+			);
 			setSaving(false);
 		}
 	};

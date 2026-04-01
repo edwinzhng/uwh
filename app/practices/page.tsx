@@ -10,8 +10,12 @@ import {
 	type PracticeCoachJoin,
 	type PracticeWithCoaches,
 } from "@/components/practices/add-coach-modal";
+import { AddPracticeModal } from "@/components/practices/add-practice-modal";
+import { AttendanceModal } from "@/components/practices/attendance-modal";
+import { Button } from "@/components/ui/button";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import {
 	cn,
 	formatDayTime,
@@ -35,6 +39,11 @@ export default function PracticesPage() {
 	const [view, setView] = useState<"UPCOMING" | "PAST">("UPCOMING");
 	const [addCoachPractice, setAddCoachPractice] =
 		useState<PracticeWithCoaches | null>(null);
+	const [showAddPractice, setShowAddPractice] = useState(false);
+	const [attendancePractice, setAttendancePractice] = useState<{
+		id: Id<"practices">;
+		date: number;
+	} | null>(null);
 
 	const displayed = view === "UPCOMING" ? practices : pastPractices;
 	const nextPractice = practices[0] ?? null;
@@ -45,14 +54,23 @@ export default function PracticesPage() {
 				eyebrow="Schedule"
 				title="Practices"
 				actions={
-					<SegmentedControl
-						options={[
-							{ label: "Upcoming", value: "UPCOMING" },
-							{ label: "Past", value: "PAST" },
-						]}
-						value={view}
-						onChange={(v) => setView(v as "UPCOMING" | "PAST")}
-					/>
+					<>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => setShowAddPractice(true)}
+						>
+							+ Add Practice
+						</Button>
+						<SegmentedControl
+							options={[
+								{ label: "Upcoming", value: "UPCOMING" },
+								{ label: "Past", value: "PAST" },
+							]}
+							value={view}
+							onChange={(v) => setView(v as "UPCOMING" | "PAST")}
+						/>
+					</>
 				}
 			/>
 
@@ -135,6 +153,12 @@ export default function PracticesPage() {
 							practice={practice}
 							isFirst={i === 0 && view === "UPCOMING"}
 							onAddCoach={() => setAddCoachPractice(practice)}
+							onAttendance={() =>
+								setAttendancePractice({
+									id: practice._id,
+									date: practice.date,
+								})
+							}
 						/>
 					))}
 				</div>
@@ -150,6 +174,21 @@ export default function PracticesPage() {
 					}}
 				/>
 			)}
+
+			{showAddPractice && (
+				<AddPracticeModal
+					onClose={() => setShowAddPractice(false)}
+					onSaved={() => setShowAddPractice(false)}
+				/>
+			)}
+
+			{attendancePractice && (
+				<AttendanceModal
+					practiceId={attendancePractice.id}
+					practiceDate={attendancePractice.date}
+					onClose={() => setAttendancePractice(null)}
+				/>
+			)}
 		</div>
 	);
 }
@@ -158,10 +197,12 @@ function PracticeRow({
 	practice,
 	isFirst,
 	onAddCoach,
+	onAttendance,
 }: {
 	practice: PracticeWithCoaches;
 	isFirst: boolean;
 	onAddCoach: () => void;
+	onAttendance: () => void;
 }) {
 	const dateStr = formatMonthDay(practice.date);
 	const dayTime = formatDayTime(practice.date);
@@ -172,7 +213,7 @@ function PracticeRow({
 			{/* Desktop row */}
 			<div
 				className={cn(
-					"hidden md:grid grid-cols-[200px_1fr_200px_100px] gap-0 px-6 py-5 border-b border-[#cbdbcc] items-center",
+					"hidden md:grid grid-cols-[200px_1fr_200px_auto] gap-0 px-6 py-5 border-b border-[#cbdbcc] items-center",
 					isFirst && "bg-white/40",
 				)}
 			>
@@ -228,8 +269,15 @@ function PracticeRow({
 					)}
 				</div>
 
-				{/* Action */}
-				<div className="flex justify-end">
+				{/* Actions */}
+				<div className="flex items-center gap-2 justify-end">
+					<button
+						type="button"
+						onClick={onAttendance}
+						className="inline-flex items-center justify-center h-9 px-3 text-xs font-semibold tracking-[0.08em] uppercase border border-[#cbdbcc] text-[#4a8a40] hover:border-[#298a29] hover:text-[#298a29]"
+					>
+						Attendance
+					</button>
 					<Link
 						href={`/practices/${practice.sporteasyId ?? practice._id}/plan`}
 						className={cn(
@@ -286,12 +334,21 @@ function PracticeRow({
 							)}
 						</div>
 					</div>
-					<Link
-						href={`/practices/${practice.sporteasyId ?? practice._id}/plan`}
-						className="ml-4 inline-flex items-center justify-center h-9 px-4 border border-[#021e00] text-[#021e00] text-xs font-semibold tracking-[0.08em] uppercase "
-					>
-						Plan
-					</Link>
+					<div className="ml-4 flex flex-col gap-1.5">
+						<Link
+							href={`/practices/${practice.sporteasyId ?? practice._id}/plan`}
+							className="inline-flex items-center justify-center h-9 px-4 border border-[#021e00] text-[#021e00] text-xs font-semibold tracking-[0.08em] uppercase"
+						>
+							Plan
+						</Link>
+						<button
+							type="button"
+							onClick={onAttendance}
+							className="inline-flex items-center justify-center h-8 px-3 border border-[#cbdbcc] text-[#4a8a40] text-[10px] font-semibold tracking-[0.08em] uppercase"
+						>
+							Attendance
+						</button>
+					</div>
 				</div>
 			</div>
 		</>

@@ -6,8 +6,11 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
+import { useToast } from "@/lib/toast";
 
 export default function AdminPage() {
+	const toast = useToast();
+
 	const [cookiePaste, setCookiePaste] = useState("");
 	const [cookieStatus, setCookieStatus] = useState<{
 		active: boolean;
@@ -15,20 +18,6 @@ export default function AdminPage() {
 	} | null>(null);
 	const [updatingCookie, setUpdatingCookie] = useState(false);
 	const [testingConnection, setTestingConnection] = useState(false);
-	const [testConnectionStatus, setTestConnectionStatus] = useState<{
-		ok: boolean;
-		message: string;
-	} | null>(null);
-
-	const [importPlayersStatus, setImportPlayersStatus] = useState<string | null>(
-		null,
-	);
-	const [importPracticesStatus, setImportPracticesStatus] = useState<
-		string | null
-	>(null);
-	const [syncAttendanceStatus, setSyncAttendanceStatus] = useState<
-		string | null
-	>(null);
 
 	const [importingPlayers, setImportingPlayers] = useState(false);
 	const [importingPractices, setImportingPractices] = useState(false);
@@ -42,6 +31,7 @@ export default function AdminPage() {
 	const testConnectionAction = useAction(api.sporteasy.testConnection);
 	const importProfilesAction = useAction(api.sporteasy.importProfiles);
 	const importEventsAction = useAction(api.sporteasy.importEvents);
+	const syncAllAttendanceAction = useAction(api.attendance.syncAllAttendance);
 
 	useEffect(() => {
 		if (dbCookie !== undefined && dbCookie !== null) {
@@ -62,8 +52,11 @@ export default function AdminPage() {
 			});
 			setCookieStatus({ active: true, lastSynced: new Date().toISOString() });
 			setCookiePaste("");
+			toast.success("Cookie updated");
 		} catch (err) {
-			console.error(err);
+			toast.error(
+				err instanceof Error ? err.message : "Failed to update cookie.",
+			);
 		} finally {
 			setUpdatingCookie(false);
 		}
@@ -71,38 +64,33 @@ export default function AdminPage() {
 
 	const handleTestConnection = async () => {
 		setTestingConnection(true);
-		setTestConnectionStatus(null);
 		try {
 			const result = await testConnectionAction();
-			setTestConnectionStatus(
-				result.ok
-					? { ok: true, message: "Connection successful" }
-					: { ok: false, message: result.error ?? "Connection failed" },
-			);
+			if (result.ok) {
+				toast.success("Connection successful");
+			} else {
+				toast.error(result.error ?? "Connection failed");
+			}
 		} catch {
-			setTestConnectionStatus({ ok: false, message: "Connection failed" });
+			toast.error("Connection failed");
 		} finally {
 			setTestingConnection(false);
-			setTimeout(() => setTestConnectionStatus(null), 6000);
 		}
 	};
 
 	const handleImportPlayers = async () => {
 		setImportingPlayers(true);
-		setImportPlayersStatus(null);
 		try {
 			const result = await importProfilesAction();
 			const parts = [];
 			if (result.imported > 0) parts.push(`${result.imported} imported`);
 			if (result.updated > 0) parts.push(`${result.updated} updated`);
 			if (result.skipped > 0) parts.push(`${result.skipped} skipped`);
-			setImportPlayersStatus(
-				parts.length > 0 ? parts.join(", ") : "Up to date",
+			toast.success(
+				`Players: ${parts.length > 0 ? parts.join(", ") : "up to date"}`,
 			);
-			setTimeout(() => setImportPlayersStatus(null), 5000);
 		} catch {
-			setImportPlayersStatus("Failed");
-			setTimeout(() => setImportPlayersStatus(null), 5000);
+			toast.error("Failed to import players.");
 		} finally {
 			setImportingPlayers(false);
 		}
@@ -110,19 +98,16 @@ export default function AdminPage() {
 
 	const handleImportPractices = async () => {
 		setImportingPractices(true);
-		setImportPracticesStatus(null);
 		try {
 			const result = await importEventsAction();
 			const parts = [];
 			if (result.imported > 0) parts.push(`${result.imported} imported`);
 			if (result.updated > 0) parts.push(`${result.updated} updated`);
-			setImportPracticesStatus(
-				parts.length > 0 ? parts.join(", ") : "Up to date",
+			toast.success(
+				`Practices: ${parts.length > 0 ? parts.join(", ") : "up to date"}`,
 			);
-			setTimeout(() => setImportPracticesStatus(null), 5000);
 		} catch {
-			setImportPracticesStatus("Failed");
-			setTimeout(() => setImportPracticesStatus(null), 5000);
+			toast.error("Failed to import practices.");
 		} finally {
 			setImportingPractices(false);
 		}
@@ -130,15 +115,15 @@ export default function AdminPage() {
 
 	const handleSyncAttendance = async () => {
 		setSyncingAttendance(true);
-		setSyncAttendanceStatus(null);
 		try {
-			// Would call a sync attendance endpoint
-			await new Promise((r) => setTimeout(r, 1500));
-			setSyncAttendanceStatus("Synced");
-			setTimeout(() => setSyncAttendanceStatus(null), 5000);
-		} catch {
-			setSyncAttendanceStatus("Failed");
-			setTimeout(() => setSyncAttendanceStatus(null), 5000);
+			const result = await syncAllAttendanceAction();
+			toast.success(
+				`Attendance synced: ${result.synced} records across ${result.practices} practices`,
+			);
+		} catch (err) {
+			toast.error(
+				err instanceof Error ? err.message : "Failed to sync attendance.",
+			);
 		} finally {
 			setSyncingAttendance(false);
 		}
@@ -230,22 +215,6 @@ export default function AdminPage() {
 									Test Connection
 								</Button>
 							</div>
-							{testConnectionStatus && (
-								<div
-									className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border ${
-										testConnectionStatus.ok
-											? "bg-[#eef4f1] border-[#cbdbcc] text-[#021e00]"
-											: "bg-red-50 border-red-200 text-red-700"
-									}`}
-								>
-									<span
-										className={`h-2 w-2 flex-shrink-0 ${
-											testConnectionStatus.ok ? "bg-[#298a29]" : "bg-red-500"
-										}`}
-									/>
-									{testConnectionStatus.message}
-								</div>
-							)}
 						</div>
 					</div>
 				</div>
@@ -265,7 +234,6 @@ export default function AdminPage() {
 								action="Run Import"
 								onAction={handleImportPlayers}
 								loading={importingPlayers}
-								status={importPlayersStatus}
 							/>
 							<SyncCard
 								title="Import Practices"
@@ -273,7 +241,6 @@ export default function AdminPage() {
 								action="Run Import"
 								onAction={handleImportPractices}
 								loading={importingPractices}
-								status={importPracticesStatus}
 							/>
 							<SyncCard
 								title="Sync Attendance"
@@ -281,7 +248,6 @@ export default function AdminPage() {
 								action="Run Sync"
 								onAction={handleSyncAttendance}
 								loading={syncingAttendance}
-								status={syncAttendanceStatus}
 							/>
 						</div>
 					</div>
@@ -297,14 +263,12 @@ function SyncCard({
 	action,
 	onAction,
 	loading,
-	status,
 }: {
 	title: string;
 	description: string;
 	action: string;
 	onAction: () => void;
 	loading: boolean;
-	status: string | null;
 }) {
 	return (
 		<div className="border border-[#cbdbcc] p-4 flex flex-col gap-3">
@@ -315,9 +279,6 @@ function SyncCard({
 				</p>
 			</div>
 			<div className="mt-auto">
-				{status && (
-					<p className="text-[#298a29] text-xs mb-2 font-medium">{status}</p>
-				)}
 				<Button
 					variant="secondary"
 					size="sm"

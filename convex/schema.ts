@@ -94,6 +94,17 @@ export default defineSchema({
 		.index("by_playerId", ["playerId"])
 		.index("by_practiceId_and_playerId", ["practiceId", "playerId"]),
 
+	practiceAttendance: defineTable({
+		practiceId: v.id("practices"),
+		playerId: v.id("players"),
+		attended: v.boolean(),
+		source: v.union(v.literal("manual"), v.literal("sporteasy")),
+		updatedAt: v.number(),
+	})
+		.index("by_practiceId", ["practiceId"])
+		.index("by_playerId", ["playerId"])
+		.index("by_practiceId_and_playerId", ["practiceId", "playerId"]),
+
 	settings: defineTable({
 		key: v.string(),
 		value: v.string(),

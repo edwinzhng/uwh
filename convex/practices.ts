@@ -212,6 +212,27 @@ export const createPractice = mutation({
 	},
 });
 
+export const createPractices = mutation({
+	args: {
+		dates: v.array(v.number()),
+		notes: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		if (args.dates.length === 0) throw new Error("No dates provided");
+		const now = Date.now();
+		const ids = await Promise.all(
+			args.dates.map((date) =>
+				ctx.db.insert("practices", {
+					date,
+					notes: args.notes,
+					updatedAt: now,
+				}),
+			),
+		);
+		return ids;
+	},
+});
+
 export const updatePractice = mutation({
 	args: {
 		id: v.id("practices"),
@@ -256,6 +277,15 @@ export const deletePractice = mutation({
 			.collect();
 		for (const ps of statuses) {
 			await ctx.db.delete(ps._id);
+		}
+
+		// Delete associated attendance records
+		const attendance = await ctx.db
+			.query("practiceAttendance")
+			.withIndex("by_practiceId", (q) => q.eq("practiceId", args.id))
+			.collect();
+		for (const a of attendance) {
+			await ctx.db.delete(a._id);
 		}
 
 		// Finally delete the practice

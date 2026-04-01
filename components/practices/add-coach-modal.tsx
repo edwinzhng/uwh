@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
+import { useToast } from "@/lib/toast";
 import { cn, formatMonthDay } from "@/lib/utils";
 
 export type PracticeCoachJoin = Doc<"practiceCoaches"> & { coachName: string };
@@ -35,6 +36,7 @@ export function AddCoachModal({
 		assignedCoachIds as Id<"coaches">[],
 	);
 	const [saving, setSaving] = useState(false);
+	const toast = useToast();
 
 	const setPracticeCoaches = useMutation(
 		api.practiceCoaches.setPracticeCoaches,
@@ -53,9 +55,12 @@ export function AddCoachModal({
 				practiceId: practice._id as Id<"practices">,
 				coachIds: selectedIds as Id<"coaches">[],
 			});
+			toast.success("Coaches updated");
 			onSaved();
 		} catch (err) {
-			console.error(err);
+			toast.error(
+				err instanceof Error ? err.message : "Failed to update coaches.",
+			);
 			setSaving(false);
 		}
 	};

@@ -1,6 +1,13 @@
 "use client";
 
-import { Activity, Calendar, Settings, Star, User } from "lucide-react";
+import {
+	Activity,
+	Calendar,
+	CheckSquare,
+	Settings,
+	Star,
+	User,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -9,6 +16,7 @@ const navItems = [
 	{ href: "/practices", label: "Practices", icon: Calendar },
 	{ href: "/players", label: "Players", icon: User },
 	{ href: "/fitness", label: "Fitness", icon: Activity },
+	{ href: "/attendance", label: "Attendance", icon: CheckSquare },
 	{ href: "/coaches", label: "Coaches", icon: Star },
 	{ href: "/admin", label: "Admin", icon: Settings },
 ];

@@ -136,8 +136,10 @@ const formatValueForOverview = (
 			: value.toFixed(1);
 
 export const getFitnessOverview = query({
-	args: {},
-	handler: async (ctx) => {
+	args: {
+		sessionDate: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
 		const tests = await ctx.db
 			.query("fitnessTests")
 			.withIndex("by_archivedAt_and_name", (q) => q.eq("archivedAt", undefined))
@@ -152,14 +154,18 @@ export const getFitnessOverview = query({
 
 		const testStats = await Promise.all(
 			tests.map(async (test) => {
-				const sessionIds = (
-					await ctx.db
-						.query("fitnessTestSessions")
-						.withIndex("by_fitnessTestId", (q) =>
-							q.eq("fitnessTestId", test._id),
-						)
-						.collect()
-				).map((s) => s._id);
+				const allSessions = await ctx.db
+					.query("fitnessTestSessions")
+					.withIndex("by_fitnessTestId", (q) => q.eq("fitnessTestId", test._id))
+					.collect();
+
+				// When filtering by date, only include sessions on that date
+				const filteredSessions =
+					args.sessionDate !== undefined
+						? allSessions.filter((s) => s.date === args.sessionDate)
+						: allSessions;
+
+				const sessionIds = filteredSessions.map((s) => s._id);
 
 				const testResults = allResults.filter((r) =>
 					sessionIds.includes(r.fitnessTestSessionId),
@@ -174,6 +180,19 @@ export const getFitnessOverview = query({
 						);
 						const playerName = playerNameById.get(playerId);
 						if (!playerName) return undefined;
+
+						// When filtering by session date, show actual value (not best)
+						if (args.sessionDate !== undefined) {
+							const result = playerResults[0];
+							if (!result) return undefined;
+							return {
+								playerId,
+								playerName,
+								best: result.value,
+								average: "",
+								resultCount: 1,
+							};
+						}
 
 						if (test.unit === fitnessTestUnits.PASS_FAIL) {
 							const passCount = playerResults.filter(
@@ -238,6 +257,69 @@ export const getFitnessOverview = query({
 		);
 
 		return testStats;
+	},
+});
+
+export const getFitnessTestSessionDates = query({
+	args: {},
+	handler: async (ctx) => {
+		const sessions = await ctx.db.query("fitnessTestSessions").collect();
+		// Get unique dates sorted descending
+		const uniqueDates = [...new Set(sessions.map((s) => s.date))].sort(
+			(a, b) => b - a,
+		);
+		return uniqueDates;
+	},
+});
+
+export const getPlayerFitnessHistory = query({
+	args: { playerId: v.id("players") },
+	handler: async (ctx, args) => {
+		const player = await ctx.db.get(args.playerId);
+		if (!player) return null;
+
+		// Get all results for this player
+		const results = await ctx.db
+			.query("fitnessTestResults")
+			.withIndex("by_playerId", (q) => q.eq("playerId", args.playerId))
+			.collect();
+
+		// Get all sessions referenced
+		const sessionIds = [...new Set(results.map((r) => r.fitnessTestSessionId))];
+		const sessions = (
+			await Promise.all(sessionIds.map((id) => ctx.db.get(id)))
+		).filter((s): s is NonNullable<typeof s> => s !== null);
+
+		const sessionMap = new Map(sessions.map((s) => [s._id, s]));
+
+		// Get unique test IDs from sessions
+		const testIdSet = new Set(sessions.map((s) => s.fitnessTestId));
+		const tests = (
+			await Promise.all([...testIdSet].map((id) => ctx.db.get(id)))
+		).filter((t): t is NonNullable<typeof t> => t !== null);
+
+		const activeTests = tests.filter((t) => !t.archivedAt);
+
+		const mappedResults = results
+			.map((r) => {
+				const session = sessionMap.get(r.fitnessTestSessionId);
+				if (!session) return null;
+				return {
+					_id: r._id,
+					sessionId: r.fitnessTestSessionId,
+					testId: session.fitnessTestId,
+					value: r.value,
+					date: session.date,
+				};
+			})
+			.filter((r): r is NonNullable<typeof r> => r !== null)
+			.sort((a, b) => a.date - b.date);
+
+		return {
+			player: { _id: player._id, fullName: player.fullName },
+			tests: activeTests,
+			results: mappedResults,
+		};
 	},
 });
 
