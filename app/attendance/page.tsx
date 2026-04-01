@@ -82,41 +82,32 @@ export default function AttendancePage() {
 		player: (typeof allPlayers)[0],
 		month: MonthGroup,
 	): { attended: number; total: number } => {
-		let attended = 0;
-		let total = 0;
-		for (const pid of month.practiceIds) {
-			const a = player.attendance.find((x) => x.practiceId === pid);
-			if (a?.attended === true) {
-				attended++;
-				total++;
-			} else if (a?.attended === false) {
-				total++;
-			}
-			// null = unrecorded, don't count toward total
-		}
+		const total = month.practiceIds.length;
+		const attended = month.practiceIds.filter(
+			(pid) =>
+				player.attendance.find((x) => x.practiceId === pid)?.attended === true,
+		).length;
 		return { attended, total };
 	};
 
-	// Per-month session rate across all players
+	// Per-month session rate across all players (attended / total possible)
 	const monthRates = months.map((month) => {
 		let totalAttended = 0;
-		let totalRecorded = 0;
+		const totalPossible = month.practiceIds.length * allPlayers.length;
 		for (const player of allPlayers) {
-			const { attended, total } = monthCount(player, month);
-			totalAttended += attended;
-			totalRecorded += total;
+			totalAttended += monthCount(player, month).attended;
 		}
-		return totalRecorded > 0
-			? Math.round((totalAttended / totalRecorded) * 100)
+		return totalPossible > 0
+			? Math.round((totalAttended / totalPossible) * 100)
 			: null;
 	});
 
-	// Per-player overall attendance rate
+	// Per-player overall attendance rate (out of all sessions in the season)
 	const playerRate = (player: (typeof players)[0]) => {
-		const recorded = player.attendance.filter((a) => a.attended !== null);
-		if (recorded.length === 0) return null;
-		const present = recorded.filter((a) => a.attended === true).length;
-		return Math.round((present / recorded.length) * 100);
+		const total = practices.length;
+		if (total === 0) return null;
+		const present = player.attendance.filter((a) => a.attended === true).length;
+		return Math.round((present / total) * 100);
 	};
 
 	const handleResync = async () => {
