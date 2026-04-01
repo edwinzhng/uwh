@@ -72,8 +72,19 @@ export default function AttendancePage() {
 	});
 
 	const loading = data === undefined;
-	const practices = data?.practices ?? [];
+	const allPractices = data?.practices ?? [];
 	const allPlayers = data?.players ?? [];
+
+	// Only count sessions that are hockey/training
+	const practices = allPractices.filter((p) => {
+		const notes = (p.notes ?? "").toLowerCase();
+		return (
+			notes.includes("hockey") ||
+			notes.includes("training") ||
+			notes.includes("intra-club") ||
+			notes.includes("intraclub")
+		);
+	});
 
 	const months = groupPracticesByMonth(practices);
 
@@ -108,11 +119,15 @@ export default function AttendancePage() {
 			: null;
 	});
 
-	// Per-player overall attendance rate (out of all sessions in the season)
+	const practiceIdSet = new Set(practices.map((p) => p._id));
+
+	// Per-player overall attendance rate (out of filtered hockey/training sessions only)
 	const playerRate = (player: (typeof players)[0]) => {
 		const total = practices.length;
 		if (total === 0) return null;
-		const present = player.attendance.filter((a) => a.attended === true).length;
+		const present = player.attendance.filter(
+			(a) => practiceIdSet.has(a.practiceId) && a.attended === true,
+		).length;
 		return Math.round((present / total) * 100);
 	};
 
@@ -224,14 +239,7 @@ export default function AttendancePage() {
 									<td key={months[i].key} className="px-3 py-2 text-center">
 										{rate !== null ? (
 											<span
-												className={cn(
-													"text-xs font-semibold",
-													rate >= 70
-														? "text-[#298a29]"
-														: rate >= 40
-															? "text-amber-600"
-															: "text-red-500",
-												)}
+												className={cn("text-xs font-semibold", rateColor(rate))}
 											>
 												{rate}%
 											</span>
