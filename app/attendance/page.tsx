@@ -61,6 +61,7 @@ export default function AttendancePage() {
 	const toast = useToast();
 	const [filter, setFilter] = useState<"ALL" | "ADULT" | "YOUTH">("ALL");
 	const [seasonIndex, setSeasonIndex] = useState(0);
+	const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
 	const [syncing, setSyncing] = useState(false);
 
 	const season = SEASONS[seasonIndex];
@@ -88,7 +89,7 @@ export default function AttendancePage() {
 
 	const months = groupPracticesByMonth(practices);
 
-	const players = allPlayers.filter((p) => {
+	const unsortedPlayers = allPlayers.filter((p) => {
 		if (filter === "ADULT") return !p.youth;
 		if (filter === "YOUTH") return p.youth;
 		return true;
@@ -122,7 +123,7 @@ export default function AttendancePage() {
 	const practiceIdSet = new Set(practices.map((p) => p._id));
 
 	// Per-player overall attendance rate (out of filtered hockey/training sessions only)
-	const playerRate = (player: (typeof players)[0]) => {
+	const playerRate = (player: (typeof unsortedPlayers)[0]) => {
 		const total = practices.length;
 		if (total === 0) return null;
 		const present = player.attendance.filter(
@@ -130,6 +131,12 @@ export default function AttendancePage() {
 		).length;
 		return Math.round((present / total) * 100);
 	};
+
+	const players = [...unsortedPlayers].sort((a, b) => {
+		const ra = playerRate(a) ?? -1;
+		const rb = playerRate(b) ?? -1;
+		return sortDir === "desc" ? rb - ra : ra - rb;
+	});
 
 	const handleResync = async () => {
 		setSyncing(true);
@@ -209,8 +216,19 @@ export default function AttendancePage() {
 								<th className="sticky left-0 z-10 bg-[#eef4f1] px-4 py-3 text-left text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a] min-w-[160px] border-r border-[#cbdbcc]">
 									Player
 								</th>
-								<th className="px-3 py-3 text-center text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a] w-16 border-r border-[#cbdbcc]">
-									Rate
+								<th className="px-3 py-3 text-center w-16 border-r border-[#cbdbcc]">
+									<button
+										type="button"
+										onClick={() =>
+											setSortDir((d) => (d === "desc" ? "asc" : "desc"))
+										}
+										className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[#4a8a40] hover:text-[#298a29] inline-flex items-center gap-0.5"
+									>
+										Rate
+										<span className="text-[9px]">
+											{sortDir === "desc" ? "↓" : "↑"}
+										</span>
+									</button>
 								</th>
 								{months.map((m) => (
 									<th
