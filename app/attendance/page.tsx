@@ -4,7 +4,9 @@ import { useAction, useQuery } from "convex/react";
 import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { AttendanceComparisonModal } from "@/components/practices/attendance-comparison-modal";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -63,6 +65,19 @@ export default function AttendancePage() {
 	const [seasonIndex, setSeasonIndex] = useState(0);
 	const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
 	const [syncing, setSyncing] = useState(false);
+	const [selectedPlayerIds, setSelectedPlayerIds] = useState<
+		Set<Id<"players">>
+	>(new Set());
+	const [showComparison, setShowComparison] = useState(false);
+
+	const togglePlayer = (id: Id<"players">) => {
+		setSelectedPlayerIds((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) next.delete(id);
+			else next.add(id);
+			return next;
+		});
+	};
 
 	const season = SEASONS[seasonIndex];
 	const syncAllAttendance = useAction(api.attendance.syncAllAttendance);
@@ -213,7 +228,8 @@ export default function AttendancePage() {
 					<table className="min-w-full border-collapse">
 						<thead>
 							<tr className="bg-[#eef4f1] border-b border-[#cbdbcc]">
-								<th className="sticky left-0 z-10 bg-[#eef4f1] px-4 py-3 text-left text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a] min-w-[160px] border-r border-[#cbdbcc]">
+								<th className="sticky left-0 z-10 w-10 bg-[#eef4f1] px-3 py-3" />
+								<th className="sticky left-10 z-10 bg-[#eef4f1] px-4 py-3 text-left text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a] min-w-[160px] border-r border-[#cbdbcc]">
 									Player
 								</th>
 								<th className="px-3 py-3 text-center w-16 border-r border-[#cbdbcc]">
@@ -249,7 +265,8 @@ export default function AttendancePage() {
 						<tbody>
 							{/* Per-month rate row */}
 							<tr className="border-b-2 border-[#cbdbcc] bg-white">
-								<td className="sticky left-0 z-10 bg-white px-4 py-2 text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] border-r border-[#cbdbcc]">
+								<td className="sticky left-0 z-10 w-10 bg-white px-3 py-2" />
+								<td className="sticky left-10 z-10 bg-white px-4 py-2 text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] border-r border-[#cbdbcc]">
 									Month Rate
 								</td>
 								<td className="border-r border-[#cbdbcc]" />
@@ -271,15 +288,33 @@ export default function AttendancePage() {
 							{/* Player rows */}
 							{players.map((player, rowIdx) => {
 								const rate = playerRate(player);
+								const isSelected = selectedPlayerIds.has(player._id);
+								const rowBg = rowIdx % 2 === 0 ? "bg-white" : "bg-[#f8fbf8]";
 								return (
 									<tr
 										key={player._id}
 										className={cn(
 											"border-b border-[#cbdbcc]",
-											rowIdx % 2 === 0 ? "bg-white" : "bg-[#f8fbf8]",
+											isSelected ? "bg-[#e8f5e8]" : rowBg,
 										)}
 									>
-										<td className="sticky left-0 z-10 px-4 py-3 border-r border-[#cbdbcc] bg-inherit">
+										<td
+											className={cn(
+												"sticky left-0 z-10 w-10 px-3 py-3",
+												isSelected ? "bg-[#e8f5e8]" : rowBg,
+											)}
+										>
+											<Checkbox
+												checked={isSelected}
+												onChange={() => togglePlayer(player._id)}
+											/>
+										</td>
+										<td
+											className={cn(
+												"sticky left-10 z-10 px-4 py-3 border-r border-[#cbdbcc]",
+												isSelected ? "bg-[#e8f5e8]" : rowBg,
+											)}
+										>
 											<p className="text-sm font-medium text-[#021e00] truncate max-w-[140px]">
 												{player.fullName}
 											</p>
@@ -324,6 +359,38 @@ export default function AttendancePage() {
 					</table>
 				</div>
 			)}
+
+			{selectedPlayerIds.size >= 2 && (
+				<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-[#021e00] px-5 py-3 shadow-lg">
+					<span className="text-xs text-[#8aab8a]">
+						{selectedPlayerIds.size} players selected
+					</span>
+					<button
+						type="button"
+						onClick={() => setShowComparison(true)}
+						className="text-xs font-semibold text-[#eef4f1] hover:text-white underline underline-offset-2"
+					>
+						Compare
+					</button>
+					<button
+						type="button"
+						onClick={() => setSelectedPlayerIds(new Set())}
+						className="text-xs text-[#6c866d] hover:text-[#8aab8a]"
+					>
+						Clear
+					</button>
+				</div>
+			)}
+
+			<AttendanceComparisonModal
+				players={
+					showComparison
+						? allPlayers.filter((p) => selectedPlayerIds.has(p._id))
+						: []
+				}
+				months={months}
+				onClose={() => setShowComparison(false)}
+			/>
 		</div>
 	);
 }

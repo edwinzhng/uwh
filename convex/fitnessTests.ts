@@ -323,6 +323,62 @@ export const getPlayerFitnessHistory = query({
 	},
 });
 
+export const getMultiplePlayerFitnessHistories = query({
+	args: { playerIds: v.array(v.id("players")) },
+	handler: async (ctx, args) => {
+		if (args.playerIds.length === 0) return [];
+
+		const histories = await Promise.all(
+			args.playerIds.map(async (playerId) => {
+				const player = await ctx.db.get(playerId);
+				if (!player) return null;
+
+				const results = await ctx.db
+					.query("fitnessTestResults")
+					.withIndex("by_playerId", (q) => q.eq("playerId", playerId))
+					.collect();
+
+				const sessionIds = [
+					...new Set(results.map((r) => r.fitnessTestSessionId)),
+				];
+				const sessions = (
+					await Promise.all(sessionIds.map((id) => ctx.db.get(id)))
+				).filter((s): s is NonNullable<typeof s> => s !== null);
+
+				const sessionMap = new Map(sessions.map((s) => [s._id, s]));
+
+				const testIdSet = new Set(sessions.map((s) => s.fitnessTestId));
+				const tests = (
+					await Promise.all([...testIdSet].map((id) => ctx.db.get(id)))
+				).filter((t): t is NonNullable<typeof t> => t !== null);
+
+				const activeTests = tests.filter((t) => !t.archivedAt);
+
+				const mappedResults = results
+					.map((r) => {
+						const session = sessionMap.get(r.fitnessTestSessionId);
+						if (!session) return null;
+						return {
+							testId: session.fitnessTestId,
+							value: r.value,
+							date: session.date,
+						};
+					})
+					.filter((r): r is NonNullable<typeof r> => r !== null)
+					.sort((a, b) => a.date - b.date);
+
+				return {
+					player: { _id: player._id, fullName: player.fullName },
+					tests: activeTests,
+					results: mappedResults,
+				};
+			}),
+		);
+
+		return histories.filter((h): h is NonNullable<typeof h> => h !== null);
+	},
+});
+
 export const getFitnessTestWorkspace = query({
 	args: {
 		fitnessTestId: v.id("fitnessTests"),

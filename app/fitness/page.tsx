@@ -11,8 +11,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { PlayerComparisonModal } from "@/components/fitness/player-comparison-modal";
 import { PlayerTrendModal } from "@/components/fitness/player-trend-modal";
 import { PageHeader } from "@/components/layout/page-header";
+import { Checkbox } from "@/components/ui/checkbox";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -107,12 +109,16 @@ const OverviewTable = ({
 	playersQuery,
 	isSessionFiltered,
 	onPlayerClick,
+	selectedPlayerIds,
+	onTogglePlayer,
 }: {
 	tests: NonNullable<OverviewQuery>;
 	playerFilter: PlayerFilter;
 	playersQuery: { _id: string; youth: boolean | undefined }[];
 	isSessionFiltered: boolean;
 	onPlayerClick: (playerId: Id<"players">) => void;
+	selectedPlayerIds: Set<Id<"players">>;
+	onTogglePlayer: (playerId: Id<"players">) => void;
 }) => {
 	const [sortState, setSortState] = useState<{
 		testId: string | null;
@@ -179,7 +185,8 @@ const OverviewTable = ({
 			<table className="w-full border-collapse text-sm">
 				<thead>
 					<tr className="border-b border-[#cbdbcc] bg-[#eef4f1]">
-						<th className="sticky left-0 z-10 min-w-[140px] bg-[#eef4f1] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
+						<th className="sticky left-0 z-10 w-10 bg-[#eef4f1] px-3 py-3" />
+						<th className="sticky left-10 z-10 min-w-[140px] bg-[#eef4f1] px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8aab8a]">
 							Player
 						</th>
 						{tests.map((t) => {
@@ -207,55 +214,77 @@ const OverviewTable = ({
 					</tr>
 				</thead>
 				<tbody>
-					{players.map((player, i) => (
-						<tr
-							key={player.playerId}
-							className={cn(
-								"border-b border-[#cbdbcc] cursor-pointer transition-colors",
-								i % 2 === 0
-									? "bg-white hover:bg-[#f0f7f0]"
-									: "bg-[#fafcfa] hover:bg-[#eaf3ea]",
-							)}
-							onClick={() => onPlayerClick(player.playerId)}
-						>
-							<td
+					{players.map((player, i) => {
+						const isSelected = selectedPlayerIds.has(player.playerId);
+						const rowBg = i % 2 === 0 ? "bg-white" : "bg-[#fafcfa]";
+						return (
+							<tr
+								key={player.playerId}
 								className={cn(
-									"sticky left-0 z-10 min-w-[140px] px-4 py-3 font-medium text-[#021e00]",
-									i % 2 === 0 ? "bg-white" : "bg-[#fafcfa]",
+									"border-b border-[#cbdbcc] transition-colors",
+									isSelected
+										? "bg-[#e8f5e8]"
+										: i % 2 === 0
+											? "bg-white hover:bg-[#f0f7f0]"
+											: "bg-[#fafcfa] hover:bg-[#eaf3ea]",
 								)}
 							>
-								{player.playerName}
-							</td>
-							{tests.map((t) => {
-								const result = player.results.get(t.test._id);
-								const isRecord =
-									!isSessionFiltered &&
-									(recordHolders.get(t.test._id)?.has(player.playerId) ??
-										false);
-								return (
-									<td key={t.test._id} className="min-w-[110px] px-4 py-3">
-										{result ? (
-											<div className="flex flex-col gap-0.5">
-												<span className="flex items-center gap-1 font-semibold text-[#021e00]">
-													{result.best}
-													{isRecord && (
-														<Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-													)}
-												</span>
-												{result.average && (
-													<span className="text-xs text-[#8aab8a]">
-														{result.average}
+								<td
+									className={cn(
+										"sticky left-0 z-10 w-10 px-3 py-3",
+										isSelected ? "bg-[#e8f5e8]" : rowBg,
+									)}
+								>
+									<Checkbox
+										checked={isSelected}
+										onChange={() => onTogglePlayer(player.playerId)}
+									/>
+								</td>
+								<td
+									className={cn(
+										"sticky left-10 z-10 min-w-[140px] px-4 py-3 font-medium text-[#021e00]",
+										isSelected ? "bg-[#e8f5e8]" : rowBg,
+									)}
+								>
+									<button
+										type="button"
+										className="text-left w-full hover:underline focus-visible:outline-none focus-visible:underline"
+										onClick={() => onPlayerClick(player.playerId)}
+									>
+										{player.playerName}
+									</button>
+								</td>
+								{tests.map((t) => {
+									const result = player.results.get(t.test._id);
+									const isRecord =
+										!isSessionFiltered &&
+										(recordHolders.get(t.test._id)?.has(player.playerId) ??
+											false);
+									return (
+										<td key={t.test._id} className="min-w-[110px] px-4 py-3">
+											{result ? (
+												<div className="flex flex-col gap-0.5">
+													<span className="flex items-center gap-1 font-semibold text-[#021e00]">
+														{result.best}
+														{isRecord && (
+															<Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+														)}
 													</span>
-												)}
-											</div>
-										) : (
-											<span className="text-[#cbdbcc]">—</span>
-										)}
-									</td>
-								);
-							})}
-						</tr>
-					))}
+													{result.average && (
+														<span className="text-xs text-[#8aab8a]">
+															{result.average}
+														</span>
+													)}
+												</div>
+											) : (
+												<span className="text-[#cbdbcc]">—</span>
+											)}
+										</td>
+									);
+								})}
+							</tr>
+						);
+					})}
 				</tbody>
 			</table>
 		</div>
@@ -270,6 +299,21 @@ export default function FitnessOverviewPage(): React.JSX.Element {
 	const [trendPlayerId, setTrendPlayerId] = useState<Id<"players"> | null>(
 		null,
 	);
+	const [selectedPlayerIds, setSelectedPlayerIds] = useState<
+		Set<Id<"players">>
+	>(new Set());
+	const [comparingPlayerIds, setComparingPlayerIds] = useState<Id<"players">[]>(
+		[],
+	);
+
+	const togglePlayer = (id: Id<"players">) => {
+		setSelectedPlayerIds((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) next.delete(id);
+			else next.add(id);
+			return next;
+		});
+	};
 
 	const sessionDates =
 		useQuery(api.fitnessTests.getFitnessTestSessionDates) ?? [];
@@ -359,13 +403,43 @@ export default function FitnessOverviewPage(): React.JSX.Element {
 						playersQuery={playersQuery}
 						isSessionFiltered={selectedDate !== undefined}
 						onPlayerClick={(id) => setTrendPlayerId(id)}
+						selectedPlayerIds={selectedPlayerIds}
+						onTogglePlayer={togglePlayer}
 					/>
+				</div>
+			)}
+
+			{selectedPlayerIds.size >= 2 && (
+				<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-[#021e00] px-5 py-3 shadow-lg">
+					<span className="text-xs text-[#8aab8a]">
+						{selectedPlayerIds.size} players selected
+					</span>
+					<button
+						type="button"
+						onClick={() => {
+							setComparingPlayerIds([...selectedPlayerIds]);
+						}}
+						className="text-xs font-semibold text-[#eef4f1] hover:text-white underline underline-offset-2"
+					>
+						Compare
+					</button>
+					<button
+						type="button"
+						onClick={() => setSelectedPlayerIds(new Set())}
+						className="text-xs text-[#6c866d] hover:text-[#8aab8a]"
+					>
+						Clear
+					</button>
 				</div>
 			)}
 
 			<PlayerTrendModal
 				playerId={trendPlayerId}
 				onClose={() => setTrendPlayerId(null)}
+			/>
+			<PlayerComparisonModal
+				playerIds={comparingPlayerIds}
+				onClose={() => setComparingPlayerIds([])}
 			/>
 		</div>
 	);
