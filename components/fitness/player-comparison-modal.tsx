@@ -14,50 +14,18 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { fitnessTestUnits } from "@/lib/fitness";
+import {
+	fitnessTestUnits,
+	fitnessValueToNumeric,
+	formatFitnessValue,
+} from "@/lib/fitness";
+import { formatChartDate, PLAYER_COLORS } from "@/lib/utils";
 
-const PLAYER_COLORS = [
-	"#298a29",
-	"#2563eb",
-	"#d97706",
-	"#dc2626",
-	"#7c3aed",
-	"#0891b2",
-	"#be185d",
-	"#059669",
-];
-
-const formatDate = (timestamp: number): string => {
-	const d = new Date(timestamp);
-	return d.toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-		year: "2-digit",
-	});
-};
-
-const timeStringToSeconds = (value: string): number => {
-	const [minutes = "0", seconds = "0"] = value.split(":");
-	return Number(minutes) * 60 + Number(seconds);
-};
-
-const secondsToTimeString = (seconds: number): string => {
-	const m = Math.floor(seconds / 60);
-	const s = `${Math.round(seconds % 60)}`.padStart(2, "0");
-	return `${m}:${s}`;
-};
-
-const valueToNumeric = (value: string, unit: string): number | null => {
-	if (unit === fitnessTestUnits.TIME) return timeStringToSeconds(value);
-	if (unit === fitnessTestUnits.COUNT) return Number(value);
-	if (unit === fitnessTestUnits.PASS_FAIL) return value === "PASS" ? 1 : 0;
-	return null;
-};
-
-const formatYAxisTick = (value: number, unit: string): string => {
-	if (unit === fitnessTestUnits.TIME) return secondsToTimeString(value);
-	if (unit === fitnessTestUnits.PASS_FAIL) return value === 1 ? "Pass" : "Fail";
-	return `${value}`;
+// See player-trend-modal.tsx for an explanation of this loose type.
+type LooseTooltipProps = {
+	active?: boolean;
+	payload?: ReadonlyArray<unknown>;
+	label?: string | number;
 };
 
 type PlayerHistory = NonNullable<
@@ -79,7 +47,6 @@ const ComparisonChart = ({
 	unit,
 	playerHistories,
 }: ComparisonChartProps) => {
-	// Collect all unique dates across all players for this test
 	const allDates = [
 		...new Set(
 			playerHistories.flatMap((h) =>
@@ -88,9 +55,7 @@ const ComparisonChart = ({
 		),
 	].sort((a, b) => a - b);
 
-	const hasAnyData = allDates.length > 0;
-
-	if (!hasAnyData) {
+	if (allDates.length === 0) {
 		return (
 			<div className="mb-6">
 				<p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8aab8a] mb-3">
@@ -103,17 +68,18 @@ const ComparisonChart = ({
 		);
 	}
 
-	// Build chart data: one row per date, one key per player
 	const chartData = allDates.map((date) => {
 		const row: Record<string, string | number | null> = {
-			date: formatDate(date),
+			date: formatChartDate(date),
 		};
 		for (const h of playerHistories) {
 			const result = h.results.find(
 				(r) => r.testId === testId && r.date === date,
 			);
 			row[h.player.fullName] =
-				result != null ? (valueToNumeric(result.value, unit) ?? null) : null;
+				result != null
+					? (fitnessValueToNumeric(result.value, unit) ?? null)
+					: null;
 		}
 		return row;
 	});
@@ -121,7 +87,7 @@ const ComparisonChart = ({
 	const allValues = playerHistories.flatMap((h) =>
 		h.results
 			.filter((r) => r.testId === testId)
-			.map((r) => valueToNumeric(r.value, unit))
+			.map((r) => fitnessValueToNumeric(r.value, unit))
 			.filter((v): v is number => v !== null),
 	);
 
@@ -136,41 +102,32 @@ const ComparisonChart = ({
 
 	const yTicks = unit === fitnessTestUnits.PASS_FAIL ? [0, 1] : undefined;
 
-	function renderTooltip(props: {
-		active?: boolean;
-		payload?: Array<{ name: string; value: number | null; color: string }>;
-		label?: string;
-	}) {
-		if (!props.active || !props.payload || props.payload.length === 0)
-			return null;
+	function renderTooltip({ active, payload, label }: LooseTooltipProps) {
+		if (!active || !payload || payload.length === 0) return null;
 		return (
 			<div className="border border-[#cbdbcc] bg-white px-3 py-2 shadow-sm text-xs">
-				<p className="text-[#6c866d] mb-1">{props.label}</p>
-				{props.payload.map((entry) => {
-					if (entry.value == null) return null;
-					const formatted =
-						unit === fitnessTestUnits.TIME
-							? secondsToTimeString(entry.value)
-							: unit === fitnessTestUnits.PASS_FAIL
-								? entry.value === 1
-									? "Pass"
-									: "Fail"
-								: `${entry.value}`;
+				<p className="text-[#6c866d] mb-1">{label}</p>
+				{payload.map((raw, i) => {
+					const entry = raw as {
+						name?: unknown;
+						value?: unknown;
+						color?: unknown;
+					};
+					const value = entry.value as number | null;
+					if (value == null) return null;
 					return (
 						<p
-							key={entry.name}
+							key={String(entry.name ?? i)}
 							className="font-semibold"
-							style={{ color: entry.color }}
+							style={{ color: String(entry.color) }}
 						>
-							{entry.name}: {formatted}
+							{String(entry.name)}: {formatFitnessValue(value, unit)}
 						</p>
 					);
 				})}
 			</div>
 		);
 	}
-	// biome-ignore lint/suspicious/noExplicitAny: Recharts v3 tooltip content type is overly strict
-	const tooltipContent = renderTooltip as any;
 
 	return (
 		<div className="mb-6">
@@ -198,13 +155,13 @@ const ComparisonChart = ({
 						<YAxis
 							domain={yDomain}
 							ticks={yTicks}
-							tickFormatter={(v) => formatYAxisTick(v, unit)}
+							tickFormatter={(v) => formatFitnessValue(v, unit)}
 							tick={{ fontSize: 10, fill: "#8aab8a" }}
 							axisLine={false}
 							tickLine={false}
 							width={unit === fitnessTestUnits.TIME ? 42 : 30}
 						/>
-						<Tooltip content={tooltipContent} />
+						<Tooltip content={renderTooltip} />
 						<Legend
 							wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
 							formatter={(value) => (
@@ -228,7 +185,7 @@ const ComparisonChart = ({
 									r: 4,
 									strokeWidth: 0,
 								}}
-								connectNulls={false}
+								connectNulls
 							/>
 						))}
 					</LineChart>
@@ -238,23 +195,18 @@ const ComparisonChart = ({
 	);
 };
 
-interface PlayerComparisonModalProps {
-	playerIds: Id<"players">[];
-	onClose: () => void;
-}
-
 export function PlayerComparisonModal({
 	playerIds,
 	onClose,
-}: PlayerComparisonModalProps) {
+}: {
+	playerIds: Id<"players">[];
+	onClose: () => void;
+}) {
 	const histories = useQuery(
 		api.fitnessTests.getMultiplePlayerFitnessHistories,
 		playerIds.length > 0 ? { playerIds } : "skip",
 	);
 
-	const isOpen = playerIds.length > 0;
-
-	// Union of all tests across all players
 	const allTests = (() => {
 		if (!histories) return [];
 		const testMap = new Map<
@@ -278,7 +230,7 @@ export function PlayerComparisonModal({
 
 	return (
 		<Dialog
-			open={isOpen}
+			open={playerIds.length > 0}
 			onOpenChange={(open) => {
 				if (!open) onClose();
 			}}

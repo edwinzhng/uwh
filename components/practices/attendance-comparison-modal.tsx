@@ -12,17 +12,14 @@ import {
 } from "recharts";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { Id } from "@/convex/_generated/dataModel";
+import { PLAYER_COLORS } from "@/lib/utils";
 
-const PLAYER_COLORS = [
-	"#298a29",
-	"#2563eb",
-	"#d97706",
-	"#dc2626",
-	"#7c3aed",
-	"#0891b2",
-	"#be185d",
-	"#059669",
-];
+// See player-trend-modal.tsx for an explanation of this loose type.
+type LooseTooltipProps = {
+	active?: boolean;
+	payload?: ReadonlyArray<unknown>;
+	label?: string | number;
+};
 
 type MonthGroup = {
 	key: string;
@@ -40,19 +37,15 @@ type AttendancePlayer = {
 	}>;
 };
 
-interface AttendanceComparisonModalProps {
-	players: AttendancePlayer[];
-	months: MonthGroup[];
-	onClose: () => void;
-}
-
 export function AttendanceComparisonModal({
 	players,
 	months,
 	onClose,
-}: AttendanceComparisonModalProps) {
-	const isOpen = players.length > 0;
-
+}: {
+	players: AttendancePlayer[];
+	months: MonthGroup[];
+	onClose: () => void;
+}) {
 	const chartData = months.map((month) => {
 		const row: Record<string, string | number | null> = { month: month.label };
 		for (const player of players) {
@@ -78,37 +71,36 @@ export function AttendanceComparisonModal({
 		return `Comparing ${players.length} players`;
 	})();
 
-	function renderTooltip(props: {
-		active?: boolean;
-		payload?: Array<{ name: string; value: number | null; color: string }>;
-		label?: string;
-	}) {
-		if (!props.active || !props.payload || props.payload.length === 0)
-			return null;
+	function renderTooltip({ active, payload, label }: LooseTooltipProps) {
+		if (!active || !payload || payload.length === 0) return null;
 		return (
 			<div className="border border-[#cbdbcc] bg-white px-3 py-2 shadow-sm text-xs">
-				<p className="text-[#6c866d] mb-1">{props.label}</p>
-				{props.payload.map((entry) => {
-					if (entry.value == null) return null;
+				<p className="text-[#6c866d] mb-1">{label}</p>
+				{payload.map((raw, i) => {
+					const entry = raw as {
+						name?: unknown;
+						value?: unknown;
+						color?: unknown;
+					};
+					const value = entry.value as number | null;
+					if (value == null) return null;
 					return (
 						<p
-							key={entry.name}
+							key={String(entry.name ?? i)}
 							className="font-semibold"
-							style={{ color: entry.color }}
+							style={{ color: String(entry.color) }}
 						>
-							{entry.name}: {entry.value}%
+							{String(entry.name)}: {value}%
 						</p>
 					);
 				})}
 			</div>
 		);
 	}
-	// biome-ignore lint/suspicious/noExplicitAny: Recharts v3 tooltip content type is overly strict
-	const tooltipContent = renderTooltip as any;
 
 	return (
 		<Dialog
-			open={isOpen}
+			open={players.length > 0}
 			onOpenChange={(open) => {
 				if (!open) onClose();
 			}}
@@ -156,7 +148,7 @@ export function AttendanceComparisonModal({
 											tickLine={false}
 											width={34}
 										/>
-										<Tooltip content={tooltipContent} />
+										<Tooltip content={renderTooltip} />
 										<Legend
 											wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
 											formatter={(value) => (
@@ -180,7 +172,7 @@ export function AttendanceComparisonModal({
 													r: 4,
 													strokeWidth: 0,
 												}}
-												connectNulls={false}
+												connectNulls
 											/>
 										))}
 									</LineChart>

@@ -106,6 +106,37 @@ export const normalizeFitnessResultValue = (
 	return trimmedValue;
 };
 
+// Chart value helpers — used by fitness chart components
+
+export const timeStringToSeconds = (value: string): number => {
+	const [minutes = "0", seconds = "0"] = value.split(":");
+	return Number(minutes) * 60 + Number(seconds);
+};
+
+export const secondsToTimeString = (totalSeconds: number): string => {
+	const m = Math.floor(totalSeconds / 60);
+	const s = `${Math.round(totalSeconds % 60)}`.padStart(2, "0");
+	return `${m}:${s}`;
+};
+
+/** Convert a stored fitness result string to a number for charting. */
+export const fitnessValueToNumeric = (
+	value: string,
+	unit: string,
+): number | null => {
+	if (unit === fitnessTestUnits.TIME) return timeStringToSeconds(value);
+	if (unit === fitnessTestUnits.COUNT) return Number(value);
+	if (unit === fitnessTestUnits.PASS_FAIL) return value === "PASS" ? 1 : 0;
+	return null;
+};
+
+/** Format a numeric chart value for display (axis ticks and tooltips). */
+export const formatFitnessValue = (value: number, unit: string): string => {
+	if (unit === fitnessTestUnits.TIME) return secondsToTimeString(value);
+	if (unit === fitnessTestUnits.PASS_FAIL) return value === 1 ? "Pass" : "Fail";
+	return `${value}`;
+};
+
 export const getFitnessTestBestLabel = (
 	value: string | undefined,
 	unit: FitnessTestUnit,

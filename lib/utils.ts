@@ -73,6 +73,27 @@ export function formatHours(minutes: number): string {
 	return `${h}.${m}`;
 }
 
+/** Short date for chart X-axis labels, e.g. "Sep 5, 25". */
+export function formatChartDate(timestamp: number): string {
+	return new Date(timestamp).toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "2-digit",
+	});
+}
+
+/** Ordered color palette for multi-series charts. */
+export const PLAYER_COLORS = [
+	"#298a29",
+	"#2563eb",
+	"#d97706",
+	"#dc2626",
+	"#7c3aed",
+	"#0891b2",
+	"#be185d",
+	"#059669",
+] as const;
+
 export function getSeasonLabel(start: string, end: string): string {
 	const s = new Date(start);
 	const e = new Date(end);

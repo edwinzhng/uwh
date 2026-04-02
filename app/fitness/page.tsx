@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 type OverviewQuery = FunctionReturnType<
 	typeof api.fitnessTests.getFitnessOverview
@@ -57,15 +57,6 @@ const pivotData = (tests: NonNullable<OverviewQuery>): PivotedPlayer[] => {
 	return [...playerMap.values()].sort((a, b) =>
 		a.playerName.localeCompare(b.playerName),
 	);
-};
-
-const formatSessionDate = (timestamp: number): string => {
-	const d = new Date(timestamp);
-	return d.toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-	});
 };
 
 const getTimeValueInSeconds = (value: string): number => {
@@ -349,7 +340,7 @@ export default function FitnessOverviewPage(): React.JSX.Element {
 								<option value="">All Time</option>
 								{sessionDates.map((date) => (
 									<option key={date} value={date}>
-										{formatSessionDate(date)}
+										{formatDate(date)}
 									</option>
 								))}
 							</select>
