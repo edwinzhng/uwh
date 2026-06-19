@@ -54,7 +54,6 @@ export const setPracticeCoaches = mutation({
 		durationMinutes: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
-		// Remove existing
 		const existing = await ctx.db
 			.query("practiceCoaches")
 			.withIndex("by_practiceId", (q) => q.eq("practiceId", args.practiceId))
@@ -64,7 +63,6 @@ export const setPracticeCoaches = mutation({
 			await ctx.db.delete(pc._id);
 		}
 
-		// Add new ones
 		for (const coachId of args.coachIds) {
 			await ctx.db.insert("practiceCoaches", {
 				practiceId: args.practiceId,

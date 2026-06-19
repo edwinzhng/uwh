@@ -37,7 +37,6 @@ export function Sidebar() {
 
 	return (
 		<aside className="hidden md:flex min-h-screen w-[196px] flex-shrink-0 flex-col border-r border-[#1a3a00] bg-[#021e00]">
-			{/* Brand */}
 			<div className="px-4 pt-5 pb-7">
 				<p className="text-[#8aab8a] text-[10px] font-semibold tracking-[0.15em] uppercase mb-1">
 					Calgary
@@ -50,7 +49,6 @@ export function Sidebar() {
 				</p>
 			</div>
 
-			{/* Nav */}
 			<nav className="flex-1 space-y-0.5 px-2.5">
 				{navItems.map(({ href, label, icon: Icon }) => {
 					const active =
@@ -80,7 +78,6 @@ export function Sidebar() {
 				})}
 			</nav>
 
-			{/* Sign out */}
 			<div className="px-2.5 pb-4 pt-2">
 				<button
 					type="button"

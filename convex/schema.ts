@@ -67,10 +67,10 @@ export default defineSchema({
 
 	practices: defineTable({
 		sporteasyId: v.optional(v.number()),
-		date: v.number(), // timestamp
+		date: v.number(),
 		notes: v.optional(v.string()),
-		discordReminderSentAt: v.optional(v.number()), // timestamp
-		updatedAt: v.number(), // timestamp
+		discordReminderSentAt: v.optional(v.number()),
+		updatedAt: v.number(),
 	})
 		.index("by_sporteasyId", ["sporteasyId"])
 		.index("by_date", ["date"]),
@@ -111,6 +111,6 @@ export default defineSchema({
 	settings: defineTable({
 		key: v.string(),
 		value: v.string(),
-		updatedAt: v.number(), // timestamp
+		updatedAt: v.number(),
 	}).index("by_key", ["key"]),
 });

@@ -268,7 +268,7 @@ const OverviewTable = ({
 													)}
 												</div>
 											) : (
-												<span className="text-[#cbdbcc]">—</span>
+												<span className="text-[#cbdbcc]">-</span>
 											)}
 										</td>
 									);

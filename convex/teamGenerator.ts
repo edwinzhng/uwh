@@ -27,7 +27,6 @@ const POSITION_ABBREVIATIONS: Record<string, string> = {
 	FULL_BACK: "FB",
 };
 
-// Copied TeamGeneratorService methods adapted as pure functions
 function findDuplicateFirstNames(allPlayers: TeamPlayer[]): Set<string> {
 	const firstNameCounts = new Map<string, number>();
 
@@ -124,7 +123,6 @@ function doGenerateTeams(players: TeamPlayer[]): {
 	blackTeam: TeamPlayer[];
 	whiteTeam: TeamPlayer[];
 } {
-	// Re-use logic from TeamGeneratorService for balance
 	const queues: Record<Position, TeamPlayer[]> = {
 		FORWARD: buildPositionQueue(players, "FORWARD"),
 		WING: buildPositionQueue(players, "WING"),
@@ -382,7 +380,6 @@ export const generateTeamsAndMessage = internalAction({
 
 		const { blackTeam, whiteTeam } = doGenerateTeams(players);
 
-		// Format output
 		const duplicateFirstNames = findDuplicateFirstNames(players);
 
 		const blackTeamText = formatTeamForDiscord(

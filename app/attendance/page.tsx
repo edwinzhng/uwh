@@ -21,7 +21,7 @@ type Season = {
 
 const SEASONS: Season[] = [
 	{
-		label: "2025–26",
+		label: "2025-26",
 		start: new Date("2025-09-01").getTime(),
 		end: new Date("2026-09-01").getTime(),
 	},
@@ -34,8 +34,8 @@ function rateColor(rate: number) {
 }
 
 type MonthGroup = {
-	key: string; // "2025-09"
-	label: string; // "Sep"
+	key: string;
+	label: string;
 	practiceIds: Id<"practices">[];
 };
 
@@ -91,7 +91,6 @@ export default function AttendancePage() {
 	const allPractices = data?.practices ?? [];
 	const allPlayers = data?.players ?? [];
 
-	// Only count sessions that are hockey/training
 	const practices = allPractices.filter((p) => {
 		const notes = (p.notes ?? "").toLowerCase();
 		return (
@@ -110,7 +109,6 @@ export default function AttendancePage() {
 		return true;
 	});
 
-	// Attendance count for a player in a month: { attended, total }
 	const monthCount = (
 		player: (typeof allPlayers)[0],
 		month: MonthGroup,
@@ -123,7 +121,6 @@ export default function AttendancePage() {
 		return { attended, total };
 	};
 
-	// Per-month session rate across all players (attended / total possible)
 	const monthRates = months.map((month) => {
 		let totalAttended = 0;
 		const totalPossible = month.practiceIds.length * allPlayers.length;
@@ -137,7 +134,6 @@ export default function AttendancePage() {
 
 	const practiceIdSet = new Set(practices.map((p) => p._id));
 
-	// Per-player overall attendance rate (out of filtered hockey/training sessions only)
 	const playerRate = (player: (typeof unsortedPlayers)[0]) => {
 		const total = practices.length;
 		if (total === 0) return null;
@@ -263,7 +259,6 @@ export default function AttendancePage() {
 							</tr>
 						</thead>
 						<tbody>
-							{/* Per-month rate row */}
 							<tr className="border-b-2 border-[#cbdbcc] bg-white">
 								<td className="sticky left-0 z-10 w-10 bg-white px-3 py-2" />
 								<td className="sticky left-10 z-10 bg-white px-4 py-2 text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] border-r border-[#cbdbcc]">
@@ -279,13 +274,12 @@ export default function AttendancePage() {
 												{rate}%
 											</span>
 										) : (
-											<span className="text-[#cbdbcc] text-xs">—</span>
+											<span className="text-[#cbdbcc] text-xs">-</span>
 										)}
 									</td>
 								))}
 							</tr>
 
-							{/* Player rows */}
 							{players.map((player, rowIdx) => {
 								const rate = playerRate(player);
 								const isSelected = selectedPlayerIds.has(player._id);
@@ -330,7 +324,7 @@ export default function AttendancePage() {
 													{rate}%
 												</span>
 											) : (
-												<span className="text-[#cbdbcc] text-xs">—</span>
+												<span className="text-[#cbdbcc] text-xs">-</span>
 											)}
 										</td>
 										{months.map((month) => {
@@ -347,7 +341,7 @@ export default function AttendancePage() {
 															{attended}/{total}
 														</span>
 													) : (
-														<span className="text-[#cbdbcc] text-xs">—</span>
+														<span className="text-[#cbdbcc] text-xs">-</span>
 													)}
 												</td>
 											);

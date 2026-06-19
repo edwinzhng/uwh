@@ -6,6 +6,8 @@ import type { CoachWithPlayer } from "@/components/coaches/add-edit-coach-modal"
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { FieldLabel } from "@/components/ui/field-label";
+import { Muted } from "@/components/ui/typography";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useToast } from "@/lib/toast";
@@ -73,12 +75,9 @@ export function AddCoachModal({
 				subtitle={`SAT ${dateLabel.toUpperCase()}`}
 				title="Add Coach"
 			>
-				{/* Currently assigned */}
 				{selectedIds.length > 0 && (
 					<div className="px-6 pt-4 pb-3 flex flex-wrap gap-2 border-b border-[#cbdbcc]">
-						<p className="w-full text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-1">
-							Currently Assigned
-						</p>
+						<FieldLabel className="w-full mb-1">Currently Assigned</FieldLabel>
 						{selectedIds.map((id) => {
 							const coach = coaches.find((c) => c._id === id);
 							if (!coach) return null;
@@ -101,7 +100,6 @@ export function AddCoachModal({
 					</div>
 				)}
 
-				{/* Coach list */}
 				<div className="divide-y divide-[#cbdbcc]">
 					{coaches
 						.filter((c) => c.isActive)
@@ -122,9 +120,7 @@ export function AddCoachModal({
 											<p className="text-[#021e00] font-medium text-sm">
 												{coach.player?.fullName ?? ""}
 											</p>
-											<p className="text-[#8aab8a] text-xs">
-												{/* Could show stats here */}
-											</p>
+											<Muted />
 										</div>
 									</div>
 									<button

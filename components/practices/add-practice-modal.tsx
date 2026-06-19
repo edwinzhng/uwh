@@ -4,6 +4,7 @@ import { useMutation } from "convex/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { FieldLabel } from "@/components/ui/field-label";
 import { Input } from "@/components/ui/input";
 import { api } from "@/convex/_generated/api";
 import { useToast } from "@/lib/toast";
@@ -124,7 +125,6 @@ export function AddPracticeModal({ onClose, onSaved }: AddPracticeModalProps) {
 		<Dialog open onOpenChange={(open) => !open && onClose()}>
 			<DialogContent title="Add Practice" subtitle="Schedule">
 				<div className="px-6 py-5 space-y-5">
-					{/* Start date */}
 					<Input
 						label={isRecurring ? "Start date" : "Date"}
 						type="date"
@@ -132,7 +132,6 @@ export function AddPracticeModal({ onClose, onSaved }: AddPracticeModalProps) {
 						onChange={(e) => setStartDate(e.target.value)}
 					/>
 
-					{/* Recurring toggle */}
 					<div className="flex items-center justify-between">
 						<span className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40]">
 							Recurring
@@ -163,11 +162,8 @@ export function AddPracticeModal({ onClose, onSaved }: AddPracticeModalProps) {
 
 					{isRecurring && (
 						<>
-							{/* Day of week selector */}
 							<div>
-								<p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-2">
-									Repeat on
-								</p>
+								<FieldLabel className="mb-2">Repeat on</FieldLabel>
 								<div className="flex gap-1.5">
 									{DAYS.map(({ label, value }) => (
 										<button
@@ -187,7 +183,6 @@ export function AddPracticeModal({ onClose, onSaved }: AddPracticeModalProps) {
 								</div>
 							</div>
 
-							{/* End date */}
 							<Input
 								label="Repeat until"
 								type="date"
@@ -196,7 +191,6 @@ export function AddPracticeModal({ onClose, onSaved }: AddPracticeModalProps) {
 								onChange={(e) => setEndDate(e.target.value)}
 							/>
 
-							{/* Preview count */}
 							{previewDates.length > 0 && (
 								<p className="text-xs text-[#4a8a40]">
 									Creates{" "}
@@ -207,7 +201,6 @@ export function AddPracticeModal({ onClose, onSaved }: AddPracticeModalProps) {
 						</>
 					)}
 
-					{/* Notes */}
 					<Input
 						label="Notes"
 						hint="optional"

@@ -264,7 +264,6 @@ export const getFitnessTestSessionDates = query({
 	args: {},
 	handler: async (ctx) => {
 		const sessions = await ctx.db.query("fitnessTestSessions").collect();
-		// Get unique dates sorted descending
 		const uniqueDates = [...new Set(sessions.map((s) => s.date))].sort(
 			(a, b) => b - a,
 		);
@@ -278,13 +277,11 @@ export const getPlayerFitnessHistory = query({
 		const player = await ctx.db.get(args.playerId);
 		if (!player) return null;
 
-		// Get all results for this player
 		const results = await ctx.db
 			.query("fitnessTestResults")
 			.withIndex("by_playerId", (q) => q.eq("playerId", args.playerId))
 			.collect();
 
-		// Get all sessions referenced
 		const sessionIds = [...new Set(results.map((r) => r.fitnessTestSessionId))];
 		const sessions = (
 			await Promise.all(sessionIds.map((id) => ctx.db.get(id)))
@@ -292,7 +289,6 @@ export const getPlayerFitnessHistory = query({
 
 		const sessionMap = new Map(sessions.map((s) => [s._id, s]));
 
-		// Get unique test IDs from sessions
 		const testIdSet = new Set(sessions.map((s) => s.fitnessTestId));
 		const tests = (
 			await Promise.all([...testIdSet].map((id) => ctx.db.get(id)))

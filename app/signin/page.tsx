@@ -33,10 +33,6 @@ export default function SignInPage() {
 					Coaching Tool
 				</p>
 
-				<p className="text-[#021e00] text-sm mb-5">
-					Sign in with your coach Google account to continue.
-				</p>
-
 				<Button
 					onClick={handleSignIn}
 					loading={signingIn}

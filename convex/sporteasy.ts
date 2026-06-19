@@ -22,7 +22,6 @@ const SPORTEASY_V2_1_BASE_URL = "https://api.sporteasy.net/v2.1";
 const SPORTEASY_TEAM_ID = process.env.SPORTEASY_TEAM_ID || "2307567";
 const SPORTEASY_SEASON_ID = process.env.SPORTEASY_SEASON_ID || "2633771";
 
-// Helper to get the cookie
 const getCookie = async (ctx: ActionCtx): Promise<string> => {
 	const cookieSetting = await ctx.runQuery(
 		internal.sporteasy.internalGetCookie,
@@ -104,7 +103,6 @@ export const testConnection = action({
 	},
 });
 
-// Import profiles action
 export const importProfiles = action({
 	args: {},
 	handler: async (ctx): Promise<SportEasySyncResult> => {
@@ -168,7 +166,6 @@ export const internalSyncProfiles = internalMutation({
 
 			if (existingSporteasyIds.has(sportEasyId)) {
 				importResults.updated++;
-				// Update existing player
 				const existingPlayer = existingPlayers.find(
 					(p) => p.sporteasyId === sportEasyId,
 				);
@@ -184,7 +181,6 @@ export const internalSyncProfiles = internalMutation({
 				}
 			} else {
 				importResults.imported++;
-				// Insert new player
 				await ctx.db.insert("players", {
 					fullName,
 					email: email,
@@ -282,7 +278,6 @@ export const internalGetPractice = internalQuery({
 	},
 });
 
-// Import events action
 export const importEvents = action({
 	args: {},
 	handler: async (ctx): Promise<SportEasySyncResult> => {
@@ -339,7 +334,6 @@ export const internalSyncEvents = internalMutation({
 
 		const nonCancelledEvents = events.filter((event) => !event.is_cancelled);
 
-		// Group events by date
 		const eventsByDate = new Map<string, typeof nonCancelledEvents>();
 		for (const event of nonCancelledEvents) {
 			const eventDate = new Date(event.start_at);

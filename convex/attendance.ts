@@ -8,10 +8,6 @@ import {
 	query,
 } from "./_generated/server";
 
-// ---------------------------------------------------------------------------
-// Queries
-// ---------------------------------------------------------------------------
-
 export const getPracticeAttendance = query({
 	args: { practiceId: v.id("practices") },
 	handler: async (ctx, args) => {
@@ -29,8 +25,8 @@ export const getPracticeAttendance = query({
 	},
 });
 
-/** Returns every practice (past) with attendance counts, and every player with
- *  their per-practice attended flag — for the stats grid page. */
+/** Returns every past practice with attendance counts, and every player with
+ *  their per-practice attended flag, for the stats grid page. */
 export const getAttendanceOverview = query({
 	args: {
 		seasonStart: v.optional(v.number()),
@@ -40,7 +36,6 @@ export const getAttendanceOverview = query({
 		const now = Date.now();
 		const rangeEnd = Math.min(args.seasonEnd ?? now, now);
 
-		// All past practices in the season range, ordered oldest first
 		const practices = await ctx.db
 			.query("practices")
 			.withIndex("by_date", (q) =>
@@ -49,7 +44,7 @@ export const getAttendanceOverview = query({
 			.order("asc")
 			.collect();
 
-		// Deduplicate by calendar date — pick the earliest practice per day
+		// Deduplicate by calendar date: pick the earliest practice per day.
 		const practicesByDate = new Map<string, (typeof practices)[0]>();
 		for (const p of practices) {
 			const dateKey = new Date(p.date).toISOString().split("T")[0];
@@ -59,10 +54,8 @@ export const getAttendanceOverview = query({
 		}
 		const canonicalPractices = [...practicesByDate.values()];
 
-		// All players
 		const players = await ctx.db.query("players").collect();
 
-		// All attendance records for canonical practices
 		const canonicalIds = new Set(canonicalPractices.map((p) => p._id));
 		const allAttendance = await Promise.all(
 			[...canonicalIds].map((pid) =>
@@ -91,10 +84,6 @@ export const getAttendanceOverview = query({
 		};
 	},
 });
-
-// ---------------------------------------------------------------------------
-// Mutations
-// ---------------------------------------------------------------------------
 
 export const upsertAttendance = mutation({
 	args: {
@@ -167,10 +156,6 @@ export const internalUpsertAttendance = internalMutation({
 	},
 });
 
-// ---------------------------------------------------------------------------
-// Internal queries for sync actions
-// ---------------------------------------------------------------------------
-
 export const internalGetPastSporteasyPractices = internalQuery({
 	args: {},
 	handler: async (ctx) => {
@@ -186,7 +171,6 @@ export const internalGetPastSporteasyPractices = internalQuery({
 export const internalGetPracticesByDate = internalQuery({
 	args: { dateKey: v.string() },
 	handler: async (ctx, args) => {
-		// dateKey = "YYYY-MM-DD"
 		const start = new Date(args.dateKey).getTime();
 		const end = start + 24 * 60 * 60 * 1000;
 		return await ctx.db
@@ -195,10 +179,6 @@ export const internalGetPracticesByDate = internalQuery({
 			.collect();
 	},
 });
-
-// ---------------------------------------------------------------------------
-// Sync actions
-// ---------------------------------------------------------------------------
 
 const SPORTEASY_V2_1_BASE_URL = "https://api.sporteasy.net/v2.1";
 const SPORTEASY_TEAM_ID = process.env.SPORTEASY_TEAM_ID || "2307567";
@@ -251,7 +231,6 @@ export const syncPracticeAttendance = action({
 
 		const dateKey = new Date(practice.date).toISOString().split("T")[0];
 
-		// Fetch all season events to find every event on this date
 		const eventsData = (await fetchWithCookie(
 			`${SPORTEASY_V2_1_BASE_URL}/teams/${SPORTEASY_TEAM_ID}/events/?season_id=${SPORTEASY_SEASON_ID}`,
 			cookie,
@@ -263,7 +242,6 @@ export const syncPracticeAttendance = action({
 				new Date(e.start_at).toISOString().split("T")[0] === dateKey,
 		);
 
-		// Union present player sport easy IDs across all events on this day
 		const presentSporteasyIds = new Set<number>();
 		for (const event of dayEvents) {
 			try {
@@ -303,13 +281,11 @@ export const syncPracticeAttendance = action({
 			}
 		}
 
-		// Match sport easy IDs to local player IDs
 		const players = await ctx.runQuery(
 			internal.players.getPlayersBySportEasyIds,
 			{ sporteasyIds: [...presentSporteasyIds] },
 		);
 
-		// Find all practices on this date to get the canonical (earliest) one
 		const dayPractices = await ctx.runQuery(
 			internal.attendance.internalGetPracticesByDate,
 			{ dateKey },
@@ -353,7 +329,7 @@ export const syncAllAttendance = action({
 			internal.attendance.internalGetPastSporteasyPractices,
 		);
 
-		// Group by calendar date — we only need to sync once per date
+		// Group by calendar date: we only need to sync once per date
 		const byDate = new Map<string, (typeof practices)[0]>();
 		for (const p of practices) {
 			const dateKey = new Date(p.date).toISOString().split("T")[0];
@@ -362,7 +338,6 @@ export const syncAllAttendance = action({
 			}
 		}
 
-		// Fetch all season events once
 		let allEvents: SportEasyEvent[] = [];
 		try {
 			const eventsData = (await fetchWithCookie(
@@ -374,7 +349,6 @@ export const syncAllAttendance = action({
 			throw new Error(`Failed to fetch SportEasy events: ${e}`);
 		}
 
-		// Group all events by date
 		const eventsByDate = new Map<string, SportEasyEvent[]>();
 		for (const e of allEvents) {
 			const dk = new Date(e.start_at).toISOString().split("T")[0];
@@ -424,7 +398,6 @@ export const syncAllAttendance = action({
 				{ sporteasyIds: [...presentSporteasyIds] },
 			);
 
-			// Get the actual canonical (earliest) practice for this date
 			const dayPractices = await ctx.runQuery(
 				internal.attendance.internalGetPracticesByDate,
 				{ dateKey },

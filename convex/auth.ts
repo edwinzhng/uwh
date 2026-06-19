@@ -2,8 +2,7 @@ import Google from "@auth/core/providers/google";
 import { convexAuth } from "@convex-dev/auth/server";
 import type { MutationCtx } from "./_generated/server";
 
-// Returns true if the given email belongs to a coach (matched via the
-// coaches -> players relationship). Comparison is case-insensitive.
+// True if the email belongs to a coach (via coaches -> players). Case-insensitive.
 const isCoachEmail = async (
 	ctx: MutationCtx,
 	email: string,
@@ -22,8 +21,7 @@ const isCoachEmail = async (
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
 	providers: [Google],
 	callbacks: {
-		// Only allow sign-in for emails that belong to a coach. Throwing here
-		// aborts the sign-in before any session is created.
+		// Only allow sign-in for coach emails; throwing aborts before a session is created.
 		async createOrUpdateUser(ctx, args) {
 			const email = args.profile.email;
 			if (!email) {

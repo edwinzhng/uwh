@@ -60,8 +60,6 @@ function CardContent({
 	);
 }
 
-// ─── Draggable-only assigned card ────────────────────────────────────
-
 export function PlayerCard({
 	assignment,
 	player,

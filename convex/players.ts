@@ -48,7 +48,6 @@ export const createPlayer = mutation({
 		youth: v.boolean(),
 	},
 	handler: async (ctx, args) => {
-		// Check for email uniqueness if email is provided
 		if (args.email) {
 			const existing = await ctx.db
 				.query("players")
@@ -102,7 +101,6 @@ export const updatePlayer = mutation({
 			}
 		}
 
-		// Clean undefined values
 		const cleanUpdates = Object.fromEntries(
 			Object.entries(updates).filter(([_, v]) => v !== undefined),
 		);

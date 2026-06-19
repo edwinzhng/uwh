@@ -31,7 +31,6 @@ export const sendHockeyReminders = internalAction({
 					continue;
 				}
 
-				// Get attendees using the action we defined in sporteasy.ts
 				const eventResponse = (await ctx.runAction(
 					internal.sporteasy.getEventAttendees,
 					{
@@ -60,7 +59,6 @@ export const sendHockeyReminders = internalAction({
 					continue;
 				}
 
-				// Generate teams and message
 				const responseMessage = await ctx.runAction(
 					internal.teamGenerator.generateTeamsAndMessage,
 					{
@@ -68,12 +66,10 @@ export const sendHockeyReminders = internalAction({
 					},
 				);
 
-				// Send reminder message
 				await ctx.runAction(internal.discord.sendMessage, {
 					message: "Reminder: create teams for hockey practice tomorrow",
 				});
 
-				// Calculate skill of the week by week number
 				const practiceDate = new Date(practice.date);
 				const startOfYear = new Date(practiceDate.getFullYear(), 0, 1);
 				const diff = practiceDate.getTime() - startOfYear.getTime();
@@ -87,7 +83,6 @@ export const sendHockeyReminders = internalAction({
 					message: teamsMessageFull,
 				});
 
-				// Mark as sent
 				await ctx.runMutation(api.practices.updatePractice, {
 					id: practice._id,
 					discordReminderSentAt: Date.now(),

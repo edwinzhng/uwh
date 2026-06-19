@@ -6,7 +6,6 @@ export const getCoaches = query({
 	handler: async (ctx) => {
 		const coaches = await ctx.db.query("coaches").collect();
 
-		// Join with players to get the coach name
 		const coachesWithPlayers = await Promise.all(
 			coaches.map(async (coach) => {
 				const player = await ctx.db.get(coach.playerId);
@@ -52,7 +51,6 @@ export const createCoach = mutation({
 		isActive: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args) => {
-		// Check if coach already exists for this player
 		const existingCoach = await ctx.db
 			.query("coaches")
 			.withIndex("by_playerId", (q) => q.eq("playerId", args.playerId))
@@ -77,7 +75,6 @@ export const updateCoach = mutation({
 	handler: async (ctx, args) => {
 		const { id, ...updates } = args;
 
-		// Clean undefined values
 		const cleanUpdates = Object.fromEntries(
 			Object.entries(updates).filter(([_, v]) => v !== undefined),
 		);

@@ -4,6 +4,7 @@ import { useMutation } from "convex/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { FieldLabel } from "@/components/ui/field-label";
 import { Input } from "@/components/ui/input";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
@@ -116,12 +117,7 @@ export const EditFitnessTestModal = ({
 								onChange={(event) => setName(event.target.value)}
 							/>
 							<div className="mt-5">
-								<label
-									htmlFor="fitness-test-unit"
-									className="mb-1.5 block text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40]"
-								>
-									Unit
-								</label>
+								<FieldLabel htmlFor="fitness-test-unit">Unit</FieldLabel>
 								{fitnessTest ? (
 									<div className="flex h-11 items-center border border-[#cbdbcc] bg-[#f8faf9] px-3 text-sm text-[#021e00]">
 										{fitnessTestUnitLabels[fitnessTest.unit]}

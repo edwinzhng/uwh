@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { FieldLabel } from "@/components/ui/field-label";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { useToast } from "@/lib/toast";
@@ -45,7 +46,6 @@ export function EditPlayerModal({
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const toast = useToast();
 
-	// Coach check
 	const coach = useQuery(api.coaches.getCoachByPlayerId, {
 		playerId: player._id,
 	});
@@ -82,7 +82,6 @@ export function EditPlayerModal({
 				youth,
 			});
 
-			// Handle coach status
 			if (isCoach && !coach) {
 				await createCoach({ playerId: player._id });
 			} else if (!isCoach && coach) {
@@ -109,17 +108,13 @@ export function EditPlayerModal({
 		<Dialog open onOpenChange={(open) => !open && onClose()}>
 			<DialogContent subtitle="Player Profile" title="Edit Player">
 				<div className="px-6 pt-5 pb-4 space-y-5">
-					{/* Full name */}
 					<div>
-						<label
-							htmlFor="fullName"
-							className="block text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-1.5"
-						>
+						<FieldLabel htmlFor="fullName">
 							Full Name{" "}
 							<span className="text-[#8aab8a] font-normal normal-case tracking-normal">
-								— from SportEasy
+								- from SportEasy
 							</span>
-						</label>
+						</FieldLabel>
 						<div className="relative">
 							<input
 								id="fullName"
@@ -133,14 +128,8 @@ export function EditPlayerModal({
 						)}
 					</div>
 
-					{/* Rating slider */}
 					<div>
-						<label
-							htmlFor="rating"
-							className="block text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-1.5"
-						>
-							Rating
-						</label>
+						<FieldLabel htmlFor="rating">Rating</FieldLabel>
 						<div className="flex items-center gap-4">
 							<input
 								id="rating"
@@ -182,19 +171,18 @@ export function EditPlayerModal({
 							</div>
 						</div>
 						<div className="flex justify-between mt-1">
-							<span className="text-[10px] text-[#8aab8a]">1 — Beginner</span>
-							<span className="text-[10px] text-[#8aab8a]">100 — Elite</span>
+							<span className="text-[10px] text-[#8aab8a]">1 - Beginner</span>
+							<span className="text-[10px] text-[#8aab8a]">100 - Elite</span>
 						</div>
 					</div>
 
-					{/* Positions */}
 					<div>
-						<span className="block text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-1.5">
+						<FieldLabel>
 							Positions{" "}
 							<span className="text-[#8aab8a] font-normal normal-case tracking-normal">
-								— select all that apply
+								- select all that apply
 							</span>
-						</span>
+						</FieldLabel>
 						{errors.positions && (
 							<p className="text-red-500 text-xs mb-1">{errors.positions}</p>
 						)}
@@ -248,11 +236,8 @@ export function EditPlayerModal({
 						</div>
 					</div>
 
-					{/* Player type toggle */}
 					<div>
-						<span className="block text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-1.5">
-							Player Type
-						</span>
+						<FieldLabel>Player Type</FieldLabel>
 						<div className="flex border border-[#cbdbcc] overflow-hidden">
 							<button
 								type="button"
@@ -281,7 +266,6 @@ export function EditPlayerModal({
 						</div>
 					</div>
 
-					{/* Coach toggle */}
 					<div className="flex items-center justify-between py-2.5 px-4 border border-[#cbdbcc] bg-[#f8faf9]">
 						<div className="flex flex-col">
 							<span className="text-[10px] font-bold tracking-[0.1em] uppercase text-[#4a8a40]">

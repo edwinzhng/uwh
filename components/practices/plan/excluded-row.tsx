@@ -16,13 +16,11 @@ export function ExcludedRow({
 	if (excluded.length === 0) return null;
 	return (
 		<div className="flex border-b border-[#021e00]">
-			{/* Vertical label */}
 			<div className="w-8 shrink-0 flex items-center justify-center bg-[#021e00] border-r border-[#cbdbcc]">
 				<span className="text-[8px] font-bold tracking-[0.18em] uppercase text-[#4a8a40] [writing-mode:vertical-rl] rotate-180 whitespace-nowrap">
 					EXCLUDED
 				</span>
 			</div>
-			{/* Spans both columns */}
 			<div className="flex-1 bg-[#eef4f1] p-3 flex flex-wrap gap-2">
 				{excluded.map((p) => (
 					<button

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { FieldLabel } from "./field-label";
 
 interface InputProps
 	extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "prefix"> {
@@ -17,17 +18,14 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 		return (
 			<div className="w-full">
 				{label && (
-					<label
-						htmlFor={inputId}
-						className="block text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-1.5"
-					>
+					<FieldLabel htmlFor={inputId}>
 						{label}
 						{hint && (
 							<span className="text-[#8aab8a] ml-2 font-normal normal-case tracking-normal text-[10px]">
-								— {hint}
+								- {hint}
 							</span>
 						)}
-					</label>
+					</FieldLabel>
 				)}
 				<div className="relative">
 					{prefix && (
@@ -69,14 +67,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 		const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
 		return (
 			<div className="w-full">
-				{label && (
-					<label
-						htmlFor={inputId}
-						className="block text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-1.5"
-					>
-						{label}
-					</label>
-				)}
+				{label && <FieldLabel htmlFor={inputId}>{label}</FieldLabel>}
 				<textarea
 					ref={ref}
 					id={inputId}

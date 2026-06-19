@@ -56,7 +56,6 @@ const DialogContent = React.forwardRef<
 			)}
 			{...props}
 		>
-			{/* Header */}
 			<div className="bg-[#021e00] px-6 py-5 flex items-start justify-between">
 				<div>
 					{subtitle && (
@@ -81,7 +80,6 @@ const DialogContent = React.forwardRef<
 				)}
 			</div>
 
-			{/* Content */}
 			<div className="bg-[#eef4f1]">{children}</div>
 		</DialogPrimitive.Content>
 	</DialogPortal>

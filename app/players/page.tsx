@@ -9,6 +9,7 @@ import type { Player } from "@/components/players/player-row";
 import { PlayerRow } from "@/components/players/player-row";
 import { Input } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { SectionLabel } from "@/components/ui/typography";
 import { api } from "@/convex/_generated/api";
 
 type Filter = "ALL" | "ADULT" | "YOUTH";
@@ -67,17 +68,10 @@ export default function PlayersPage() {
 				}
 			/>
 
-			{/* Column headers — desktop */}
 			<div className="hidden md:grid grid-cols-[1fr_200px_120px_80px] px-6 py-3 border-b border-[#cbdbcc]">
-				<span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a]">
-					Name
-				</span>
-				<span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a]">
-					Rating &nbsp; Positions
-				</span>
-				<span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a]">
-					Type
-				</span>
+				<SectionLabel>Name</SectionLabel>
+				<SectionLabel>Rating &nbsp; Positions</SectionLabel>
+				<SectionLabel>Type</SectionLabel>
 				<span />
 			</div>
 

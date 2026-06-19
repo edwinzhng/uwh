@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { FieldLabel } from "@/components/ui/field-label";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useToast } from "@/lib/toast";
@@ -69,12 +70,7 @@ export function AddEditCoachModal({
 			>
 				<div className="px-6 pt-5 pb-4 space-y-5">
 					<div>
-						<label
-							htmlFor="coachPlayer"
-							className="block text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-1.5"
-						>
-							Player
-						</label>
+						<FieldLabel htmlFor="coachPlayer">Player</FieldLabel>
 						{coach ? (
 							<div className="flex items-center gap-3 px-4 py-3 bg-[#eef4f1] border border-[#cbdbcc]">
 								<Avatar name={coach.player?.fullName ?? ""} size="sm" />
@@ -108,9 +104,7 @@ export function AddEditCoachModal({
 					</div>
 
 					<div>
-						<span className="block text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-1.5">
-							Status
-						</span>
+						<FieldLabel>Status</FieldLabel>
 						<div className="flex  border border-[#cbdbcc] overflow-hidden">
 							<button
 								type="button"

@@ -1,5 +1,6 @@
 import { Avatar } from "@/components/ui/avatar";
 import { Badge, PositionBadge } from "@/components/ui/badge";
+import { Muted } from "@/components/ui/typography";
 import type { Doc } from "@/convex/_generated/dataModel";
 
 export type Player = Doc<"players">;
@@ -13,9 +14,7 @@ export function PlayerRow({
 }) {
 	return (
 		<>
-			{/* Desktop */}
 			<div className="hidden md:grid grid-cols-[1fr_200px_120px_80px] px-6 py-4 border-b border-[#cbdbcc] items-center hover:bg-white/30">
-				{/* Name */}
 				<div className="flex items-center gap-3">
 					<Avatar name={player.fullName} size="sm" />
 					<div>
@@ -25,13 +24,12 @@ export function PlayerRow({
 							</p>
 							{player.youth && <Badge variant="youth">Youth</Badge>}
 						</div>
-						<p className="text-[#8aab8a] text-xs mt-0.5">
+						<Muted className="mt-0.5">
 							{player.email || player.parentEmail || ""}
-						</p>
+						</Muted>
 					</div>
 				</div>
 
-				{/* Rating + positions */}
 				<div className="flex items-center gap-2">
 					<span className="text-[#021e00] text-lg font-bold">
 						{player.rating}
@@ -44,14 +42,12 @@ export function PlayerRow({
 					</div>
 				</div>
 
-				{/* Type */}
 				<div>
 					<span className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#8aab8a]">
 						{player.youth ? "Youth" : "Adult"}
 					</span>
 				</div>
 
-				{/* Edit */}
 				<div className="flex justify-end">
 					<button
 						type="button"
@@ -63,7 +59,6 @@ export function PlayerRow({
 				</div>
 			</div>
 
-			{/* Mobile */}
 			<div className="md:hidden flex items-center px-4 py-4 border-b border-[#cbdbcc] hover:bg-white/20">
 				<Avatar
 					name={player.fullName}

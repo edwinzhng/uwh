@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { Position } from "@/components/players/edit-player-modal";
 import { Badge, PositionBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FieldLabel } from "@/components/ui/field-label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
@@ -43,7 +44,7 @@ export function PlayerAssignmentModal({
 		.toUpperCase();
 	const displayRole: Role | null = isCapt ? "CAPTAIN" : isRef ? "REF" : null;
 
-	// Auto-save helper — called with the next state each time something changes
+	// Auto-save helper, called with the next state each time something changes.
 	const save = (patch: Partial<Assignment>) => {
 		onSave({
 			...assignment,
@@ -68,7 +69,6 @@ export function PlayerAssignmentModal({
 				className="w-full max-w-[390px] bg-[#021e00] shadow-2xl"
 				onClick={(e) => e.stopPropagation()}
 			>
-				{/* Header */}
 				<div className="px-5 pt-5 pb-4 flex items-start justify-between">
 					<div>
 						<p className="text-[10px] font-semibold tracking-[0.14em] uppercase text-[#4a8a40] mb-0.5">
@@ -88,9 +88,7 @@ export function PlayerAssignmentModal({
 					</button>
 				</div>
 
-				{/* Body */}
 				<div className="bg-[#eef4f1] flex flex-col">
-					{/* Player row */}
 					<div className="mx-5 my-5 flex items-center gap-3 p-4 bg-white border border-[#cbdbcc]">
 						<div className="w-11 h-11 bg-[#021e00] text-[#eef4f1] flex items-center justify-center text-sm font-bold shrink-0">
 							{initials}
@@ -125,11 +123,8 @@ export function PlayerAssignmentModal({
 						</span>
 					</div>
 
-					{/* Team Assignment */}
 					<div className="px-5 pb-4">
-						<p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-2">
-							Team Assignment
-						</p>
+						<FieldLabel className="mb-2">Team Assignment</FieldLabel>
 						<div className="flex border border-[#cbdbcc]">
 							{(["BLACK", "WHITE"] as TeamColor[]).map((t) => (
 								<button
@@ -154,11 +149,8 @@ export function PlayerAssignmentModal({
 						</div>
 					</div>
 
-					{/* Position */}
 					<div className="px-5 pb-4">
-						<p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-2">
-							Position
-						</p>
+						<FieldLabel className="mb-2">Position</FieldLabel>
 						<div className="relative">
 							<select
 								value={position}
@@ -194,11 +186,8 @@ export function PlayerAssignmentModal({
 						</div>
 					</div>
 
-					{/* Match Roles */}
 					<div className="px-5 pb-5">
-						<p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-[#4a8a40] mb-2">
-							Match Roles
-						</p>
+						<FieldLabel className="mb-2">Match Roles</FieldLabel>
 						<div className="border border-[#cbdbcc] bg-white divide-y divide-[#cbdbcc]">
 							{[
 								{
@@ -238,7 +227,6 @@ export function PlayerAssignmentModal({
 						</div>
 					</div>
 
-					{/* Footer — single destructive CTA */}
 					<div className="px-5 pb-6 border-t-2 border-[#021e00] pt-4">
 						<Button
 							variant="destructive"

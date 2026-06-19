@@ -25,14 +25,12 @@ export function UnassignedPool({
 
 	return (
 		<div className="flex flex-col h-full bg-[#eef4f1] overflow-hidden">
-			{/* Header */}
 			<div className="bg-[#8aab8a] px-5 py-3 border-b-2 border-[#021e00] flex justify-between items-baseline shrink-0">
 				<h2 className="text-[#021e00] font-bold tracking-tight">Unassigned</h2>
 				<span className="text-[#021e00] font-medium text-sm">
 					{unassignedPlayers.length}
 				</span>
 			</div>
-			{/* Droppable Area */}
 			<div
 				ref={setNodeRef}
 				className={cn(

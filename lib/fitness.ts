@@ -106,7 +106,7 @@ export const normalizeFitnessResultValue = (
 	return trimmedValue;
 };
 
-// Chart value helpers — used by fitness chart components
+// Chart value helpers used by fitness chart components
 
 export const timeStringToSeconds = (value: string): number => {
 	const [minutes = "0", seconds = "0"] = value.split(":");

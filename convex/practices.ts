@@ -151,7 +151,6 @@ async function getFullPracticeDetails(
 	practice: Doc<"practices">,
 ) {
 	const practiceId = practice._id;
-	// Get coaches
 	const practiceCoaches = await ctx.db
 		.query("practiceCoaches")
 		.withIndex("by_practiceId", (q) => q.eq("practiceId", practiceId))
@@ -172,7 +171,6 @@ async function getFullPracticeDetails(
 		}),
 	);
 
-	// Get player statuses
 	const playerStatuses = await ctx.db
 		.query("practicePlayerStatuses")
 		.withIndex("by_practiceId", (q) => q.eq("practiceId", practiceId))
@@ -244,7 +242,6 @@ export const updatePractice = mutation({
 	handler: async (ctx, args) => {
 		const { id, ...updates } = args;
 
-		// Clean undefined values
 		const cleanUpdates = Object.fromEntries(
 			Object.entries(updates).filter(([_, v]) => v !== undefined),
 		);
@@ -261,7 +258,6 @@ export const updatePractice = mutation({
 export const deletePractice = mutation({
 	args: { id: v.id("practices") },
 	handler: async (ctx, args) => {
-		// Delete associated coaches
 		const coaches = await ctx.db
 			.query("practiceCoaches")
 			.withIndex("by_practiceId", (q) => q.eq("practiceId", args.id))
@@ -270,7 +266,6 @@ export const deletePractice = mutation({
 			await ctx.db.delete(pc._id);
 		}
 
-		// Delete associated player statuses
 		const statuses = await ctx.db
 			.query("practicePlayerStatuses")
 			.withIndex("by_practiceId", (q) => q.eq("practiceId", args.id))
@@ -279,7 +274,6 @@ export const deletePractice = mutation({
 			await ctx.db.delete(ps._id);
 		}
 
-		// Delete associated attendance records
 		const attendance = await ctx.db
 			.query("practiceAttendance")
 			.withIndex("by_practiceId", (q) => q.eq("practiceId", args.id))
@@ -288,7 +282,6 @@ export const deletePractice = mutation({
 			await ctx.db.delete(a._id);
 		}
 
-		// Finally delete the practice
 		await ctx.db.delete(args.id);
 		return { success: true };
 	},

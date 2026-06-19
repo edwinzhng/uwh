@@ -27,7 +27,7 @@ export function AttendanceModal({
 		practiceId,
 	});
 
-	// Local override state: playerId → attended boolean
+	// Local override state: playerId -> attended boolean
 	const [overrides, setOverrides] = useState<Record<string, boolean>>({});
 	const [saving, setSaving] = useState(false);
 
@@ -35,7 +35,6 @@ export function AttendanceModal({
 
 	const loading = allPlayers === undefined || attendanceRecords === undefined;
 
-	// Build attendance map from DB
 	const dbAttendance = new Map<string, boolean>();
 	if (attendanceRecords) {
 		for (const r of attendanceRecords) {
@@ -94,7 +93,6 @@ export function AttendanceModal({
 					</div>
 				) : (
 					<>
-						{/* Summary */}
 						<div className="px-6 py-3 border-b border-[#cbdbcc] flex items-center justify-between">
 							<p className="text-xs text-[#8aab8a]">
 								Tap players to mark attendance
@@ -104,7 +102,6 @@ export function AttendanceModal({
 							</p>
 						</div>
 
-						{/* Player list */}
 						<div className="overflow-y-auto max-h-[50vh]">
 							{adults.length > 0 && (
 								<PlayerSection

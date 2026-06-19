@@ -49,8 +49,6 @@ const convertTeams = (teamsGroup: {
 	];
 };
 
-// ─── Rating helpers ──────────────────────────────────────────────────────────
-
 function teamRatings(roster: RosterState, team: TeamColor, players: Player[]) {
 	const assigned = roster.filter((a) => a.team === team);
 
@@ -71,8 +69,6 @@ function teamRatings(roster: RosterState, team: TeamColor, players: Player[]) {
 
 	return { fwd, back };
 }
-
-// ─── Discord copy ────────────────────────────────────────────────────────────
 
 function formatForDiscord(
 	roster: RosterState,
@@ -115,8 +111,6 @@ function formatForDiscord(
 	return text;
 }
 
-// ─── Main Page ───────────────────────────────────────────────────────────────
-
 export default function PlanPage() {
 	const params = useParams();
 	const idOrSporteasyId = params.id as string | undefined;
@@ -134,24 +128,20 @@ export default function PlanPage() {
 	const [gameType, setGameType] = useState<GameType>("MAIN");
 	const [youthCollapsed, setYouthCollapsed] = useState(false);
 
-	// Roster per game type
 	const [mainRoster, setMainRoster] = useState<RosterState>([]);
 	const [youthRoster, setYouthRoster] = useState<RosterState>([]);
 
-	// Excluded player IDs
 	const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
 
 	const toast = useToast();
 	const generateTeamsAction = useAction(api.teamGenerator.generateTeams);
 
-	// Modals
 	const [assignModal, setAssignModal] = useState<{
 		assignment: Assignment;
 		player: Player;
 	} | null>(null);
 	const [excludedModal, setExcludedModal] = useState<Player | null>(null);
 
-	// Derived player lists
 	const adultPlayers = useMemo(
 		() => allPlayers.filter((p) => !p.youth),
 		[allPlayers],
@@ -193,7 +183,6 @@ export default function PlanPage() {
 						combineYouth,
 					});
 
-					// Re-map the raw DB docs to match the Player type expectation
 					setAllPlayers(result.presentPlayers as unknown as Player[]);
 
 					const adultsRoster = convertTeams(
@@ -232,7 +221,6 @@ export default function PlanPage() {
 		).finally(() => setIsRegenerating(false));
 	}, [practice?._id, excludedIds, fetchGeneratedTeams, youthCollapsed]);
 
-	// Copy Teams
 	const [copied, setCopied] = useState(false);
 	const copyTeams = useCallback(() => {
 		const text =
@@ -245,7 +233,6 @@ export default function PlanPage() {
 		});
 	}, [roster, activePlayers]);
 
-	// Load Initial Data
 	useEffect(() => {
 		if (practice !== undefined && practice !== null && allPlayersData) {
 			if (practice.sporteasyId) {
@@ -269,7 +256,6 @@ export default function PlanPage() {
 		fetchGeneratedTeams,
 	]);
 
-	// DnD handler
 	function handleDragEnd(e: DragEndEvent) {
 		const activeId = e.active.id as string;
 		const overId = e.over?.id as string | undefined;
@@ -385,7 +371,6 @@ export default function PlanPage() {
 					</div>
 				) : (
 					<DragContextWrapper onDragEnd={handleDragEnd}>
-						{/* Sub-header: game tabs + drag hint */}
 						<div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-[#cbdbcc] bg-[#eef4f1]">
 							<div className="flex items-center gap-3">
 								{!youthCollapsed && (
@@ -435,9 +420,7 @@ export default function PlanPage() {
 							</p>
 						</div>
 
-						{/* ── Two-column layout (desktop + mobile) ── */}
 						<div className="flex flex-col flex-1 border-t-2 border-[#021e00]">
-							{/* Team column headers */}
 							<div className="flex border-b border-[#1a3a00]">
 								<div className="w-8 shrink-0 bg-[#021e00]" />
 								<div className="flex-1 px-4 py-3 flex items-center bg-[#021e00] border-r border-[#1a3a00] gap-3">
@@ -460,19 +443,16 @@ export default function PlanPage() {
 								</div>
 							</div>
 
-							{/* Position rows */}
 							{POSITIONS.map((posConfig) => (
 								<div
 									key={posConfig.key}
 									className="flex items-stretch border-b border-[#1a3a00]"
 								>
-									{/* Vertical label */}
 									<div className="w-8 shrink-0 flex items-center justify-center bg-[#021e00] border-r border-[#1a3a00]">
 										<span className="text-[8px] font-bold tracking-[0.18em] uppercase text-[#4a8a40] [writing-mode:vertical-rl] rotate-180 whitespace-nowrap">
 											{posConfig.plural}
 										</span>
 									</div>
-									{/* Black */}
 									<div className="flex-1 bg-[#021e00] p-3 border-r border-[#1a3a00] min-h-[80px]">
 										<PositionSection
 											posConfig={posConfig}
@@ -484,7 +464,6 @@ export default function PlanPage() {
 											}
 										/>
 									</div>
-									{/* White */}
 									<div className="flex-1 bg-white p-3 min-h-[80px]">
 										<PositionSection
 											posConfig={posConfig}
@@ -508,7 +487,6 @@ export default function PlanPage() {
 				)}
 			</div>
 
-			{/* Modals */}
 			{assignModal && (
 				<PlayerAssignmentModal
 					player={assignModal.player}

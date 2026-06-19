@@ -43,7 +43,6 @@ export function PageHeader({
 					</div>
 				)}
 			</div>
-			{/* Mobile Actions Bar */}
 			{actions && (
 				<div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[#cbdbcc] bg-[#eef4f1] gap-3">
 					{actions}

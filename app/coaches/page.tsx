@@ -18,7 +18,7 @@ import { selectedCoachIdAtom } from "@/lib/atoms";
 
 function generateSeasons(): Season[] {
 	const currentYear = new Date().getFullYear();
-	const currentMonth = new Date().getMonth(); // 0 is jan
+	const currentMonth = new Date().getMonth();
 	// If it's before September (8), the current season started last year.
 	const seasonStartYear = currentMonth < 8 ? currentYear - 1 : currentYear;
 
@@ -52,7 +52,6 @@ export default function CoachesPage() {
 
 	const [selectedCoachId, setSelectedCoachId] = useAtom(selectedCoachIdAtom);
 
-	// Select the current season (index 1) which is exactly what generateSeasons index 1 is.
 	const [season, setSeason] = useState(SEASONS[1]);
 	const [showSeasonPicker, setShowSeasonPicker] = useState(false);
 	const [showAddModal, setShowAddModal] = useState(false);
@@ -111,7 +110,6 @@ export default function CoachesPage() {
 	const selectedCoach = coaches.find((c) => c._id === selectedCoachId);
 	const selectedStat = stats.find((s) => s.coachId === selectedCoachId);
 
-	// Practices coached by selected coach
 	const coachPractices = practices
 		.filter((p) =>
 			p.practiceCoaches.some((pc) => pc.coachId === selectedCoachId),
@@ -152,11 +150,10 @@ export default function CoachesPage() {
 				</div>
 			) : (
 				<div className="flex flex-col md:flex-row">
-					{/* Left panel — coach list */}
 					<div className="md:w-[400px] md:border-r border-[#cbdbcc] md:min-h-[calc(100vh-5rem)]">
 						<div className="px-4 h-11 border-b border-[#cbdbcc] flex items-center">
 							<p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a]">
-								Active Coaches — Season Hours
+								Active Coaches - Season Hours
 							</p>
 						</div>
 						<div className="divide-y divide-[#cbdbcc]">
@@ -176,12 +173,11 @@ export default function CoachesPage() {
 						</div>
 					</div>
 
-					{/* Right panel — practice history */}
 					{selectedCoach && (
 						<div className="flex-1">
 							<div className="px-5 md:px-6 h-11 border-b border-[#cbdbcc] flex items-center justify-between">
 								<p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a]">
-									{selectedCoach.player?.fullName || "Coach"} — Practice History
+									{selectedCoach.player?.fullName || "Coach"} - Practice History
 								</p>
 								{selectedStat && (
 									<p className="text-[#298a29] text-sm font-semibold">

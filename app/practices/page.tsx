@@ -15,6 +15,7 @@ import { AttendanceModal } from "@/components/practices/attendance-modal";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Muted, SectionLabel } from "@/components/ui/typography";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useToast } from "@/lib/toast";
@@ -101,7 +102,6 @@ export default function PracticesPage() {
 				}
 			/>
 
-			{/* Mobile next practice card */}
 			{view === "UPCOMING" && nextPractice && (
 				<div className="md:hidden bg-[#eef4f1] px-4 py-4 border-b border-[#cbdbcc]">
 					<p className="text-[#4a8a40] text-[10px] font-semibold tracking-[0.12em] uppercase mb-1">
@@ -145,17 +145,10 @@ export default function PracticesPage() {
 				</div>
 			)}
 
-			{/* Table header */}
 			<div className="hidden md:grid grid-cols-[200px_1fr_200px_100px] gap-0 px-6 py-3 border-b border-[#cbdbcc] bg-[#eef4f1]">
-				<span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a]">
-					Date
-				</span>
-				<span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a]">
-					Event
-				</span>
-				<span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[#8aab8a]">
-					Coaches
-				</span>
+				<SectionLabel>Date</SectionLabel>
+				<SectionLabel>Event</SectionLabel>
+				<SectionLabel>Coaches</SectionLabel>
 				<span />
 			</div>
 
@@ -256,22 +249,19 @@ function PracticeRow({
 
 	return (
 		<>
-			{/* Desktop row */}
 			<div
 				className={cn(
 					"hidden md:grid grid-cols-[200px_1fr_200px_auto] gap-0 px-6 py-5 border-b border-[#cbdbcc] items-center",
 					isFirst && "bg-white/40",
 				)}
 			>
-				{/* Date */}
 				<div>
 					<p className="text-[#021e00] text-lg font-bold tracking-wide">
 						{dateStr.replace("", "")}
 					</p>
-					<p className="text-[#8aab8a] text-xs mt-0.5">{dayTime}</p>
+					<Muted className="mt-0.5">{dayTime}</Muted>
 				</div>
 
-				{/* Event */}
 				<div>
 					<p className="text-[#021e00] font-medium">{title}</p>
 					<p className="text-[#4a8a40] text-xs mt-0.5">
@@ -279,7 +269,6 @@ function PracticeRow({
 					</p>
 				</div>
 
-				{/* Coaches */}
 				<div className="flex flex-wrap gap-1.5 items-center">
 					{practice.practiceCoaches.length > 0 ? (
 						practice.practiceCoaches.map((pc: PracticeCoachJoin) => (
@@ -315,7 +304,6 @@ function PracticeRow({
 					)}
 				</div>
 
-				{/* Actions */}
 				<div className="flex items-center gap-2 justify-end">
 					<button
 						type="button"
