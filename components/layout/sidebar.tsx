@@ -1,15 +1,17 @@
 "use client";
 
+import { useAuthActions } from "@convex-dev/auth/react";
 import {
 	Activity,
 	Calendar,
 	CheckSquare,
+	LogOut,
 	Settings,
 	Star,
 	User,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -23,6 +25,15 @@ const navItems = [
 
 export function Sidebar() {
 	const pathname = usePathname();
+	const router = useRouter();
+	const { signOut } = useAuthActions();
+
+	if (pathname === "/signin") return null;
+
+	const handleSignOut = async () => {
+		await signOut();
+		router.push("/signin");
+	};
 
 	return (
 		<aside className="hidden md:flex min-h-screen w-[196px] flex-shrink-0 flex-col border-r border-[#1a3a00] bg-[#021e00]">
@@ -68,12 +79,26 @@ export function Sidebar() {
 					);
 				})}
 			</nav>
+
+			{/* Sign out */}
+			<div className="px-2.5 pb-4 pt-2">
+				<button
+					type="button"
+					onClick={handleSignOut}
+					className="flex w-full items-center gap-2.5 px-2.5 py-2 text-sm font-medium text-[#8aab8a] hover:text-[#eef4f1] hover:bg-white/5"
+				>
+					<LogOut className="h-4 w-4 flex-shrink-0" />
+					Sign out
+				</button>
+			</div>
 		</aside>
 	);
 }
 
 export function MobileNav() {
 	const pathname = usePathname();
+
+	if (pathname === "/signin") return null;
 
 	return (
 		<nav className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden bg-[#021e00] border-t border-[#0a3a00]">

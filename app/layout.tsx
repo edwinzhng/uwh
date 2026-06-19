@@ -1,3 +1,4 @@
+import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -18,19 +19,21 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
-			<body className={inter.className}>
-				<Providers>
-					<div className="flex min-h-screen">
-						<Sidebar />
-						<main className="flex-1 min-h-screen bg-[#eef4f1] pb-20 md:pb-0">
-							{children}
-						</main>
-					</div>
-					<MobileNav />
-					<Toaster />
-				</Providers>
-			</body>
-		</html>
+		<ConvexAuthNextjsServerProvider>
+			<html lang="en">
+				<body className={inter.className}>
+					<Providers>
+						<div className="flex min-h-screen">
+							<Sidebar />
+							<main className="flex-1 min-h-screen bg-[#eef4f1] pb-20 md:pb-0">
+								{children}
+							</main>
+						</div>
+						<MobileNav />
+						<Toaster />
+					</Providers>
+				</body>
+			</html>
+		</ConvexAuthNextjsServerProvider>
 	);
 }
