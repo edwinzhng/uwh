@@ -63,7 +63,9 @@ export default function AdminPage() {
 	const handleTestConnection = async () => {
 		setTestingConnection(true);
 		try {
-			const result = await testConnectionAction();
+			const result = await testConnectionAction(
+				cookiePaste.trim() ? { cookie: cookiePaste.trim() } : {},
+			);
 			if (result.ok) {
 				toast.success("Connected");
 			} else {

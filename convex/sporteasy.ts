@@ -73,10 +73,10 @@ export interface SportEasyEventDetail {
 }
 
 export const testConnection = action({
-	args: {},
-	handler: async (ctx): Promise<{ ok: boolean; error?: string }> => {
+	args: { cookie: v.optional(v.string()) },
+	handler: async (ctx, args): Promise<{ ok: boolean; error?: string }> => {
 		try {
-			const cookie = await getCookie(ctx);
+			const cookie = args.cookie?.trim() || (await getCookie(ctx));
 			const url = `${SPORTEASY_V2_1_BASE_URL}/me/`;
 
 			const response = await fetch(url, {
