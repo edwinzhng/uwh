@@ -36,7 +36,7 @@ export function Sidebar() {
 	};
 
 	return (
-		<aside className="hidden md:flex min-h-screen w-[196px] flex-shrink-0 flex-col border-r border-[#1a3a00] bg-[#021e00]">
+		<aside className="hidden md:flex sticky top-0 h-screen w-[196px] flex-shrink-0 flex-col border-r border-[#1a3a00] bg-[#021e00]">
 			<div className="px-4 pt-5 pb-7">
 				<p className="text-[#8aab8a] text-[10px] font-semibold tracking-[0.15em] uppercase mb-1">
 					Calgary
