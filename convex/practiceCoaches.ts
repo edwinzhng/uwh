@@ -1,17 +1,13 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
-import { getDefaultPracticeDurationMinutes } from "./practiceDuration";
+import {
+	getDefaultPracticeDurationMinutes,
+	isCoachingDurationMinutes,
+} from "./practiceDuration";
 
 const validateDuration = (durationMinutes: number): void => {
-	if (
-		!Number.isInteger(durationMinutes) ||
-		durationMinutes < 15 ||
-		durationMinutes > 24 * 60 ||
-		durationMinutes % 15 !== 0
-	) {
-		throw new Error(
-			"Coach hours must be between 0.25 and 24 hours in 0.25-hour increments",
-		);
+	if (!isCoachingDurationMinutes(durationMinutes)) {
+		throw new Error("Coach hours must use one of the available durations");
 	}
 };
 

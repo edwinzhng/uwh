@@ -10,7 +10,11 @@ import { FieldLabel } from "@/components/ui/field-label";
 import { Muted } from "@/components/ui/typography";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { getDefaultPracticeDurationMinutes } from "@/convex/practiceDuration";
+import {
+	COACHING_DURATION_OPTIONS,
+	getDefaultPracticeDurationMinutes,
+	isCoachingDurationMinutes,
+} from "@/convex/practiceDuration";
 import { useToast } from "@/lib/toast";
 import { cn, formatMonthDay } from "@/lib/utils";
 
@@ -28,7 +32,7 @@ interface AddCoachModalProps {
 
 type CoachAssignment = {
 	coachId: Id<"coaches">;
-	hours: string;
+	durationMinutes: number;
 };
 
 export function AddCoachModal({
@@ -40,7 +44,9 @@ export function AddCoachModal({
 	const [assignments, setAssignments] = useState<CoachAssignment[]>(
 		practice.practiceCoaches.map(({ coachId, durationMinutes }) => ({
 			coachId,
-			hours: String(durationMinutes / 60),
+			durationMinutes: isCoachingDurationMinutes(durationMinutes)
+				? durationMinutes
+				: getDefaultPracticeDurationMinutes(practice.date),
 		})),
 	);
 	const [saving, setSaving] = useState(false);
@@ -60,46 +66,33 @@ export function AddCoachModal({
 						...currentAssignments,
 						{
 							coachId,
-							hours: String(
-								getDefaultPracticeDurationMinutes(practice.date) / 60,
-							),
+							durationMinutes: getDefaultPracticeDurationMinutes(practice.date),
 						},
 					],
 		);
 	};
 
-	const updateHours = (coachId: Id<"coaches">, hours: string): void => {
+	const updateDuration = (
+		coachId: Id<"coaches">,
+		durationMinutes: number,
+	): void => {
 		setAssignments((currentAssignments) =>
 			currentAssignments.map((assignment) =>
-				assignment.coachId === coachId ? { ...assignment, hours } : assignment,
+				assignment.coachId === coachId
+					? { ...assignment, durationMinutes }
+					: assignment,
 			),
 		);
 	};
 
 	const handleSave = async (): Promise<void> => {
-		const hasInvalidHours = assignments.some(({ hours }) => {
-			const parsedHours = Number(hours);
-			return (
-				!Number.isFinite(parsedHours) ||
-				parsedHours < 0.25 ||
-				parsedHours > 24 ||
-				!Number.isInteger(parsedHours * 4)
-			);
-		});
-		if (hasInvalidHours) {
-			toast.error(
-				"Coach hours must be between 0.25 and 24 hours in 0.25-hour increments",
-			);
-			return;
-		}
-
 		setSaving(true);
 		try {
 			await setPracticeCoaches({
 				practiceId: practice._id,
-				coaches: assignments.map(({ coachId, hours }) => ({
+				coaches: assignments.map(({ coachId, durationMinutes }) => ({
 					coachId,
-					durationMinutes: Math.round(Number(hours) * 60),
+					durationMinutes,
 				})),
 			});
 			toast.success("Coaches updated");
@@ -127,7 +120,7 @@ export function AddCoachModal({
 				{assignments.length > 0 && (
 					<div className="px-6 pt-4 pb-3 space-y-3 border-b border-[#cbdbcc]">
 						<FieldLabel>Currently Assigned</FieldLabel>
-						{assignments.map(({ coachId, hours }) => {
+						{assignments.map(({ coachId, durationMinutes }) => {
 							const coach = coaches.find((c) => c._id === coachId);
 							if (!coach) return null;
 							const name = coach.player?.fullName || "Coach";
@@ -140,19 +133,23 @@ export function AddCoachModal({
 										{name}
 									</p>
 									<div className="flex items-center gap-2">
-										<input
+										<select
 											aria-label={`${name} hours`}
-											type="number"
-											min="0.25"
-											max="24"
-											step="0.25"
-											value={hours}
+											value={durationMinutes}
 											onChange={(event) =>
-												updateHours(coachId, event.target.value)
+												updateDuration(coachId, Number(event.target.value))
 											}
-											className="h-9 w-20 border border-[#cbdbcc] bg-white px-2 text-right text-sm text-[#021e00] focus:border-[#298a29] focus:outline-none"
-										/>
-										<span className="text-xs text-[#4a8a40]">hrs</span>
+											className="h-9 border border-[#cbdbcc] bg-white px-2 text-sm text-[#021e00] focus:border-[#298a29] focus:outline-none"
+										>
+											{COACHING_DURATION_OPTIONS.map((option) => (
+												<option
+													key={option.durationMinutes}
+													value={option.durationMinutes}
+												>
+													{option.label}
+												</option>
+											))}
+										</select>
 										<button
 											type="button"
 											onClick={() => toggle(coachId)}
