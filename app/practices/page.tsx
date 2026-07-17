@@ -131,6 +131,15 @@ export default function PracticesPage() {
 											),
 										)
 									: null}
+								<button
+									type="button"
+									onClick={() => setAddCoachPractice(nextPractice)}
+									className="text-xs px-2 py-0.5 border border-dashed border-[#8aab8a] text-[#4a8a40] font-medium"
+								>
+									{nextPractice.practiceCoaches.length > 0
+										? "Edit coaches"
+										: "+ Coach"}
+								</button>
 							</div>
 						</div>
 						<div className="text-right">
@@ -372,6 +381,15 @@ function PracticeRow({
 											: ""}
 									</span>
 								))
+							)}
+							{practice.practiceCoaches.length > 0 && (
+								<button
+									type="button"
+									onClick={onAddCoach}
+									className="px-1.5 py-0.5 text-[10px] border border-dashed border-[#cbdbcc] text-[#4a8a40]"
+								>
+									Edit
+								</button>
 							)}
 						</div>
 					</div>
