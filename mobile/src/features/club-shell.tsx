@@ -48,6 +48,7 @@ export const ClubShell = ({
 	return (
 		<AppLayout
 			brand={data.clubName}
+			onBrandPress={(): void => router.navigate("/club")}
 			brandLogo={data.clubName === "Calgary Crocs" ? clubLogo : undefined}
 			title={title}
 			subtitle={subtitle}

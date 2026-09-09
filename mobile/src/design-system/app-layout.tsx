@@ -26,6 +26,7 @@ type Props = {
 	subtitle?: string;
 	brand: string;
 	brandLogo?: ImageSourcePropType;
+	onBrandPress?: () => void;
 	navigation: NavigationItem[];
 	profile?: ReactNode;
 	accessory?: ReactNode;
@@ -41,6 +42,7 @@ export const AppLayout = ({
 	subtitle,
 	brand,
 	brandLogo,
+	onBrandPress,
 	navigation,
 	profile,
 	accessory,
@@ -120,7 +122,11 @@ export const AppLayout = ({
 						}}
 					>
 						<Stack gap="xl">
-							<BrandIdentity name={brand} logo={brandLogo} />
+							<BrandIdentity
+								name={brand}
+								logo={brandLogo}
+								onPress={onBrandPress}
+							/>
 							<Stack gap="xxs">
 								{navigation.map((item) => (
 									<NavigationControl key={item.label} item={item} />
@@ -141,7 +147,11 @@ export const AppLayout = ({
 						}}
 					>
 						<Row justify="between">
-							<BrandIdentity name={brand} logo={brandLogo} />
+							<BrandIdentity
+								name={brand}
+								logo={brandLogo}
+								onPress={onBrandPress}
+							/>
 							<Row gap="xs">
 								{accessory}
 								{profile}
