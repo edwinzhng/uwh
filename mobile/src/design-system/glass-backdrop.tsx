@@ -25,10 +25,10 @@ export const GlassBackdrop = ({
 				style={[StyleSheet.absoluteFill, { backgroundColor: colors[material] }]}
 			/>
 			<LinearGradient
-				colors={[colors.shine, "transparent", colors.refraction]}
-				locations={[0, 0.5, 1]}
+				colors={[colors.shine, "transparent"]}
+				locations={[0, 1]}
 				start={{ x: 0, y: 0 }}
-				end={{ x: 1, y: 1 }}
+				end={{ x: 0, y: 1 }}
 				style={StyleSheet.absoluteFill}
 			/>
 			<View style={[StyleSheet.absoluteFill, { boxShadow: colors.rim }]} />

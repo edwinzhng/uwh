@@ -12,13 +12,15 @@ import {
 	useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { BrandIdentity } from "./brand-identity";
-import { NavigationControl, type NavigationItem } from "./navigation-control";
+import type { NavigationItem } from "./navigation-control";
 import { Row } from "./row";
+import { SidebarNavigation } from "./sidebar-navigation";
 import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { control, geometry, layer, space } from "./tokens";
 import { useKeyboardVisible } from "./use-keyboard-visible";
+import { WaterBackground } from "./water-background";
 
 type Props = {
 	children: ReactNode;
@@ -115,23 +117,20 @@ export const AppLayout = ({
 					<View
 						style={{
 							width: geometry.popupWidth,
-							backgroundColor: theme.background.secondary,
+							backgroundColor: "transparent",
 							padding: space.sm,
 							borderRightWidth: geometry.border,
 							borderRightColor: theme.border,
 						}}
 					>
+						<WaterBackground />
 						<Stack gap="xl">
 							<BrandIdentity
 								name={brand}
 								logo={brandLogo}
 								onPress={onBrandPress}
 							/>
-							<Stack gap="xxs">
-								{navigation.map((item) => (
-									<NavigationControl key={item.label} item={item} />
-								))}
-							</Stack>
+							<SidebarNavigation navigation={navigation} />
 						</Stack>
 					</View>
 				) : undefined}
@@ -143,15 +142,17 @@ export const AppLayout = ({
 							zIndex: layer.sticky,
 							borderBottomWidth: geometry.border,
 							borderBottomColor: theme.border,
-							backgroundColor: theme.background.primary,
+							backgroundColor: "transparent",
 						}}
 					>
-						<Row justify="between">
-							<BrandIdentity
-								name={brand}
-								logo={brandLogo}
-								onPress={onBrandPress}
-							/>
+						<Row justify={wide ? "end" : "between"}>
+							{!wide ? (
+								<BrandIdentity
+									name={brand}
+									logo={brandLogo}
+									onPress={onBrandPress}
+								/>
+							) : undefined}
 							<Row gap="xs">
 								{accessory}
 								{profile}
@@ -212,7 +213,7 @@ export const AppLayout = ({
 										: geometry.tab + space.lg + insets.bottom,
 								borderTopWidth: geometry.border,
 								borderTopColor: theme.border,
-								backgroundColor: theme.background.primary,
+								backgroundColor: "transparent",
 							}}
 						>
 							<View

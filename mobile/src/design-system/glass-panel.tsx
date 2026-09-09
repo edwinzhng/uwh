@@ -7,12 +7,14 @@ import { corners, geometry, type SpaceToken, space } from "./tokens";
 
 type Props = {
 	children: ReactNode;
+	background?: ReactNode;
 	padding?: SpaceToken;
 	shape?: "panel" | "pill";
 	material?: "floating";
 };
 export const GlassPanel = ({
 	children,
+	background,
 	padding = "md",
 	shape = "panel",
 	material = "floating",
@@ -28,6 +30,7 @@ export const GlassPanel = ({
 				overflow: "hidden",
 			}}
 		>
+			{background}
 			<GlassBackdrop material={material} />
 			<View style={{ padding: space[padding] }}>{children}</View>
 		</View>

@@ -20,7 +20,7 @@ export const GlassBackdrop = ({
 				position: "absolute",
 				inset: 0,
 				borderRadius: "inherit",
-				background: `radial-gradient(ellipse at 12% 0%, ${colors.shine}, transparent 55%), linear-gradient(165deg, transparent 45%, ${colors.refraction}), ${colors[material]}`,
+				background: `linear-gradient(180deg, ${colors.shine}, transparent), ${colors[material]}`,
 				backdropFilter: filter,
 				WebkitBackdropFilter: filter,
 				boxShadow: colors.rim,

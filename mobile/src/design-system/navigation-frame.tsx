@@ -16,6 +16,7 @@ import { useTheme } from "./theme";
 import { corners, geometry, layer, space } from "./tokens";
 import { useKeyboardVisible } from "./use-keyboard-visible";
 import { useMotion } from "./use-motion";
+import { WaterBackground } from "./water-background";
 
 export const NavigationFrame = ({
 	children,
@@ -88,7 +89,12 @@ export const NavigationFrame = ({
 						zIndex: layer.sticky,
 					}}
 				>
-					<GlassPanel shape="pill" material="floating" padding="xxs">
+					<GlassPanel
+						shape="pill"
+						material="floating"
+						padding="xxs"
+						background={<WaterBackground />}
+					>
 						<View
 							accessibilityRole="tablist"
 							accessibilityLabel="Main navigation"

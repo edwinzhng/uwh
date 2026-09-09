@@ -2,6 +2,7 @@ import { type ReactElement, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Badge } from "./badge";
 import { Icon, type IconName } from "./icon";
+import { NavigationHighlight } from "./navigation-highlight";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, geometry, space } from "./tokens";
@@ -16,10 +17,12 @@ export type NavigationItem = {
 export const NavigationControl = ({
 	item,
 	vertical = false,
+	glass = false,
 	onHoverChange,
 }: {
 	item: NavigationItem;
 	vertical?: boolean;
+	glass?: boolean;
 	onHoverChange?: (hovered: boolean) => void;
 }): ReactElement => {
 	const theme = useTheme();
@@ -52,18 +55,24 @@ export const NavigationControl = ({
 				paddingHorizontal: vertical ? space.xxs : space.sm,
 				paddingVertical: space.xs,
 				borderRadius: vertical ? corners.pill : corners.item,
-				backgroundColor: vertical
-					? "transparent"
-					: item.selected
-						? theme.background.selected
-						: hovered || pressed
-							? theme.background.hover
-							: "transparent",
+				backgroundColor: "transparent",
+				borderWidth: !vertical && !glass ? geometry.border : 0,
+				borderColor:
+					!vertical && !glass && !item.selected && (hovered || pressed)
+						? theme.border
+						: "transparent",
+				boxShadow:
+					!vertical && !glass && !item.selected && hovered
+						? "0 2px 7px rgba(25,45,40,0.14)"
+						: undefined,
 				outlineWidth: focused ? geometry.focus : 0,
 				outlineColor: theme.focus,
 				outlineOffset: -geometry.focus,
 			})}
 		>
+			{!vertical && !glass && item.selected ? (
+				<NavigationHighlight />
+			) : undefined}
 			<View
 				style={{
 					flexDirection: vertical ? "column" : "row",
@@ -77,7 +86,9 @@ export const NavigationControl = ({
 				>
 					<Icon
 						name={item.icon}
-						tone={item.selected ? "primary" : "secondary"}
+						tone={
+							item.selected || (!vertical && hovered) ? "primary" : "secondary"
+						}
 					/>
 					{item.badge ? (
 						<Badge
@@ -88,7 +99,9 @@ export const NavigationControl = ({
 				</View>
 				<Text
 					variant={vertical ? "caption" : "label"}
-					tone={item.selected ? "primary" : "secondary"}
+					tone={
+						item.selected || (!vertical && hovered) ? "primary" : "secondary"
+					}
 				>
 					{item.label}
 				</Text>
