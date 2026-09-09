@@ -1,0 +1,9 @@
+node_modules/
+.expo/
+dist/
+ios/
+android/
+*.tsbuildinfo
+.env.local
+.convex/
+.env.auth.local

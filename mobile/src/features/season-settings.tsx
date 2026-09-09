@@ -1,0 +1,83 @@
+import { type ReactElement, useState } from "react";
+import { newId, useApp } from "../demo/app-state";
+import {
+	Button,
+	DatePicker,
+	Dialog,
+	Field,
+	ListItem,
+	Row,
+	Stack,
+	Surface,
+	Text,
+} from "../design-system";
+
+export const SeasonSettings = (): ReactElement => {
+	const { data, dispatch, busy } = useApp();
+	const [open, setOpen] = useState(false);
+	const [name, setName] = useState("");
+	const [start, setStart] = useState<string>();
+	const [end, setEnd] = useState<string>();
+	const save = async (): Promise<void> => {
+		if (
+			start &&
+			end &&
+			(await dispatch({
+				type: "add-season",
+				season: { id: newId(), name, start, end },
+			}))
+		) {
+			setOpen(false);
+			setName("");
+		}
+	};
+	return (
+		<Surface>
+			<Stack>
+				<Row justify="between">
+					<Text variant="h4">Seasons</Text>
+					<Button
+						label="Season"
+						prefix="plus"
+						variant="secondary"
+						onPress={(): void => setOpen(true)}
+					/>
+				</Row>
+				{data.seasons.map((season) => (
+					<ListItem
+						key={season.id}
+						title={season.name}
+						description={`${season.start} – ${season.end}`}
+					/>
+				))}
+			</Stack>
+			<Dialog
+				staffRole="admin"
+				title="New season"
+				isOpen={open}
+				onOpenChange={setOpen}
+				footer={
+					<Button
+						label="Create season"
+						isLoading={busy}
+						isDisabled={!name.trim() || !start || !end || end < start}
+						onPress={(): void => {
+							void save();
+						}}
+					/>
+				}
+			>
+				<Stack>
+					<Field
+						label="Name"
+						placeholder="2027–2028"
+						value={name}
+						onValueChange={setName}
+					/>
+					<DatePicker label="Starts" value={start} onValueChange={setStart} />
+					<DatePicker label="Ends" value={end} onValueChange={setEnd} />
+				</Stack>
+			</Dialog>
+		</Surface>
+	);
+};

@@ -1,0 +1,60 @@
+import type { Player } from "../domain/club";
+
+export const players: Player[] = [
+	{
+		id: "mila",
+		name: "Mila Rivera",
+		position: "Wing",
+		rating: 2,
+		response: "unavailable",
+		attendance: "unmarked",
+	},
+	{
+		id: "sam",
+		name: "Sam Rivera",
+		position: "Forward",
+		rating: 4,
+		response: "going",
+		attendance: "unmarked",
+	},
+	{
+		id: "alex",
+		name: "Alex Chen",
+		position: "Wing",
+		rating: 5,
+		response: "going",
+		attendance: "unmarked",
+	},
+	{
+		id: "jordan",
+		name: "Jordan Lee",
+		position: "Center",
+		rating: 3,
+		response: "going",
+		attendance: "unmarked",
+	},
+	{
+		id: "robin",
+		name: "Robin Ellis",
+		position: "Full back",
+		rating: 4,
+		response: "going",
+		attendance: "unmarked",
+	},
+	{
+		id: "casey",
+		name: "Casey Morgan",
+		position: "Forward",
+		rating: 3,
+		response: "going",
+		attendance: "unmarked",
+	},
+	{
+		id: "taylor",
+		name: "Taylor Brooks",
+		position: "Wing",
+		rating: 2,
+		response: "unanswered",
+		attendance: "unmarked",
+	},
+];

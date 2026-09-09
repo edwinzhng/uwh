@@ -1,3 +1,7 @@
+## Browser usage preference
+
+Edwin explicitly approved browser use whenever needed on September 8, 2026 and requested removal of the earlier per-turn permission restriction. Browser use is authorized for visual verification and performance testing. Reuse a single browser tab where practical and keep checks lightweight.
+
 ## Coding Style
 
 - Avoid writing comments and use self-documenting code instead, with well-named variables and functions

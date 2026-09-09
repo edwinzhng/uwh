@@ -1,0 +1,159 @@
+import { v } from "convex/values";
+import { eventDraftValue } from "./event_validator";
+import { positionValue } from "./player_coaching_schema";
+import {
+	equipmentValue,
+	feedbackValue,
+	loansValue,
+	membersValue,
+	noticesValue,
+	paymentsValue,
+	trackersValue,
+} from "./validators";
+export const appAction = v.union(
+	v.object({
+		type: v.literal("add-season"),
+		season: v.object({
+			id: v.string(),
+			name: v.string(),
+			start: v.string(),
+			end: v.string(),
+		}),
+	}),
+	v.object({ type: v.literal("delete-feedback"), id: v.string() }),
+	v.object({
+		type: v.literal("add-member"),
+		member: membersValue,
+		charge: v.number(),
+	}),
+	v.object({
+		type: v.literal("respond"),
+		eventId: v.string(),
+		personId: v.string(),
+		response: v.union(
+			v.literal("going"),
+			v.literal("unavailable"),
+			v.literal("unanswered"),
+		),
+	}),
+	v.object({
+		type: v.literal("attendance"),
+		eventId: v.string(),
+		personId: v.string(),
+		attendance: v.union(
+			v.literal("unmarked"),
+			v.literal("present"),
+			v.literal("late"),
+			v.literal("absent"),
+		),
+	}),
+	v.object({
+		type: v.literal("create-event"),
+		id: v.string(),
+		draft: eventDraftValue,
+	}),
+	v.object({
+		type: v.literal("edit-event"),
+		eventId: v.string(),
+		draft: eventDraftValue,
+		scope: v.union(
+			v.literal("single"),
+			v.literal("series"),
+			v.literal("following"),
+		),
+		editId: v.optional(v.string()),
+	}),
+	v.object({ type: v.literal("cancel-event"), eventId: v.string() }),
+	v.object({
+		type: v.literal("generate-teams"),
+		eventId: v.string(),
+		separateYouth: v.optional(v.boolean()),
+		excludedPersonIds: v.optional(v.array(v.string())),
+	}),
+	v.object({
+		type: v.literal("assign-position"),
+		eventId: v.string(),
+		personId: v.string(),
+		position: positionValue,
+	}),
+	v.object({
+		type: v.literal("move-player"),
+		eventId: v.string(),
+		personId: v.string(),
+	}),
+	v.object({ type: v.literal("publish-teams"), eventId: v.string() }),
+	v.object({
+		type: v.literal("save-plan"),
+		eventId: v.string(),
+		body: v.string(),
+	}),
+	v.object({ type: v.literal("save-feedback"), feedback: feedbackValue }),
+	v.object({ type: v.literal("publish-feedback"), id: v.string() }),
+	v.object({
+		type: v.literal("set-goal"),
+		personId: v.string(),
+		goal: v.string(),
+	}),
+	v.object({
+		type: v.literal("goal-step"),
+		personId: v.string(),
+		delta: v.number(),
+	}),
+	v.object({
+		type: v.literal("send-message"),
+		replyToId: v.optional(v.string()),
+		id: v.string(),
+		threadId: v.string(),
+		body: v.string(),
+		time: v.string(),
+		images: v.optional(v.array(v.object({ id: v.string(), name: v.string() }))),
+	}),
+	v.object({
+		type: v.literal("edit-message"),
+		messageId: v.string(),
+		body: v.string(),
+	}),
+	v.object({
+		type: v.literal("delete-message"),
+		messageId: v.string(),
+	}),
+	v.object({
+		type: v.literal("set-reaction"),
+		messageId: v.string(),
+		emoji: v.string(),
+		active: v.boolean(),
+	}),
+	v.object({
+		type: v.literal("create-thread"),
+		id: v.string(),
+		title: v.string(),
+		recipientId: v.string(),
+	}),
+	v.object({ type: v.literal("acknowledge"), noticeId: v.string() }),
+	v.object({ type: v.literal("create-notice"), notice: noticesValue }),
+	v.object({
+		type: v.literal("registration"),
+		personId: v.string(),
+		status: v.union(
+			v.literal("missing"),
+			v.literal("submitted"),
+			v.literal("approved"),
+		),
+	}),
+	v.object({ type: v.literal("payment"), payment: paymentsValue }),
+	v.object({ type: v.literal("issue"), loan: loansValue }),
+	v.object({ type: v.literal("return"), loanId: v.string() }),
+	v.object({ type: v.literal("add-equipment"), equipment: equipmentValue }),
+	v.object({ type: v.literal("add-tracker"), tracker: trackersValue }),
+	v.object({
+		type: v.literal("tracker-value"),
+		trackerId: v.string(),
+		personId: v.string(),
+		value: v.string(),
+	}),
+	v.object({
+		type: v.literal("settings"),
+		clubName: v.string(),
+		reminders: v.boolean(),
+	}),
+);

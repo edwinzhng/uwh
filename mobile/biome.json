@@ -1,0 +1,14 @@
+{
+	"root": false,
+	"extends": ["../biome.json"],
+	"files": {
+		"includes": [
+			"**",
+			"!dist",
+			"!.expo",
+			"!node_modules",
+			"!convex/_generated",
+			"!.convex"
+		]
+	}
+}
