@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useBackend } from "../backend/context";
-import { Divider, Stack, Text } from "../design-system";
+import { Divider, SectionHeading, Stack } from "../design-system";
 import { socialProviders } from "../domain/social-auth";
 import { ConnectedAccountRow } from "./connected-account-row";
 
@@ -9,7 +9,7 @@ export const ConnectedAccounts = (): ReactElement => {
 	return (
 		<Stack>
 			<Divider />
-			<Text variant="h4">Connected accounts</Text>
+			<SectionHeading>Connected accounts</SectionHeading>
 			{socialProviders.flatMap((provider) => {
 				const accounts =
 					info?.accounts.filter((account) => account.provider === provider) ??

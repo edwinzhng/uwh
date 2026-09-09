@@ -7,7 +7,6 @@ import type { PersonPickerProps } from "./person-picker-props";
 import { PopupRow } from "./popup-row";
 import { ProfileOption } from "./profile-option";
 import { Stack } from "./stack";
-import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, geometry, space } from "./tokens";
 
@@ -69,12 +68,9 @@ export const PersonPicker = ({
 					{account ? (
 						<>
 							{canSwitch ? <Divider /> : undefined}
-							<Text variant="caption" tone="secondary">
-								{account.name}
-							</Text>
 							<PopupRow
-								label="Account settings"
-								icon="settings"
+								label="Settings"
+								icon="gear"
 								onSelect={(): void => {
 									setOpen(false);
 									account.onSettings();

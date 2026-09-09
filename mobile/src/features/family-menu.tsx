@@ -22,7 +22,6 @@ export const FamilyMenu = (): ReactElement => {
 				}))}
 			onValueChange={select}
 			account={{
-				name: account.name,
 				onSettings: (): void => router.navigate("/account"),
 			}}
 		/>

@@ -1,16 +1,12 @@
 import type { FunctionArgs } from "convex/server";
 import { type ReactElement, useState } from "react";
 import type { api } from "../../convex/_generated/api";
-import {
-	Button,
-	DatePicker,
-	Dialog,
-	Field,
-	Stack,
-	Text,
-} from "../design-system";
+import { useApp } from "../demo/app-state";
+import { DatePicker, Dialog, Field, Stack, Text } from "../design-system";
+import { memberName, money } from "../domain/app-rules";
 import { clubDate } from "../domain/event-time";
 import type { LedgerChange, SeasonRecord } from "../domain/season-ledger";
+import { ConfirmButton } from "./confirm-button";
 
 export const SeasonLedgerForm = ({
 	kind,
@@ -30,6 +26,7 @@ export const SeasonLedgerForm = ({
 	) => Promise<boolean>;
 	onClose: () => void;
 }): ReactElement => {
+	const { data } = useApp();
 	const [revision] = useState(record.revision);
 	const [amount, setAmount] = useState(
 		String(
@@ -41,15 +38,18 @@ export const SeasonLedgerForm = ({
 		),
 	);
 	const [note, setNote] = useState(kind === "payment" ? "E-transfer" : "");
-	const [date, setDate] = useState(clubDate);
-	const submit = async (): Promise<void> => {
+	const [date, setDate] = useState(() => clubDate(undefined, data.timeZone));
+	const submit = async (): Promise<boolean> => {
 		if (
 			await save(
 				{ kind, amount: Math.round(Number(amount) * 100), note, date },
 				revision,
 			)
-		)
+		) {
 			onClose();
+			return true;
+		}
+		return false;
 	};
 	return (
 		<Dialog
@@ -66,13 +66,38 @@ export const SeasonLedgerForm = ({
 				if (!open && !busy) onClose();
 			}}
 			footer={
-				<Button
-					label="Save"
-					isLoading={busy}
-					isDisabled={!amount || !note.trim()}
-					onPress={(): void => {
-						void submit();
-					}}
+				<ConfirmButton
+					label={
+						kind === "dues"
+							? "Set dues"
+							: kind === "refund"
+								? "Record refund"
+								: "Record payment"
+					}
+					title={
+						kind === "dues"
+							? "Set season dues?"
+							: kind === "refund"
+								? "Record refund?"
+								: "Record payment?"
+					}
+					description={`${memberName(data, record.personId)} · ${money(Math.round(Number(amount) * 100))} · ${date}. ${kind === "dues" ? "Updates the season balance." : "Adds a permanent ledger entry. No money is transferred."}`}
+					confirmLabel={
+						kind === "dues"
+							? "Set dues"
+							: kind === "refund"
+								? "Record refund"
+								: "Record payment"
+					}
+					isDisabled={
+						busy ||
+						!amount ||
+						!Number.isFinite(Number(amount)) ||
+						Number(amount) < 0 ||
+						(kind !== "dues" && Number(amount) === 0) ||
+						!note.trim()
+					}
+					onConfirm={submit}
 				/>
 			}
 		>

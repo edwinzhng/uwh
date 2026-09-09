@@ -1,6 +1,6 @@
 import type { IconName } from "./icon";
 
-export type StatusTone = "success" | "warning" | "danger";
+export type StatusTone = "success" | "warning" | "danger" | "pending";
 
 export type ChoiceOption<T extends string> = {
 	value: T;
@@ -11,6 +11,8 @@ export type ChoiceOption<T extends string> = {
 };
 
 export type PickerProps<T extends string> = {
+	hideLabel?: boolean;
+	compact?: boolean;
 	label: string;
 	value?: T;
 	options: readonly ChoiceOption<T>[];

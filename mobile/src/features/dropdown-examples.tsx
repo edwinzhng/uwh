@@ -19,7 +19,7 @@ const statusAtom = atom<string | undefined>("going");
 const statuses: ChoiceOption<string>[] = [
 	{ value: "going", label: "Going", tone: "success" },
 	{ value: "unavailable", label: "Not going", tone: "danger" },
-	{ value: "unanswered", label: "Not responded", tone: "warning" },
+	{ value: "unanswered", label: "Not responded", tone: "pending" },
 	{ value: "waiting", label: "Waitlisted", tone: "warning" },
 ];
 

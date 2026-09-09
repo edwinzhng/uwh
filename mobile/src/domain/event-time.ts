@@ -1,24 +1,36 @@
 import { Temporal } from "@js-temporal/polyfill";
 import type { ClubEvent, EventDraft } from "./app-types";
+import { canonicalTimeZone, defaultClubTimeZone } from "./time-zones";
 
 const permanentAlbertaTime = {
 	date: "2026-03-09",
 	instant: Date.parse("2026-03-09T06:00:00Z"),
 	zone: "Etc/GMT+6",
 } as const;
-export const clubTimestamp = (date: string, time: string): number =>
+const effectiveTimeZone = (date: string, timeZone: string): string =>
+	canonicalTimeZone(timeZone) === defaultClubTimeZone &&
+	date >= permanentAlbertaTime.date
+		? permanentAlbertaTime.zone
+		: timeZone;
+export const clubTimestamp = (
+	date: string,
+	time: string,
+	timeZone = defaultClubTimeZone,
+): number =>
 	Temporal.ZonedDateTime.from(
-		`${date}T${time}[${date >= permanentAlbertaTime.date ? permanentAlbertaTime.zone : "America/Edmonton"}]`,
-		{
-			disambiguation: "reject",
-		},
+		`${date}T${time}[${effectiveTimeZone(date, timeZone)}]`,
+		{ disambiguation: "reject" },
 	).epochMilliseconds;
-export const clubDate = (timestamp = Date.now()): string =>
+export const clubDate = (
+	timestamp = Date.now(),
+	timeZone = defaultClubTimeZone,
+): string =>
 	Temporal.Instant.fromEpochMilliseconds(timestamp)
 		.toZonedDateTimeISO(
-			timestamp >= permanentAlbertaTime.instant
+			canonicalTimeZone(timeZone) === defaultClubTimeZone &&
+				timestamp >= permanentAlbertaTime.instant
 				? permanentAlbertaTime.zone
-				: "America/Edmonton",
+				: timeZone,
 		)
 		.toPlainDate()
 		.toString();
@@ -27,7 +39,8 @@ export const signupState = (
 	now: number,
 ): ClubEvent["signup"] =>
 	event.cancelled ||
-	now >= (event.closesAt ?? clubTimestamp(event.date, event.start))
+	now >=
+		(event.closesAt ?? clubTimestamp(event.date, event.start, event.timeZone))
 		? "closed"
 		: event.opensAt !== undefined && now < event.opensAt
 			? "scheduled"
@@ -39,7 +52,7 @@ export const signupWindow = (
 	draft: EventDraft,
 	now: number,
 ): { opensAt: number; closesAt: number } => {
-	const start = clubTimestamp(date, draft.start);
+	const start = clubTimestamp(date, draft.start, draft.timeZone);
 	const openHours =
 		draft.signupOpens === "week"
 			? 168
@@ -53,14 +66,18 @@ export const signupWindow = (
 		closesAt: start - closeHours * 3600000,
 	};
 };
-export const windowLabel = (timestamp: number): string =>
+export const windowLabel = (
+	timestamp: number,
+	timeZone = defaultClubTimeZone,
+): string =>
 	new Intl.DateTimeFormat("en-CA", {
 		month: "short",
 		day: "numeric",
 		hour: "numeric",
 		minute: "2-digit",
 		timeZone:
+			canonicalTimeZone(timeZone) === defaultClubTimeZone &&
 			timestamp >= permanentAlbertaTime.instant
 				? permanentAlbertaTime.zone
-				: "America/Edmonton",
+				: timeZone,
 	}).format(timestamp);

@@ -28,7 +28,7 @@ export const FitnessSessionForm = ({
 }): ReactElement => {
 	const { data } = useApp();
 	const season = data.seasons.find((entry) => entry.id === seasonId);
-	const today = clubDate();
+	const today = clubDate(undefined, data.timeZone);
 	const [date, setDate] = useState(
 		session?.date ??
 			(season && today < season.start

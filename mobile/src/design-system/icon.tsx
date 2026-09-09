@@ -17,6 +17,7 @@ import FlaskConical from "lucide-react-native/icons/flask-conical";
 import House from "lucide-react-native/icons/house";
 import ImagePlus from "lucide-react-native/icons/image-plus";
 import Layers from "lucide-react-native/icons/layers";
+import List from "lucide-react-native/icons/list";
 import LockKeyhole from "lucide-react-native/icons/lock-keyhole";
 import Menu from "lucide-react-native/icons/menu";
 import MessageSquare from "lucide-react-native/icons/message-square";
@@ -27,9 +28,11 @@ import Pencil from "lucide-react-native/icons/pencil";
 import Plus from "lucide-react-native/icons/plus";
 import Reply from "lucide-react-native/icons/reply";
 import Search from "lucide-react-native/icons/search";
+import Settings from "lucide-react-native/icons/settings";
 import Settings2 from "lucide-react-native/icons/settings-2";
 import Shield from "lucide-react-native/icons/shield";
 import Square from "lucide-react-native/icons/square";
+import SquareCheck from "lucide-react-native/icons/square-check";
 import Sun from "lucide-react-native/icons/sun";
 import Target from "lucide-react-native/icons/target";
 import Trash from "lucide-react-native/icons/trash";
@@ -41,8 +44,10 @@ import { useTheme } from "./theme";
 import { geometry } from "./tokens";
 
 const icons = {
+	list: List,
 	microphone: Mic,
 	stop: Square,
+	checkboxChecked: SquareCheck,
 	more: Ellipsis,
 	reply: Reply,
 	trash: Trash,
@@ -73,6 +78,7 @@ const icons = {
 	plus: Plus,
 	search: Search,
 	settings: Settings2,
+	gear: Settings,
 	shield: Shield,
 	sun: Sun,
 	target: Target,
@@ -91,6 +97,7 @@ type Props = {
 		| "onDanger"
 		| "success"
 		| "warning"
+		| "pending"
 		| "danger";
 	size?: "sm" | "md";
 };
@@ -105,7 +112,10 @@ export const Icon = ({
 		<Glyph
 			size={size === "sm" ? geometry.iconSmall : geometry.icon}
 			color={
-				tone === "success" || tone === "warning" || tone === "danger"
+				tone === "success" ||
+				tone === "warning" ||
+				tone === "danger" ||
+				tone === "pending"
 					? theme[tone].foreground
 					: tone === "onAccent"
 						? theme.accent.foreground

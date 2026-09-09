@@ -1,48 +1,43 @@
 import { atom, useAtom } from "jotai";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
-import {
-	Button,
-	Row,
-	SegmentedControl,
-	Select,
-	Surface,
-} from "../design-system";
+import { Button, Row, SegmentedControl, Surface } from "../design-system";
 import { clubDate, clubTimestamp } from "../domain/event-time";
-import { CalendarSyncButton } from "./calendar-sync-button";
+import { CalendarExportButton } from "./calendar-export-button";
 import { ClubShell } from "./club-shell";
 import { EventEditor } from "./event-editor";
 import { ScheduleCalendar } from "./schedule-calendar";
 import { SchedulePage } from "./schedule-page";
 
-const viewAtom = atom<"upcoming" | "calendar" | "past">("upcoming");
+const viewAtom = atom<"upcoming" | "past">("upcoming");
+const layoutAtom = atom<"list" | "calendar">("list");
 const dateAtom = atom<string>();
 
 export const AgendaScreen = (): ReactElement => {
 	const { data, account } = useApp();
-	const [view, setView] = useAtom(viewAtom);
+	const [period, setPeriod] = useAtom(viewAtom);
+	const [layout, setLayout] = useAtom(layoutAtom);
+	const view = layout === "calendar" ? "calendar" : period;
 	const [selectedDate, setSelectedDate] = useAtom(dateAtom);
 	const [create, setCreate] = useState(false);
-	const [season, setSeason] = useState("all");
+	const season = "all";
 	const [now] = useState(Date.now);
-	const today = clubDate(now);
+	const today = clubDate(now, data.timeZone);
 	const allEvents = data.events
 		.filter(
-			(event) => season === "all" || (event.seasonId ?? "2026-2027") === season,
+			(event) =>
+				clubTimestamp(event.date, event.end, event.timeZone) <= now ===
+				(period === "past"),
 		)
 		.toSorted((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
 	const date =
 		selectedDate ??
-		allEvents.find((event) => event.date >= today && !event.cancelled)?.date ??
+		(period === "past" ? allEvents.at(-1)?.date : allEvents.at(0)?.date) ??
 		today;
-	const events = allEvents.filter((event) =>
-		view === "calendar"
-			? event.date === date
-			: view === "past"
-				? clubTimestamp(event.date, event.end) <= now
-				: clubTimestamp(event.date, event.end) > now,
+	const events = allEvents.filter(
+		(event) => layout !== "calendar" || event.date === date,
 	);
-	const ordered = view === "past" ? events.toReversed() : events;
+	const ordered = period === "past" ? events.toReversed() : events;
 	const counts = allEvents
 		.filter((event) => !event.cancelled)
 		.reduce<Record<string, number>>((counts, event) => {
@@ -54,7 +49,7 @@ export const AgendaScreen = (): ReactElement => {
 			title="Schedule"
 			action={
 				<Row gap="xs" wrap>
-					<CalendarSyncButton />
+					<CalendarExportButton />
 					{account.admin ? (
 						<Button
 							label="New event"
@@ -67,27 +62,28 @@ export const AgendaScreen = (): ReactElement => {
 			}
 		>
 			<Row justify="between" wrap>
-				<Select
-					label="Season"
-					value={season}
-					options={[
-						{ value: "all", label: "All seasons" },
-						...data.seasons.map((season) => ({
-							value: season.id,
-							label: season.name,
-						})),
-					]}
-					onValueChange={(value): void => setSeason(value ?? "all")}
-				/>
 				<SegmentedControl
-					label="Schedule view"
+					label="Schedule period"
 					hideLabel
-					value={view}
-					onValueChange={setView}
+					value={period}
+					onValueChange={(value): void => {
+						setPeriod(value);
+						setSelectedDate(undefined);
+					}}
 					options={[
 						{ value: "upcoming", label: "Upcoming" },
-						{ value: "calendar", label: "Calendar" },
 						{ value: "past", label: "Past" },
+					]}
+				/>
+				<SegmentedControl
+					label="Schedule layout"
+					hideLabel
+					variant="icons"
+					value={layout}
+					onValueChange={setLayout}
+					options={[
+						{ value: "list", label: "List", icon: "list" },
+						{ value: "calendar", label: "Calendar", icon: "calendar" },
 					]}
 				/>
 			</Row>
@@ -95,6 +91,8 @@ export const AgendaScreen = (): ReactElement => {
 				<Surface>
 					<ScheduleCalendar
 						date={date}
+						period={period}
+						now={now}
 						season={season}
 						today={today}
 						counts={counts}
@@ -104,6 +102,7 @@ export const AgendaScreen = (): ReactElement => {
 			) : undefined}
 			<SchedulePage
 				view={view}
+				period={period}
 				date={date}
 				season={season}
 				now={now}

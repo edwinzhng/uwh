@@ -80,6 +80,7 @@ export default defineSchema({
 		.index("by_owner", ["ownerId"])
 		.index("by_owner_message", ["ownerId", "messageId"]),
 	clubs: defineTable({
+		timeZone: v.optional(v.string()),
 		publicSlug: v.optional(v.string()),
 		publicSchedule: v.optional(v.boolean()),
 		seasons: v.optional(
@@ -152,6 +153,7 @@ export default defineSchema({
 		.index("by_club", ["clubId"])
 		.index("by_club_and_key", ["clubId", "value.id"]),
 	teams: defineTable({ clubId: v.id("clubs"), value: teamsValue })
+		.index("by_event", ["clubId", "value.eventId"])
 		.index("by_club", ["clubId"])
 		.index("by_club_and_key", ["clubId", "value.id"]),
 	plans: defineTable({ clubId: v.id("clubs"), value: plansValue })

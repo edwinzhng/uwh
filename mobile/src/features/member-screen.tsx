@@ -5,10 +5,10 @@ import {
 	Avatar,
 	Button,
 	Row,
-	SegmentedControl,
 	Stack,
-	StaffSection,
 	Surface,
+	TabContent,
+	Tabs,
 	Text,
 } from "../design-system";
 import { canReadProgress, memberRoles } from "../domain/app-rules";
@@ -68,49 +68,51 @@ export const MemberScreen = (): ReactElement => {
 		>
 			{member ? (
 				<>
-					<SegmentedControl
+					<Tabs
 						label="Member"
 						hideLabel
 						value={selectedTab}
 						onValueChange={setTab}
 						options={tabs}
 					/>
-					{selectedTab === "progress" ? (
-						<MemberProgress member={member} />
-					) : selectedTab === "coach" ? (
-						<StaffSection staffRole="coach">
-							<PlayerCoachingPanel personId={member.id} />
-						</StaffSection>
-					) : selectedTab === "admin" ? (
-						<StaffSection staffRole="admin">
-							<MemberAdmin key={member.id} member={member} />
-						</StaffSection>
-					) : (
-						<Surface>
-							<Stack>
-								<Row>
-									<Avatar name={member.name} />
-									<Stack gap="xxs">
-										<Text variant="h4">{member.name}</Text>
-										<Text variant="small" tone="secondary">
-											{memberRoles(member, accounts)}
-										</Text>
-									</Stack>
-								</Row>
-
-								{progress ? (
-									<Row>
-										<Button
-											label="View progress"
-											prefix="target"
-											variant="secondary"
-											onPress={(): void => setTab("progress")}
-										/>
-									</Row>
-								) : undefined}
+					<TabContent value={selectedTab}>
+						{selectedTab === "progress" ? (
+							<MemberProgress member={member} />
+						) : selectedTab === "coach" ? (
+							<Stack gap="xl">
+								<PlayerCoachingPanel personId={member.id} />
 							</Stack>
-						</Surface>
-					)}
+						) : selectedTab === "admin" ? (
+							<Stack gap="xl">
+								<MemberAdmin key={member.id} member={member} />
+							</Stack>
+						) : (
+							<Surface>
+								<Stack>
+									<Row>
+										<Avatar name={member.name} />
+										<Stack gap="xxs">
+											<Text variant="h4">{member.name}</Text>
+											<Text variant="small" tone="secondary">
+												{memberRoles(member, accounts)}
+											</Text>
+										</Stack>
+									</Row>
+
+									{progress ? (
+										<Row>
+											<Button
+												label="View progress"
+												prefix="target"
+												variant="secondary"
+												onPress={(): void => setTab("progress")}
+											/>
+										</Row>
+									) : undefined}
+								</Stack>
+							</Surface>
+						)}
+					</TabContent>
 				</>
 			) : (
 				<Text variant="small" tone="secondary">

@@ -1,6 +1,7 @@
 import { useAtomValue } from "jotai";
 import { type ReactElement, type ReactNode, useEffect, useState } from "react";
 import { AccessibilityInfo } from "react-native";
+import { trackPageMotionInput } from "./page-motion-input";
 import { reduceMotionAtom } from "./theme";
 import { MotionContext } from "./use-motion";
 
@@ -9,6 +10,7 @@ export const MotionProvider = ({
 }: {
 	children: ReactNode;
 }): ReactElement => {
+	useEffect(trackPageMotionInput, []);
 	const forced = useAtomValue(reduceMotionAtom);
 	const [systemReduced, setSystemReduced] = useState(true);
 	useEffect(() => {

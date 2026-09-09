@@ -16,7 +16,7 @@ export type SegmentFrame = {
 type Props = {
 	frame: SegmentFrame;
 	isRound?: boolean;
-	appearance?: "solid" | "glass";
+	appearance?: "solid" | "glass" | "underline";
 };
 
 export const SegmentIndicator = memo(
@@ -36,7 +36,11 @@ export const SegmentIndicator = memo(
 					width: frame.width,
 					height: frame.height,
 					transform: [{ translateX: frame.x }, { translateY: frame.y }],
-					backgroundColor: glass ? "transparent" : theme.background.selected,
+					backgroundColor: glass
+						? "transparent"
+						: appearance === "underline"
+							? theme.text.primary
+							: theme.background.selected,
 					boxShadow: glass ? materialColors(theme).selectionShadow : undefined,
 					overflow: "hidden",
 					borderRadius: isRound ? corners.pill : corners.control,

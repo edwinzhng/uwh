@@ -11,6 +11,7 @@ import {
 } from "../design-system";
 import { memberName } from "../domain/app-rules";
 import type { CoachingFeedback } from "../domain/app-types";
+import { ConfirmButton } from "./confirm-button";
 import { useDraft } from "./use-draft";
 
 export const FeedbackEditor = ({
@@ -31,7 +32,7 @@ export const FeedbackEditor = ({
 	const attempt = useRef<string | undefined>(undefined);
 	const save = async (
 		visibility: CoachingFeedback["visibility"],
-	): Promise<void> => {
+	): Promise<boolean> => {
 		const id = existing?.id ?? attempt.current ?? newId();
 		attempt.current = id;
 		if (
@@ -50,11 +51,14 @@ export const FeedbackEditor = ({
 			setBody("");
 			setOpen(false);
 			attempt.current = undefined;
+			return true;
 		}
+		return false;
 	};
 	return (
 		<>
 			<Button
+				compact
 				staffRole={existing ? undefined : "coach"}
 				label={existing ? "Edit" : "Feedback"}
 				prefix={existing ? "edit" : "plus"}
@@ -83,14 +87,25 @@ export const FeedbackEditor = ({
 								}}
 							/>
 						) : undefined}
-						<Button
-							label={privateNote ? "Save note" : "Publish"}
-							isLoading={busy}
-							isDisabled={!body.trim()}
-							onPress={(): void => {
-								void save(privateNote ? "private" : "published");
-							}}
-						/>
+						{privateNote ? (
+							<Button
+								label="Save note"
+								isLoading={busy}
+								isDisabled={!body.trim()}
+								onPress={(): void => {
+									void save("private");
+								}}
+							/>
+						) : (
+							<ConfirmButton
+								label="Publish"
+								title="Publish feedback?"
+								description={`Share with ${memberName(data, personId)} and linked parents. Published feedback can’t be edited or deleted.`}
+								confirmLabel="Publish feedback"
+								isDisabled={busy || !body.trim()}
+								onConfirm={(): Promise<boolean> => save("published")}
+							/>
+						)}
 					</Row>
 				}
 			>

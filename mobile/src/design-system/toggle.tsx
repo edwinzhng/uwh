@@ -8,12 +8,15 @@ export const Toggle = ({
 	value,
 	onValueChange,
 	isDisabled,
+	compact,
 }: SwitchProps): ReactElement => (
 	<ContentRow
 		title={label}
+		titleVariant={compact ? "small" : "label"}
 		description={description}
 		control={
 			<SwitchControl
+				compact={compact}
 				label={label}
 				description={description}
 				value={value}

@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { type ReactElement, type ReactNode, useState } from "react";
+import clubLogo from "../../assets/club-logo.png";
 import { useApp } from "../demo/app-state";
 import {
 	AppLayout,
@@ -8,9 +9,10 @@ import {
 	Dialog,
 	IconButton,
 	ListItem,
+	LoadingContent,
+	PageReveal,
 	Row,
 	Stack,
-	StaffSection,
 	Text,
 } from "../design-system";
 import { FamilyMenu } from "./family-menu";
@@ -38,7 +40,7 @@ export const ClubShell = ({
 }: Props): ReactElement => {
 	const navigation = useClubNavigation();
 	const router = useRouter();
-	const { data, account, error, clearError } = useApp();
+	const { data, account, error, clearError, loading } = useApp();
 	const [notifications, setNotifications] = useState(false);
 	const unread = data.notices.filter(
 		(entry) => !entry.acknowledgedBy.includes(account.id),
@@ -46,9 +48,18 @@ export const ClubShell = ({
 	return (
 		<AppLayout
 			brand={data.clubName}
+			brandLogo={data.clubName === "Calgary Crocs" ? clubLogo : undefined}
 			title={title}
 			subtitle={subtitle}
-			action={staffRole ? undefined : action}
+			action={action}
+			titleAccessory={
+				staffRole ? (
+					<Badge
+						label={staffRole === "admin" ? "Admin" : "Coach"}
+						kind={staffRole}
+					/>
+				) : undefined
+			}
 			back={back}
 			footer={footer}
 			scrollable={scrollable}
@@ -73,20 +84,18 @@ export const ClubShell = ({
 					<Button label="Dismiss" variant="ghost" onPress={clearError} />
 				</Row>
 			) : undefined}
-			{staffRole ? (
-				<StaffSection staffRole={staffRole} action={action}>
-					{children}
-				</StaffSection>
+			{loading ? (
+				<LoadingContent />
 			) : (
-				children
+				<PageReveal fill={scrollable === false}>{children}</PageReveal>
 			)}
 			<Dialog
-				title="Recent notices"
+				title="Recent announcements"
 				isOpen={notifications}
 				onOpenChange={setNotifications}
 				footer={
 					<Button
-						label="All notices"
+						label="All announcements"
 						variant="secondary"
 						onPress={(): void => {
 							setNotifications(false);
@@ -116,7 +125,7 @@ export const ClubShell = ({
 							/>
 						))
 					) : (
-						<Text tone="secondary">No unread recent notices.</Text>
+						<Text tone="secondary">No unread recent announcements.</Text>
 					)}
 				</Stack>
 			</Dialog>

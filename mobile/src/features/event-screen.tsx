@@ -8,8 +8,9 @@ import {
 	Row,
 	SegmentedControl,
 	Stack,
-	StaffSection,
 	Surface,
+	TabContent,
+	Tabs,
 	Text,
 } from "../design-system";
 import { canCoach, formatDate, formatTime } from "../domain/app-rules";
@@ -25,15 +26,20 @@ export const EventScreen = (): ReactElement => {
 		event: eventId,
 		id: legacyId,
 		tab: selectedTab,
+		part: selectedPart,
 	} = useLocalSearchParams<{
 		id?: string;
 		event?: string;
 		tab?: string;
+		part?: string;
 	}>();
 	const id = eventId ?? legacyId;
 	const { data, account, dispatch, busy } = useApp();
 	const router = useRouter();
 	const event = data.events.find((entry) => entry.id === id);
+	const partId = event?.parts?.some((part) => part.id === selectedPart)
+		? selectedPart
+		: undefined;
 	const tab = selectedTab ?? "overview";
 	const setTab = (tab: string): void => router.setParams({ tab });
 	const [cancel, setCancel] = useState(false);
@@ -88,7 +94,7 @@ export const EventScreen = (): ReactElement => {
 		>
 			{event ? (
 				<>
-					<SegmentedControl
+					<Tabs
 						label="Event"
 						hideLabel
 						value={activeTab}
@@ -99,41 +105,76 @@ export const EventScreen = (): ReactElement => {
 								value: "people",
 								label: "Attendance",
 							},
-							...(coach ? [{ value: "coaching", label: "Coaching" }] : []),
+							...(coach
+								? [
+										{
+											value: "coaching",
+											label: "Coaching",
+											staffRole: "coach" as const,
+										},
+									]
+								: []),
 						]}
 					/>
-					{activeTab === "overview" ? (
-						<Stack>
-							<Surface>
-								<Stack>
-									<Row gap="xs" wrap>
-										<Badge
-											label={
-												data.seasons.find(
-													(season) =>
-														season.id === (event.seasonId ?? "2026-2027"),
-												)?.name ?? "2026–2027"
-											}
-										/>
-										{event.seriesId ? <Badge label="Recurring" /> : undefined}
-									</Row>
-									<Text variant="h4">{event.venue}</Text>
-									<Text variant="small">{event.description}</Text>
-									<Text variant="caption" tone="secondary">
-										Calgary time
-									</Text>
-									<ResponseControl event={event} />
-								</Stack>
-							</Surface>
-							<TeamPanel event={event} readOnly />
-						</Stack>
-					) : activeTab === "people" ? (
-						<SessionPeople event={event} />
-					) : (
-						<StaffSection staffRole="coach">
-							<SessionCoaching event={event} />
-						</StaffSection>
-					)}
+					{event.parts?.length ? (
+						<SegmentedControl
+							label="Practice part"
+							value={partId ?? "all"}
+							onValueChange={(part): void => router.setParams({ part })}
+							options={[
+								{ value: "all", label: "All" },
+								...event.parts.map((part) => ({
+									value: part.id,
+									label: part.title,
+								})),
+							]}
+						/>
+					) : undefined}
+					<TabContent value={activeTab}>
+						{activeTab === "overview" ? (
+							<Stack>
+								<Surface>
+									<Stack>
+										<Row gap="xs" wrap>
+											<Badge
+												label={
+													data.seasons.find(
+														(season) =>
+															season.id === (event.seasonId ?? "2026-2027"),
+													)?.name ?? "2026–2027"
+												}
+											/>
+											{event.seriesId ? <Badge label="Recurring" /> : undefined}
+										</Row>
+										<Text variant="h4">{event.venue}</Text>
+										<Text variant="small">{event.description}</Text>
+										{event.parts?.map((part) => (
+											<Text key={part.id} variant="small" tone="secondary">
+												{part.title} · {formatTime(part.start)}–
+												{formatTime(part.end)}
+											</Text>
+										))}
+										<ResponseControl event={event} />
+									</Stack>
+								</Surface>
+								<TeamPanel event={event} partId={partId} readOnly />
+							</Stack>
+						) : activeTab === "people" ? (
+							<SessionPeople
+								key={`${event.id}:${partId}`}
+								event={event}
+								partId={partId}
+							/>
+						) : (
+							<>
+								<SessionCoaching
+									key={`${event.id}:${partId}`}
+									event={event}
+									partId={partId}
+								/>
+							</>
+						)}
+					</TabContent>
 					<Dialog
 						title="Cancel this event?"
 						isOpen={cancel}

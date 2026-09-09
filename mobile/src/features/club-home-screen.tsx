@@ -1,38 +1,33 @@
 import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { useActivePerson, useApp } from "../demo/app-state";
-import { ListItem, Stack, StaffSection, Surface, Text } from "../design-system";
+import {
+	ListItem,
+	SectionHeading,
+	Stack,
+	StaffSection,
+} from "../design-system";
 import { ClubShell } from "./club-shell";
 import { MemberAdmin } from "./member-admin";
 
 export const ClubHomeScreen = (): ReactElement => {
-	const { data, account } = useApp();
+	const { account } = useApp();
 	const active = useActivePerson();
 	const router = useRouter();
 	return (
-		<ClubShell title="Club" subtitle={data.clubName}>
+		<ClubShell title="Club management">
 			{account.admin ? (
-				<StaffSection staffRole="admin">
-					<Surface padding="xs">
+				<StaffSection staffRole="admin" padding="xs">
+					<Stack gap="none">
 						<ListItem
 							title="Registration"
 							icon="users"
-							onPress={(): void =>
-								router.push({
-									pathname: "/administration",
-									params: { section: "registration" },
-								})
-							}
+							onPress={(): void => router.push("/registration")}
 						/>
 						<ListItem
 							title="Payments"
 							icon="layers"
-							onPress={(): void =>
-								router.push({
-									pathname: "/administration",
-									params: { section: "payments" },
-								})
-							}
+							onPress={(): void => router.push("/payments")}
 						/>
 						<ListItem
 							title="Equipment"
@@ -45,21 +40,21 @@ export const ClubHomeScreen = (): ReactElement => {
 							onPress={(): void => router.navigate("/settings")}
 						/>
 						<ListItem
+							title="Moderation"
+							icon="message"
+							onPress={(): void => router.push("/moderation")}
+						/>
+						<ListItem
 							title="Import data"
 							icon="download"
 							onPress={(): void => router.push("/import")}
 						/>
-					</Surface>
+					</Stack>
 				</StaffSection>
 			) : undefined}
 			{account.coachPrograms.length ? (
-				<StaffSection staffRole="coach">
-					<Surface padding="xs">
-						<ListItem
-							title="Attendance & teams"
-							icon="calendar"
-							onPress={(): void => router.navigate("/schedule")}
-						/>
+				<StaffSection staffRole="coach" padding="xs">
+					<Stack gap="none">
 						<ListItem
 							title="Coaching hours"
 							icon="clock"
@@ -75,20 +70,15 @@ export const ClubHomeScreen = (): ReactElement => {
 							icon="layers"
 							onPress={(): void => router.push("/attendance-report")}
 						/>
-						<ListItem
-							title="Player progress & feedback"
-							icon="target"
-							onPress={(): void => router.navigate("/members")}
-						/>
-					</Surface>
+					</Stack>
 				</StaffSection>
 			) : undefined}
 			<Stack gap="sm">
-				<Text variant="h4">
+				<SectionHeading>
 					{active.id === account.personId
 						? "My membership"
 						: `${active.name.split(" ").at(0)}’s membership`}
-				</Text>
+				</SectionHeading>
 				<MemberAdmin key={active.id} member={active} readOnly />
 			</Stack>
 		</ClubShell>

@@ -4,7 +4,9 @@ import { useSeasonRecord } from "../backend/use-season-record";
 import {
 	Badge,
 	Button,
+	LoadingContent,
 	Row,
+	SectionHeading,
 	Select,
 	Stack,
 	Surface,
@@ -30,51 +32,52 @@ export const SeasonMembership = ({
 	const { record, busy, error, save } = useSeasonRecord(personId, season);
 	const [kind, setKind] = useState<LedgerChange["kind"]>();
 	return (
-		<Stack>
+		<Stack gap="xl">
 			<SeasonSelect isDisabled={busy || Boolean(kind)} />
 			{!record ? (
-				<Text>Loading…</Text>
+				<LoadingContent />
 			) : (
 				<>
-					<Surface>
-						<Stack>
-							<Text variant="h4">Registration</Text>
-							<Select
-								label="Status"
-								value={record.registration}
-								isDisabled={!editable || busy}
-								options={[
-									{ value: "missing", label: "Missing" },
-									{ value: "submitted", label: "Awaiting review" },
-									{ value: "approved", label: "Approved" },
-								]}
-								onValueChange={(status): void => {
-									if (status)
+					<Stack gap="sm">
+						<SectionHeading>Registration</SectionHeading>
+						<Surface>
+							<Stack>
+								<Select
+									label="Status"
+									value={record.registration}
+									isDisabled={!editable || busy}
+									options={[
+										{ value: "missing", label: "Missing" },
+										{ value: "submitted", label: "Awaiting review" },
+										{ value: "approved", label: "Approved" },
+									]}
+									onValueChange={(status): void => {
+										if (status)
+											void save({
+												kind: "registration",
+												status,
+												cuga: record.cuga,
+											});
+									}}
+								/>
+								<Toggle
+									label="CUGA membership"
+									value={record.cuga}
+									isDisabled={!editable || busy}
+									onValueChange={(cuga): void => {
 										void save({
 											kind: "registration",
-											status,
-											cuga: record.cuga,
+											status: record.registration,
+											cuga,
 										});
-								}}
-							/>
-							<Toggle
-								label="CUGA membership"
-								value={record.cuga}
-								isDisabled={!editable || busy}
-								onValueChange={(cuga): void => {
-									void save({
-										kind: "registration",
-										status: record.registration,
-										cuga,
-									});
-								}}
-							/>
-						</Stack>
-					</Surface>
-					<Surface>
-						<Stack>
-							<Row justify="between" wrap>
-								<Text variant="h4">Payments</Text>
+									}}
+								/>
+							</Stack>
+						</Surface>
+					</Stack>
+					<Stack gap="sm">
+						<SectionHeading
+							action={
 								<Badge
 									label={
 										record.due > record.paid
@@ -85,78 +88,86 @@ export const SeasonMembership = ({
 									}
 									kind={record.due > record.paid ? "warning" : "success"}
 								/>
-							</Row>
-							<Row justify="between">
-								<Text variant="small">Dues {money(record.due)}</Text>
-								<Text variant="small">Paid {money(record.paid)}</Text>
-							</Row>
-							{editable ? (
-								<Row wrap>
-									<Button
-										label="Set dues"
-										variant="secondary"
-										onPress={(): void => setKind("dues")}
-									/>
-									{record.due > record.paid ? (
-										<Button
-											label="Record payment"
-											onPress={(): void => setKind("payment")}
-										/>
-									) : undefined}
-									{record.paid > 0 ? (
-										<Button
-											label="Record refund"
-											variant="ghost"
-											onPress={(): void => setKind("refund")}
-										/>
-									) : undefined}
+							}
+						>
+							Payments
+						</SectionHeading>
+						<Surface>
+							<Stack>
+								<Row justify="between">
+									<Text variant="small">Dues {money(record.due)}</Text>
+									<Text variant="small">Paid {money(record.paid)}</Text>
 								</Row>
-							) : undefined}
-							{season === defaultSeasonId ? (
-								<PaymentHistory personId={personId} />
-							) : undefined}
-						</Stack>
-					</Surface>
-					<Surface>
-						<Stack>
-							<Text variant="h4">History</Text>
-							<DataPage
-								key={personId + season}
-								config={{
-									query: api.season_records.history,
-									args: { personId, seasonId: season },
-									preview: [],
-									size: 20,
-								}}
-							>
-								{(entries) => (
-									<Stack gap="sm">
-										{entries.map((entry) => (
-											<Stack key={entry._id} gap="xxs">
-												<Row justify="between" wrap>
-													<Text variant="small">{entry.note}</Text>
-													{entry.kind !== "registration" ? (
-														<Text variant="small">
-															{entry.kind === "refund" ? "−" : ""}
-															{money(entry.amount)}
-														</Text>
-													) : undefined}
-												</Row>
-												<Text variant="caption" tone="secondary">
-													{entry.date} · {entry.actor} · {entry.kind}
-												</Text>
-											</Stack>
-										))}
-										{!entries.length ? (
-											<Text variant="small" tone="secondary">
-												No changes this season.
-											</Text>
+								{editable ? (
+									<Row wrap>
+										<Button
+											label="Set dues"
+											variant="secondary"
+											onPress={(): void => setKind("dues")}
+										/>
+										{record.due > record.paid ? (
+											<Button
+												label="Record payment"
+												onPress={(): void => setKind("payment")}
+											/>
 										) : undefined}
-									</Stack>
-								)}
-							</DataPage>
-						</Stack>
-					</Surface>
+										{record.paid > 0 ? (
+											<Button
+												label="Record refund"
+												variant="ghost"
+												onPress={(): void => setKind("refund")}
+											/>
+										) : undefined}
+									</Row>
+								) : undefined}
+								{season === defaultSeasonId ? (
+									<PaymentHistory personId={personId} />
+								) : undefined}
+							</Stack>
+						</Surface>
+					</Stack>
+					<Stack gap="sm">
+						<SectionHeading>History</SectionHeading>
+						<Surface>
+							<Stack>
+								<DataPage
+									key={personId + season}
+									config={{
+										query: api.season_records.history,
+										args: { personId, seasonId: season },
+										preview: [],
+										size: 20,
+									}}
+								>
+									{(entries) => (
+										<Stack gap="sm">
+											{entries.map((entry) => (
+												<Stack key={entry._id} gap="xxs">
+													<Row justify="between" wrap>
+														<Text variant="small">{entry.note}</Text>
+														{entry.kind !== "registration" ? (
+															<Text variant="small">
+																{entry.kind === "refund" ? "−" : ""}
+																{money(entry.amount)}
+															</Text>
+														) : undefined}
+													</Row>
+													<Text variant="caption" tone="secondary">
+														{entry.date} · {entry.actor} · {entry.kind}
+													</Text>
+												</Stack>
+											))}
+											{!entries.length ? (
+												<Text variant="small" tone="secondary">
+													No changes this season.
+												</Text>
+											) : undefined}
+										</Stack>
+									)}
+								</DataPage>
+							</Stack>
+						</Surface>
+					</Stack>
 					{kind ? (
 						<SeasonLedgerForm
 							key={personId + season + kind}

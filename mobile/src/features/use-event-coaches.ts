@@ -6,7 +6,11 @@ import { useApp } from "../demo/app-state";
 import type { ClubEvent } from "../domain/app-types";
 import {
 	type CoachingAssignment,
+	coachingPartIds,
+	coachingPartMinutes,
 	defaultCoachingDuration,
+	resolvedCoachingAssignment,
+	updatedCoachingPartIds,
 	validCoachingDuration,
 } from "../domain/coaching-hours";
 
@@ -22,13 +26,19 @@ export type EventCoachControls = {
 	loading: boolean;
 	busy: boolean;
 	error?: string;
-	change: (value: CoachChange) => Promise<void>;
+	change: (value: CoachChange) => Promise<boolean>;
 };
 export const previewCoachAssignments = atom<
 	Record<string, CoachingAssignment[]>
 >({});
-export const useLiveEventCoaches = (eventId: string): EventCoachControls => {
-	const assignments = useQuery(api.coaching_hours.eventCoaches, { eventId });
+export const useLiveEventCoaches = (
+	eventId: string,
+	partId?: string,
+): EventCoachControls => {
+	const assignments = useQuery(api.coaching_hours.eventCoaches, {
+		eventId,
+		partId,
+	});
 	const {
 		results: coaches,
 		status,
@@ -44,15 +54,17 @@ export const useLiveEventCoaches = (eventId: string): EventCoachControls => {
 	useEffect(() => {
 		if (status === "CanLoadMore") loadMore(30);
 	}, [status, loadMore]);
-	const change = async (value: CoachChange): Promise<void> => {
+	const change = async (value: CoachChange): Promise<boolean> => {
 		setBusy(true);
 		setError(undefined);
 		try {
-			await save({ eventId, ...value });
+			await save({ eventId, partId, ...value });
+			return true;
 		} catch (error) {
 			setError(
 				error instanceof Error ? error.message : "Could not save coach hours.",
 			);
+			return false;
 		} finally {
 			setBusy(false);
 		}
@@ -68,6 +80,7 @@ export const useLiveEventCoaches = (eventId: string): EventCoachControls => {
 };
 export const usePreviewEventCoaches = (
 	event: ClubEvent,
+	partId?: string,
 ): EventCoachControls => {
 	const { accounts } = useApp();
 	const [stored, setStored] = useAtom(previewCoachAssignments);
@@ -78,29 +91,49 @@ export const usePreviewEventCoaches = (
 			personId: account.personId,
 			name: account.name,
 		}));
-	const assignments = stored[event.id] ?? [];
-	const change = async (value: CoachChange): Promise<void> => {
+	const allAssignments = stored[event.id] ?? [];
+	const assignments = allAssignments
+		.filter(
+			(assignment) =>
+				!partId || coachingPartIds(event, assignment.partIds).includes(partId),
+		)
+		.map((assignment) => resolvedCoachingAssignment(event, assignment, partId))
+		.filter((assignment) => assignment.durationMinutes > 0);
+	const change = async (value: CoachChange): Promise<boolean> => {
 		const coach = coaches.find((coach) => coach.coachId === value.coachId);
-		const durationMinutes =
-			value.durationMinutes ??
-			assignments.find((entry) => entry.coachId === value.coachId)
-				?.durationMinutes ??
-			defaultCoachingDuration(event.date);
+		const existing = allAssignments.find(
+			(entry) => entry.coachId === value.coachId,
+		);
+		const partIds = updatedCoachingPartIds(
+			event,
+			existing,
+			value.assigned,
+			partId,
+		);
+		const assigned = partIds?.length !== 0;
+		const durationMinutes = event.parts?.length
+			? coachingPartMinutes(event, partIds)
+			: (value.durationMinutes ??
+				existing?.durationMinutes ??
+				defaultCoachingDuration(event.date));
 		if (
 			event.cancelled ||
-			!validCoachingDuration(durationMinutes) ||
+			(!event.parts?.length && !validCoachingDuration(durationMinutes)) ||
 			(value.assigned && !coach)
 		)
-			return;
+			return false;
 		setStored((current) => ({
 			...current,
 			[event.id]: [
 				...(current[event.id] ?? []).filter(
 					(entry) => entry.coachId !== value.coachId,
 				),
-				...(value.assigned && coach ? [{ ...coach, durationMinutes }] : []),
+				...(assigned && coach
+					? [{ ...coach, durationMinutes, ...(partIds ? { partIds } : {}) }]
+					: []),
 			],
 		}));
+		return true;
 	};
 	return { coaches, assignments, loading: false, busy: false, change };
 };

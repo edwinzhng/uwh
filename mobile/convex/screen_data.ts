@@ -53,47 +53,35 @@ export const screenData = async (
 		select.plans = ids;
 	}
 	if (["club", "member"].includes(screen)) {
-		const targetIds =
-			screen === "administration" && member.admin
-				? undefined
-				: people.filter(
-						(personId) =>
-							member.admin || canManagePerson(accountFor(member), personId),
-					);
-		select.charges = targetIds ?? true;
+		const targetIds = people.filter(
+			(personId) =>
+				member.admin || canManagePerson(accountFor(member), personId),
+		);
+		select.charges = targetIds;
 		select.trackers = true;
 		const trackers = await ctx.db
 			.query("trackers")
 			.withIndex("by_club", (q) => q.eq("clubId", clubId))
 			.collect();
 		rows.trackers = trackers;
-		select.trackerValues = targetIds
-			? targetIds.flatMap((personId) =>
-					trackers.map((row) => `${row.value.id}:${personId}`),
-				)
-			: true;
-		rows.loans = targetIds
-			? (
-					await Promise.all(
-						targetIds.map((personId) =>
-							ctx.db
-								.query("loans")
-								.withIndex("by_person_active", (q) =>
-									q
-										.eq("clubId", clubId)
-										.eq("value.personId", personId)
-										.eq("value.returned", false),
-								)
-								.collect(),
-						),
-					)
-				).flat()
-			: await ctx.db
-					.query("loans")
-					.withIndex("by_returned", (q) =>
-						q.eq("clubId", clubId).eq("value.returned", false),
-					)
-					.collect();
+		select.trackerValues = targetIds.flatMap((personId) =>
+			trackers.map((row) => `${row.value.id}:${personId}`),
+		);
+		rows.loans = (
+			await Promise.all(
+				targetIds.map((personId) =>
+					ctx.db
+						.query("loans")
+						.withIndex("by_person_active", (q) =>
+							q
+								.eq("clubId", clubId)
+								.eq("value.personId", personId)
+								.eq("value.returned", false),
+						)
+						.collect(),
+				),
+			)
+		).flat();
 		select.equipment = rows.loans.map((row) => row.value.itemId);
 	}
 	if (screen === "equipment" && member.admin) {

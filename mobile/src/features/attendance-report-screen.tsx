@@ -2,7 +2,6 @@ import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import { Button, Field, Row, Select, Stack, Text } from "../design-system";
-import { AttendanceComparison } from "./attendance-comparison";
 import { AttendanceReportTable } from "./attendance-report-table";
 import { ClubShell } from "./club-shell";
 import { SeasonSelect } from "./season-select";
@@ -16,7 +15,6 @@ export const AttendanceReportScreen = (): ReactElement => {
 	const [search, setSearch] = useState("");
 	const query = useSearchTerm(search);
 	const [month, setMonth] = useState("");
-	const [selected, setSelected] = useState<{ id: string; name: string }[]>([]);
 	const season = data.seasons.find((entry) => entry.id === seasonId);
 	const years = season
 		? Array.from(
@@ -44,14 +42,6 @@ export const AttendanceReportScreen = (): ReactElement => {
 				value >= season.start.slice(0, 7) &&
 				value <= season.end.slice(0, 7),
 		);
-	const toggle = (person: { id: string; name: string }): void =>
-		setSelected((current) =>
-			current.some((entry) => entry.id === person.id)
-				? current.filter((entry) => entry.id !== person.id)
-				: current.length < 4
-					? [...current, person]
-					: current,
-		);
 	return (
 		<ClubShell
 			title="Attendance"
@@ -72,12 +62,11 @@ export const AttendanceReportScreen = (): ReactElement => {
 			) : source !== "convex" ? (
 				<Text>Connect to your club to view reports.</Text>
 			) : (
-				<Stack gap="lg">
+				<Stack gap="xl">
 					<Row wrap>
 						<SeasonSelect
 							onChange={(): void => {
 								setMonth("");
-								setSelected([]);
 							}}
 						/>
 						<Select
@@ -110,18 +99,6 @@ export const AttendanceReportScreen = (): ReactElement => {
 						seasonId={seasonId}
 						month={month}
 						search={query}
-						selected={selected.map((person) => person.id)}
-						onSelect={toggle}
-					/>
-					<AttendanceComparison
-						seasonId={seasonId}
-						month={month}
-						people={selected}
-						onRemove={(id): void =>
-							setSelected((current) =>
-								current.filter((person) => person.id !== id),
-							)
-						}
 					/>
 				</Stack>
 			)}

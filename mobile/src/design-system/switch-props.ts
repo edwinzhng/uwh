@@ -4,4 +4,5 @@ export type SwitchProps = {
 	value: boolean;
 	onValueChange: (value: boolean) => void;
 	isDisabled?: boolean;
+	compact?: boolean;
 };

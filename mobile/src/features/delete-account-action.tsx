@@ -61,8 +61,9 @@ export const DeleteAccountAction = (): ReactElement | undefined => {
 			>
 				<Stack>
 					<Text variant="small">
-						Your account, profile, messages, photos, attendance and personal
-						records will be deleted. Linked children’s club profiles remain.
+						Your account, profile, messages, photos and child profiles managed
+						only by you will be deleted. Attendance records stay with the club
+						without these profiles. Children linked to another account remain.
 					</Text>
 					<Text variant="small" tone="secondary">
 						Published coaching feedback stays without your name. Moderation

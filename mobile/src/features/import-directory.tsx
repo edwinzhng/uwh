@@ -1,6 +1,12 @@
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
-import { FileDownload, Select, Stack, Text } from "../design-system";
+import {
+	FileDownload,
+	SectionHeading,
+	Select,
+	Stack,
+	Text,
+} from "../design-system";
 import { exportCsv } from "../domain/import-csv";
 import { DataPage } from "./data-page";
 export const ImportDirectory = (): ReactElement => {
@@ -8,7 +14,7 @@ export const ImportDirectory = (): ReactElement => {
 	const [error, setError] = useState("");
 	return (
 		<Stack>
-			<Text variant="h4">Existing IDs</Text>
+			<SectionHeading>Existing IDs</SectionHeading>
 			<Select
 				label="Directory"
 				value={kind}

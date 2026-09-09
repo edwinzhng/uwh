@@ -130,7 +130,7 @@ assert(second);
 await owner.client.mutation(api.club.approveRequest, {
 	requestId: second.id,
 	personId: "jamie",
-	children: ["sam"],
+	children: ["sam", "quinn"],
 	coachPrograms: [],
 	admin: false,
 });
@@ -311,7 +311,7 @@ assert.equal(
 );
 await owner.client.mutation(api.club.setAccess, {
 	accountId: member.id,
-	children: ["sam"],
+	children: ["sam", "quinn"],
 	coachPrograms: [],
 	admin: false,
 });
@@ -533,6 +533,20 @@ assert.equal(
 	).reads,
 	1,
 );
+await owner.client.mutation(api.club.apply, {
+	action: {
+		type: "attendance",
+		eventId: "past",
+		personId: "quinn",
+		attendance: "present",
+	},
+});
+const beforeErasure = await owner.client.query(api.club.current, {});
+const pastQuinn =
+	beforeErasure?.data.responses.filter(
+		(row) => row.personId === "quinn" && row.attendance !== "unmarked",
+	) ?? [];
+assert(pastQuinn.length > 0);
 await recovery.action(api.account_actions.deleteAccount, {
 	password: newPassword,
 });
@@ -577,6 +591,14 @@ assert.equal(
 const remaining = await owner.client.query(api.club.current, {});
 assert(!remaining?.data.members.some((entry) => entry.id === "jamie"));
 assert(remaining?.data.members.some((entry) => entry.id === "sam"));
+assert(!remaining?.data.members.some((entry) => entry.id === "quinn"));
+for (const response of pastQuinn)
+	assert.deepEqual(
+		remaining?.data.responses.find(
+			(row) => row.personId === "quinn" && row.eventId === response.eventId,
+		),
+		response,
+	);
 const nextOwner = await fixture("NextOwner");
 await nextOwner.client.mutation(api.club.requestToJoin, { clubCode: clubId });
 const nextRequest = (

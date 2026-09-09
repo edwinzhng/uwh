@@ -6,6 +6,8 @@ import { Calendar, calendarDays } from "../design-system";
 
 type Props = {
 	date: string;
+	period: "upcoming" | "past";
+	now: number;
 	today: string;
 	season: string;
 	counts: Record<string, number>;
@@ -15,6 +17,8 @@ const LiveCalendar = ({
 	date,
 	today,
 	season,
+	period,
+	now,
 	onChange,
 }: Props): ReactElement => {
 	const days = calendarDays(date);
@@ -22,6 +26,8 @@ const LiveCalendar = ({
 		from: days.at(0) ?? date,
 		to: days.at(-1) ?? date,
 		season,
+		period,
+		now,
 	});
 	return (
 		<Calendar
@@ -36,6 +42,8 @@ export const ScheduleCalendar = (props: Props): ReactElement =>
 	useApp().source === "convex" ? (
 		<LiveCalendar
 			date={props.date}
+			period={props.period}
+			now={props.now}
 			today={props.today}
 			season={props.season}
 			counts={props.counts}

@@ -1,9 +1,10 @@
 import { v } from "convex/values";
 import { initialAppData } from "../src/demo/app-data";
 import { reduceApp } from "../src/domain/app-reducer";
-import type { Account, AppData } from "../src/domain/app-types";
+import type { Account, AppAction, AppData } from "../src/domain/app-types";
 import { visibleAppData } from "../src/domain/app-visibility";
 import { clubTimestamp, signupState } from "../src/domain/event-time";
+import { defaultClubTimeZone } from "../src/domain/time-zones";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
 import { actionData } from "./action_data";
@@ -113,7 +114,25 @@ export const apply = mutation({
 			action.type === "set-reaction"
 		)
 			return applyMessage(ctx, membership, action);
-		const { data, rows } = await actionData(ctx, membership.clubId, action);
+		const club =
+			action.type === "create-event"
+				? await ctx.db.get(membership.clubId)
+				: undefined;
+		const effectiveAction: AppAction =
+			action.type === "create-event"
+				? {
+						...action,
+						draft: {
+							...action.draft,
+							timeZone: club?.timeZone ?? defaultClubTimeZone,
+						},
+					}
+				: action;
+		const { data, rows } = await actionData(
+			ctx,
+			membership.clubId,
+			effectiveAction,
+		);
 		const currentData = {
 			...data,
 			events: data.events.map((event) => ({
@@ -121,7 +140,7 @@ export const apply = mutation({
 				signup: signupState(event, Date.now()),
 			})),
 		};
-		const next = reduceApp(currentData, account, action);
+		const next = reduceApp(currentData, account, effectiveAction);
 		await saveData(ctx, membership.clubId, rows, next);
 		await notifyChanges(ctx, membership.clubId, membership.userId, data, next);
 		if (action.type === "create-event" || action.type === "edit-event") {
@@ -148,6 +167,7 @@ export const create = mutation({
 		const personName = user?.name ?? "Club owner";
 		const clubId = await ctx.db.insert("clubs", {
 			name: name.trim(),
+			timeZone: defaultClubTimeZone,
 			ownerId: userId,
 			reminders: true,
 		});
@@ -206,9 +226,11 @@ export const create = mutation({
 		const scheduled = {
 			...data,
 			events: data.events.map((event) => {
-				const start = clubTimestamp(event.date, event.start);
+				const timeZone = event.timeZone ?? defaultClubTimeZone;
+				const start = clubTimestamp(event.date, event.start, timeZone);
 				const timed = {
 					...event,
+					timeZone,
 					opensAt:
 						event.signup === "scheduled" ? start - 39 * 3600000 : Date.now(),
 					closesAt: start,

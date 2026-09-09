@@ -44,6 +44,32 @@ await owner.mutation(api.club.approveRequest, {
 });
 const family = await parent.query(api.club.current, {});
 assert(family);
+const snapshot = await parent.query(api.calendar.householdSnapshot, {
+	personIds: ["sam", "mila"],
+});
+const exported = new ICAL.Component(ICAL.parse(snapshot)).getAllSubcomponents(
+	"vevent",
+);
+assert(
+	exported.length > 0,
+	"Household export includes saved RSVPs without loading schedule pages",
+);
+assert(
+	exported.some((event) =>
+		String(event.getFirstPropertyValue("summary")).includes("Sam"),
+	),
+);
+assert(
+	exported.some((event) =>
+		String(event.getFirstPropertyValue("summary")).includes("Mila"),
+	),
+);
+await assert.rejects(
+	parent.query(api.calendar.householdSnapshot, { personIds: ["alex"] }),
+);
+await assert.rejects(
+	parent.query(api.calendar.householdSnapshot, { personIds: [] }),
+);
 const stranger = await signUp("stranger");
 await stranger.mutation(api.club.create, {
 	name: "Different club",

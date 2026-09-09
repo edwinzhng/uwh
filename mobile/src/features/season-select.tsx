@@ -8,9 +8,10 @@ export const SeasonSelect = ({
 }: {
 	isDisabled?: boolean;
 	onChange?: () => void;
-}): ReactElement => {
+}): ReactElement | undefined => {
 	const { data } = useApp();
 	const [season, select] = useSeason();
+	if (data.seasons.length < 2) return undefined;
 	return (
 		<Select
 			label="Season"

@@ -1,51 +1,41 @@
 import type { ReactElement, ReactNode } from "react";
-import { View } from "react-native";
 import { Badge } from "./badge";
 import { Row } from "./row";
 import { Stack } from "./stack";
+import { Surface } from "./surface";
 import { Text } from "./text";
-import { useTheme } from "./theme";
-import { corners, geometry, space } from "./tokens";
+import type { SpaceToken } from "./tokens";
 
 type Props = {
 	staffRole: "coach" | "admin" | undefined;
 	title?: string;
 	action?: ReactNode;
+	padding?: SpaceToken;
 	children?: ReactNode;
 };
-
 export const StaffSection = ({
 	staffRole,
 	title,
 	action,
+	padding = "md",
 	children,
 }: Props): ReactElement => {
-	const theme = useTheme();
 	if (!staffRole) return <>{children}</>;
+	const label = staffRole === "coach" ? "Coach" : "Admin";
 	return (
 		<Stack gap="sm">
-			<View
-				style={{
-					padding: space.xs,
-					backgroundColor: theme[staffRole].background,
-					borderColor: theme.colorScales[staffRole].border,
-					borderWidth: geometry.border,
-					borderRadius: corners.panel,
-				}}
-			>
-				<Row justify="between" wrap gap="xs">
-					<Row gap="xs" wrap>
-						<Badge
-							compact
-							label={staffRole === "coach" ? "Coach" : "Admin"}
-							kind={staffRole}
-						/>
-						{title ? <Text variant="label">{title}</Text> : undefined}
-					</Row>
-					{action}
+			<Row justify="between" wrap>
+				<Row gap="xs">
+					<Badge label={label} kind={staffRole} />
+					{title ? <Text variant="h4">{title}</Text> : undefined}
 				</Row>
-			</View>
-			{children}
+				{action}
+			</Row>
+			{children ? (
+				<Surface padding={padding}>
+					<Stack gap="sm">{children}</Stack>
+				</Surface>
+			) : undefined}
 		</Stack>
 	);
 };

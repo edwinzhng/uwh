@@ -6,12 +6,14 @@ import { DataPage } from "./data-page";
 import { ScheduleEvents } from "./schedule-events";
 export const SchedulePage = ({
 	view,
+	period,
 	date,
 	season,
 	now,
 	preview,
 }: {
 	view: "upcoming" | "past" | "calendar";
+	period: "upcoming" | "past";
 	date: string;
 	season: string;
 	now: number;
@@ -22,7 +24,7 @@ export const SchedulePage = ({
 		<DataPage
 			config={{
 				query: api.pages.schedule,
-				args: { view, date, season, now },
+				args: { view, date, season, now, period },
 				preview: preview.map((event) => ({
 					event,
 					responses: app.data.responses.filter(

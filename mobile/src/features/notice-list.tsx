@@ -44,7 +44,7 @@ const NoticeRows = ({ items }: { items: Notice[] }): ReactElement => {
 					))}
 					{!items.length ? (
 						<Text variant="small" tone="secondary">
-							No notices
+							No announcements
 						</Text>
 					) : undefined}
 				</Stack>

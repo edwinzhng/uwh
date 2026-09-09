@@ -9,6 +9,7 @@ export const coachingHoursTables = {
 		personId: v.string(),
 		name: v.string(),
 		durationMinutes: v.number(),
+		partIds: v.optional(v.array(v.string())),
 	})
 		.index("by_club", ["clubId"])
 		.index("by_club_event", ["clubId", "eventId"])

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import {
+	eventPartValue,
 	repeatValue,
 	signupClosesValue,
 	signupOpensValue,
@@ -18,9 +19,12 @@ export const membersValue = v.object({
 		v.literal("approved"),
 	),
 	goal: v.string(),
+	pendingGoal: v.optional(v.string()),
 	steps: v.number(),
 });
 export const eventsValue = v.object({
+	timeZone: v.optional(v.string()),
+	parts: v.optional(v.array(eventPartValue)),
 	public: v.optional(v.boolean()),
 	exception: v.optional(v.boolean()),
 	editId: v.optional(v.string()),
@@ -56,6 +60,20 @@ export const eventsValue = v.object({
 	closesAt: v.optional(v.number()),
 });
 export const responsesValue = v.object({
+	partIds: v.optional(v.array(v.string())),
+	partAttendance: v.optional(
+		v.array(
+			v.object({
+				partId: v.string(),
+				attendance: v.union(
+					v.literal("unmarked"),
+					v.literal("present"),
+					v.literal("late"),
+					v.literal("absent"),
+				),
+			}),
+		),
+	),
 	id: v.string(),
 	eventId: v.string(),
 	personId: v.string(),
@@ -73,6 +91,7 @@ export const responsesValue = v.object({
 	),
 });
 export const teamsValue = v.object({
+	partId: v.optional(v.string()),
 	coachingStale: v.optional(v.boolean()),
 	separateYouth: v.optional(v.boolean()),
 	excludedPersonIds: v.optional(v.array(v.string())),
@@ -139,6 +158,7 @@ export const equipmentValue = v.object({
 	name: v.string(),
 	size: v.string(),
 	condition: v.union(v.literal("ready"), v.literal("repair")),
+	quantity: v.optional(v.number()),
 });
 export const loansValue = v.object({
 	id: v.string(),

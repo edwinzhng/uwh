@@ -8,8 +8,9 @@ import {
 	Button,
 	Dialog,
 	Row,
-	SegmentedControl,
 	Stack,
+	TabContent,
+	Tabs,
 	Text,
 } from "../design-system";
 import { fitnessUnitLabel } from "../domain/fitness";
@@ -85,7 +86,7 @@ export const FitnessWorkspace = ({
 				</Text>
 			</Stack>
 			<SeasonSelect />
-			<SegmentedControl
+			<Tabs
 				label="Fitness view"
 				value={tab}
 				onValueChange={setTab}
@@ -94,20 +95,22 @@ export const FitnessWorkspace = ({
 					{ value: "progress", label: "Progress" },
 				]}
 			/>
-			{tab === "sessions" ? (
-				<FitnessSessions
-					key={`${testId}:${seasonId}`}
-					test={test}
-					seasonId={seasonId}
-					onSelect={setSessionId}
-				/>
-			) : (
-				<FitnessProgress
-					key={`${testId}:${seasonId}`}
-					test={test}
-					seasonId={seasonId}
-				/>
-			)}
+			<TabContent value={tab}>
+				{tab === "sessions" ? (
+					<FitnessSessions
+						key={`${testId}:${seasonId}`}
+						test={test}
+						seasonId={seasonId}
+						onSelect={setSessionId}
+					/>
+				) : (
+					<FitnessProgress
+						key={`${testId}:${seasonId}`}
+						test={test}
+						seasonId={seasonId}
+					/>
+				)}
+			</TabContent>
 			{editing ? (
 				<FitnessTestForm
 					test={test}

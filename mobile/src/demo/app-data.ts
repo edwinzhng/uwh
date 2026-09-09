@@ -191,23 +191,38 @@ export const initialAppData: AppData = {
 		},
 		{
 			id: "club-thu",
-			title: "Club training",
+			title: "Thursday practice",
 			date: "2026-09-10",
 			start: "19:45",
-			end: "20:30",
+			end: "21:30",
 			venue: "MNP Community & Sport Centre",
 			program: "club",
 			kind: "training",
 			signup: "open",
 			capacity: 24,
-			description:
-				"Transitions and defensive shape. Meet poolside 10 minutes early.",
+			description: "Training followed by hockey. Bring both caps.",
+			parts: [
+				{
+					id: "training",
+					title: "Training",
+					kind: "training",
+					start: "19:45",
+					end: "20:30",
+				},
+				{
+					id: "hockey",
+					title: "Hockey",
+					kind: "hockey",
+					start: "20:30",
+					end: "21:30",
+				},
+			],
 			cancelled: false,
 		},
 		{
-			id: "hockey-thu",
-			title: "Evening hockey",
-			date: "2026-09-10",
+			id: "hockey-fri",
+			title: "Friday hockey",
+			date: "2026-09-11",
 			start: "20:30",
 			end: "21:30",
 			venue: "MNP Community & Sport Centre",
@@ -215,7 +230,7 @@ export const initialAppData: AppData = {
 			kind: "hockey",
 			signup: "open",
 			capacity: 24,
-			description: "Open play. Teams will be shared before the session.",
+			description: "Open play. Bring both caps.",
 			cancelled: false,
 		},
 		{
@@ -262,7 +277,7 @@ export const initialAppData: AppData = {
 			cancelled: false,
 		},
 	],
-	responses: ["club-thu", "hockey-thu", "past"]
+	responses: ["club-thu", "past"]
 		.flatMap((eventId) =>
 			members
 				.filter((member) => member.programs.includes("club"))

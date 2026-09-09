@@ -14,10 +14,10 @@ export const ImportScreen = (): ReactElement => {
 			back={
 				<Row>
 					<Button
-						label="Admin"
+						label="Club"
 						prefix="arrowLeft"
 						variant="ghost"
-						onPress={(): void => router.navigate("/administration")}
+						onPress={(): void => router.navigate("/club")}
 					/>
 				</Row>
 			}

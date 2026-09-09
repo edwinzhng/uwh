@@ -10,12 +10,14 @@ import {
 	Dialog,
 	ListItem,
 	Row,
+	SectionHeading,
 	Stack,
 	Surface,
 	Text,
 	Toggle,
 } from "../design-system";
 import { AccountAccessEditor } from "./account-access-editor";
+import { ConfirmButton } from "./confirm-button";
 
 export const AccessPanel = (): ReactElement => {
 	const { data, accounts, source } = useApp();
@@ -45,156 +47,160 @@ export const AccessPanel = (): ReactElement => {
 		}
 	};
 	return (
-		<Surface>
-			<Stack>
-				<Text variant="h4">Account access</Text>
-				{backend.clubCode ? (
-					<Stack gap="xs">
-						<Text variant="caption" tone="secondary">
-							Club code · share this to request access
+		<Stack gap="sm">
+			<SectionHeading>Account access</SectionHeading>
+			<Surface>
+				<Stack>
+					{backend.clubCode ? (
+						<Stack gap="xs">
+							<Text variant="caption" tone="secondary">
+								Club code · share this to request access
+							</Text>
+							<Text variant="small">{backend.clubCode}</Text>
+						</Stack>
+					) : (
+						<Text variant="small" tone="secondary">
+							Sign in and create a club to manage access requests.
 						</Text>
-						<Text variant="small">{backend.clubCode}</Text>
-					</Stack>
-				) : (
-					<Text variant="small" tone="secondary">
-						Sign in and create a club to manage access requests.
-					</Text>
-				)}
-				{backend.requests.map((entry) => (
-					<ListItem
-						key={entry.id}
-						title={entry.name}
-						description="Requesting access"
-						trailing={<Badge label="Pending" kind="warning" />}
-						onPress={(): void => {
-							setRequestId(entry.id);
-							setPersonId(undefined);
-							setChildren([]);
-							setCoaching([]);
-							setAdmin(false);
-							setVerified(false);
-						}}
-					/>
-				))}
-				{accounts.map((entry) => (
-					<ListItem
-						key={entry.id}
-						onPress={
-							source === "convex" ? (): void => setEditing(entry.id) : undefined
-						}
-						title={entry.name}
-						description={
-							(entry.admin ? "Admin · " : "") +
-							(entry.coachPrograms.length ? "Coach · " : "") +
-							(entry.children.length ? "Parent" : "Member")
-						}
-					/>
-				))}
-				{editingAccount ? (
-					<AccountAccessEditor
-						key={editingAccount.id}
-						account={editingAccount}
-						onClose={(): void => setEditing(undefined)}
-					/>
-				) : undefined}
-				{source === "preview" ? (
-					<Text variant="caption" tone="secondary">
-						Preview accounts are examples.
-					</Text>
-				) : undefined}
-				<Dialog
-					staffRole="admin"
-					title={`Approve ${request?.name ?? "account"}`}
-					isOpen={Boolean(request)}
-					onOpenChange={(open): void => {
-						if (!open) setRequestId(undefined);
-					}}
-					footer={
-						<Row>
-							<Button
-								label="Decline"
-								variant="secondary"
-								isDisabled={busy}
-								onPress={(): void => {
-									if (!request) return;
-									setBusy(true);
-									setError(undefined);
-									void backend
-										.declineRequest?.(request.id)
-										.then((): void => setRequestId(undefined))
-										.catch((error): void => setError(friendlyError(error)))
-										.finally((): void => setBusy(false));
-								}}
-							/>
-							<Button
-								label="Approve access"
-								isLoading={busy}
-								isDisabled={!personId || !verified}
-								onPress={(): void => {
-									void approve();
-								}}
-							/>
-						</Row>
-					}
-				>
-					<Stack>
-						<Combobox
-							label="Their profile"
-							value={personId}
-							onValueChange={(value): void => {
-								setPersonId(value);
-								setChildren((ids) => ids.filter((id) => id !== value));
+					)}
+					{backend.requests.map((entry) => (
+						<ListItem
+							key={entry.id}
+							title={entry.name}
+							description="Requesting access"
+							trailing={<Badge label="Pending" kind="warning" />}
+							onPress={(): void => {
+								setRequestId(entry.id);
+								setPersonId(undefined);
+								setChildren([]);
+								setCoaching([]);
+								setAdmin(false);
+								setVerified(false);
 							}}
-							options={data.members
-								.filter(
-									(member) =>
-										!accounts.some((entry) => entry.personId === member.id),
-								)
-								.map((member) => ({ value: member.id, label: member.name }))}
 						/>
-						<Text variant="label">Linked children</Text>
-						{data.members
-							.filter((member) => member.id !== personId)
-							.map((member) => (
-								<Toggle
-									key={member.id}
-									label={member.name}
-									value={children.includes(member.id)}
-									onValueChange={(value): void =>
-										setChildren((ids) =>
-											value
-												? [...ids, member.id]
-												: ids.filter((id) => id !== member.id),
-										)
-									}
-								/>
-							))}
-						<Text variant="label">Coaching access</Text>
-						<Toggle
-							label="Coach"
-							value={coaching.length > 0}
-							onValueChange={(value): void =>
-								setCoaching(value ? ["club", "youth"] : [])
+					))}
+					{accounts.map((entry) => (
+						<ListItem
+							key={entry.id}
+							onPress={
+								source === "convex"
+									? (): void => setEditing(entry.id)
+									: undefined
+							}
+							title={entry.name}
+							description={
+								(entry.admin ? "Admin · " : "") +
+								(entry.coachPrograms.length ? "Coach · " : "") +
+								(entry.children.length ? "Parent" : "Member")
 							}
 						/>
-						<Toggle
-							label="Club administrator"
-							value={admin}
-							onValueChange={setAdmin}
+					))}
+					{editingAccount ? (
+						<AccountAccessEditor
+							key={editingAccount.id}
+							account={editingAccount}
+							onClose={(): void => setEditing(undefined)}
 						/>
-						<Toggle
-							label="I’ve verified this person and their family links"
-							value={verified}
-							onValueChange={setVerified}
-						/>
-						{error ? (
-							<Text variant="small" tone="danger">
-								{error}
-							</Text>
-						) : undefined}
-					</Stack>
-				</Dialog>
-			</Stack>
-		</Surface>
+					) : undefined}
+					{source === "preview" ? (
+						<Text variant="caption" tone="secondary">
+							Preview accounts are examples.
+						</Text>
+					) : undefined}
+					<Dialog
+						staffRole="admin"
+						title={`Approve ${request?.name ?? "account"}`}
+						isOpen={Boolean(request)}
+						onOpenChange={(open): void => {
+							if (!open) setRequestId(undefined);
+						}}
+						footer={
+							<Row>
+								<ConfirmButton
+									label="Decline"
+									variant="secondary"
+									danger
+									title="Decline request?"
+									description={`Decline ${request?.name ?? "this person"}’s request to join the club. They would need to request access again.`}
+									confirmLabel="Decline request"
+									isDisabled={busy}
+									onConfirm={async (): Promise<void> => {
+										if (!request || !backend.declineRequest)
+											throw new Error("Request unavailable.");
+										await backend.declineRequest(request.id);
+										setRequestId(undefined);
+									}}
+								/>
+								<Button
+									label="Approve access"
+									isLoading={busy}
+									isDisabled={!personId || !verified}
+									onPress={(): void => {
+										void approve();
+									}}
+								/>
+							</Row>
+						}
+					>
+						<Stack>
+							<Combobox
+								label="Their profile"
+								value={personId}
+								onValueChange={(value): void => {
+									setPersonId(value);
+									setChildren((ids) => ids.filter((id) => id !== value));
+								}}
+								options={data.members
+									.filter(
+										(member) =>
+											!accounts.some((entry) => entry.personId === member.id),
+									)
+									.map((member) => ({ value: member.id, label: member.name }))}
+							/>
+							<Text variant="label">Linked children</Text>
+							{data.members
+								.filter((member) => member.id !== personId)
+								.map((member) => (
+									<Toggle
+										key={member.id}
+										label={member.name}
+										value={children.includes(member.id)}
+										onValueChange={(value): void =>
+											setChildren((ids) =>
+												value
+													? [...ids, member.id]
+													: ids.filter((id) => id !== member.id),
+											)
+										}
+									/>
+								))}
+							<Text variant="label">Coaching access</Text>
+							<Toggle
+								label="Coach"
+								value={coaching.length > 0}
+								onValueChange={(value): void =>
+									setCoaching(value ? ["club", "youth"] : [])
+								}
+							/>
+							<Toggle
+								label="Club administrator"
+								value={admin}
+								onValueChange={setAdmin}
+							/>
+							<Toggle
+								label="I’ve verified this person and their family links"
+								value={verified}
+								onValueChange={setVerified}
+							/>
+							{error ? (
+								<Text variant="small" tone="danger">
+									{error}
+								</Text>
+							) : undefined}
+						</Stack>
+					</Dialog>
+				</Stack>
+			</Surface>
+		</Stack>
 	);
 };

@@ -1,21 +1,25 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { Badge, Button, Row, Stack, Surface, Text } from "../design-system";
+import { Badge, Row, Stack, Surface, Text } from "../design-system";
 import { formatDate } from "../domain/app-rules";
 import type { CoachingFeedback } from "../domain/app-types";
+import { ConfirmButton } from "./confirm-button";
 import { FeedbackDelete } from "./feedback-delete";
 import { FeedbackEditor } from "./feedback-editor";
 
 export const FeedbackCard = ({
 	entry,
 	editable = false,
+	embedded = false,
 }: {
 	entry: CoachingFeedback;
 	editable?: boolean;
+	embedded?: boolean;
 }): ReactElement => {
 	const { account, busy, dispatch } = useApp();
+	const Container = embedded ? Stack : Surface;
 	return (
-		<Surface>
+		<Container>
 			<Stack gap="sm">
 				<Row justify="between" wrap>
 					<Badge
@@ -40,17 +44,20 @@ export const FeedbackCard = ({
 						<FeedbackEditor personId={entry.personId} existing={entry} />
 						<FeedbackDelete id={entry.id} />
 						{entry.visibility === "draft" ? (
-							<Button
+							<ConfirmButton
 								label="Publish"
-								isLoading={busy}
-								onPress={(): void => {
-									void dispatch({ type: "publish-feedback", id: entry.id });
-								}}
+								title="Publish feedback?"
+								description="This feedback will be shared with the player and linked parents. It can’t be edited or deleted after publishing."
+								confirmLabel="Publish"
+								isDisabled={busy}
+								onConfirm={() =>
+									dispatch({ type: "publish-feedback", id: entry.id })
+								}
 							/>
 						) : undefined}
 					</Row>
 				) : undefined}
 			</Stack>
-		</Surface>
+		</Container>
 	);
 };

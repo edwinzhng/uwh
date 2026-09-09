@@ -16,6 +16,7 @@ export const AttendanceRecords = ({
 				<Stack gap="xs">
 					{items.map((record) => (
 						<ListItem
+							flush
 							key={record.id}
 							title={record.title}
 							description={formatDate(record.date)}

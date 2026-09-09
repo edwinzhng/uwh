@@ -18,7 +18,7 @@ export const useAttendanceReport = (
 		seasonId,
 		month: month || undefined,
 		search,
-		paginationOpts: { numItems: 10, cursor: cursors.at(-1) ?? null },
+		paginationOpts: { numItems: 100, cursor: cursors.at(-1) ?? null },
 	});
 	return {
 		result,

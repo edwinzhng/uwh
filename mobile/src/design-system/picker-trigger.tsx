@@ -13,6 +13,7 @@ type Props = {
 	icon?: IconName;
 	tone?: StatusTone;
 	onPress: () => void;
+	compact?: boolean;
 };
 
 export const PickerTrigger = ({
@@ -23,6 +24,7 @@ export const PickerTrigger = ({
 	icon = "chevronDown",
 	onPress,
 	tone,
+	compact = false,
 }: Props): ReactElement => {
 	const theme = useTheme();
 	const [focused, setFocused] = useState(false);
@@ -38,7 +40,7 @@ export const PickerTrigger = ({
 			style={{
 				minHeight: geometry.touch,
 				justifyContent: "center",
-				width: geometry.popupWidth,
+				width: compact ? geometry.compactPickerWidth : geometry.popupWidth,
 				maxWidth: "100%",
 			}}
 		>

@@ -1,3 +1,4 @@
+import { Temporal } from "@js-temporal/polyfill";
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { canRegister } from "../src/domain/app-rules";
@@ -35,7 +36,9 @@ const rangeEvents = async (
 			month > season.end.slice(0, 7))
 	)
 		throw new Error("Choose a month in this season.");
-	const today = clubDate();
+	const today = Temporal.PlainDate.from(clubDate(undefined, club?.timeZone))
+		.add({ days: 2 })
+		.toString();
 	const start = month ? `${month}-01` : "0000-01-01";
 	const end = month && `${month}-31` < today ? `${month}-31` : today;
 	const read = (id: string | undefined): Promise<Doc<"events">[]> =>
@@ -65,7 +68,7 @@ const rangeEvents = async (
 				(value.seasonId ?? defaultSeasonId) === seasonId &&
 				!value.cancelled &&
 				value.kind !== "social" &&
-				clubTimestamp(value.date, value.end) <= Date.now(),
+				clubTimestamp(value.date, value.end, value.timeZone) <= Date.now(),
 		)
 		.sort(
 			(a, b) =>
@@ -144,7 +147,7 @@ export const roster = query({
 		).paginate({
 			...args.paginationOpts,
 			numItems: Math.min(
-				10,
+				100,
 				args.paginationOpts.numItems,
 				Math.max(1, Math.floor(3000 / Math.max(1, events.length * 2))),
 			),

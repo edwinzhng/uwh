@@ -8,7 +8,6 @@ export type PersonPickerProps = {
 	options: readonly PersonChoice[];
 	onValueChange: (id: string) => void;
 	account?: {
-		name: string;
 		onSettings: () => void;
 	};
 };

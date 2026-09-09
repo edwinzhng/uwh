@@ -55,7 +55,10 @@ export const corners = {
 } as const;
 export const elevation = {
 	none: { boxShadow: "none", elevation: 0 },
-	raised: { boxShadow: "0 1px 2px rgba(0,0,0,0.05)", elevation: 1 },
+	raised: {
+		boxShadow: "0 1px 2px rgba(0,0,0,0.06), 0 3px 8px rgba(0,0,0,0.04)",
+		elevation: 1,
+	},
 	floating: { boxShadow: "0 4px 12px rgba(0,0,0,0.12)", elevation: 4 },
 	overlay: { boxShadow: "0 12px 32px rgba(0,0,0,0.20)", elevation: 8 },
 } as const;
@@ -63,7 +66,14 @@ export const elevation = {
 export const opacity = { backdrop: 0.15 } as const;
 
 export const motion = {
-	duration: { instant: 0, fast: 120, standard: 200, toggle: 220, slow: 280 },
+	duration: {
+		instant: 0,
+		fast: 120,
+		reveal: 150,
+		standard: 200,
+		toggle: 220,
+		slow: 280,
+	},
 	easing: {
 		control: [0.25, 0.1, 0.25, 1],
 		out: [0.23, 1, 0.32, 1],
@@ -114,6 +124,7 @@ export const geometry = {
 	compactControl: 32,
 	calendarDay: 36,
 	popupWidth: 224,
+	compactPickerWidth: 144,
 	popupMaxHeight: 320,
 	iconSmall: 16,
 	nativeSpinnerSmall: 20,
@@ -130,6 +141,7 @@ export const geometry = {
 	messageImage: 320,
 	column: 300,
 	wide: 900,
+	narrow: 480,
 	swatch: 40,
 	progress: 4,
 	numberDigit: 23,
@@ -204,6 +216,10 @@ export const lightTheme: Theme = {
 		foreground: lightColorScales.success.text,
 	},
 	info: { background: "#F0F0F0", foreground: palette.black },
+	pending: {
+		background: lightColorScales.pending.subtle,
+		foreground: lightColorScales.pending.text,
+	},
 	warning: {
 		background: lightColorScales.warning.subtle,
 		foreground: lightColorScales.warning.text,
@@ -259,6 +275,10 @@ export const darkTheme: Theme = {
 		foreground: darkColorScales.success.text,
 	},
 	info: { background: "#242424", foreground: palette.white },
+	pending: {
+		background: darkColorScales.pending.subtle,
+		foreground: darkColorScales.pending.text,
+	},
 	warning: {
 		background: darkColorScales.warning.subtle,
 		foreground: darkColorScales.warning.text,
@@ -273,6 +293,7 @@ export type SpaceToken = keyof typeof space;
 export type ElevationToken = keyof typeof elevation;
 export type TypographyVariant = keyof typeof typography;
 export type Kind =
+	| "pending"
 	| "coach"
 	| "admin"
 	| "neutral"

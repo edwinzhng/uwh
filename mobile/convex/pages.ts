@@ -1,3 +1,4 @@
+import { Temporal } from "@js-temporal/polyfill";
 import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import {
@@ -43,15 +44,18 @@ export const schedule = query({
 		date: v.string(),
 		season: v.string(),
 		now: v.number(),
+		period: v.optional(v.union(v.literal("upcoming"), v.literal("past"))),
 		paginationOpts: paginationOptsValidator,
 	},
 	handler: async (
 		ctx,
-		{ view, date, season, now, paginationOpts },
+		{ view, date, season, now, period, paginationOpts },
 	): Promise<PaginationResult<ScheduleEntry>> => {
 		const member = await memberFor(ctx);
 		if (!member) return empty();
-		const today = clubDate(now);
+		const today = Temporal.PlainDate.from(clubDate(now, "UTC"));
+		const upcomingFrom = today.subtract({ days: 2 }).toString();
+		const pastThrough = today.add({ days: 2 }).toString();
 		const filtered =
 			season !== "all" && season !== "2026-2027"
 				? ctx.db.query("events").withIndex("by_season_date", (q) => {
@@ -61,8 +65,8 @@ export const schedule = query({
 						return view === "calendar"
 							? range.eq("value.date", date)
 							: view === "past"
-								? range.lte("value.date", today)
-								: range.gte("value.date", today);
+								? range.lte("value.date", pastThrough)
+								: range.gte("value.date", upcomingFrom);
 					})
 				: ctx.db
 						.query("events")
@@ -71,8 +75,8 @@ export const schedule = query({
 							return view === "calendar"
 								? range.eq("value.date", date)
 								: view === "past"
-									? range.lte("value.date", today)
-									: range.gte("value.date", today);
+									? range.lte("value.date", pastThrough)
+									: range.gte("value.date", upcomingFrom);
 						})
 						.filter((q) =>
 							season === "all"
@@ -94,8 +98,9 @@ export const schedule = query({
 			}))
 			.filter(
 				(event) =>
-					view === "calendar" ||
-					clubTimestamp(event.date, event.end) <= now === (view === "past"),
+					(view === "calendar" && !period) ||
+					clubTimestamp(event.date, event.end, event.timeZone) <= now ===
+						((period ?? view) === "past"),
 			);
 		const responses = await eventRows(
 			ctx,
@@ -118,10 +123,16 @@ export const schedule = query({
 	},
 });
 export const calendar = query({
-	args: { from: v.string(), to: v.string(), season: v.string() },
+	args: {
+		from: v.string(),
+		to: v.string(),
+		season: v.string(),
+		now: v.optional(v.number()),
+		period: v.optional(v.union(v.literal("upcoming"), v.literal("past"))),
+	},
 	handler: async (
 		ctx,
-		{ from, to, season },
+		{ from, to, season, now, period },
 	): Promise<Record<string, number>> => {
 		const member = await memberFor(ctx);
 		if (!member) return {};
@@ -147,6 +158,11 @@ export const calendar = query({
 			.filter(
 				(row) =>
 					!row.value.cancelled &&
+					(!period ||
+						now === undefined ||
+						clubTimestamp(row.value.date, row.value.end, row.value.timeZone) <=
+							now ===
+							(period === "past")) &&
 					(season === "all" || (row.value.seasonId ?? "2026-2027") === season),
 			)
 			.reduce<Record<string, number>>((counts, row) => {

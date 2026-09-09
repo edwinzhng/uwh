@@ -19,9 +19,19 @@ export type Member = {
 	rating: number;
 	registration: "missing" | "submitted" | "approved";
 	goal: string;
+	pendingGoal?: string;
 	steps: number;
 };
+export type EventPart = {
+	id: string;
+	title: string;
+	kind: "training" | "hockey";
+	start: string;
+	end: string;
+};
 export type ClubEvent = {
+	timeZone?: string;
+	parts?: EventPart[];
 	public?: boolean;
 	exception?: boolean;
 	editId?: string;
@@ -49,12 +59,15 @@ export type ClubEvent = {
 	signupCloses?: EventDraft["signupCloses"];
 };
 export type EventResponse = {
+	partIds?: string[];
+	partAttendance?: { partId: string; attendance: Attendance }[];
 	eventId: string;
 	personId: string;
 	response: Response | "waiting";
 	attendance: Attendance;
 };
 export type TeamPlan = {
+	partId?: string;
 	coachingStale?: boolean;
 	separateYouth?: boolean;
 	excludedPersonIds?: string[];
@@ -105,6 +118,7 @@ export type Equipment = {
 	name: string;
 	size: string;
 	condition: "ready" | "repair";
+	quantity?: number;
 };
 export type Loan = {
 	id: string;
@@ -127,6 +141,7 @@ export type Tracker = {
 	kind: "check" | "text" | "date";
 };
 export type AppData = {
+	timeZone?: string;
 	playerCoaching?: PlayerCoaching[];
 	seasons: Season[];
 	clubName: string;
@@ -149,6 +164,8 @@ export type AppData = {
 	reminders: boolean;
 };
 export type EventDraft = {
+	timeZone?: string;
+	parts?: EventPart[];
 	public?: boolean;
 	rebuild?: boolean;
 	seasonId?: string;
@@ -170,9 +187,16 @@ export type EventDraft = {
 export type AppAction =
 	| { type: "add-season"; season: Season }
 	| { type: "add-member"; member: Member; charge: number }
-	| { type: "respond"; eventId: string; personId: string; response: Response }
+	| {
+			type: "respond";
+			eventId: string;
+			personId: string;
+			response: Response;
+			partIds?: string[];
+	  }
 	| {
 			type: "attendance";
+			partId?: string;
 			eventId: string;
 			personId: string;
 			attendance: Attendance;
@@ -188,24 +212,28 @@ export type AppAction =
 	| { type: "cancel-event"; eventId: string }
 	| {
 			type: "generate-teams";
+			partId?: string;
 			eventId: string;
 			separateYouth?: boolean;
 			excludedPersonIds?: string[];
 	  }
 	| {
 			type: "assign-position";
+			partId?: string;
 			eventId: string;
 			personId: string;
 			position: Position;
 	  }
-	| { type: "move-player"; eventId: string; personId: string }
-	| { type: "publish-teams"; eventId: string }
-	| { type: "save-plan"; eventId: string; body: string }
+	| { type: "move-player"; partId?: string; eventId: string; personId: string }
+	| { type: "publish-teams"; partId?: string; eventId: string }
+	| { type: "save-plan"; partId?: string; eventId: string; body: string }
 	| { type: "save-feedback"; feedback: CoachingFeedback }
 	| { type: "publish-feedback"; id: string }
 	| { type: "delete-feedback"; id: string }
 	| { type: "goal-step"; personId: string; delta: number }
 	| { type: "set-goal"; personId: string; goal: string }
+	| { type: "request-goal"; personId: string; goal: string }
+	| { type: "review-goal"; personId: string; goal: string; approve: boolean }
 	| {
 			type: "send-message";
 			id: string;
@@ -226,6 +254,7 @@ export type AppAction =
 	| { type: "issue"; loan: Loan }
 	| { type: "return"; loanId: string }
 	| { type: "add-equipment"; equipment: Equipment }
+	| { type: "update-equipment"; equipment: Equipment }
 	| { type: "add-tracker"; tracker: Tracker }
 	| {
 			type: "tracker-value";
@@ -233,4 +262,9 @@ export type AppAction =
 			personId: string;
 			value: string;
 	  }
-	| { type: "settings"; clubName: string; reminders: boolean };
+	| {
+			type: "settings";
+			clubName: string;
+			reminders: boolean;
+			timeZone?: string;
+	  };

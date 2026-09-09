@@ -5,6 +5,7 @@ import { useApp } from "../demo/app-state";
 import {
 	AttendanceChart,
 	Row,
+	SectionHeading,
 	Select,
 	Stack,
 	Surface,
@@ -29,11 +30,12 @@ const AttendanceContent = ({
 }: ContentProps): ReactElement => {
 	const { data } = useApp();
 	return (
-		<Surface>
-			<Stack>
-				<Row justify="between" wrap>
-					<Text variant="h4">Attendance</Text>
+		<Stack gap="sm">
+			<SectionHeading
+				action={
 					<Select
+						hideLabel
+						compact
 						label="Season"
 						value={seasonId}
 						options={data.seasons.map((season) => ({
@@ -42,44 +44,54 @@ const AttendanceContent = ({
 						}))}
 						onValueChange={onSeason}
 					/>
-				</Row>
-				<Row gap="xl" wrap>
-					<Stack gap="xxs">
-						<Text variant="h2">
-							{summary.attended === undefined ? "—" : `${summary.attended}%`}
+				}
+			>
+				Attendance
+			</SectionHeading>
+			<Surface>
+				<Stack>
+					<Row gap="xl" wrap>
+						<Stack gap="xxs">
+							<Text variant="h2">
+								{summary.attended === undefined
+									? "N/A"
+									: `${summary.attended}%`}
+							</Text>
+							<Text variant="small">Practices attended</Text>
+							<Text variant="caption" tone="secondary">
+								Of recorded practices
+							</Text>
+						</Stack>
+						<Stack gap="xxs">
+							<Text variant="h2">
+								{summary.onTime === undefined ? "N/A" : `${summary.onTime}%`}
+							</Text>
+							<Text variant="small">On time</Text>
+							<Text variant="caption" tone="secondary">
+								Of practices attended
+							</Text>
+						</Stack>
+					</Row>
+					{summary.recorded > 0 && summary.points.length ? (
+						<AttendanceChart data={summary.points} />
+					) : (
+						<Text variant="small" tone="secondary">
+							{summary.total
+								? "Attendance hasn’t been recorded yet"
+								: "No completed practices this season"}
 						</Text>
-						<Text variant="small">Practices attended</Text>
-						<Text variant="caption" tone="secondary">
-							Of recorded practices
-						</Text>
-					</Stack>
-					<Stack gap="xxs">
-						<Text variant="h2">
-							{summary.onTime === undefined ? "—" : `${summary.onTime}%`}
-						</Text>
-						<Text variant="small">On time</Text>
-						<Text variant="caption" tone="secondary">
-							Of practices attended
-						</Text>
-					</Stack>
-				</Row>
-				{summary.points.length ? (
-					<AttendanceChart data={summary.points} />
-				) : (
-					<Text variant="small" tone="secondary">
-						No completed practices this season
+					)}
+					<Text variant="caption" tone="secondary">
+						{summary.recorded} of {summary.total} practices recorded ·{" "}
+						{summary.total - summary.recorded} unmarked
 					</Text>
-				)}
-				<Text variant="caption" tone="secondary">
-					{summary.recorded} of {summary.total} practices recorded ·{" "}
-					{summary.total - summary.recorded} unmarked
-				</Text>
-				<AttendanceRecords
-					key={member.id + seasonId}
-					records={summary.records}
-				/>
-			</Stack>
-		</Surface>
+					<AttendanceRecords
+						key={member.id + seasonId}
+						records={summary.records}
+					/>
+				</Stack>
+			</Surface>
+		</Stack>
 	);
 };
 

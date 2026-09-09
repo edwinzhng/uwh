@@ -11,6 +11,7 @@ import {
 	Calendar,
 	IconButton,
 	Row,
+	SectionHeading,
 	SegmentedControl,
 	Stack,
 	Surface,
@@ -22,11 +23,12 @@ import { clubDate } from "../domain/event-time";
 export const PublicScheduleScreen = (): ReactElement => {
 	const { club = "" } = useLocalSearchParams<{ club?: string }>();
 	const router = useRouter();
-	const [date, setDate] = useState(clubDate);
+	const [selectedDate, setDate] = useState<string>();
 	const [view, setView] = useState("agenda");
 	const [copied, setCopied] = useState(false);
-	const month = Temporal.PlainDate.from(date).with({ day: 1 });
 	const info = useQuery(api.public_schedule.info, { slug: club });
+	const date = selectedDate ?? clubDate(undefined, info?.timeZone);
+	const month = Temporal.PlainDate.from(date).with({ day: 1 });
 	const { results, status, loadMore } = usePaginatedQuery(
 		api.public_schedule.events,
 		{
@@ -42,14 +44,17 @@ export const PublicScheduleScreen = (): ReactElement => {
 	return (
 		<AuthLayout title={info?.name ?? "Public schedule"}>
 			<Stack>
-				<Row justify="between">
-					<Text variant="h4">Schedule</Text>
-					<Button
-						label="Sign in"
-						variant="secondary"
-						onPress={(): void => router.replace("/schedule")}
-					/>
-				</Row>
+				<SectionHeading
+					action={
+						<Button
+							label="Sign in"
+							variant="secondary"
+							onPress={(): void => router.replace("/schedule")}
+						/>
+					}
+				>
+					Schedule
+				</SectionHeading>
 				{info === undefined ? (
 					<Text>Loading…</Text>
 				) : !info ? (
@@ -68,7 +73,7 @@ export const PublicScheduleScreen = (): ReactElement => {
 						{view === "calendar" ? (
 							<Calendar
 								value={date}
-								today={clubDate()}
+								today={clubDate(undefined, info.timeZone)}
 								counts={{}}
 								onValueChange={setDate}
 							/>
@@ -96,9 +101,6 @@ export const PublicScheduleScreen = (): ReactElement => {
 								/>
 							</Row>
 						)}
-						<Text variant="caption" tone="secondary">
-							Calgary time
-						</Text>
 						<Button
 							label={
 								copied

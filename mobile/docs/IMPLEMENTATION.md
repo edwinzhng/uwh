@@ -20,7 +20,7 @@ The app is an Expo / React Native implementation with a shared web preview and a
 
 Feature screens use public components from `src/design-system/`; HTML/native visual imports and free-form styles stay inside that boundary. Inter, neutral semantic surfaces, accent actions and shared radius/spacing/motion tokens are retained.
 
-Coach uses purple and Admin uses amber, with complete light/dark semantic scales. Banners group staff-only areas. Contextual edit/create controls contain compact role labels inside the same button; dialog labels sit beside the title. Resources and the duplicate mobile drawer are gone. The profile menu sits at the top left and includes Account settings under the signed-in account’s name. Single-profile accounts retain this menu without profile-switching choices. RSVP dropdowns use green for Going, red for Not going and amber for Not responded/Waitlisted; locked registration remains neutral and disabled.
+Coach uses purple and Admin uses amber, with complete light/dark semantic scales. Staff areas use continuous cards with tinted headers. Contextual edit/create controls contain compact role labels inside the same button; dialog labels sit beside the title. Resources and the duplicate mobile drawer are gone. The club name and logo sit at the top left; notifications and the profile menu sit at the right. The profile menu includes a gear icon and Settings, without an account-name subheading. Single-profile accounts retain this menu without profile-switching choices. RSVP dropdowns use green for Going, red for Not going and purple for Not responded and amber for Waitlisted; locked registration remains neutral and disabled.
 
 The mobile tab bar remains mounted and slides over 220 ms, with inset hover and selected states. Glass is confined to floating navigation, with translucent tint, restrained gradient, blur and shared shadows. Pages, cards, menus, messages and dialogs have opaque neutral surfaces. Dialogs retain a 15% contrast backdrop, shadow, close icon, outside dismissal and keyboard avoidance. Chat has a separate footer composer and respects the reader’s scroll position; native keyboard display hides the tab bar.
 
@@ -36,7 +36,7 @@ Photos use Convex storage with authenticated thread-aware downloads, bound owner
 
 ## Verification and limits
 
-TypeScript, Biome, the design boundary and 85 tests pass. Local live suites verify authentication, invitation signup/expiry/revocation, guardian isolation, concurrent capacity, event/season edits, feedback publication/editing/deletion, message ownership/replies/reactions/photo deletion, calendar revision/revocation and reactive changes. Coaching suites additionally cover hours calculations, fitness corrections/statistics, private team settings, attendance denominators and 50-player/520-practice scale boundaries. Verification uses fictional accounts and clubs; it contacts no members.
+TypeScript, Biome, the design boundary and 114 tests pass. Local live suites verify authentication, invitation signup/expiry/revocation, guardian isolation, concurrent capacity, event/season edits, feedback publication/editing/deletion, message ownership/replies/reactions/photo deletion, calendar revision/revocation and reactive changes. Coaching suites additionally cover hours calculations, fitness corrections/statistics, private team settings, attendance denominators and 50-player/520-practice scale boundaries. Verification uses fictional accounts and clubs; it contacts no members.
 
 All platform exports must pass after changes. They verify bundling, not native launch or interaction. Checks in this pass use local backend integration and bundle exports. Device microphone, touch, accessibility, glass appearance and push need device evidence. Dictation needs a fresh native development build with the speech module; unsupported environments show an alternative instead of crashing.
 
@@ -47,3 +47,17 @@ See [workflow audit](UX-AUDIT.md), [testing](TESTING.md) and [store release requ
 ## Time handling
 
 Events keep a local date and wall time. Recurrences expand calendar dates individually. Historical timestamps use `America/Edmonton`, rejecting ambiguous/nonexistent times. After March 2026 the Calgary adapter uses UTC−06:00 for permanent Alberta Time, avoiding stale device timezone databases. This is club-specific until configurable timezones are added. [Alberta announcement](https://www.alberta.ca/albertas-new-time-system)
+
+## Practice parts
+
+Admins can enable **Training + hockey** in the event editor. Both parts share one practice, capacity, registration window, recurring series, notification and calendar UID. A simple hockey-only or training-only practice keeps the existing controls.
+
+Players choose Both, Training only or Hockey only in Status. Coaches filter All, Training or Hockey for attendance, team generation, private plans and coach assignments. Part attendance is independent: a hockey-only signup is not expected at training. Whole-practice attendance is complete once all selected parts are recorded; any lateness makes it late, otherwise any attended part makes it attended. Part coaching hours use the union of assigned time ranges and update when those times change.
+
+Series edits preserve stable part IDs. Removing a selected part resets affected partial RSVPs to Not responded; the editor warns before saving. Changing parts unpublishes existing lineups for review. Personal calendar subscriptions keep one entry and update its time span to the selected parts, subject to the calendar provider’s refresh interval.
+
+Verification: `bun test tests/practice-*.test.ts`, `bun scripts/verify-practice-calendars.ts`, and `bun run verify:coaching-teams`. Live checks use isolated local fixtures and clean up their accounts.
+
+## Club timezone
+
+Club settings → General has an admin-only searchable IANA timezone setting. Existing Calgary clubs default to America/Edmonton. Times in the app omit timezone suffixes; new events capture the club setting, and edits preserve each event’s saved timezone. Changing the club setting does not shift existing events or their calendar entries. Event timestamps, registration windows, notification scheduling, attendance completion and coaching hours use the event timezone; current-day defaults use the club timezone. Daylight-saving gaps and ambiguous part boundaries are rejected.

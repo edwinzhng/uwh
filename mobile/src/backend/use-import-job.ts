@@ -25,7 +25,7 @@ export const useImportJob = (): {
 	done: boolean;
 	reset: () => void;
 	preview: (input: Input) => Promise<void>;
-	commit: () => Promise<void>;
+	commit: () => Promise<boolean>;
 } => {
 	const client = useConvex();
 	const write = useMutation(api.imports.commit);
@@ -71,8 +71,8 @@ export const useImportJob = (): {
 			setBusy(false);
 		}
 	};
-	const commit = async (): Promise<void> => {
-		if (busy || !input || !batches.length) return;
+	const commit = async (): Promise<boolean> => {
+		if (busy || !input || !batches.length) return false;
 		setBusy(true);
 		setError(undefined);
 		try {
@@ -87,10 +87,12 @@ export const useImportJob = (): {
 				setCompleted(index + 1);
 			}
 			setDone(true);
+			return true;
 		} catch (error) {
 			setError(
 				`${friendlyError(error)} Saved batches are kept. Preview again to continue safely.`,
 			);
+			return false;
 		} finally {
 			setBusy(false);
 		}

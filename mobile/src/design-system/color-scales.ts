@@ -7,11 +7,18 @@ export type ColorScale = {
 };
 
 export type SemanticColorScales = Record<
-	"accent" | "success" | "warning" | "danger" | "coach" | "admin",
+	"accent" | "success" | "warning" | "danger" | "pending" | "coach" | "admin",
 	ColorScale
 >;
 
 export const lightColorScales = {
+	pending: {
+		subtle: "#F5F3FF",
+		muted: "#EDE9FE",
+		border: "#C4B5FD",
+		solid: "#7C3AED",
+		text: "#5B21B6",
+	},
 	coach: {
 		subtle: "#F5F0FF",
 		muted: "#EDE2FF",
@@ -41,11 +48,11 @@ export const lightColorScales = {
 		text: "#166534",
 	},
 	warning: {
-		subtle: "#FFFBEB",
-		muted: "#FEF0C7",
-		border: "#EBC572",
-		solid: "#AD6A10",
-		text: "#92400E",
+		subtle: "#FFF7ED",
+		muted: "#FFEDD5",
+		border: "#FDBA74",
+		solid: "#EA580C",
+		text: "#C2410C",
 	},
 	danger: {
 		subtle: "#FEF2F2",
@@ -57,6 +64,13 @@ export const lightColorScales = {
 } as const satisfies SemanticColorScales;
 
 export const darkColorScales = {
+	pending: {
+		subtle: "#251D38",
+		muted: "#35264F",
+		border: "#7655A8",
+		solid: "#A78BFA",
+		text: "#DDD6FE",
+	},
 	coach: {
 		subtle: "#291D3B",
 		muted: "#38264E",
@@ -86,11 +100,11 @@ export const darkColorScales = {
 		text: "#86EFAC",
 	},
 	warning: {
-		subtle: "#302414",
-		muted: "#493419",
-		border: "#86622D",
-		solid: "#DFA63C",
-		text: "#FCD34D",
+		subtle: "#321F14",
+		muted: "#4A2D18",
+		border: "#9A5424",
+		solid: "#F97316",
+		text: "#FDBA74",
 	},
 	danger: {
 		subtle: "#321B1B",

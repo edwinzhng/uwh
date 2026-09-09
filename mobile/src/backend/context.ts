@@ -2,7 +2,6 @@ import type { FunctionReturnType } from "convex/server";
 import { createContext, useContext } from "react";
 import type { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import type { CalendarFeedInfo } from "../domain/calendar-export";
 import type { ImageService } from "./image-service";
 import type { InviteService } from "./use-invites";
 
@@ -33,20 +32,7 @@ export type Backend = {
 	) => Promise<void>;
 	cancelRequest?: (requestId: Id<"joinRequests">) => Promise<void>;
 	declineRequest?: (requestId: Id<"joinRequests">) => Promise<void>;
-	calendars?: {
-		feeds: CalendarFeedInfo[];
-		loading: boolean;
-		enable: (
-			personId: string,
-			includeWaitlisted: boolean,
-			rotate?: boolean,
-		) => Promise<CalendarFeedInfo>;
-		preferences: (
-			personId: string,
-			includeWaitlisted: boolean,
-		) => Promise<void>;
-		disable: (personId: string) => Promise<void>;
-	};
+
 	images?: ImageService;
 	available: boolean;
 	authenticated: boolean;

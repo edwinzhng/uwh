@@ -14,10 +14,24 @@ import {
 } from "./app-rules";
 import type { Account, AppAction, AppData, EventResponse } from "./app-types";
 import { generatePreviewTeams } from "./club";
+import { equipmentStock, validateEquipment } from "./equipment";
 import { editedOccurrences, eligibleResponses } from "./event-recurrence";
 import { signupState } from "./event-time";
 import { reduceMessages } from "./message-reducer";
 import { defaultPlayerCoaching } from "./player-coaching";
+import {
+	aggregateAttendance,
+	attendanceForPart,
+	participatesInPart,
+	practicePartKey,
+	selectedParts,
+	validatePartSelection,
+} from "./practice-parts";
+import {
+	canonicalTimeZone,
+	defaultClubTimeZone,
+	validTimeZone,
+} from "./time-zones";
 
 const requireAccess = (allowed: boolean): void => {
 	if (!allowed) throw new Error("You don’t have access to this action.");
@@ -88,6 +102,7 @@ export const reduceApp = (
 			if (!event || signupState(event, Date.now()) !== "open")
 				throw new Error("Signup is not open.");
 			const current = eventResponse(data, event.id, action.personId);
+			validatePartSelection(event, action.partIds);
 			const going = data.responses.filter(
 				(entry) =>
 					entry.eventId === event.id &&
@@ -98,7 +113,15 @@ export const reduceApp = (
 				action.response === "going" && going >= event.capacity
 					? "waiting"
 					: action.response;
-			const next: EventResponse = { ...current, response };
+			const updated: EventResponse = {
+				...current,
+				response,
+				partIds: action.response === "going" ? action.partIds : undefined,
+			};
+			const next: EventResponse = {
+				...updated,
+				attendance: aggregateAttendance(event, updated),
+			};
 			const responses = [
 				...data.responses.filter(
 					(entry) =>
@@ -132,9 +155,34 @@ export const reduceApp = (
 						(account.admin || canCoach(account, event.program)),
 				),
 			);
+			if (!event || event.cancelled) throw new Error("Practice unavailable.");
+			const current = eventResponse(data, action.eventId, action.personId);
+			if (
+				action.partId &&
+				(!event.parts?.some((part) => part.id === action.partId) ||
+					!participatesInPart(current, action.partId))
+			)
+				throw new Error("Player is not registered for this part.");
+			const marked = event.parts?.length
+				? {
+						...current,
+						partAttendance: event.parts.map((part) => ({
+							partId: part.id,
+							attendance: (
+								action.partId
+									? part.id === action.partId
+									: selectedParts(event, current).some(
+											(selected) => selected.id === part.id,
+										)
+							)
+								? action.attendance
+								: attendanceForPart(current, part.id),
+						})),
+					}
+				: { ...current, attendance: action.attendance };
 			const entry = {
-				...eventResponse(data, action.eventId, action.personId),
-				attendance: action.attendance,
+				...marked,
+				attendance: aggregateAttendance(event, marked),
 			};
 			return {
 				...data,
@@ -152,13 +200,17 @@ export const reduceApp = (
 		}
 		case "create-event": {
 			requireAccess(account.admin);
+			const draft = {
+				...action.draft,
+				timeZone: data.timeZone ?? defaultClubTimeZone,
+			};
 			if (
 				!data.seasons.some(
 					(season) => season.id === (action.draft.seasonId ?? "2026-2027"),
 				)
 			)
 				throw new Error("Choose a season.");
-			const error = validateEvent(action.draft);
+			const error = validateEvent(draft);
 			if (error) throw new Error(error);
 			if (
 				action.draft.eligiblePersonIds?.some(
@@ -169,7 +221,7 @@ export const reduceApp = (
 				)
 			)
 				throw new Error("Choose players from this club.");
-			const events = createOccurrences(action.id, action.draft);
+			const events = createOccurrences(action.id, draft);
 			if (
 				data.events.some((entry) =>
 					events.some((event) => event.id === entry.id),
@@ -183,13 +235,17 @@ export const reduceApp = (
 				return data;
 			requireAccess(account.admin && Boolean(event && !event.cancelled));
 			if (!event) throw new Error("Event unavailable.");
+			const draft = {
+				...action.draft,
+				timeZone: event.timeZone ?? defaultClubTimeZone,
+			};
 			if (
 				!data.seasons.some(
 					(season) => season.id === (action.draft.seasonId ?? "2026-2027"),
 				)
 			)
 				throw new Error("Choose a season.");
-			const error = validateEvent({ ...action.draft, repeat: "once" });
+			const error = validateEvent({ ...draft, repeat: "once" });
 			if (error) throw new Error(error);
 			if (
 				action.draft.eligiblePersonIds?.some(
@@ -203,7 +259,7 @@ export const reduceApp = (
 			const events = editedOccurrences(
 				data.events,
 				event,
-				action.draft,
+				draft,
 				action.scope,
 				Date.now(),
 				action.editId,
@@ -214,7 +270,8 @@ export const reduceApp = (
 			);
 			for (const entry of changed) {
 				const issue = validateEvent({
-					...action.draft,
+					...draft,
+					timeZone: entry.timeZone,
 					date: entry.date,
 					repeat: "once",
 				});
@@ -223,6 +280,18 @@ export const reduceApp = (
 			return {
 				...data,
 				events,
+				teams: data.teams.map((plan) => {
+					const revised = changed.find((entry) => entry.id === plan.eventId);
+					const previous = data.events.find(
+						(entry) => entry.id === plan.eventId,
+					);
+					return revised &&
+						previous &&
+						(revised.cancelled ||
+							JSON.stringify(revised.parts) !== JSON.stringify(previous.parts))
+						? { ...plan, published: false, coachingStale: true }
+						: plan;
+				}),
 				responses: eligibleResponses(
 					data,
 					events,
@@ -242,7 +311,12 @@ export const reduceApp = (
 			requireAccess(
 				Boolean(event && !event.cancelled && canCoach(account, event.program)),
 			);
-			const attendees = eventAttendees(data, action.eventId);
+			if (
+				action.partId &&
+				!event?.parts?.some((part) => part.id === action.partId)
+			)
+				throw new Error("Practice part not found.");
+			const attendees = eventAttendees(data, action.eventId, action.partId);
 			if (attendees.length < 2)
 				throw new Error("At least two attendees are needed.");
 			const excludedPersonIds = [...new Set(action.excludedPersonIds ?? [])];
@@ -267,6 +341,7 @@ export const reduceApp = (
 				{ separateYouth: action.separateYouth ?? true, excludedPersonIds },
 			);
 			const plan = {
+				partId: action.partId,
 				separateYouth: action.separateYouth ?? true,
 				excludedPersonIds,
 				assignments: [...generated.black, ...generated.white].map((player) => ({
@@ -283,7 +358,11 @@ export const reduceApp = (
 			return {
 				...data,
 				teams: [
-					...data.teams.filter((entry) => entry.eventId !== action.eventId),
+					...data.teams.filter(
+						(entry) =>
+							entry.eventId !== action.eventId ||
+							entry.partId !== action.partId,
+					),
 					plan,
 				],
 			};
@@ -294,7 +373,15 @@ export const reduceApp = (
 			requireAccess(
 				Boolean(event && !event.cancelled && canCoach(account, event.program)),
 			);
-			const plan = data.teams.find((entry) => entry.eventId === action.eventId);
+			if (
+				action.partId &&
+				!event?.parts?.some((part) => part.id === action.partId)
+			)
+				throw new Error("Practice part not found.");
+			const plan = data.teams.find(
+				(entry) =>
+					entry.eventId === action.eventId && entry.partId === action.partId,
+			);
 			if (!plan) throw new Error("Generate teams first.");
 			if (lineupNeedsReview(data, plan))
 				throw new Error("Lineup changed. Regenerate teams before publishing.");
@@ -347,10 +434,21 @@ export const reduceApp = (
 			};
 		}
 		case "save-plan":
+			if (
+				action.partId &&
+				!event?.parts?.some((part) => part.id === action.partId)
+			)
+				throw new Error("Practice part unavailable.");
 			requireAccess(Boolean(event && canCoach(account, event.program)));
 			return {
 				...data,
-				plans: { ...data.plans, [action.eventId]: action.body.slice(0, 10000) },
+				plans: {
+					...data.plans,
+					[practicePartKey(action.eventId, action.partId)]: action.body.slice(
+						0,
+						10000,
+					),
+				},
 			};
 		case "save-feedback": {
 			const target = data.members.find(
@@ -434,6 +532,44 @@ export const reduceApp = (
 				),
 			};
 		}
+		case "request-goal":
+			requireAccess(Boolean(member && account.personId === member.id));
+			if (
+				!action.goal.trim() ||
+				action.goal.length > 500 ||
+				action.goal.trim() === member?.goal
+			)
+				throw new Error("Propose a different goal under 500 characters.");
+			return {
+				...data,
+				members: data.members.map((entry) =>
+					entry.id === action.personId
+						? { ...entry, pendingGoal: action.goal.trim() }
+						: entry,
+				),
+			};
+		case "review-goal":
+			requireAccess(
+				Boolean(
+					member &&
+						canCoachMember(account, member) &&
+						account.personId !== member.id,
+				),
+			);
+			if (!member?.pendingGoal || member.pendingGoal !== action.goal)
+				throw new Error("This request has changed. Review the latest goal.");
+			return {
+				...data,
+				members: data.members.map((entry) =>
+					entry.id === action.personId
+						? {
+								...entry,
+								goal: action.approve ? action.goal : entry.goal,
+								pendingGoal: undefined,
+							}
+						: entry,
+				),
+			};
 		case "set-goal":
 			requireAccess(Boolean(member && canCoachMember(account, member)));
 			if (!action.goal.trim() || action.goal.length > 500)
@@ -442,7 +578,12 @@ export const reduceApp = (
 				...data,
 				members: data.members.map((entry) =>
 					entry.id === action.personId
-						? { ...entry, goal: action.goal.trim(), steps: 0 }
+						? {
+								...entry,
+								goal: action.goal.trim(),
+								steps: 0,
+								pendingGoal: undefined,
+							}
 						: entry,
 				),
 			};
@@ -543,7 +684,7 @@ export const reduceApp = (
 			if (
 				!item ||
 				item.condition !== "ready" ||
-				data.loans.some((entry) => entry.itemId === item.id && !entry.returned)
+				equipmentStock(item, data.loans).available === 0
 			)
 				throw new Error("This item is unavailable.");
 			if (
@@ -566,10 +707,21 @@ export const reduceApp = (
 			};
 		case "add-equipment":
 			requireAccess(account.admin);
-			if (!action.equipment.name.trim()) throw new Error("Add an item name.");
+			validateEquipment(action.equipment, data.loans);
 			if (data.equipment.some((entry) => entry.id === action.equipment.id))
 				return data;
 			return { ...data, equipment: [...data.equipment, action.equipment] };
+		case "update-equipment":
+			requireAccess(account.admin);
+			validateEquipment(action.equipment, data.loans);
+			if (!data.equipment.some((item) => item.id === action.equipment.id))
+				throw new Error("Item not found.");
+			return {
+				...data,
+				equipment: data.equipment.map((item) =>
+					item.id === action.equipment.id ? action.equipment : item,
+				),
+			};
 		case "add-tracker":
 			requireAccess(account.admin);
 			if (!action.tracker.name.trim()) throw new Error("Add a tracker name.");
@@ -603,9 +755,16 @@ export const reduceApp = (
 		case "settings":
 			requireAccess(account.admin);
 			if (!action.clubName.trim()) throw new Error("Add a club name.");
+			if (
+				!validTimeZone(action.timeZone ?? data.timeZone ?? defaultClubTimeZone)
+			)
+				throw new Error("Choose a valid timezone.");
 			return {
 				...data,
 				clubName: action.clubName.trim(),
+				timeZone: canonicalTimeZone(
+					action.timeZone ?? data.timeZone ?? defaultClubTimeZone,
+				),
 				reminders: action.reminders,
 			};
 	}

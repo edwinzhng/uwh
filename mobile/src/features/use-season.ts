@@ -7,10 +7,11 @@ const selectedSeason = atom<string>();
 export const useSeason = (): [string, (value: string) => void] => {
 	const { data } = useApp();
 	const [selected, select] = useAtom(selectedSeason);
+	const today = clubDate(undefined, data.timeZone);
 	const season =
 		data.seasons.find((season) => season.id === selected) ??
 		data.seasons.find(
-			(season) => season.start <= clubDate() && season.end >= clubDate(),
+			(season) => season.start <= today && season.end >= today,
 		) ??
 		data.seasons.at(-1);
 	return [season?.id ?? defaultSeasonId, select];

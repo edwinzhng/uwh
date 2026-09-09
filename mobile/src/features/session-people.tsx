@@ -12,18 +12,27 @@ import {
 } from "../design-system";
 import { canCoach, canRegister, eventResponse } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
+import { effectiveAttendance } from "../domain/effective-attendance";
+import { participatesInPart, selectedParts } from "../domain/practice-parts";
 import { AttendanceControl } from "./attendance-control";
+import { AttendanceFlagBadge } from "./attendance-flag-badge";
 import { AttendanceFlagControl } from "./attendance-flag-control";
 import { AttendanceFlagProvider } from "./attendance-flag-provider";
 
 export const SessionPeople = ({
 	event,
+	partId,
 }: {
 	event: ClubEvent;
+	partId?: string;
 }): ReactElement => {
 	const { data, account } = useApp();
 	const staff = account.admin || canCoach(account, event.program);
-	const members = data.members.filter((member) => canRegister(member, event));
+	const members = data.members.filter(
+		(member) =>
+			canRegister(member, event) &&
+			participatesInPart(eventResponse(data, event.id, member.id), partId),
+	);
 	const going = members.filter(
 		(member) => eventResponse(data, event.id, member.id).response === "going",
 	).length;
@@ -41,7 +50,7 @@ export const SessionPeople = ({
 			<StaffSection
 				staffRole={staff ? (canCoach(account) ? "coach" : "admin") : undefined}
 			>
-				<Stack gap="lg">
+				<Stack gap="xl">
 					{groups
 						.filter((group) => group.members.length > 0)
 						.map((group) => (
@@ -67,19 +76,36 @@ export const SessionPeople = ({
 													<ContentRow
 														title={member.name}
 														identity={staff ? undefined : member.name}
+														metadata={
+															staff ? (
+																<AttendanceFlagBadge personId={member.id} />
+															) : undefined
+														}
 														description={
 															staff && response.response !== "going"
 																? label
-																: undefined
+																: !partId &&
+																		event.parts?.length &&
+																		response.partIds?.length
+																	? selectedParts(event, response)
+																			.map((part) => part.title)
+																			.join(" · ")
+																	: undefined
 														}
 														control={
 															staff ? (
-																<Row wrap>
+																<Row gap="xs">
 																	<AttendanceControl
 																		eventId={event.id}
 																		personId={member.id}
 																		name={member.name}
-																		value={response.attendance}
+																		value={effectiveAttendance(
+																			event,
+																			response,
+																			partId,
+																		)}
+																		defaultHere={response.response === "going"}
+																		partId={partId}
 																		disabled={event.cancelled}
 																	/>
 																	<AttendanceFlagControl

@@ -1,35 +1,71 @@
-import type { ReactElement } from "react";
-import { ScrollView, View } from "react-native";
+import { type ReactElement, useState } from "react";
+import { Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import type { AttendanceReportRow } from "../domain/attendance-report";
-import { Badge } from "./badge";
-import { Button } from "./button";
-import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
-import { Toggle } from "./toggle";
 import { corners, geometry, space } from "./tokens";
 
-type EventColumn = { id: string; date: string; start: string; title: string };
 type Props = {
-	events: EventColumn[];
 	rows: AttendanceReportRow[];
-	selected: string[];
-	onSelect: (id: string) => void;
 	onMember: (id: string) => void;
-	onEvent: (id: string) => void;
 };
+
+type SortKey = "name" | "attended" | "onTime" | "recorded";
+type SortDirection = "asc" | "desc";
+
 const percent = (value?: number): string =>
-	value === undefined ? "—" : `${value}%`;
-export const AttendanceMatrix = ({
-	events,
-	rows,
-	selected,
-	onSelect,
-	onMember,
-	onEvent,
-}: Props): ReactElement => {
+	value === undefined ? "N/A" : `${value}%`;
+
+export const AttendanceMatrix = ({ rows, onMember }: Props): ReactElement => {
 	const theme = useTheme();
-	const column = geometry.popupWidth - space.xxl;
+	const { width } = useWindowDimensions();
+	const [sortKey, setSortKey] = useState<SortKey>("attended");
+	const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+	const contentWidth = Math.max(
+		560,
+		width >= geometry.wide
+			? width - geometry.popupWidth - space.lg * 2
+			: width - space.md * 2,
+	);
+	const columns: Array<{ key: SortKey; label: string }> = [
+		{ key: "name", label: "Player" },
+		{ key: "attended", label: "Attendance" },
+		{ key: "onTime", label: "On time" },
+		{ key: "recorded", label: "Recorded" },
+	];
+	const sortNumber = (
+		left: number | undefined,
+		right: number | undefined,
+		direction: SortDirection,
+	): number => {
+		if (left === undefined && right === undefined) return 0;
+		if (left === undefined) return 1;
+		if (right === undefined) return -1;
+		return (left - right) * (direction === "asc" ? 1 : -1);
+	};
+	const sortedRows = [...rows].sort((left, right) => {
+		const primary =
+			sortKey === "name"
+				? left.name.localeCompare(right.name) *
+					(sortDirection === "asc" ? 1 : -1)
+				: sortNumber(left[sortKey], right[sortKey], sortDirection);
+		if (primary !== 0) return primary;
+		if (sortKey === "attended") {
+			const onTime = sortNumber(left.onTime, right.onTime, "desc");
+			if (onTime !== 0) return onTime;
+			const recorded = sortNumber(left.recorded, right.recorded, "desc");
+			if (recorded !== 0) return recorded;
+		}
+		return left.name.localeCompare(right.name);
+	});
+	const changeSort = (key: SortKey): void => {
+		if (key === sortKey) {
+			setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+			return;
+		}
+		setSortKey(key);
+		setSortDirection(key === "name" ? "asc" : "desc");
+	};
 	return (
 		<ScrollView
 			horizontal
@@ -40,114 +76,69 @@ export const AttendanceMatrix = ({
 				borderRadius: corners.panel,
 			}}
 		>
-			<View>
+			<View style={{ width: contentWidth }}>
 				<View
 					style={{
 						flexDirection: "row",
 						backgroundColor: theme.background.secondary,
+						paddingVertical: space.xs,
 					}}
 				>
-					<View style={{ width: geometry.column, padding: space.sm }}>
-						<Text variant="label">Player</Text>
-						<Text variant="caption" tone="secondary">
-							Attendance · On time
-						</Text>
-					</View>
-					{events.map((event) => (
-						<View key={event.id} style={{ width: column, padding: space.xs }}>
-							<Button
-								variant="ghost"
-								label={event.date.slice(5)}
-								onPress={(): void => onEvent(event.id)}
-							/>
-							<Text variant="caption">
-								{event.start} · {event.title}
-							</Text>
+					{columns.map(({ key, label }, index) => (
+						<View
+							key={key}
+							style={{ flex: index === 0 ? 2 : 1, paddingHorizontal: space.sm }}
+						>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityLabel={`Sort by ${label}`}
+								onPress={(): void => changeSort(key)}
+								style={{ minHeight: space.lg, justifyContent: "center" }}
+							>
+								<Text variant="caption" tone="secondary">
+									{label}
+									{sortKey === key
+										? sortDirection === "asc"
+											? " ↑"
+											: " ↓"
+										: ""}
+								</Text>
+							</Pressable>
 						</View>
 					))}
 				</View>
-				{rows.map((row) => (
+				{sortedRows.map((row) => (
 					<View
 						key={row.id}
 						style={{
 							flexDirection: "row",
+							alignItems: "center",
 							borderTopWidth: geometry.border,
 							borderColor: theme.border,
+							paddingVertical: space.xxs,
 						}}
 					>
-						<View style={{ width: geometry.column, padding: space.sm }}>
-							<Stack gap="xs">
-								<Button
-									variant="ghost"
-									label={row.name}
-									onPress={(): void => onMember(row.id)}
-								/>
-								<Text variant="small">
-									{percent(row.attended)} attended · {percent(row.onTime)} on
-									time
-								</Text>
-								<Text variant="caption" tone="secondary">
-									{row.recorded}/{row.total} recorded · {row.additions} added
-									late · {row.cancellations} cancelled late
-								</Text>
-								<Toggle
-									label={`Compare ${row.name}`}
-									value={selected.includes(row.id)}
-									isDisabled={
-										!selected.includes(row.id) && selected.length >= 4
-									}
-									onValueChange={(): void => onSelect(row.id)}
-								/>
-							</Stack>
+						<View style={{ flex: 2, paddingHorizontal: space.xs }}>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityLabel={row.name}
+								onPress={(): void => onMember(row.id)}
+								style={{ minHeight: space.xl, justifyContent: "center" }}
+							>
+								<Text variant="small">{row.name}</Text>
+							</Pressable>
 						</View>
-						{events.map((event) => {
-							const cell = row.cells.find(
-								(entry) => entry.eventId === event.id,
-							);
-							const status = cell?.attendance;
-							return (
-								<View
-									key={event.id}
-									style={{
-										width: column,
-										padding: space.sm,
-										justifyContent: "center",
-									}}
-								>
-									<Stack gap="xs">
-										<Badge
-											label={
-												status === "present"
-													? "On time"
-													: status === "late"
-														? "Late"
-														: status === "absent"
-															? "No-show"
-															: status === "unmarked"
-																? "Unmarked"
-																: "Not eligible"
-											}
-											kind={
-												status === "present"
-													? "success"
-													: status === "late"
-														? "warning"
-														: status === "absent"
-															? "danger"
-															: "neutral"
-											}
-										/>
-										{cell?.flag ? (
-											<Text variant="caption" tone="secondary">
-												{cell.flag === "addition"
-													? "Late addition"
-													: "Late cancellation"}
-											</Text>
-										) : undefined}
-									</Stack>
-								</View>
-							);
-						})}
+						<View style={{ flex: 1, paddingHorizontal: space.sm }}>
+							<Text variant="small">{percent(row.attended)}</Text>
+						</View>
+						<View style={{ flex: 1, paddingHorizontal: space.sm }}>
+							<Text variant="small">{percent(row.onTime)}</Text>
+						</View>
+						<View style={{ flex: 1, paddingHorizontal: space.sm }}>
+							<Text variant="small">
+								{row.recorded}/{row.total}
+							</Text>
+						</View>
 					</View>
 				))}
 			</View>

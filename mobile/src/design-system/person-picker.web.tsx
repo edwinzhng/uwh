@@ -30,7 +30,7 @@ export const PersonPicker = ({
 					className="club-popup-positioner"
 					sideOffset={space.xs}
 					collisionPadding={space.xs}
-					align="start"
+					align="end"
 				>
 					<Menu.Popup className="club-popup club-menu-popup" data-club-popup>
 						{canSwitch ? (
@@ -80,18 +80,13 @@ export const PersonPicker = ({
 									<Menu.Separator className="club-popup-separator" />
 								) : undefined}
 								<Menu.Group>
-									<Menu.GroupLabel className="club-popup-group-label">
-										{account.name}
-									</Menu.GroupLabel>
 									<Menu.Item
-										label="Account settings"
+										label="Settings"
 										className="club-popup-item"
 										onClick={account.onSettings}
 									>
-										<Icon name="settings" size="sm" tone="secondary" />
-										<span className="club-popup-item-label">
-											Account settings
-										</span>
+										<Icon name="gear" size="sm" tone="secondary" />
+										<span className="club-popup-item-label">Settings</span>
 									</Menu.Item>
 								</Menu.Group>
 							</>

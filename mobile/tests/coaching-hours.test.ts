@@ -2,9 +2,12 @@ import { describe, expect, test } from "bun:test";
 import type { ClubEvent } from "../src/domain/app-types";
 import {
 	type CoachingPractice,
+	coachingPartMinutes,
 	coachingTotals,
 	completedCoachingEvent,
 	defaultCoachingDuration,
+	resolvedCoachingAssignment,
+	updatedCoachingPartIds,
 	validCoachingDuration,
 } from "../src/domain/coaching-hours";
 import { clubTimestamp } from "../src/domain/event-time";
@@ -44,6 +47,62 @@ const coach = (
 	personId: coachId,
 });
 describe("coaching hours", () => {
+	test("practice parts count only assigned time and never double-count overlaps", () => {
+		const combined: ClubEvent = {
+			...event,
+			parts: [
+				{
+					id: "training",
+					title: "Training",
+					kind: "training",
+					start: "19:00",
+					end: "20:00",
+				},
+				{
+					id: "hockey",
+					title: "Hockey",
+					kind: "hockey",
+					start: "19:45",
+					end: "20:30",
+				},
+			],
+		};
+		expect(coachingPartMinutes(combined)).toBe(90);
+		expect(coachingPartMinutes(combined, ["hockey"])).toBe(45);
+		expect(coachingPartMinutes(combined, ["removed"])).toBe(0);
+		expect(
+			coachingPartMinutes({
+				...combined,
+				parts: combined.parts?.map((part) =>
+					part.id === "hockey"
+						? { ...part, start: "20:15", end: "20:45" }
+						: part,
+				),
+			}),
+		).toBe(90);
+		const assignment = coach("alex", 150);
+		expect(
+			resolvedCoachingAssignment(combined, assignment).durationMinutes,
+		).toBe(90);
+		expect(resolvedCoachingAssignment(event, assignment).durationMinutes).toBe(
+			150,
+		);
+		expect(updatedCoachingPartIds(combined, undefined, true, "hockey")).toEqual(
+			["hockey"],
+		);
+		expect(
+			updatedCoachingPartIds(combined, assignment, false, "training"),
+		).toEqual(["hockey"]);
+		expect(
+			updatedCoachingPartIds(
+				combined,
+				{ ...assignment, partIds: ["hockey"] },
+				true,
+				"hockey",
+			),
+		).toEqual(["hockey"]);
+		expect(updatedCoachingPartIds(combined, assignment, false)).toEqual([]);
+	});
 	test("retains Friday and non-Friday duration defaults", () => {
 		expect(defaultCoachingDuration("2026-09-11")).toBe(60);
 		expect(defaultCoachingDuration("2026-09-07")).toBe(90);

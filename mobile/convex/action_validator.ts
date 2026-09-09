@@ -28,6 +28,7 @@ export const appAction = v.union(
 	}),
 	v.object({
 		type: v.literal("respond"),
+		partIds: v.optional(v.array(v.string())),
 		eventId: v.string(),
 		personId: v.string(),
 		response: v.union(
@@ -38,6 +39,7 @@ export const appAction = v.union(
 	}),
 	v.object({
 		type: v.literal("attendance"),
+		partId: v.optional(v.string()),
 		eventId: v.string(),
 		personId: v.string(),
 		attendance: v.union(
@@ -66,29 +68,48 @@ export const appAction = v.union(
 	v.object({ type: v.literal("cancel-event"), eventId: v.string() }),
 	v.object({
 		type: v.literal("generate-teams"),
+		partId: v.optional(v.string()),
 		eventId: v.string(),
 		separateYouth: v.optional(v.boolean()),
 		excludedPersonIds: v.optional(v.array(v.string())),
 	}),
 	v.object({
 		type: v.literal("assign-position"),
+		partId: v.optional(v.string()),
 		eventId: v.string(),
 		personId: v.string(),
 		position: positionValue,
 	}),
 	v.object({
 		type: v.literal("move-player"),
+		partId: v.optional(v.string()),
 		eventId: v.string(),
 		personId: v.string(),
 	}),
-	v.object({ type: v.literal("publish-teams"), eventId: v.string() }),
+	v.object({
+		type: v.literal("publish-teams"),
+		partId: v.optional(v.string()),
+		eventId: v.string(),
+	}),
 	v.object({
 		type: v.literal("save-plan"),
+		partId: v.optional(v.string()),
 		eventId: v.string(),
 		body: v.string(),
 	}),
 	v.object({ type: v.literal("save-feedback"), feedback: feedbackValue }),
 	v.object({ type: v.literal("publish-feedback"), id: v.string() }),
+	v.object({
+		type: v.literal("request-goal"),
+		personId: v.string(),
+		goal: v.string(),
+	}),
+	v.object({
+		type: v.literal("review-goal"),
+		personId: v.string(),
+		goal: v.string(),
+		approve: v.boolean(),
+	}),
 	v.object({
 		type: v.literal("set-goal"),
 		personId: v.string(),
@@ -144,6 +165,7 @@ export const appAction = v.union(
 	v.object({ type: v.literal("issue"), loan: loansValue }),
 	v.object({ type: v.literal("return"), loanId: v.string() }),
 	v.object({ type: v.literal("add-equipment"), equipment: equipmentValue }),
+	v.object({ type: v.literal("update-equipment"), equipment: equipmentValue }),
 	v.object({ type: v.literal("add-tracker"), tracker: trackersValue }),
 	v.object({
 		type: v.literal("tracker-value"),
@@ -153,6 +175,7 @@ export const appAction = v.union(
 	}),
 	v.object({
 		type: v.literal("settings"),
+		timeZone: v.optional(v.string()),
 		clubName: v.string(),
 		reminders: v.boolean(),
 	}),

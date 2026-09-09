@@ -8,6 +8,7 @@ import {
 	Field,
 	ListItem,
 	Row,
+	SectionHeading,
 	Stack,
 	Surface,
 	Text,
@@ -38,49 +39,54 @@ export const FitnessProgress = ({
 	return (
 		<Stack>
 			{selected.length ? (
-				<Surface>
-					<Stack>
-						<Row justify="between">
-							<Text variant="h4">Trends</Text>
+				<Stack gap="sm">
+					<SectionHeading
+						action={
 							<Button
 								label="Clear"
 								variant="ghost"
 								onPress={(): void => setSelected([])}
 							/>
-						</Row>
-						{trends?.some((series) => series.points.length) ? (
-							<TrendChart
-								series={trends}
-								formatValue={(value): string =>
-									test.unit === "pass_fail" && value !== 0 && value !== 1
-										? ""
-										: formatFitnessValue(test.unit, value)
-								}
-							/>
-						) : (
-							<Text tone="secondary">
-								{trends ? "No results for these players." : "Loading…"}
-							</Text>
-						)}
-						{trends?.some((series) => series.limited) ? (
-							<Text variant="caption" tone="secondary">
-								Latest 100 results per player.
-							</Text>
-						) : undefined}
-						{trends?.map((series) => (
-							<Button
-								key={series.id}
-								label={`Remove ${series.label}`}
-								variant="ghost"
-								onPress={(): void =>
-									setSelected((values) =>
-										values.filter((value) => value !== series.id),
-									)
-								}
-							/>
-						))}
-					</Stack>
-				</Surface>
+						}
+					>
+						Trends
+					</SectionHeading>
+					<Surface>
+						<Stack>
+							{trends?.some((series) => series.points.length) ? (
+								<TrendChart
+									series={trends}
+									formatValue={(value): string =>
+										test.unit === "pass_fail" && value !== 0 && value !== 1
+											? ""
+											: formatFitnessValue(test.unit, value)
+									}
+								/>
+							) : (
+								<Text tone="secondary">
+									{trends ? "No results for these players." : "Loading…"}
+								</Text>
+							)}
+							{trends?.some((series) => series.limited) ? (
+								<Text variant="caption" tone="secondary">
+									Latest 100 results per player.
+								</Text>
+							) : undefined}
+							{trends?.map((series) => (
+								<Button
+									key={series.id}
+									label={`Remove ${series.label}`}
+									variant="ghost"
+									onPress={(): void =>
+										setSelected((values) =>
+											values.filter((value) => value !== series.id),
+										)
+									}
+								/>
+							))}
+						</Stack>
+					</Surface>
+				</Stack>
 			) : undefined}
 			<Text variant="small" tone="secondary">
 				Select up to 4 players to compare.

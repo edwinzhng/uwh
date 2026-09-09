@@ -45,7 +45,7 @@ The backend uses port **3210** and authentication and protected image HTTP route
 - Coach hours and season totals, fitness sessions/results/trends, private player settings, position-aware teams and club attendance reports. See [coaching workflows](docs/COACHING.md).
 - Season-specific registration, CUGA status, dues, payments, refunds and change history; equipment inventory, loans and custom trackers.
 - Authenticated club access and verified guardian linking, with permissions enforced in Convex.
-- Solid content surfaces, glass floating navigation, responsive sliding mobile tabs, a top-left profile menu with Account settings, family profile switching and consistent purple Coach / amber Admin indicators attached to their controls. RSVP status uses green, red and amber semantic colors.
+- Solid content surfaces, glass floating navigation, responsive sliding mobile tabs, club branding on the left and notifications/profile switching on the right. The profile menu includes Settings. Coach and Admin areas use continuous cards with purple/amber headers. RSVP status uses green, red and amber semantic colors.
 
 This is a working first implementation. Cloud hosting, email sender and Expo push credentials, and real device delivery testing remain. Legacy integrations and historical data migration are out of scope for the current replacement. Public scheduling, import tools and season records are implemented; see [product workflows](docs/PRODUCT-WORK.md). Account recovery/deletion, moderation and native push integration are implemented; see [configuration and verification](docs/ACCOUNT-SAFETY-PUSH.md). Payments track money received; they do not charge a card. See [implementation status](docs/IMPLEMENTATION.md).
 

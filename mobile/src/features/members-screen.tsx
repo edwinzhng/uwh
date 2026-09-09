@@ -7,9 +7,10 @@ import {
 	Field,
 	ListItem,
 	Row,
-	SegmentedControl,
 	Stack,
 	Surface,
+	TabContent,
+	Tabs,
 } from "../design-system";
 import { memberRoles } from "../domain/app-rules";
 import { ClubShell } from "./club-shell";
@@ -36,7 +37,7 @@ export const MembersScreen = (): ReactElement => {
 			action={
 				account.admin ? (
 					<Button
-						label="Add member"
+						label="Invite member"
 						staffRole="admin"
 						prefix="plus"
 						onPress={(): void => setAdd(true)}
@@ -45,7 +46,7 @@ export const MembersScreen = (): ReactElement => {
 			}
 		>
 			{account.admin ? (
-				<SegmentedControl
+				<Tabs
 					label="Members"
 					hideLabel
 					value={tab}
@@ -56,67 +57,71 @@ export const MembersScreen = (): ReactElement => {
 					]}
 				/>
 			) : undefined}
-			{tab === "invites" ? (
-				<InviteList />
-			) : (
-				<>
-					<Surface padding="xs">
-						<ListItem
-							title={
-								active.id === account.personId
-									? "My profile"
-									: `${active.name.split(" ").at(0)}’s profile`
-							}
-							avatar={active.name}
-							onPress={(): void => router.push("/member")}
-						/>
-					</Surface>
-					<Row justify="between" wrap>
-						<Stack grow>
-							<Field
-								label="Search"
-								value={search}
-								onValueChange={setSearch}
-								placeholder="Find a member"
+			<TabContent value={tab}>
+				{tab === "invites" ? (
+					<InviteList />
+				) : (
+					<>
+						<Surface padding="xs">
+							<ListItem
+								title={
+									active.id === account.personId
+										? "My profile"
+										: `${active.name.split(" ").at(0)}’s profile`
+								}
+								avatar={active.name}
+								onPress={(): void => router.push("/member")}
 							/>
-						</Stack>
-					</Row>
-					<DataPage
-						config={{
-							query: api.pages.members,
-							args: { search: term },
-							preview: members.map((member) => ({
-								member,
-								roles: memberRoles(member, accounts),
-							})),
-						}}
-					>
-						{(items) => (
-							<Surface padding="xs">
-								<Stack gap="xxs">
-									{items.map(({ member, roles }) => (
-										<ListItem
-											key={member.id}
-											title={member.name}
-											avatar={member.name}
-											description={roles}
-											onPress={() =>
-												router.push({
-													pathname: "/member",
-													params: { id: member.id },
-												})
-											}
-										/>
-									))}
-									{!items.length ? (
-										<ListItem title="No members found" />
-									) : undefined}
+						</Surface>
+						<Stack gap="sm">
+							<Row justify="between" wrap>
+								<Stack grow>
+									<Field
+										label="Search"
+										value={search}
+										onValueChange={setSearch}
+										placeholder="Find a member"
+									/>
 								</Stack>
-							</Surface>
-						)}
-					</DataPage>
-				</>
-			)}
+							</Row>
+							<DataPage
+								config={{
+									query: api.pages.members,
+									args: { search: term },
+									preview: members.map((member) => ({
+										member,
+										roles: memberRoles(member, accounts),
+									})),
+								}}
+							>
+								{(items) => (
+									<Surface padding="xs">
+										<Stack gap="xxs">
+											{items.map(({ member, roles }) => (
+												<ListItem
+													key={member.id}
+													title={member.name}
+													avatar={member.name}
+													description={roles}
+													onPress={() =>
+														router.push({
+															pathname: "/member",
+															params: { id: member.id },
+														})
+													}
+												/>
+											))}
+											{!items.length ? (
+												<ListItem title="No members found" />
+											) : undefined}
+										</Stack>
+									</Surface>
+								)}
+							</DataPage>
+						</Stack>
+					</>
+				)}
+			</TabContent>
 			{account.admin && add ? (
 				<MemberEditor
 					open={add}

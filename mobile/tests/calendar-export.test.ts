@@ -41,6 +41,69 @@ const projection = personalCalendarEvents(
 const now = Date.parse("2026-09-08T18:00:00Z");
 const entries = reconcileCalendar([], projection, "club", "alex", now);
 
+test("practice part choices keep one calendar entry and revise its time and description", (): void => {
+	const combined: ClubEvent = {
+		...practice,
+		parts: [
+			{
+				id: "training",
+				title: "Training",
+				kind: "training",
+				start: "19:45",
+				end: "20:15",
+			},
+			{
+				id: "hockey",
+				title: "Hockey",
+				kind: "hockey",
+				start: "20:15",
+				end: "21:00",
+			},
+		],
+	};
+	const both = personalCalendarEvents(
+		[combined],
+		[response],
+		"alex",
+		["club"],
+		false,
+	);
+	const hockey = personalCalendarEvents(
+		[combined],
+		[{ ...response, partIds: ["hockey"] }],
+		"alex",
+		["club"],
+		false,
+	);
+	expect(both).toHaveLength(1);
+	expect(hockey).toHaveLength(1);
+	expect(both.at(0)?.description).toContain("Training: 19:45–20:15");
+	expect(hockey.at(0)?.description).not.toContain("Training:");
+	expect(hockey.at(0)?.description).toContain("Hockey: 20:15–21:00");
+	expect((hockey.at(0)?.start ?? 0) - (both.at(0)?.start ?? 0)).toBe(
+		30 * 60000,
+	);
+	const original = reconcileCalendar([], both, "club", "alex", now);
+	const updated = reconcileCalendar(
+		original,
+		hockey,
+		"club",
+		"alex",
+		now + 1000,
+	);
+	expect(updated.at(0)?.uid).toBe(original.at(0)?.uid);
+	expect(updated.at(0)?.sequence).toBe(1);
+	expect(
+		personalCalendarEvents(
+			[combined],
+			[{ ...response, partIds: ["removed"] }],
+			"alex",
+			["club"],
+			false,
+		),
+	).toHaveLength(0);
+});
+
 test("a standard calendar parser reads UTC times and identity", (): void => {
 	const calendar = new ICAL.Component(
 		ICAL.parse(renderCalendar("Crocs · Alex", entries)),

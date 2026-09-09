@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
 import {
-	ContentRow,
+	Divider,
 	IconButton,
 	Row,
 	Select,
@@ -37,7 +37,7 @@ export const TeamSide = ({
 	);
 	const title = side === "black" ? "Black" : "White";
 	return (
-		<Surface>
+		<Surface elevation="raised">
 			<Stack>
 				<Row justify="between">
 					<Text variant="label">{title}</Text>
@@ -45,55 +45,62 @@ export const TeamSide = ({
 						{players.length} players
 					</Text>
 				</Row>
-				{players.map((id) => {
-					const name = memberName(data, id);
-					const assignment = plan.assignments?.find(
-						(entry) => entry.personId === id,
-					);
-					return (
-						<Stack key={id} gap="xs">
-							<ContentRow
-								title={name}
-								description={
-									assignment ? positionLabel(assignment.position) : undefined
-								}
-								control={
-									editable ? (
-										<IconButton
-											icon="arrowRight"
-											label={`Move ${name} to ${side === "black" ? "White" : "Black"}`}
+				<Divider />
+				<Stack gap="sm">
+					{players.map((id) => {
+						const name = memberName(data, id);
+						const assignment = plan.assignments?.find(
+							(entry) => entry.personId === id,
+						);
+						return (
+							<Row key={id} gap="xs">
+								<Stack gap="xxs" grow>
+									<Text variant="small">{name}</Text>
+									{editable ? (
+										<Select
+											hideLabel
+											compact
+											label={`${name} · position`}
+											value={assignment?.position}
+											options={positionOptions}
 											isDisabled={busy}
-											onPress={(): void => {
-												void dispatch({
-													type: "move-player",
-													eventId: plan.eventId,
-													personId: id,
-												});
+											onValueChange={(position): void => {
+												if (position)
+													void dispatch({
+														type: "assign-position",
+														eventId: plan.eventId,
+														partId: plan.partId,
+														personId: id,
+														position,
+													});
 											}}
 										/>
-									) : undefined
-								}
-							/>
-							{editable ? (
-								<Select
-									label={`${name} · position`}
-									value={assignment?.position}
-									options={positionOptions}
-									isDisabled={busy}
-									onValueChange={(position): void => {
-										if (position)
+									) : undefined}
+									{!editable && assignment ? (
+										<Text variant="caption" tone="secondary">
+											{positionLabel(assignment.position)}
+										</Text>
+									) : undefined}
+								</Stack>
+								{editable ? (
+									<IconButton
+										icon={side === "black" ? "arrowRight" : "arrowLeft"}
+										label={`Move ${name} to ${side === "black" ? "White" : "Black"}`}
+										isDisabled={busy}
+										onPress={(): void => {
 											void dispatch({
-												type: "assign-position",
+												type: "move-player",
 												eventId: plan.eventId,
+												partId: plan.partId,
 												personId: id,
-												position,
 											});
-									}}
-								/>
-							) : undefined}
-						</Stack>
-					);
-				})}
+										}}
+									/>
+								) : undefined}
+							</Row>
+						);
+					})}
+				</Stack>
 			</Stack>
 		</Surface>
 	);

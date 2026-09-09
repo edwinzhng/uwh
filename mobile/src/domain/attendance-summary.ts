@@ -1,5 +1,6 @@
 import { canRegister } from "./app-rules";
 import type { AppData, Member } from "./app-types";
+import { effectiveAttendance } from "./effective-attendance";
 import { clubTimestamp } from "./event-time";
 import { groupBy } from "./group-by";
 import { defaultSeasonId } from "./seasons";
@@ -41,14 +42,14 @@ export const attendanceSummary = (
 				!event.cancelled &&
 				event.kind !== "social" &&
 				canRegister(member, event) &&
-				clubTimestamp(event.date, event.end) <= now,
+				clubTimestamp(event.date, event.end, event.timeZone) <= now,
 		)
 		.toSorted((a, b) => a.date.localeCompare(b.date))
 		.map((event) => ({
 			id: event.id,
 			title: event.title,
 			date: event.date,
-			attendance: responses.get(event.id)?.attendance ?? "unmarked",
+			attendance: effectiveAttendance(event, responses.get(event.id)),
 		}));
 	const recorded = records.filter(
 		(record) => record.attendance !== "unmarked",

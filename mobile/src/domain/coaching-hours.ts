@@ -14,12 +14,65 @@ export const completedCoachingEvent = (
 ): boolean =>
 	!event.cancelled &&
 	event.kind !== "social" &&
-	clubTimestamp(event.date, event.end) <= now;
+	clubTimestamp(event.date, event.end, event.timeZone) <= now;
 export type CoachingAssignment = {
 	coachId: string;
 	personId: string;
 	name: string;
 	durationMinutes: number;
+	partIds?: string[];
+};
+export const coachingPartIds = (
+	event: ClubEvent,
+	assignedPartIds?: string[],
+): string[] =>
+	(event.parts ?? [])
+		.filter((part) => !assignedPartIds || assignedPartIds.includes(part.id))
+		.map((part) => part.id);
+export const coachingPartMinutes = (
+	event: ClubEvent,
+	partIds?: string[],
+): number => {
+	const ranges = (event.parts ?? [])
+		.filter((part) => !partIds || partIds.includes(part.id))
+		.map((part) => ({
+			start: clubTimestamp(event.date, part.start, event.timeZone),
+			end: clubTimestamp(event.date, part.end, event.timeZone),
+		}))
+		.toSorted((left, right) => left.start - right.start);
+	const merged = ranges.reduce<{ end: number; minutes: number }>(
+		(total, range) => ({
+			end: Math.max(total.end, range.end),
+			minutes:
+				total.minutes +
+				Math.max(0, range.end - Math.max(total.end, range.start)) / 60000,
+		}),
+		{ end: 0, minutes: 0 },
+	);
+	return merged.minutes;
+};
+export const resolvedCoachingAssignment = (
+	event: ClubEvent,
+	assignment: CoachingAssignment,
+	partId?: string,
+): CoachingAssignment => ({
+	...assignment,
+	...(partId ? { partIds: [partId] } : {}),
+	durationMinutes: event.parts?.length
+		? coachingPartMinutes(event, partId ? [partId] : assignment.partIds)
+		: assignment.durationMinutes,
+});
+export const updatedCoachingPartIds = (
+	event: ClubEvent,
+	existing: CoachingAssignment | undefined,
+	assigned: boolean,
+	partId?: string,
+): string[] | undefined => {
+	if (!partId) return assigned ? undefined : [];
+	const current = existing ? coachingPartIds(event, existing.partIds) : [];
+	return assigned
+		? [...new Set([...current, partId])]
+		: current.filter((id) => id !== partId);
 };
 export type CoachingPractice = {
 	eventId: string;

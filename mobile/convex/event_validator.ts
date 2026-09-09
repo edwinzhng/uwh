@@ -18,7 +18,16 @@ export const signupClosesValue = v.union(
 	v.literal("hour"),
 	v.literal("day"),
 );
+export const eventPartValue = v.object({
+	id: v.string(),
+	title: v.string(),
+	kind: v.union(v.literal("training"), v.literal("hockey")),
+	start: v.string(),
+	end: v.string(),
+});
 export const eventDraftValue = v.object({
+	timeZone: v.optional(v.string()),
+	parts: v.optional(v.array(eventPartValue)),
 	public: v.optional(v.boolean()),
 	rebuild: v.optional(v.boolean()),
 	seasonId: v.optional(v.string()),

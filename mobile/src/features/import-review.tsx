@@ -1,6 +1,13 @@
 import type { ReactElement } from "react";
 import type { ImportPlan } from "../../convex/import_plan";
-import { Badge, FileDownload, Row, Stack, Text } from "../design-system";
+import {
+	Badge,
+	FileDownload,
+	Row,
+	SectionHeading,
+	Stack,
+	Text,
+} from "../design-system";
 import { exportCsv } from "../domain/import-csv";
 import { importSummary } from "../domain/import-summary";
 import { LocalPage } from "./local-page";
@@ -14,7 +21,7 @@ export const ImportReview = ({
 	const errors = plans.filter((plan) => plan.status === "error").length;
 	return (
 		<Stack>
-			<Text variant="h4">Review</Text>
+			<SectionHeading>Review</SectionHeading>
 			<Text variant="small">
 				{plans.filter((plan) => plan.status === "create").length} new ·{" "}
 				{plans.filter((plan) => plan.status === "link").length} linked ·{" "}

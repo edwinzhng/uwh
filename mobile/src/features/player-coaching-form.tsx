@@ -4,6 +4,7 @@ import {
 	Button,
 	Dialog,
 	Field,
+	SectionHeading,
 	Select,
 	Stack,
 	Text,
@@ -80,22 +81,27 @@ export const PlayerCoachingForm = ({
 					}}
 					isDisabled={busy}
 				/>
-				<Text variant="label">Positions</Text>
-				{positionOptions.map((option) => (
-					<Toggle
-						key={option.value}
-						label={option.label}
-						value={positions.includes(option.value)}
-						onValueChange={(selected): void =>
-							setPositions((current) =>
-								selected
-									? [...current, option.value]
-									: current.filter((value) => value !== option.value),
-							)
-						}
-						isDisabled={busy}
-					/>
-				))}
+				<Stack gap="sm">
+					<SectionHeading>Positions</SectionHeading>
+					<Stack gap="none">
+						{positionOptions.map((option) => (
+							<Toggle
+								compact
+								key={option.value}
+								label={option.label}
+								value={positions.includes(option.value)}
+								onValueChange={(selected): void =>
+									setPositions((current) =>
+										selected
+											? [...current, option.value]
+											: current.filter((value) => value !== option.value),
+									)
+								}
+								isDisabled={busy}
+							/>
+						))}
+					</Stack>
+				</Stack>
 			</Stack>
 		</Dialog>
 	);

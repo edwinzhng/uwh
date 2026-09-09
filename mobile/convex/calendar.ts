@@ -233,3 +233,80 @@ export const read = internalMutation({
 		return renderCalendar(`${club.name} · ${member.value.name}`, entries);
 	},
 });
+
+export const householdSnapshot = query({
+	args: { personIds: v.array(v.string()) },
+	handler: async (ctx, { personIds }): Promise<string> => {
+		const userId = await getAuthUserId(ctx);
+		const membership = userId ? await membershipForUser(ctx, userId) : null;
+		if (
+			!membership ||
+			!personIds.length ||
+			personIds.some((id) => !ownsPerson(membership, id))
+		)
+			throw new Error("Choose your profile or a linked child.");
+		const club = await ctx.db.get(membership.clubId);
+		if (!club) throw new Error("Club unavailable.");
+		const household = await Promise.all(
+			[...new Set(personIds)].map(async (personId) => {
+				const [person, responses] = await Promise.all([
+					ctx.db
+						.query("members")
+						.withIndex("by_club_and_key", (q) =>
+							q.eq("clubId", membership.clubId).eq("value.id", personId),
+						)
+						.unique(),
+					ctx.db
+						.query("responses")
+						.withIndex("by_person", (q) =>
+							q.eq("clubId", membership.clubId).eq("value.personId", personId),
+						)
+						.collect(),
+				]);
+				return { person, responses };
+			}),
+		);
+		const ids = [
+			...new Set(
+				household.flatMap(({ responses }) =>
+					responses
+						.filter((row) => row.value.response === "going")
+						.map((row) => row.value.eventId),
+				),
+			),
+		];
+		const events = await Promise.all(
+			ids.map((id) =>
+				ctx.db
+					.query("events")
+					.withIndex("by_club_and_key", (q) =>
+						q.eq("clubId", membership.clubId).eq("value.id", id),
+					)
+					.unique(),
+			),
+		);
+		return renderCalendar(
+			club.name,
+			household.flatMap(({ person, responses }) =>
+				person
+					? reconcileCalendar(
+							[],
+							personalCalendarEvents(
+								events.flatMap((row) => (row ? [row.value] : [])),
+								responses.map((row) => row.value),
+								person.value.id,
+								person.value.programs,
+								false,
+							).map((event) => ({
+								...event,
+								title: `${event.title} · ${person.value.name}`,
+							})),
+							membership.clubId,
+							person.value.id,
+							Date.now(),
+						)
+					: [],
+			),
+		);
+	},
+});

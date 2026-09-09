@@ -2,18 +2,18 @@ import { type ReactElement, useState } from "react";
 import { Button, Dialog } from "../design-system";
 import { CalendarSettings } from "./calendar-settings";
 
-export const CalendarSyncButton = (): ReactElement => {
+export const CalendarExportButton = (): ReactElement => {
 	const [open, setOpen] = useState(false);
 	return (
 		<>
 			<Button
-				label="Sync calendar"
+				label="Export calendar"
 				prefix="calendar"
 				variant="secondary"
 				onPress={(): void => setOpen(true)}
 			/>
 			<Dialog
-				title="Calendar sync"
+				title="Export calendar"
 				isOpen={open}
 				onOpenChange={setOpen}
 				footer={false}

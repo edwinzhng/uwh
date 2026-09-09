@@ -10,6 +10,7 @@ import {
 	Dialog,
 	ListItem,
 	Row,
+	SectionHeading,
 	SegmentedControl,
 	Stack,
 	Surface,
@@ -18,6 +19,7 @@ import {
 } from "../design-system";
 import { ChatFilterSettings } from "./chat-filter-settings";
 import { ClubShell } from "./club-shell";
+import { ConfirmButton } from "./confirm-button";
 import { DataPage } from "./data-page";
 import { MessagePhoto } from "./message-photo";
 import { useTask } from "./use-task";
@@ -31,12 +33,15 @@ export const ModerationScreen = (): ReactElement => {
 	const [selected, setSelected] = useState<Doc<"chatReports">>();
 	const [pause, setPause] = useState(false);
 	const report = selected;
-	const review = async (decision: "removed" | "dismissed"): Promise<void> => {
-		if (!report) return;
+	const review = async (
+		decision: "removed" | "dismissed",
+	): Promise<boolean> => {
+		if (!report) return false;
 		const ok = await task.run(async (): Promise<void> => {
 			await safety.review?.(report._id, decision, pause);
 		});
 		if (ok) setSelected(undefined);
+		return ok;
 	};
 	return (
 		<ClubShell
@@ -44,10 +49,10 @@ export const ModerationScreen = (): ReactElement => {
 			staffRole={account.admin ? "admin" : undefined}
 			back={
 				<Button
-					label="Admin"
+					label="Club"
 					prefix="arrowLeft"
 					variant="ghost"
-					onPress={(): void => router.navigate("/administration")}
+					onPress={(): void => router.navigate("/club")}
 				/>
 			}
 		>
@@ -111,29 +116,31 @@ export const ModerationScreen = (): ReactElement => {
 						)}
 					</DataPage>
 					{safety.queue?.restrictions.length ? (
-						<Surface>
-							<Stack>
-								<Text variant="h4">Paused chat access</Text>
-								{safety.queue?.restrictions.map((entry) => (
-									<ListItem
-										key={entry.id}
-										title={entry.name}
-										trailing={
-											<Button
-												label="Restore"
-												variant="secondary"
-												isDisabled={task.busy}
-												onPress={(): void => {
-													void task.run(async (): Promise<void> => {
-														await safety.restore?.(entry.id);
-													});
-												}}
-											/>
-										}
-									/>
-								))}
-							</Stack>
-						</Surface>
+						<Stack gap="sm">
+							<SectionHeading>Paused chat access</SectionHeading>
+							<Surface>
+								<Stack>
+									{safety.queue?.restrictions.map((entry) => (
+										<ListItem
+											key={entry.id}
+											title={entry.name}
+											trailing={
+												<Button
+													label="Restore"
+													variant="secondary"
+													isDisabled={task.busy}
+													onPress={(): void => {
+														void task.run(async (): Promise<void> => {
+															await safety.restore?.(entry.id);
+														});
+													}}
+												/>
+											}
+										/>
+									))}
+								</Stack>
+							</Surface>
+						</Stack>
 					) : undefined}
 					{task.error ? (
 						<Text variant="small" tone="danger">
@@ -150,21 +157,34 @@ export const ModerationScreen = (): ReactElement => {
 						footer={
 							report?.state === "open" ? (
 								<Row>
-									<Button
+									<ConfirmButton
 										label="Dismiss"
+										title="Dismiss report?"
+										description={
+											"Close this report without removing the message." +
+											(pause
+												? " This account’s chat access will also be paused."
+												: "")
+										}
+										confirmLabel="Dismiss report"
 										variant="secondary"
 										isDisabled={task.busy}
-										onPress={(): void => {
-											void review("dismissed");
-										}}
+										onConfirm={() => review("dismissed")}
 									/>
-									<Button
+									<ConfirmButton
 										label="Remove message"
+										title="Remove message?"
+										description={
+											"Remove this message and its photos for everyone. This can’t be undone." +
+											(pause
+												? " This account’s chat access will also be paused."
+												: "")
+										}
+										confirmLabel="Remove message"
+										danger
 										variant="danger"
-										isLoading={task.busy}
-										onPress={(): void => {
-											void review("removed");
-										}}
+										isDisabled={task.busy}
+										onConfirm={() => review("removed")}
 									/>
 								</Row>
 							) : undefined

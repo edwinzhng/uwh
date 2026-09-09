@@ -8,8 +8,9 @@ import {
 	Combobox,
 	Dialog,
 	Field,
-	SegmentedControl,
 	Stack,
+	TabContent,
+	Tabs,
 	Text,
 } from "../design-system";
 import { ClubShell } from "./club-shell";
@@ -74,36 +75,40 @@ export const MessagesScreen = (): ReactElement => {
 					/>
 				) : canPost ? (
 					<Button
-						label="New notice"
+						label="New announcement"
 						prefix="plus"
 						onPress={(): void => setCompose("notice")}
 					/>
 				) : undefined
 			}
 		>
-			<SegmentedControl
+			<Tabs
 				label="Messages"
 				hideLabel
 				value={tab}
 				onValueChange={(tab): void => router.setParams({ tab })}
 				options={[
 					{ value: "chats", label: "Chats" },
-					{ value: "notices", label: "Notices" },
+					{ value: "notices", label: "Announcements" },
 				]}
 			/>
-			{tab === "chats" ? <ConversationList /> : <NoticeList />}
+			<TabContent value={tab}>
+				{tab === "chats" ? <ConversationList /> : <NoticeList />}
+			</TabContent>
 			<Dialog
 				staffRole={
 					compose === "notice" ? (account.admin ? "admin" : "coach") : undefined
 				}
-				title={compose === "chat" ? "New message" : "New notice"}
+				title={compose === "chat" ? "New message" : "New announcement"}
 				isOpen={Boolean(compose)}
 				onOpenChange={(open): void => {
 					if (!open && !task.busy && !busy) setCompose(undefined);
 				}}
 				footer={
 					<Button
-						label={compose === "chat" ? "Open conversation" : "Publish notice"}
+						label={
+							compose === "chat" ? "Open conversation" : "Publish announcement"
+						}
 						isDisabled={
 							compose === "chat" ? !recipient : !title.trim() || !body.trim()
 						}

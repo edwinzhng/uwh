@@ -220,7 +220,6 @@ export const DesignSystemScreen = (): ReactElement => {
 						options={[{ id: "alex", name: "Alex Rivera", relationship: "You" }]}
 						onValueChange={(): void => undefined}
 						account={{
-							name: "Alex Rivera",
 							onSettings: (): void => setActionOpen(true),
 						}}
 					/>
@@ -236,7 +235,6 @@ export const DesignSystemScreen = (): ReactElement => {
 						]}
 						onValueChange={setProfile}
 						account={{
-							name: "Alex Rivera",
 							onSettings: (): void => setActionOpen(true),
 						}}
 					/>
@@ -257,7 +255,7 @@ export const DesignSystemScreen = (): ReactElement => {
 										{
 											value: "unanswered",
 											label: "Not responded",
-											tone: "warning",
+											tone: "pending",
 										},
 										{ value: "going", label: "Going", tone: "success" },
 										{

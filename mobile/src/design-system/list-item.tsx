@@ -18,6 +18,7 @@ type Props = {
 	trailing?: ReactNode;
 	onPress?: () => void;
 	selected?: boolean;
+	flush?: boolean;
 };
 export const ListItem = ({
 	title,
@@ -29,6 +30,7 @@ export const ListItem = ({
 	trailing,
 	onPress,
 	selected = false,
+	flush = false,
 }: Props): ReactElement => {
 	const theme = useTheme();
 	const [hovered, setHovered] = useState(false);
@@ -65,7 +67,7 @@ export const ListItem = ({
 			onBlur={(): void => setFocused(false)}
 			style={({ pressed }) => ({
 				paddingVertical: space.sm,
-				paddingHorizontal: space.sm,
+				paddingHorizontal: flush ? space.none : space.sm,
 				minHeight: geometry.touch,
 				borderRadius: corners.panel,
 				backgroundColor: selected
@@ -80,7 +82,12 @@ export const ListItem = ({
 			{content}
 		</Pressable>
 	) : (
-		<View style={{ paddingVertical: space.sm, paddingHorizontal: space.sm }}>
+		<View
+			style={{
+				paddingVertical: space.sm,
+				paddingHorizontal: flush ? space.none : space.sm,
+			}}
+		>
 			{content}
 		</View>
 	);

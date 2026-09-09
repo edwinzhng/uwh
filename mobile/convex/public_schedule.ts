@@ -2,6 +2,7 @@ import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { validDate } from "../src/domain/app-rules";
 import type { ClubEvent } from "../src/domain/app-types";
+import { defaultClubTimeZone } from "../src/domain/time-zones";
 import { mutation, query } from "./_generated/server";
 import { requireMember } from "./identity";
 
@@ -45,7 +46,7 @@ export const info = query({
 	handler: async (
 		ctx,
 		{ slug },
-	): Promise<{ name: string; feedUrl: string } | null> => {
+	): Promise<{ name: string; feedUrl: string; timeZone: string } | null> => {
 		const club = await ctx.db
 			.query("clubs")
 			.withIndex("by_public_slug", (q) => q.eq("publicSlug", slug))
@@ -53,6 +54,7 @@ export const info = query({
 		return club?.publicSchedule
 			? {
 					name: club.name,
+					timeZone: club.timeZone ?? defaultClubTimeZone,
 					feedUrl: `${process.env.CONVEX_SITE_URL ?? ""}/public-calendar.ics?club=${encodeURIComponent(slug)}`,
 				}
 			: null;
@@ -72,7 +74,14 @@ export const events = query({
 		PaginationResult<
 			Pick<
 				ClubEvent,
-				"id" | "title" | "date" | "start" | "end" | "venue" | "cancelled"
+				| "id"
+				| "title"
+				| "date"
+				| "start"
+				| "end"
+				| "venue"
+				| "cancelled"
+				| "timeZone"
 			>
 		>
 	> => {
@@ -106,6 +115,7 @@ export const events = query({
 			...result,
 			page: result.page.map(({ value }) => ({
 				id: value.id,
+				timeZone: value.timeZone ?? defaultClubTimeZone,
 				title: value.title,
 				date: value.date,
 				start: value.start,

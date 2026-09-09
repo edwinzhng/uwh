@@ -6,6 +6,7 @@ import { useApp } from "../demo/app-state";
 import {
 	type CoachingPractice,
 	completedCoachingEvent,
+	resolvedCoachingAssignment,
 } from "../domain/coaching-hours";
 import { defaultSeasonId } from "../domain/seasons";
 import { previewCoachAssignments } from "./use-event-coaches";
@@ -38,7 +39,9 @@ export const usePreviewCoachingHours = (seasonId: string): HoursResult => {
 				title: event.title,
 				date: event.date,
 				start: event.start,
-				coaches: assignments[event.id] ?? [],
+				coaches: (assignments[event.id] ?? [])
+					.map((assignment) => resolvedCoachingAssignment(event, assignment))
+					.filter((assignment) => assignment.durationMinutes > 0),
 			}))
 			.filter((event) => event.coaches.length > 0)
 			.sort(

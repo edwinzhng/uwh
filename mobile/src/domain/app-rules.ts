@@ -10,7 +10,13 @@ import type {
 } from "./app-types";
 import { occurrenceDates } from "./event-recurrence";
 import { clubTimestamp, signupState, signupWindow } from "./event-time";
+import {
+	attendanceForPart,
+	participatesInPart,
+	validatePracticeParts,
+} from "./practice-parts";
 import { defaultSeasonId } from "./seasons";
+import { defaultClubTimeZone, validTimeZone } from "./time-zones";
 
 export const programs = [
 	{ value: "club", label: "Club" },
@@ -55,14 +61,19 @@ export const eventResponse = (
 	data.responses.find(
 		(entry) => entry.eventId === eventId && entry.personId === personId,
 	) ?? { eventId, personId, response: "unanswered", attendance: "unmarked" };
-export const eventAttendees = (data: AppData, eventId: string): Member[] => {
+export const eventAttendees = (
+	data: AppData,
+	eventId: string,
+	partId?: string,
+): Member[] => {
 	const attending = new Set(
 		data.responses
 			.filter(
 				(entry) =>
 					entry.eventId === eventId &&
 					entry.response === "going" &&
-					entry.attendance !== "absent",
+					participatesInPart(entry, partId) &&
+					attendanceForPart(entry, partId) !== "absent",
 			)
 			.map((entry) => entry.personId),
 	);
@@ -70,7 +81,7 @@ export const eventAttendees = (data: AppData, eventId: string): Member[] => {
 };
 export const lineupNeedsReview = (data: AppData, plan: TeamPlan): boolean =>
 	Boolean(plan.coachingStale) ||
-	eventAttendees(data, plan.eventId)
+	eventAttendees(data, plan.eventId, plan.partId)
 		.map((member) => member.id)
 		.toSorted()
 		.join(",") !== plan.attendees.toSorted().join(",");
@@ -110,6 +121,10 @@ export const validDate = (date: string): boolean =>
 	!Number.isNaN(Date.parse(`${date}T12:00:00Z`)) &&
 	new Date(`${date}T12:00:00Z`).toISOString().slice(0, 10) === date;
 export const validateEvent = (draft: EventDraft): string | undefined => {
+	if (!validTimeZone(draft.timeZone ?? defaultClubTimeZone))
+		return "Choose a valid timezone.";
+	const partsError = validatePracticeParts(draft);
+	if (partsError) return partsError;
 	if (draft.eligiblePersonIds && !draft.eligiblePersonIds.length)
 		return "Choose at least one eligible player.";
 	if (!draft.title.trim() || !draft.venue.trim())
@@ -130,8 +145,12 @@ export const validateEvent = (draft: EventDraft): string | undefined => {
 		return "Capacity must be 1–200.";
 	try {
 		for (const date of occurrenceDates(draft)) {
-			clubTimestamp(date, draft.start);
-			clubTimestamp(date, draft.end);
+			for (const time of new Set([
+				draft.start,
+				draft.end,
+				...(draft.parts ?? []).flatMap((part) => [part.start, part.end]),
+			]))
+				clubTimestamp(date, time, draft.timeZone);
 		}
 	} catch {
 		return "Check the dates, times and occurrence count (1–52).";
@@ -142,6 +161,8 @@ export const createOccurrences = (id: string, draft: EventDraft): ClubEvent[] =>
 	occurrenceDates(draft).map((date, index) => {
 		const window = signupWindow(date, draft, Date.now());
 		const event: ClubEvent = {
+			timeZone: draft.timeZone ?? defaultClubTimeZone,
+			parts: draft.parts,
 			public: draft.public ?? false,
 			seriesOrder: index,
 			seriesDate: date,

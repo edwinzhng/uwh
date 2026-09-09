@@ -6,10 +6,9 @@ import {
 	Dialog,
 	Field,
 	ListItem,
-	Row,
+	SectionHeading,
 	Stack,
 	Surface,
-	Text,
 } from "../design-system";
 
 export const SeasonSettings = (): ReactElement => {
@@ -32,52 +31,57 @@ export const SeasonSettings = (): ReactElement => {
 		}
 	};
 	return (
-		<Surface>
-			<Stack>
-				<Row justify="between">
-					<Text variant="h4">Seasons</Text>
+		<Stack gap="sm">
+			<SectionHeading
+				action={
 					<Button
 						label="Season"
 						prefix="plus"
 						variant="secondary"
 						onPress={(): void => setOpen(true)}
 					/>
-				</Row>
-				{data.seasons.map((season) => (
-					<ListItem
-						key={season.id}
-						title={season.name}
-						description={`${season.start} – ${season.end}`}
-					/>
-				))}
-			</Stack>
-			<Dialog
-				staffRole="admin"
-				title="New season"
-				isOpen={open}
-				onOpenChange={setOpen}
-				footer={
-					<Button
-						label="Create season"
-						isLoading={busy}
-						isDisabled={!name.trim() || !start || !end || end < start}
-						onPress={(): void => {
-							void save();
-						}}
-					/>
 				}
 			>
+				Seasons
+			</SectionHeading>
+			<Surface>
 				<Stack>
-					<Field
-						label="Name"
-						placeholder="2027–2028"
-						value={name}
-						onValueChange={setName}
-					/>
-					<DatePicker label="Starts" value={start} onValueChange={setStart} />
-					<DatePicker label="Ends" value={end} onValueChange={setEnd} />
+					{data.seasons.map((season) => (
+						<ListItem
+							key={season.id}
+							title={season.name}
+							description={`${season.start} – ${season.end}`}
+						/>
+					))}
 				</Stack>
-			</Dialog>
-		</Surface>
+				<Dialog
+					staffRole="admin"
+					title="New season"
+					isOpen={open}
+					onOpenChange={setOpen}
+					footer={
+						<Button
+							label="Create season"
+							isLoading={busy}
+							isDisabled={!name.trim() || !start || !end || end < start}
+							onPress={(): void => {
+								void save();
+							}}
+						/>
+					}
+				>
+					<Stack>
+						<Field
+							label="Name"
+							placeholder="2027–2028"
+							value={name}
+							onValueChange={setName}
+						/>
+						<DatePicker label="Starts" value={start} onValueChange={setStart} />
+						<DatePicker label="Ends" value={end} onValueChange={setEnd} />
+					</Stack>
+				</Dialog>
+			</Surface>
+		</Stack>
 	);
 };

@@ -17,7 +17,7 @@ export const PopupStyles = (): ReactElement => {
 	const theme = useTheme();
 	const colors = materialColors(theme);
 	const canAnimate = useMotion();
-	const statusStyles = (["success", "warning", "danger"] as const)
+	const statusStyles = (["success", "warning", "danger", "pending"] as const)
 		.map((tone): string => {
 			const scale = theme.colorScales[tone];
 			return `
@@ -37,6 +37,7 @@ export const PopupStyles = (): ReactElement => {
 .club-picker-trigger[data-icon] { justify-content:center; padding-inline:${space.xs}px; }
 .club-picker-trigger[data-picker], .club-combo { width:${geometry.popupWidth}px; }
 .club-picker-trigger[data-picker] { justify-content:space-between; }
+.club-picker-trigger[data-picker][data-compact] { width:${geometry.compactPickerWidth}px; }
 .club-picker-trigger:hover:not(:disabled), .club-picker-trigger[data-popup-open] { background:${theme.background.secondary}; }
 .club-picker-trigger:focus-visible, .club-combo:focus-within { outline:${geometry.focus}px solid ${theme.focus}; outline-offset:${geometry.focus}px; }
 .club-picker-trigger:disabled, .club-combo[data-disabled] { opacity:${geometry.disabledOpacity}; cursor:default; }
@@ -49,9 +50,9 @@ export const PopupStyles = (): ReactElement => {
 .club-popup[data-starting-style], .club-popup[data-ending-style] { opacity:0; transform:translateY(${canAnimate ? space.xxs : 0}px); }
 .club-popup-list { overflow-y:auto; overscroll-behavior:contain; max-height:min(calc(var(--available-height) - ${space.xs}px), ${geometry.popupMaxHeight - space.xs}px); outline:none; }
 .club-menu-popup { overflow-y:auto; overscroll-behavior:contain; }
-.club-popup-item { box-sizing:border-box; display:flex; align-items:center; gap:${space.xs}px; min-height:${geometry.compactControl}px; padding:${space.xxs}px ${space.xs}px; border-radius:${corners.item}px; outline:none; cursor:default; user-select:none; }
+.club-popup-item { box-sizing:border-box; display:flex; align-items:center; gap:${space.xs}px; min-height:${geometry.compactControl}px; padding:${space.xxs}px ${space.xs}px; border-radius:${corners.item}px; outline:none; cursor:pointer; user-select:none; }
 .club-popup-item[data-highlighted]:not([data-disabled]), .club-popup-item[data-checked] { background:${theme.background.hover}; }
-.club-popup-item[data-disabled] { opacity:${geometry.disabledOpacity}; }
+.club-popup-item[data-disabled] { cursor:default; opacity:${geometry.disabledOpacity}; }
 .club-popup-item[data-tone="danger"] { color:${theme.danger.foreground}; }
 .club-popup-item[data-tone="danger"][data-highlighted] { background:${theme.danger.background}; }
 .club-popup-item-label { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

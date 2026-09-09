@@ -20,6 +20,7 @@ type Props = {
 	isSelected?: boolean;
 	testID?: string;
 	staffRole?: "coach" | "admin";
+	compact?: boolean;
 } & (
 	| { prefix?: IconName; icon?: undefined }
 	| { icon: IconName; prefix?: undefined }
@@ -36,10 +37,15 @@ export const Button = ({
 	isSelected,
 	testID,
 	staffRole,
+	compact = false,
 }: Props): ReactElement => {
 	const theme = useTheme();
 	const canAnimate = useMotion();
-	const controlSize = useControlSize();
+	const defaultSize = useControlSize();
+	const controlSize =
+		compact && defaultSize < geometry.touch
+			? geometry.compactControl
+			: defaultSize;
 	const [pressed, setPressed] = useState(false);
 	const [focused, setFocused] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -94,7 +100,7 @@ export const Button = ({
 					minWidth: icon ? controlSize : undefined,
 					alignSelf: icon ? "center" : "stretch",
 					paddingHorizontal: icon ? space.none : control.paddingX,
-					paddingVertical: control.paddingY,
+					paddingVertical: compact ? space.xxs : control.paddingY,
 					borderRadius: corners.control,
 					borderWidth: geometry.border,
 					borderColor: colors.border,

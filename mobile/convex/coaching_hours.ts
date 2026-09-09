@@ -1,10 +1,16 @@
+import { Temporal } from "@js-temporal/polyfill";
 import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
+import type { ClubEvent } from "../src/domain/app-types";
 import {
 	type CoachingAssignment,
 	type CoachingPractice,
+	coachingPartIds,
+	coachingPartMinutes,
 	completedCoachingEvent,
 	defaultCoachingDuration,
+	resolvedCoachingAssignment,
+	updatedCoachingPartIds,
 	validCoachingDuration,
 } from "../src/domain/coaching-hours";
 import { clubDate } from "../src/domain/event-time";
@@ -36,27 +42,45 @@ const requireEvent = async (
 const assignmentsFor = async (
 	ctx: QueryCtx,
 	clubId: Id<"clubs">,
-	eventId: string,
+	event: ClubEvent,
+	partId?: string,
 ): Promise<CoachingAssignment[]> => {
 	const rows = await ctx.db
 		.query("coachingHours")
 		.withIndex("by_club_event", (q) =>
-			q.eq("clubId", clubId).eq("eventId", eventId),
+			q.eq("clubId", clubId).eq("eventId", event.id),
 		)
 		.take(32);
-	return rows.map(({ coachId, personId, name, durationMinutes }) => ({
-		coachId,
-		personId,
-		name,
-		durationMinutes,
-	}));
+	return rows
+		.filter(
+			(row) => !partId || coachingPartIds(event, row.partIds).includes(partId),
+		)
+		.map(({ coachId, personId, name, durationMinutes, partIds }) =>
+			resolvedCoachingAssignment(
+				event,
+				{
+					coachId,
+					personId,
+					name,
+					durationMinutes,
+					...(partIds ? { partIds } : {}),
+				},
+				partId,
+			),
+		)
+		.filter((assignment) => assignment.durationMinutes > 0);
 };
 export const eventCoaches = query({
-	args: { eventId: v.string() },
+	args: { eventId: v.string(), partId: v.optional(v.string()) },
 	handler: async (ctx, args): Promise<CoachingAssignment[]> => {
 		const actor = await requireCoach(ctx);
-		await requireEvent(ctx, actor.clubId, args.eventId);
-		return assignmentsFor(ctx, actor.clubId, args.eventId);
+		const event = await requireEvent(ctx, actor.clubId, args.eventId);
+		if (
+			args.partId &&
+			!event.value.parts?.some((part) => part.id === args.partId)
+		)
+			throw new Error("Choose a practice part.");
+		return assignmentsFor(ctx, actor.clubId, event.value, args.partId);
 	},
 });
 export const coaches = query({
@@ -92,6 +116,7 @@ export const setCoach = mutation({
 		eventId: v.string(),
 		coachId: v.string(),
 		durationMinutes: v.optional(v.number()),
+		partId: v.optional(v.string()),
 		assigned: v.boolean(),
 	},
 	handler: async (ctx, args): Promise<null> => {
@@ -101,6 +126,10 @@ export const setCoach = mutation({
 		const eventRow = await requireEvent(ctx, actor.clubId, args.eventId);
 		const event = eventRow.value;
 		if (event.cancelled) throw new Error("This practice is cancelled.");
+		if (args.partId && !event.parts?.some((part) => part.id === args.partId))
+			throw new Error("Choose a practice part.");
+		if (event.parts?.length && args.durationMinutes !== undefined)
+			throw new Error("Hours follow assigned practice parts.");
 		const existing = await ctx.db
 			.query("coachingHours")
 			.withIndex("by_club_event_coach", (q) =>
@@ -110,7 +139,13 @@ export const setCoach = mutation({
 					.eq("coachId", coachId),
 			)
 			.unique();
-		if (!args.assigned) {
+		const partIds = updatedCoachingPartIds(
+			event,
+			existing ?? undefined,
+			args.assigned,
+			args.partId,
+		);
+		if (partIds?.length === 0) {
 			if (existing) await ctx.db.delete(existing._id);
 			return null;
 		}
@@ -120,20 +155,25 @@ export const setCoach = mutation({
 			.unique();
 		if (!coach || coach.clubId !== actor.clubId || !coach.coachPrograms.length)
 			throw new Error("Choose an active coach in this club.");
-		const durationMinutes =
-			args.durationMinutes ??
-			existing?.durationMinutes ??
-			defaultCoachingDuration(event.date);
-		if (!validCoachingDuration(durationMinutes))
+		const durationMinutes = event.parts?.length
+			? coachingPartMinutes(event, partIds)
+			: (args.durationMinutes ??
+				existing?.durationMinutes ??
+				defaultCoachingDuration(event.date));
+		if (!event.parts?.length && !validCoachingDuration(durationMinutes))
 			throw new Error("Choose 1, 1.5, 2, 2.5 or 3 hours.");
 		if (!event.seasonId)
 			await ctx.db.patch(eventRow._id, {
 				value: { ...event, seasonId: defaultSeasonId },
 			});
 		if (existing)
-			await ctx.db.patch(existing._id, { durationMinutes, name: coach.name });
+			await ctx.db.patch(existing._id, {
+				durationMinutes,
+				name: coach.name,
+				partIds,
+			});
 		else {
-			const assignments = await assignmentsFor(ctx, actor.clubId, args.eventId);
+			const assignments = await assignmentsFor(ctx, actor.clubId, event);
 			if (assignments.length >= 32)
 				throw new Error("A practice can have up to 32 coaches.");
 			await ctx.db.insert("coachingHours", {
@@ -143,6 +183,7 @@ export const setCoach = mutation({
 				personId: coach.personId,
 				name: coach.name,
 				durationMinutes,
+				...(partIds ? { partIds } : {}),
 			});
 		}
 		return null;
@@ -166,7 +207,12 @@ export const seasonPractices = query({
 				q
 					.eq("clubId", actor.clubId)
 					.eq("value.seasonId", args.seasonId)
-					.lte("value.date", clubDate(now)),
+					.lte(
+						"value.date",
+						Temporal.PlainDate.from(clubDate(now, club?.timeZone))
+							.add({ days: 2 })
+							.toString(),
+					),
 			)
 			.order("desc")
 			.paginate({
@@ -182,7 +228,7 @@ export const seasonPractices = query({
 						title: value.title,
 						date: value.date,
 						start: value.start,
-						coaches: await assignmentsFor(ctx, actor.clubId, value.id),
+						coaches: await assignmentsFor(ctx, actor.clubId, value),
 					}),
 				),
 		);

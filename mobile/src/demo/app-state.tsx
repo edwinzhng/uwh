@@ -47,6 +47,7 @@ export type AppContextValue = {
 	accounts: Account[];
 	source: "preview" | "convex";
 	busy: boolean;
+	loading?: boolean;
 	error?: string;
 	clearError: () => void;
 	dispatch: (action: AppAction) => Promise<boolean>;

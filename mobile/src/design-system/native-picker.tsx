@@ -19,6 +19,8 @@ export const NativePicker = <T extends string>({
 	placeholder = "Select…",
 	isDisabled,
 	searchable = false,
+	hideLabel = false,
+	compact = false,
 }: PickerProps<T> & { searchable?: boolean }): ReactElement => {
 	const theme = useTheme();
 	const [open, setOpen] = useState(false);
@@ -33,11 +35,14 @@ export const NativePicker = <T extends string>({
 	};
 	return (
 		<Stack gap="xs">
-			<Text variant="caption" tone="secondary">
-				{label}
-			</Text>
+			{!hideLabel ? (
+				<Text variant="caption" tone="secondary">
+					{label}
+				</Text>
+			) : undefined}
 			<PickerTrigger
 				label={label}
+				compact={compact}
 				value={selected?.label ?? placeholder}
 				isOpen={open}
 				isDisabled={isDisabled}

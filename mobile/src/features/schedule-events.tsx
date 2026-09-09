@@ -15,7 +15,7 @@ export const ScheduleEvents = ({
 	const router = useRouter();
 	const dates = [...new Set(events.map((event) => event.date))];
 	return (
-		<Stack gap="lg">
+		<Stack gap="xl">
 			{dates.map((date) => (
 				<Stack key={date} gap="xs">
 					<Text variant="label">{formatDate(date)}</Text>
@@ -33,6 +33,10 @@ export const ScheduleEvents = ({
 									time={formatTime(event.start)}
 									endTime={formatTime(event.end)}
 									venue={event.venue}
+									parts={event.parts?.map((part) => ({
+										label: part.title,
+										time: formatTime(part.start),
+									}))}
 									onOpen={(): void =>
 										router.push({
 											pathname: "/session",

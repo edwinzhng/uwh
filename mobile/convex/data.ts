@@ -1,5 +1,7 @@
 import type { AppData } from "../src/domain/app-types";
+import { practicePartKey } from "../src/domain/practice-parts";
 import { initialSeasons } from "../src/domain/seasons";
+import { defaultClubTimeZone } from "../src/domain/time-zones";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 
@@ -26,7 +28,7 @@ const selectedRows = async <T extends EntityTable>(
 	table: T,
 	scope: boolean | DataScope,
 	all: () => Promise<Doc<T>[]>,
-	one: (id: string) => Promise<Doc<T> | null>,
+	one: (id: string) => Promise<Doc<T> | Doc<T>[] | null>,
 ): Promise<Doc<T>[]> => {
 	const preset = typeof scope === "object" ? scope.rows?.[table] : undefined;
 	if (preset) return preset;
@@ -36,9 +38,9 @@ const selectedRows = async <T extends EntityTable>(
 			: table !== "messages" || scope;
 	if (!selected) return [];
 	if (selected === true) return all();
-	return (await Promise.all([...new Set(selected)].map(one))).filter(
-		(row) => row !== null,
-	);
+	return (await Promise.all([...new Set(selected)].map(one)))
+		.flat()
+		.filter((row) => row !== null);
 };
 export const loadData = async (
 	ctx: QueryCtx,
@@ -123,10 +125,10 @@ export const loadData = async (
 			(id) =>
 				ctx.db
 					.query("teams")
-					.withIndex("by_club_and_key", (q) =>
-						q.eq("clubId", clubId).eq("value.id", id),
+					.withIndex("by_event", (q) =>
+						q.eq("clubId", clubId).eq("value.eventId", id),
 					)
-					.unique(),
+					.collect(),
 		),
 		selectedRows(
 			"plans",
@@ -136,13 +138,32 @@ export const loadData = async (
 					.query("plans")
 					.withIndex("by_club", (q) => q.eq("clubId", clubId))
 					.collect(),
-			(id) =>
-				ctx.db
-					.query("plans")
+			async (id) => {
+				const event = await ctx.db
+					.query("events")
 					.withIndex("by_club_and_key", (q) =>
 						q.eq("clubId", clubId).eq("value.id", id),
 					)
-					.unique(),
+					.unique();
+				const keys = [
+					id,
+					...(event?.value.parts ?? []).map((part) =>
+						practicePartKey(id, part.id),
+					),
+				];
+				return (
+					await Promise.all(
+						keys.map((key) =>
+							ctx.db
+								.query("plans")
+								.withIndex("by_club_and_key", (q) =>
+									q.eq("clubId", clubId).eq("value.id", key),
+								)
+								.unique(),
+						),
+					)
+				).filter((row) => row !== null);
+			},
 		),
 		selectedRows(
 			"feedback",
@@ -325,11 +346,13 @@ export const loadData = async (
 		},
 		data: {
 			clubName: club.name,
+			timeZone: club.timeZone ?? defaultClubTimeZone,
 			seasons: club.seasons ?? initialSeasons,
 			reminders: club.reminders,
 			members: members.map((row) => row.value),
 			events: events.map((row) => ({
 				...row.value,
+				timeZone: row.value.timeZone ?? defaultClubTimeZone,
 				seasonId: row.value.seasonId ?? "2026-2027",
 			})),
 			responses: responses.map((row) => row.value),
@@ -401,12 +424,15 @@ export const saveData = async (
 	if (!club) throw new Error("Club not found.");
 	if (
 		club.name !== data.clubName ||
+		(club.timeZone ?? defaultClubTimeZone) !==
+			(data.timeZone ?? defaultClubTimeZone) ||
 		club.reminders !== data.reminders ||
 		JSON.stringify(club.seasons ?? initialSeasons) !==
 			JSON.stringify(data.seasons)
 	)
 		await ctx.db.patch(clubId, {
 			name: data.clubName,
+			timeZone: data.timeZone ?? defaultClubTimeZone,
 			seasons: data.seasons,
 			reminders: data.reminders,
 		});
@@ -434,7 +460,10 @@ export const saveData = async (
 		await ctx.db.patch(entry.id, { value: entry.value });
 	const teamsChanges = changed(
 		rows.teams,
-		data.teams.map((entry) => ({ ...entry, id: entry.eventId })),
+		data.teams.map((entry) => ({
+			...entry,
+			id: practicePartKey(entry.eventId, entry.partId),
+		})),
 	);
 	for (const value of teamsChanges.inserts)
 		await ctx.db.insert("teams", { clubId, value });

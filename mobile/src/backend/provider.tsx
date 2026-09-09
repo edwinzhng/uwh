@@ -28,7 +28,6 @@ import {
 } from "../demo/app-state";
 import { AuthLayout, Stack, Text } from "../design-system";
 import type { AppAction } from "../domain/app-types";
-import type { CalendarFeedInfo } from "../domain/calendar-export";
 import { AccountGate } from "../features/account-gate";
 import { AuthCallbackScreen } from "../features/auth-callback-screen";
 import { ConnectAccountScreen } from "../features/connect-account-screen";
@@ -44,6 +43,7 @@ import { installationId } from "./native-push";
 import { PushBridge } from "./push-bridge";
 import { tokenStorage } from "./token-storage";
 import { useInvites } from "./use-invites";
+import { useRetainedQuery } from "./use-retained-query";
 import { useSocialAuth } from "./use-social-auth";
 
 const url = process.env.EXPO_PUBLIC_CONVEX_URL;
@@ -69,7 +69,7 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 	const selected = useAtomValue(selectedPersonAtom);
 	const screen =
 		path === "/" ? "schedule" : path === "/progress" ? "member" : path.slice(1);
-	const workspaceResult = useQuery(
+	const workspaceResult = useRetainedQuery(
 		api.club.current,
 		isAuthenticated
 			? {
@@ -109,10 +109,6 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 	const cancelRequest = useMutation(api.account.cancelRequest);
 	const declineRequest = useMutation(api.account.declineRequest);
 	const unregisterPush = useMutation(api.notifications.unregister);
-	const feeds = useQuery(api.calendar.list, isAuthenticated ? {} : "skip");
-	const enableCalendar = useAction(api.calendar_tokens.enable);
-	const calendarPreferences = useMutation(api.calendar.preferences);
-	const disableCalendar = useMutation(api.calendar.disable);
 	const apply = useMutation(api.club.apply);
 	const create = useMutation(api.club.create);
 	const join = useMutation(api.club.requestToJoin);
@@ -152,24 +148,7 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 		cancelRequest: async (requestId): Promise<void> => {
 			await cancelRequest({ requestId });
 		},
-		calendars: isAuthenticated
-			? {
-					feeds: feeds ?? [],
-					loading: feeds === undefined,
-					enable: (
-						personId,
-						includeWaitlisted,
-						rotate,
-					): Promise<CalendarFeedInfo> =>
-						enableCalendar({ personId, includeWaitlisted, rotate }),
-					preferences: async (personId, includeWaitlisted): Promise<void> => {
-						await calendarPreferences({ personId, includeWaitlisted });
-					},
-					disable: async (personId): Promise<void> => {
-						await disableCalendar({ personId });
-					},
-				}
-			: undefined,
+
 		images,
 		available: true,
 		authenticated: isAuthenticated,
@@ -251,6 +230,7 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 							account: workspace.account,
 							accounts: workspace.accounts,
 							source: "convex",
+							loading: workspaceResult === undefined,
 							busy: pending > 0,
 							error,
 							clearError: (): void => setError(undefined),

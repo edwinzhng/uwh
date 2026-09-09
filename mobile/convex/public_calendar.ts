@@ -1,6 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { v } from "convex/values";
 import {
+	calendarPartDescription,
 	reconcileCalendar,
 	renderCalendar,
 } from "../src/domain/calendar-export";
@@ -15,7 +16,7 @@ export const read = internalMutation({
 			.withIndex("by_public_slug", (q) => q.eq("publicSlug", slug))
 			.unique();
 		if (!club?.publicSchedule) return null;
-		const today = Temporal.PlainDate.from(clubDate());
+		const today = Temporal.PlainDate.from(clubDate(undefined, club.timeZone));
 		const from = today.subtract({ months: 1 }).toString();
 		const to = today.add({ months: 18 }).toString();
 		const rows = await ctx.db
@@ -38,10 +39,10 @@ export const read = internalMutation({
 			.map(({ value }) => ({
 				eventId: value.id,
 				title: value.title,
-				description: "",
+				description: calendarPartDescription(value),
 				location: value.venue,
-				start: clubTimestamp(value.date, value.start),
-				end: clubTimestamp(value.date, value.end),
+				start: clubTimestamp(value.date, value.start, value.timeZone),
+				end: clubTimestamp(value.date, value.end, value.timeZone),
 				status: "CONFIRMED" as const,
 			}));
 		const entries = reconcileCalendar(
@@ -50,7 +51,9 @@ export const read = internalMutation({
 			club._id,
 			"public",
 			Date.now(),
-		).filter((entry) => entry.end >= clubTimestamp(from, "00:00"));
+		).filter(
+			(entry) => entry.end >= clubTimestamp(from, "00:00", club.timeZone),
+		);
 		for (const entry of entries) {
 			const old = previous.find((row) => row.value.eventId === entry.eventId);
 			const value =

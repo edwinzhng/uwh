@@ -12,6 +12,8 @@ export const Select = <T extends string>({
 	onValueChange,
 	placeholder = "Select…",
 	isDisabled,
+	hideLabel = false,
+	compact = false,
 }: PickerProps<T>): ReactElement => {
 	const container = usePopupContainer();
 	const selected = options.find((option) => option.value === value);
@@ -24,12 +26,16 @@ export const Select = <T extends string>({
 			modal={false}
 		>
 			<div className="club-picker-field">
-				<BaseSelect.Label className="club-picker-label">
-					{label}
-				</BaseSelect.Label>
+				{!hideLabel ? (
+					<BaseSelect.Label className="club-picker-label">
+						{label}
+					</BaseSelect.Label>
+				) : undefined}
 				<BaseSelect.Trigger
 					className="club-picker-trigger"
 					data-picker
+					aria-label={hideLabel ? label : undefined}
+					data-compact={compact || undefined}
 					data-tone={selected?.tone}
 				>
 					<BaseSelect.Value

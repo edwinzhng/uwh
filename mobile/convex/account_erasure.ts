@@ -1,3 +1,4 @@
+import { clubTimestamp } from "../src/domain/event-time";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { loadData } from "./data";
@@ -98,37 +99,48 @@ export const eraseAccount = async (
 			}
 			await ctx.db.delete(club._id);
 		} else {
-			const personId = membership.personId;
-			for (const table of [
-				"seasonRecords",
-				"seasonLedger",
-				"importReferences",
-				"eventAttendanceFlags",
-				"playerCoaching",
-				"coachingHours",
-				"fitnessStats",
-			] as const)
-				for (const row of await ctx.db
-					.query(table)
+			const personIds = new Set([
+				membership.personId,
+				...membership.children.filter(
+					(id) =>
+						!members.some(
+							(other) =>
+								other.userId !== userId &&
+								(other.personId === id || other.children.includes(id)),
+						),
+				),
+			]);
+			for (const personId of personIds)
+				for (const table of [
+					"seasonRecords",
+					"seasonLedger",
+					"importReferences",
+					"playerCoaching",
+					"coachingHours",
+					"fitnessStats",
+				] as const)
+					for (const row of await ctx.db
+						.query(table)
+						.withIndex("by_club_person", (q) =>
+							q.eq("clubId", membership.clubId).eq("personId", personId),
+						)
+						.collect())
+						await ctx.db.delete(row._id);
+			for (const personId of personIds)
+				for (const result of await ctx.db
+					.query("fitnessResults")
 					.withIndex("by_club_person", (q) =>
 						q.eq("clubId", membership.clubId).eq("personId", personId),
 					)
-					.collect())
-					await ctx.db.delete(row._id);
-			for (const result of await ctx.db
-				.query("fitnessResults")
-				.withIndex("by_club_person", (q) =>
-					q.eq("clubId", membership.clubId).eq("personId", personId),
-				)
-				.collect()) {
-				const session = await ctx.db.get(result.sessionId);
-				if (session)
-					await ctx.db.patch(session._id, {
-						resultCount: Math.max(0, session.resultCount - 1),
-						revision: session.revision + 1,
-					});
-				await ctx.db.delete(result._id);
-			}
+					.collect()) {
+					const session = await ctx.db.get(result.sessionId);
+					if (session)
+						await ctx.db.patch(session._id, {
+							resultCount: Math.max(0, session.resultCount - 1),
+							revision: session.revision + 1,
+						});
+					await ctx.db.delete(result._id);
+				}
 			for (const table of ["seasonLedger", "importRuns"] as const)
 				for (const row of await ctx.db
 					.query(table)
@@ -138,25 +150,42 @@ export const eraseAccount = async (
 						actor: "Deleted account",
 						actorId: undefined,
 					});
-			for (const row of rows.members.filter((row) => row.value.id === personId))
+			for (const row of rows.members.filter((row) =>
+				personIds.has(row.value.id),
+			))
 				await ctx.db.delete(row._id);
-			for (const collection of [
-				rows.responses,
-				rows.loans,
-				rows.charges,
-				rows.payments,
-			])
-				for (const row of collection.filter(
-					(row) => row.value.personId === personId,
+			const events = new Map(
+				rows.events.map((row) => [row.value.id, row.value]),
+			);
+			for (const row of rows.responses.filter((row) =>
+				personIds.has(row.value.personId),
+			)) {
+				const event = events.get(row.value.eventId);
+				const recorded =
+					row.value.attendance !== "unmarked" ||
+					row.value.partAttendance?.some(
+						(part) => part.attendance !== "unmarked",
+					);
+				if (
+					!recorded &&
+					event &&
+					clubTimestamp(event.date, event.end, event.timeZone) > Date.now()
+				)
+					await ctx.db.delete(row._id);
+			}
+
+			for (const collection of [rows.loans, rows.charges, rows.payments])
+				for (const row of collection.filter((row) =>
+					personIds.has(row.value.personId),
 				))
 					await ctx.db.delete(row._id);
 			for (const row of rows.trackerValues.filter((row) =>
-				row.value.id.endsWith(`:${personId}`),
+				[...personIds].some((id) => row.value.id.endsWith(`:${id}`)),
 			))
 				await ctx.db.delete(row._id);
 			for (const row of rows.feedback) {
 				if (
-					row.value.personId === personId ||
+					personIds.has(row.value.personId) ||
 					(row.value.authorId === userId &&
 						row.value.visibility !== "published")
 				)
@@ -170,14 +199,14 @@ export const eraseAccount = async (
 				await ctx.db.patch(row._id, {
 					value: {
 						...row.value,
-						black: row.value.black.filter((id) => id !== personId),
-						white: row.value.white.filter((id) => id !== personId),
-						attendees: row.value.attendees.filter((id) => id !== personId),
+						black: row.value.black.filter((id) => !personIds.has(id)),
+						white: row.value.white.filter((id) => !personIds.has(id)),
+						attendees: row.value.attendees.filter((id) => !personIds.has(id)),
 						excludedPersonIds: row.value.excludedPersonIds?.filter(
-							(id) => id !== personId,
+							(id) => !personIds.has(id),
 						),
 						assignments: row.value.assignments?.filter(
-							(entry) => entry.personId !== personId,
+							(entry) => !personIds.has(entry.personId),
 						),
 					},
 				});
@@ -230,10 +259,10 @@ export const eraseAccount = async (
 					},
 				});
 			for (const member of members.filter((row) =>
-				row.children.includes(personId),
+				row.children.some((id) => personIds.has(id)),
 			))
 				await ctx.db.patch(member._id, {
-					children: member.children.filter((id) => id !== personId),
+					children: member.children.filter((id) => !personIds.has(id)),
 				});
 			for (const report of await ctx.db
 				.query("chatReports")

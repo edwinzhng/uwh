@@ -69,7 +69,12 @@ for (const [name, theme] of Object.entries({
 				);
 			}
 		}
-		for (const status of [theme.success, theme.warning, theme.danger])
+		for (const status of [
+			theme.success,
+			theme.warning,
+			theme.danger,
+			theme.pending,
+		])
 			expect(
 				contrast(status.foreground, theme.background.primary),
 			).toBeGreaterThanOrEqual(4.5);

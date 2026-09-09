@@ -178,8 +178,134 @@ try {
 	await coach.mutation(api.club.apply, {
 		action: { type: "publish-teams", eventId: "club-thu" },
 	});
+	const practice = (
+		await coach.query(api.club.current, { screen: "session", id: "club-thu" })
+	)?.data.events.find((event) => event.id === "club-thu");
+	assert(practice);
+	await coach.mutation(api.club.apply, {
+		action: {
+			type: "edit-event",
+			eventId: practice.id,
+			scope: "single",
+			draft: {
+				title: "Thursday practice",
+				date: practice.date,
+				start: "19:45",
+				end: "21:30",
+				venue: practice.venue,
+				program: practice.program,
+				kind: "training",
+				capacity: practice.capacity,
+				repeat: "once",
+				description: practice.description,
+				parts: [
+					{
+						id: "training",
+						title: "Training",
+						kind: "training",
+						start: "19:45",
+						end: "20:30",
+					},
+					{
+						id: "hockey",
+						title: "Hockey",
+						kind: "hockey",
+						start: "20:30",
+						end: "21:30",
+					},
+				],
+			},
+		},
+	});
+	for (const partId of ["training", "hockey"])
+		await coach.mutation(api.club.apply, {
+			action: { type: "generate-teams", eventId: practice.id, partId },
+		});
+	await coach.mutation(api.club.apply, {
+		action: { type: "publish-teams", eventId: practice.id, partId: "hockey" },
+	});
+	const parts = await coach.query(api.club.current, {
+		screen: "session",
+		id: practice.id,
+	});
+	const hockeyPlan = parts?.data.teams.find(
+		(entry) => entry.partId === "hockey",
+	);
+	const trainingPlan = parts?.data.teams.find(
+		(entry) => entry.partId === "training",
+	);
+	assert(hockeyPlan?.published);
+	assert(trainingPlan && !trainingPlan.published);
+	assert.equal(parts?.data.teams.length, 3);
+	await coach.mutation(api.club.apply, {
+		action: {
+			type: "move-player",
+			eventId: practice.id,
+			partId: "hockey",
+			personId: "alex",
+		},
+	});
+	const movedPart = await coach.query(api.club.current, {
+		screen: "session",
+		id: practice.id,
+	});
+	assert.deepEqual(
+		movedPart?.data.teams.find((entry) => entry.partId === "training"),
+		trainingPlan,
+	);
+	assert.equal(
+		movedPart?.data.teams.find((entry) => entry.partId === "hockey")?.published,
+		false,
+	);
+	await assert.rejects(
+		admin.mutation(api.club.apply, {
+			action: {
+				type: "generate-teams",
+				eventId: practice.id,
+				partId: "training",
+			},
+		}),
+	);
+	await assert.rejects(
+		coach.mutation(api.club.apply, {
+			action: {
+				type: "generate-teams",
+				eventId: practice.id,
+				partId: "missing",
+			},
+		}),
+	);
+	for (const partId of ["training", "hockey"])
+		await coach.mutation(api.club.apply, {
+			action: {
+				type: "save-plan",
+				eventId: practice.id,
+				partId,
+				body: `${partId} plan`,
+			},
+		});
+	const planBodies = (
+		await coach.query(api.club.current, { screen: "session", id: practice.id })
+	)?.data.plans;
+	assert.equal(
+		planBodies?.[JSON.stringify([practice.id, "training"])],
+		"training plan",
+	);
+	assert.equal(
+		planBodies?.[JSON.stringify([practice.id, "hockey"])],
+		"hockey plan",
+	);
+	assert.deepEqual(
+		(
+			await admin.query(api.club.current, {
+				screen: "session",
+				id: practice.id,
+			})
+		)?.data.plans,
+		{},
+	);
 	console.log(
-		"Coaching teams checks passed: private metadata, club isolation, stale revisions, server generation, age groups, exclusions, positions, published visibility, metadata invalidation and republishing.",
+		"Coaching teams checks passed: private metadata, club isolation, stale revisions, server generation, age groups, exclusions, positions, published visibility, metadata invalidation republishing, per-part lineup persistence, independent edits, and private per-part plans.",
 	);
 } finally {
 	for (const entry of fixtures.toReversed())

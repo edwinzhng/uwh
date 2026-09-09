@@ -22,7 +22,6 @@ import {
 } from "../design-system";
 import { AccountSecurity } from "./account-security";
 import { BlockedAccounts } from "./blocked-accounts";
-import { CalendarSettings } from "./calendar-settings";
 import { ClubShell } from "./club-shell";
 import { NotificationSettings } from "./notification-settings";
 import { useTask } from "./use-task";
@@ -35,8 +34,7 @@ export const AccountScreen = (): ReactElement => {
 	const [previewAccount] = useAtom(previewAccountIdAtom);
 	const selectAccount = useSetAtom(selectPreviewAccountAtom);
 	return (
-		<ClubShell title="Account">
-			{" "}
+		<ClubShell title="Settings">
 			<Surface>
 				<Stack>
 					<Text variant="h4">
@@ -87,12 +85,6 @@ export const AccountScreen = (): ReactElement => {
 						value={reduceMotion}
 						onValueChange={setReduceMotion}
 					/>
-				</Stack>
-			</Surface>
-			<Surface>
-				<Stack>
-					<Text variant="h4">Calendar</Text>
-					<CalendarSettings />
 				</Stack>
 			</Surface>
 			{source === "convex" ? (

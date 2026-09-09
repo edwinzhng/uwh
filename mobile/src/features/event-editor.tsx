@@ -10,7 +10,6 @@ import {
 	Select,
 	Stack,
 	Text,
-	TimeSelector,
 } from "../design-system";
 import { validateEvent } from "../domain/app-rules";
 import type { ClubEvent, EventDraft } from "../domain/app-types";
@@ -21,6 +20,7 @@ import {
 } from "../domain/event-recurrence";
 import { clubDate } from "../domain/event-time";
 import { EventOptions } from "./event-options";
+import { EventPartsEditor } from "./event-parts-editor";
 
 export const EventEditor = ({
 	open,
@@ -34,12 +34,14 @@ export const EventEditor = ({
 	event?: ClubEvent;
 }): ReactElement => {
 	const { data, dispatch, busy } = useApp();
+	const initialEventDate = initialDate ?? clubDate(undefined, data.timeZone);
 	const [draft, setDraft] = useState<EventDraft>(() =>
 		event
 			? eventDraft(event)
 			: {
 					title: "",
-					date: initialDate ?? clubDate(),
+					date: initialEventDate,
+					timeZone: data.timeZone,
 					start: "19:45",
 					end: "21:00",
 					venue: "MNP Community & Sport Centre",
@@ -52,8 +54,8 @@ export const EventEditor = ({
 					seasonId:
 						data.seasons.find(
 							(season) =>
-								season.start <= (initialDate ?? clubDate()) &&
-								season.end >= (initialDate ?? clubDate()),
+								season.start <= initialEventDate &&
+								season.end >= initialEventDate,
 						)?.id ?? data.seasons.at(-1)?.id,
 				},
 	);
@@ -77,6 +79,13 @@ export const EventEditor = ({
 			(response.response === "going" || response.response === "waiting") &&
 			draft.eligiblePersonIds &&
 			!draft.eligiblePersonIds.includes(response.personId),
+	).length;
+	const resetParts = data.responses.filter(
+		(response) =>
+			targets.some((entry) => entry.id === response.eventId) &&
+			response.partIds?.some(
+				(id) => !draft.parts?.some((part) => part.id === id),
+			),
 	).length;
 	const save = async (): Promise<void> => {
 		const issue = validateEvent(
@@ -176,12 +185,20 @@ export const EventEditor = ({
 							label="Type"
 							value={draft.kind}
 							options={[
-								{ value: "training", label: "Training" },
+								{
+									value: "training",
+									label: draft.parts?.length ? "Practice" : "Training",
+								},
 								{ value: "hockey", label: "Hockey" },
 								{ value: "social", label: "Social" },
 							]}
 							onValueChange={(kind): void => {
-								if (kind) setDraft({ ...draft, kind });
+								if (kind)
+									setDraft({
+										...draft,
+										kind,
+										parts: kind === "training" ? draft.parts : undefined,
+									});
 							}}
 						/>
 					</Grid>
@@ -192,25 +209,7 @@ export const EventEditor = ({
 							setDraft({ ...draft, date: date ?? "" })
 						}
 					/>
-					<Grid gap="md">
-						<TimeSelector
-							label="Starts"
-							value={draft.start}
-							onValueChange={(start): void =>
-								setDraft({ ...draft, start: start ?? "" })
-							}
-						/>
-						<TimeSelector
-							label="Ends"
-							value={draft.end}
-							onValueChange={(end): void =>
-								setDraft({ ...draft, end: end ?? "" })
-							}
-						/>
-					</Grid>
-					<Text variant="caption" tone="secondary">
-						Calgary time
-					</Text>
+					<EventPartsEditor draft={draft} onChange={setDraft} />
 					<Field
 						label="Venue"
 						value={draft.venue}
@@ -280,6 +279,11 @@ export const EventEditor = ({
 						<Text variant="small" tone="warning">
 							{removed} registrations will be removed because those players are
 							no longer eligible.
+						</Text>
+					) : undefined}
+					{resetParts > 0 ? (
+						<Text variant="small" tone="warning">
+							{resetParts} partial registrations will reset to Not responded.
 						</Text>
 					) : undefined}
 					{error ? (

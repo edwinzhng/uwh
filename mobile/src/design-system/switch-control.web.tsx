@@ -3,6 +3,7 @@ import type { SwitchProps } from "./switch-props";
 import { SwitchTrack } from "./switch-track";
 import { useTheme } from "./theme";
 import { corners, geometry } from "./tokens";
+import { useControlSize } from "./use-control-size";
 
 export const SwitchControl = ({
 	label,
@@ -10,9 +11,11 @@ export const SwitchControl = ({
 	value,
 	onValueChange,
 	isDisabled,
+	compact,
 }: SwitchProps): ReactElement => {
 	const [focused, setFocused] = useState(false);
 	const theme = useTheme();
+	const controlSize = useControlSize();
 	return (
 		<button
 			type="button"
@@ -37,7 +40,7 @@ export const SwitchControl = ({
 				justifyContent: "center",
 				flexShrink: 0,
 				minWidth: geometry.touch,
-				minHeight: geometry.touch,
+				minHeight: compact ? controlSize : geometry.touch,
 				padding: 0,
 				border: 0,
 				borderRadius: corners.control,

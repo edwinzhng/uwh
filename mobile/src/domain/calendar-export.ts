@@ -1,5 +1,14 @@
 import type { ClubEvent, EventResponse } from "./app-types";
 import { clubTimestamp } from "./event-time";
+import { selectedParts } from "./practice-parts";
+
+export const calendarPartDescription = (
+	event: ClubEvent,
+	response: Pick<EventResponse, "partIds"> = {},
+): string =>
+	selectedParts(event, response)
+		.map((part) => `${part.title}: ${part.start}–${part.end}`)
+		.join("\n");
 
 export type CalendarFeedInfo = {
 	personId: string;
@@ -31,33 +40,49 @@ export const personalCalendarEvents = (
 	const byEvent = new Map(
 		responses
 			.filter((entry) => entry.personId === personId)
-			.map((entry) => [entry.eventId, entry.response]),
+			.map((entry) => [entry.eventId, entry]),
 	);
 	return events
 		.flatMap((event): CalendarEvent[] => {
 			const response = byEvent.get(event.id);
+			const parts = selectedParts(event, response ?? {});
 			if (
 				event.cancelled ||
 				!programs.length ||
 				(event.eligiblePersonIds !== undefined &&
 					!event.eligiblePersonIds.includes(personId)) ||
-				(response !== "going" && !(includeWaitlisted && response === "waiting"))
+				(response?.response !== "going" &&
+					!(includeWaitlisted && response?.response === "waiting")) ||
+				Boolean(event.parts?.length && !parts.length)
 			)
 				return [];
-			const waitlisted = response === "waiting";
+			const waitlisted = response?.response === "waiting";
+			const start = parts.length
+				? parts.reduce(
+						(time, part) => (part.start < time ? part.start : time),
+						parts.at(0)?.start ?? event.start,
+					)
+				: event.start;
+			const end = parts.length
+				? parts.reduce(
+						(time, part) => (part.end > time ? part.end : time),
+						parts.at(0)?.end ?? event.end,
+					)
+				: event.end;
 			return [
 				{
 					eventId: event.id,
 					title: waitlisted ? `Waitlisted · ${event.title}` : event.title,
 					description: [
 						waitlisted ? "RSVP: Waitlisted" : "RSVP: Going",
+						calendarPartDescription(event, response),
 						event.description,
 					]
 						.filter(Boolean)
 						.join("\n\n"),
 					location: event.venue,
-					start: clubTimestamp(event.date, event.start),
-					end: clubTimestamp(event.date, event.end),
+					start: clubTimestamp(event.date, start, event.timeZone),
+					end: clubTimestamp(event.date, end, event.timeZone),
 					status: waitlisted ? "TENTATIVE" : "CONFIRMED",
 				},
 			];

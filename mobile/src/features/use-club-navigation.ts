@@ -34,6 +34,8 @@ export const useClubNavigation = (): NavigationItem[] => {
 			selected: [
 				"/club",
 				"/administration",
+				"/registration",
+				"/payments",
 				"/equipment",
 				"/settings",
 				"/moderation",

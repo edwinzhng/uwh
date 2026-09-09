@@ -6,6 +6,7 @@ import type {
 	EventResponse,
 } from "./app-types";
 import { clubTimestamp, signupState, signupWindow } from "./event-time";
+import { aggregateAttendance } from "./practice-parts";
 
 export const recurrenceChoices = [
 	{ value: "once", label: "Does not repeat" },
@@ -75,8 +76,13 @@ export const editedOccurrences = (
 			.toString();
 		const previous = eventDraft(event);
 		const offset =
-			clubTimestamp(date, draft.start) - clubTimestamp(event.date, event.start);
-		const window = signupWindow(date, draft, now);
+			clubTimestamp(date, draft.start, event.timeZone) -
+			clubTimestamp(event.date, event.start, event.timeZone);
+		const window = signupWindow(
+			date,
+			{ ...draft, timeZone: event.timeZone },
+			now,
+		);
 		const opensAt =
 			event.opensAt !== undefined &&
 			(draft.signupOpens ?? "now") === previous.signupOpens
@@ -89,6 +95,7 @@ export const editedOccurrences = (
 				: window.closesAt;
 		const changed: ClubEvent = {
 			...event,
+			timeZone: event.timeZone,
 			public: draft.public ?? event.public ?? false,
 			exception: scope === "single" && Boolean(event.seriesId),
 			editId,
@@ -97,6 +104,7 @@ export const editedOccurrences = (
 			date,
 			start: draft.start,
 			end: draft.end,
+			parts: draft.parts?.map((part) => ({ ...part })),
 			venue: draft.venue.trim(),
 			description: draft.description.trim(),
 			kind: draft.kind,
@@ -119,9 +127,29 @@ export const eligibleResponses = (
 	return changedIds.reduce((responses, id) => {
 		const event = events.find((entry) => entry.id === id);
 		if (!event || event.cancelled) return responses;
+		const revised = responses.map((response): EventResponse => {
+			if (response.eventId !== id) return response;
+			const partExists = (partId: string): boolean =>
+				Boolean(event.parts?.some((part) => part.id === partId));
+			if (response.partIds?.some((partId) => !partExists(partId)))
+				return {
+					...response,
+					response: "unanswered",
+					attendance: "unmarked",
+					partIds: undefined,
+					partAttendance: undefined,
+				};
+			const updated = {
+				...response,
+				partAttendance: event.parts?.length
+					? response.partAttendance?.filter((part) => partExists(part.partId))
+					: undefined,
+			};
+			return { ...updated, attendance: aggregateAttendance(event, updated) };
+		});
 		const eligible = (personId: string): boolean =>
 			!event.eligiblePersonIds || event.eligiblePersonIds.includes(personId);
-		const registered = responses.filter(
+		const registered = revised.filter(
 			(entry) =>
 				entry.eventId === id &&
 				entry.response === "going" &&
@@ -129,7 +157,7 @@ export const eligibleResponses = (
 		);
 		if (registered.length > event.capacity)
 			throw new Error("Capacity can’t be below the number already going.");
-		const promoted = responses
+		const promoted = revised
 			.filter(
 				(entry) =>
 					entry.eventId === id &&
@@ -138,7 +166,7 @@ export const eligibleResponses = (
 			)
 			.slice(0, event.capacity - registered.length)
 			.map((entry) => entry.personId);
-		return responses.map((entry) =>
+		return revised.map((entry) =>
 			entry.eventId !== id
 				? entry
 				: !eligible(entry.personId) &&
@@ -152,12 +180,14 @@ export const eligibleResponses = (
 };
 
 export const eventDraft = (event: ClubEvent): EventDraft => ({
+	timeZone: event.timeZone,
 	public: event.public ?? false,
 	seasonId: event.seasonId ?? "2026-2027",
 	title: event.title,
 	date: event.date,
 	start: event.start,
 	end: event.end,
+	parts: event.parts?.map((part) => ({ ...part })),
 	venue: event.venue,
 	program: "club",
 	kind: event.kind,
@@ -167,18 +197,22 @@ export const eventDraft = (event: ClubEvent): EventDraft => ({
 	eligiblePersonIds: event.eligiblePersonIds,
 	signupOpens:
 		event.signupOpens ??
-		(event.opensAt === clubTimestamp(event.date, event.start) - 168 * 3600000
+		(event.opensAt ===
+		clubTimestamp(event.date, event.start, event.timeZone) - 168 * 3600000
 			? "week"
-			: event.opensAt === clubTimestamp(event.date, event.start) - 72 * 3600000
+			: event.opensAt ===
+					clubTimestamp(event.date, event.start, event.timeZone) - 72 * 3600000
 				? "three-days"
 				: event.signup === "scheduled" && event.opensAt === undefined
 					? "three-days"
 					: "now"),
 	signupCloses:
 		event.signupCloses ??
-		(event.closesAt === clubTimestamp(event.date, event.start) - 24 * 3600000
+		(event.closesAt ===
+		clubTimestamp(event.date, event.start, event.timeZone) - 24 * 3600000
 			? "day"
-			: event.closesAt === clubTimestamp(event.date, event.start) - 3600000
+			: event.closesAt ===
+					clubTimestamp(event.date, event.start, event.timeZone) - 3600000
 				? "hour"
 				: "start"),
 });
@@ -236,7 +270,7 @@ const rebuildOccurrences = (
 			};
 		if (
 			previous &&
-			clubTimestamp(previous.date, previous.start) < now &&
+			clubTimestamp(previous.date, previous.start, previous.timeZone) < now &&
 			(date !== previous.date ||
 				draft.start !== previous.start ||
 				draft.end !== previous.end)
@@ -275,7 +309,7 @@ const rebuildOccurrences = (
 			throw new Error(
 				"This series has individual edits. Cancel those events separately before shortening it.",
 			);
-		if (clubTimestamp(event.date, event.start) < now)
+		if (clubTimestamp(event.date, event.start, event.timeZone) < now)
 			throw new Error("Past events cannot be removed from a series.");
 		return { ...event, cancelled: true, signup: "closed", editId };
 	});

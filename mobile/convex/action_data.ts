@@ -93,6 +93,8 @@ export const actionData = async (
 			case "registration":
 			case "goal-step":
 			case "set-goal":
+			case "request-goal":
+			case "review-goal":
 				return { select: { members: [action.personId] } };
 			case "payment": {
 				const charge = await ctx.db
@@ -162,6 +164,21 @@ export const actionData = async (
 				return { select: { loans: [action.loanId] } };
 			case "add-equipment":
 				return { select: { equipment: [action.equipment.id] } };
+			case "update-equipment":
+				return {
+					select: { equipment: [action.equipment.id] },
+					rows: {
+						loans: await ctx.db
+							.query("loans")
+							.withIndex("by_item_active", (q) =>
+								q
+									.eq("clubId", clubId)
+									.eq("value.itemId", action.equipment.id)
+									.eq("value.returned", false),
+							)
+							.collect(),
+					},
+				};
 			case "add-tracker":
 				return { select: { trackers: [action.tracker.id] } };
 			case "tracker-value":

@@ -58,6 +58,10 @@ export const ColorReference = (): ReactElement => {
 				steps={scaleSteps(theme.colorScales.warning)}
 			/>
 			<ColorScaleRow
+				label="Pending"
+				steps={scaleSteps(theme.colorScales.pending)}
+			/>
+			<ColorScaleRow
 				label="Danger"
 				steps={scaleSteps(theme.colorScales.danger)}
 			/>

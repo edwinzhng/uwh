@@ -1,6 +1,7 @@
 import { canRegister } from "./app-rules";
 import type { ClubEvent, EventResponse, Member } from "./app-types";
 import type { Attendance } from "./club";
+import { effectiveAttendance } from "./effective-attendance";
 import { clubTimestamp } from "./event-time";
 
 export type AttendanceFlag = "addition" | "cancellation";
@@ -32,7 +33,7 @@ export const attendanceReportRow = (
 	const statusByEvent = new Map(
 		responses
 			.filter((row) => row.personId === member.id)
-			.map((row) => [row.eventId, row.attendance]),
+			.map((row) => [row.eventId, row]),
 	);
 	const flagsByEvent = new Map(
 		flags
@@ -44,13 +45,13 @@ export const attendanceReportRow = (
 			!event.cancelled &&
 			event.kind !== "social" &&
 			canRegister(member, event) &&
-			clubTimestamp(event.date, event.end) <= now,
+			clubTimestamp(event.date, event.end, event.timeZone) <= now,
 	);
 	const eligibleIds = new Set(eligible.map((event) => event.id));
 	const cells = events.map((event) => ({
 		eventId: event.id,
 		attendance: eligibleIds.has(event.id)
-			? (statusByEvent.get(event.id) ?? "unmarked")
+			? effectiveAttendance(event, statusByEvent.get(event.id))
 			: undefined,
 		flag: flagsByEvent.get(event.id),
 	}));
@@ -78,7 +79,7 @@ export const attendanceReportRow = (
 		points: months.flatMap((month) => {
 			const monthCells = eligible
 				.filter((event) => event.date.startsWith(month))
-				.map((event) => statusByEvent.get(event.id) ?? "unmarked")
+				.map((event) => effectiveAttendance(event, statusByEvent.get(event.id)))
 				.filter((status) => status !== "unmarked");
 			return monthCells.length
 				? [

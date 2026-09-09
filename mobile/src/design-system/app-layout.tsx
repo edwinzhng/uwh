@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import {
+	type ImageSourcePropType,
 	KeyboardAvoidingView,
 	Platform,
 	ScrollView,
@@ -10,7 +11,7 @@ import {
 	SafeAreaView,
 	useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Icon } from "./icon";
+import { BrandIdentity } from "./brand-identity";
 import { NavigationControl, type NavigationItem } from "./navigation-control";
 import { Row } from "./row";
 import { Stack } from "./stack";
@@ -24,10 +25,12 @@ type Props = {
 	title?: string;
 	subtitle?: string;
 	brand: string;
+	brandLogo?: ImageSourcePropType;
 	navigation: NavigationItem[];
 	profile?: ReactNode;
 	accessory?: ReactNode;
 	action?: ReactNode;
+	titleAccessory?: ReactNode;
 	back?: ReactNode;
 	footer?: ReactNode;
 	scrollable?: boolean;
@@ -37,10 +40,12 @@ export const AppLayout = ({
 	title,
 	subtitle,
 	brand,
+	brandLogo,
 	navigation,
 	profile,
 	accessory,
 	action,
+	titleAccessory,
 	back,
 	footer,
 	scrollable = true,
@@ -74,15 +79,23 @@ export const AppLayout = ({
 								gap: space.xxs,
 							}}
 						>
-							<Text variant="h2">{title}</Text>
+							<Row justify="between" align="start">
+								<Stack grow>
+									<Text variant="h2">{title}</Text>
+								</Stack>
+								{titleAccessory}
+							</Row>
 							{subtitle ? (
 								<Text variant="small" tone="secondary">
 									{subtitle}
 								</Text>
 							) : undefined}
 						</View>
-						{action}
+						{titleAccessory ? undefined : action}
 					</Row>
+				) : undefined}
+				{titleAccessory && action ? (
+					<Row justify="end">{action}</Row>
 				) : undefined}
 			</View>
 		) : undefined;
@@ -107,10 +120,7 @@ export const AppLayout = ({
 						}}
 					>
 						<Stack gap="xl">
-							<Row>
-								<Icon name="shield" />
-								<Text variant="h4">{brand}</Text>
-							</Row>
+							<BrandIdentity name={brand} logo={brandLogo} />
 							<Stack gap="xxs">
 								{navigation.map((item) => (
 									<NavigationControl key={item.label} item={item} />
@@ -131,8 +141,11 @@ export const AppLayout = ({
 						}}
 					>
 						<Row justify="between">
-							{profile}
-							{accessory}
+							<BrandIdentity name={brand} logo={brandLogo} />
+							<Row gap="xs">
+								{accessory}
+								{profile}
+							</Row>
 						</Row>
 					</View>
 					{scrollable ? (
@@ -153,7 +166,7 @@ export const AppLayout = ({
 									width: "100%",
 									maxWidth: geometry.content,
 									alignSelf: "center",
-									gap: space.lg,
+									gap: space.xl,
 								}}
 							>
 								{heading}

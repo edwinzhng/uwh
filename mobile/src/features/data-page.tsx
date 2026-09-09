@@ -1,8 +1,7 @@
-import {
-	type PaginatedQueryArgs,
-	type PaginatedQueryItem,
-	type PaginatedQueryReference,
-	useQuery,
+import type {
+	PaginatedQueryArgs,
+	PaginatedQueryItem,
+	PaginatedQueryReference,
 } from "convex/react";
 import type {
 	FunctionReference,
@@ -10,8 +9,9 @@ import type {
 	PaginationResult,
 } from "convex/server";
 import { type ReactElement, useState } from "react";
+import { useRetainedQuery } from "../backend/use-retained-query";
 import { useApp } from "../demo/app-state";
-import { Button, Row, Text } from "../design-system";
+import { Button, LoadingContent, Row, Text } from "../design-system";
 
 type PageConfig<Query extends PaginatedQueryReference> = {
 	query: Query;
@@ -63,7 +63,7 @@ const LiveDataPage = <Query extends PaginatedQueryReference>({
 		{ paginationOpts: PaginationOptions },
 		PaginationResult<PaginatedQueryItem<Query>>
 	> = config.query;
-	const result = useQuery(reference, {
+	const result = useRetainedQuery(reference, {
 		...config.args,
 		paginationOpts: {
 			numItems: config.size ?? 30,
@@ -72,13 +72,7 @@ const LiveDataPage = <Query extends PaginatedQueryReference>({
 	});
 	return (
 		<>
-			{result ? (
-				children(result.page)
-			) : (
-				<Text variant="small" tone="secondary">
-					Loading…
-				</Text>
-			)}
+			{result ? children(result.page) : <LoadingContent />}
 			{cursors.length > 1 || (result && !result.isDone) ? (
 				<PageButtons
 					page={cursors.length}

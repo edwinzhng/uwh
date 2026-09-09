@@ -1,5 +1,5 @@
 import { type ReactElement, useContext } from "react";
-import { ActionMenu, Badge, Row } from "../design-system";
+import { ActionMenu } from "../design-system";
 import { AttendanceFlagContext } from "./attendance-flag-context";
 
 export const AttendanceFlagControl = ({
@@ -15,41 +15,33 @@ export const AttendanceFlagControl = ({
 	if (!context) return undefined;
 	const flag = context.flags.find((entry) => entry.personId === personId)?.kind;
 	return (
-		<Row gap="xs">
-			{flag ? (
-				<Badge
-					kind="warning"
-					label={flag === "addition" ? "Late addition" : "Late cancellation"}
-				/>
-			) : undefined}
-			<ActionMenu
-				label={`Attendance flags · ${name}`}
-				icon="more"
-				isDisabled={disabled || context.busy}
-				groups={[
-					{
-						id: "flags",
-						items: [
-							{
-								id: "addition",
-								label: "Last-minute addition",
-								onSelect: (): void => context.set(personId, "addition"),
-							},
-							{
-								id: "cancellation",
-								label: "Last-minute cancellation",
-								onSelect: (): void => context.set(personId, "cancellation"),
-							},
-							{
-								id: "clear",
-								label: "Clear flag",
-								isDisabled: !flag,
-								onSelect: (): void => context.set(personId),
-							},
-						],
-					},
-				]}
-			/>
-		</Row>
+		<ActionMenu
+			label={`Attendance flags · ${name}`}
+			icon="more"
+			isDisabled={disabled || context.busy}
+			groups={[
+				{
+					id: "flags",
+					items: [
+						{
+							id: "addition",
+							label: "Last-minute addition",
+							onSelect: (): void => context.set(personId, "addition"),
+						},
+						{
+							id: "cancellation",
+							label: "Last-minute cancellation",
+							onSelect: (): void => context.set(personId, "cancellation"),
+						},
+						{
+							id: "clear",
+							label: "Clear flag",
+							isDisabled: !flag,
+							onSelect: (): void => context.set(personId),
+						},
+					],
+				},
+			]}
+		/>
 	);
 };

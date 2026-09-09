@@ -13,6 +13,7 @@ type Props = {
 	time: string;
 	endTime: string;
 	venue: string;
+	parts?: { label: string; time: string }[];
 	onOpen: () => void;
 	actions?: ReactNode;
 };
@@ -21,6 +22,7 @@ export const EventCard = ({
 	time,
 	endTime,
 	venue,
+	parts,
 	onOpen,
 	actions,
 }: Props): ReactElement => {
@@ -28,10 +30,10 @@ export const EventCard = ({
 	const [hovered, setHovered] = useState(false);
 	const [focused, setFocused] = useState(false);
 	return (
-		<Surface padding="none">
+		<Surface padding="none" elevation="raised">
 			<Pressable
 				accessibilityRole="button"
-				accessibilityLabel={`Open ${title}, ${time}, ${venue}`}
+				accessibilityLabel={`Open ${title}, ${parts?.length ? `${parts.map((part) => `${part.label} ${part.time}`).join(", ")}, ends ${endTime}` : `${time}–${endTime}`}, ${venue}`}
 				onPress={onOpen}
 				onHoverIn={(): void => setHovered(true)}
 				onHoverOut={(): void => setHovered(false)}
@@ -54,13 +56,27 @@ export const EventCard = ({
 				})}
 			>
 				<Row align="start" gap="sm">
-					<Stack grow gap="xxs">
+					<Stack grow gap={parts?.length ? "xs" : "xxs"}>
 						<Row wrap gap="sm">
 							<Text variant="label">{title}</Text>
-							<Text variant="label">
-								{time}–{endTime}
-							</Text>
+							{!parts?.length ? (
+								<Text variant="label">
+									{time}–{endTime}
+								</Text>
+							) : undefined}
 						</Row>
+						{parts?.length ? (
+							<Row gap="md" wrap>
+								{[...parts, { label: "Ends", time: endTime }].map((part) => (
+									<Stack key={part.label} gap="none">
+										<Text variant="caption" tone="secondary">
+											{part.label}
+										</Text>
+										<Text variant="label">{part.time}</Text>
+									</Stack>
+								))}
+							</Row>
+						) : undefined}
 						<Text variant="caption" tone="secondary">
 							{venue}
 						</Text>

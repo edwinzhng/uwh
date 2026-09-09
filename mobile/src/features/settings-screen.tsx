@@ -4,10 +4,12 @@ import { newId, useApp } from "../demo/app-state";
 import {
 	Badge,
 	Button,
+	Combobox,
 	Dialog,
 	Field,
 	ListItem,
 	Row,
+	SectionHeading,
 	Select,
 	Stack,
 	Surface,
@@ -15,6 +17,7 @@ import {
 	Toggle,
 } from "../design-system";
 import type { Tracker } from "../domain/app-types";
+import { defaultClubTimeZone, timeZoneOptions } from "../domain/time-zones";
 import { AccessPanel } from "./access-panel";
 import { ClubShell } from "./club-shell";
 import { PublicScheduleSettings } from "./public-schedule-settings";
@@ -24,6 +27,9 @@ export const SettingsScreen = (): ReactElement => {
 	const { data, account, dispatch, busy, source } = useApp();
 	const router = useRouter();
 	const [name, setName] = useState(data.clubName);
+	const [timeZone, setTimeZone] = useState(
+		data.timeZone ?? defaultClubTimeZone,
+	);
 	const [reminders, setReminders] = useState(data.reminders);
 	const [add, setAdd] = useState(false);
 	const [trackerName, setTrackerName] = useState("");
@@ -51,10 +57,10 @@ export const SettingsScreen = (): ReactElement => {
 			back={
 				<Row>
 					<Button
-						label="Admin"
+						label="Club"
 						prefix="arrowLeft"
 						variant="ghost"
-						onPress={(): void => router.navigate("/administration")}
+						onPress={(): void => router.navigate("/club")}
 					/>
 				</Row>
 			}
@@ -62,77 +68,98 @@ export const SettingsScreen = (): ReactElement => {
 			{!account.admin ? (
 				<Text>You don’t have access to club settings.</Text>
 			) : (
-				<Stack gap="lg">
-					<Surface>
-						<Stack>
-							<Text variant="h4">General</Text>
-							<Field label="Club name" value={name} onValueChange={setName} />
-							<Toggle
-								label="Session reminders"
-								description="Push delivery isn’t enabled yet"
-								value={reminders}
-								onValueChange={setReminders}
-							/>
-							<Row justify="end">
-								<Button
-									label="Save changes"
-									isLoading={busy}
-									isDisabled={
-										!name.trim() ||
-										(name === data.clubName && reminders === data.reminders)
-									}
-									onPress={(): void => {
-										void dispatch({
-											type: "settings",
-											clubName: name,
-											reminders,
-										});
+				<Stack gap="xl">
+					<Stack gap="sm">
+						<SectionHeading>General</SectionHeading>
+						<Surface>
+							<Stack>
+								<Field label="Club name" value={name} onValueChange={setName} />
+								<Combobox
+									label="Timezone"
+									value={timeZone}
+									options={timeZoneOptions}
+									onValueChange={(value): void => {
+										if (value) setTimeZone(value);
 									}}
 								/>
-							</Row>
-						</Stack>
-					</Surface>
-					<Surface>
-						<Stack>
-							<Row justify="between">
-								<Text variant="h4">Member trackers</Text>
+								<Text variant="caption" tone="secondary">
+									Used for new events. Existing events keep their timezone.
+								</Text>
+								<Toggle
+									label="Session reminders"
+									description="Push delivery isn’t enabled yet"
+									value={reminders}
+									onValueChange={setReminders}
+								/>
+								<Row justify="end">
+									<Button
+										label="Save changes"
+										isLoading={busy}
+										isDisabled={
+											!name.trim() ||
+											(name === data.clubName &&
+												reminders === data.reminders &&
+												timeZone === (data.timeZone ?? defaultClubTimeZone))
+										}
+										onPress={(): void => {
+											void dispatch({
+												type: "settings",
+												clubName: name,
+												reminders,
+												timeZone,
+											});
+										}}
+									/>
+								</Row>
+							</Stack>
+						</Surface>
+					</Stack>
+					<Stack gap="sm">
+						<SectionHeading
+							action={
 								<Button
 									label="Tracker"
 									prefix="plus"
 									variant="secondary"
 									onPress={(): void => setAdd(true)}
 								/>
-							</Row>
-							{data.trackers.map((tracker) => (
-								<ListItem
-									key={tracker.id}
-									title={
-										tracker.id === "membership"
-											? "CUGA membership"
-											: tracker.name
-									}
-									description={
-										tracker.kind === "check"
-											? "Yes / No"
-											: tracker.kind === "date"
-												? "Date"
-												: "Text"
-									}
-									trailing={
-										<Badge
-											label={
-												tracker.kind === "check"
-													? "Checkbox"
-													: tracker.kind === "date"
-														? "Date"
-														: "Text"
-											}
-										/>
-									}
-								/>
-							))}
-						</Stack>
-					</Surface>
+							}
+						>
+							Member trackers
+						</SectionHeading>
+						<Surface>
+							<Stack>
+								{data.trackers.map((tracker) => (
+									<ListItem
+										key={tracker.id}
+										title={
+											tracker.id === "membership"
+												? "CUGA membership"
+												: tracker.name
+										}
+										description={
+											tracker.kind === "check"
+												? "Yes / No"
+												: tracker.kind === "date"
+													? "Date"
+													: "Text"
+										}
+										trailing={
+											<Badge
+												label={
+													tracker.kind === "check"
+														? "Checkbox"
+														: tracker.kind === "date"
+															? "Date"
+															: "Text"
+												}
+											/>
+										}
+									/>
+								))}
+							</Stack>
+						</Surface>
+					</Stack>
 					<AccessPanel />
 					<SeasonSettings />
 					{source === "convex" ? <PublicScheduleSettings /> : undefined}
