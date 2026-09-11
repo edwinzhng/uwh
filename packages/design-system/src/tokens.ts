@@ -116,11 +116,11 @@ export type SemanticColorScales = Record<
 
 export const lightColorScales = {
 	pending: {
-		subtle: "#F5F3FF",
-		muted: "#EDE9FE",
-		border: "#C4B5FD",
-		solid: "#7C3AED",
-		text: "#5B21B6",
+		subtle: "#F5F5F5",
+		muted: "#EEEEEE",
+		border: "#D4D4D4",
+		solid: "#858585",
+		text: "#525252",
 	},
 	coach: {
 		subtle: "#F5F0FF",
@@ -168,11 +168,11 @@ export const lightColorScales = {
 
 export const darkColorScales = {
 	pending: {
-		subtle: "#251D38",
-		muted: "#35264F",
-		border: "#7655A8",
-		solid: "#A78BFA",
-		text: "#DDD6FE",
+		subtle: "#202020",
+		muted: "#303030",
+		border: "#525252",
+		solid: "#A3A3A3",
+		text: "#D4D4D4",
 	},
 	coach: {
 		subtle: "#291D3B",

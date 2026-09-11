@@ -22,6 +22,15 @@ export const AttendanceRecords = ({
 							description={formatDate(record.date)}
 							trailing={
 								<Badge
+									kind={
+										record.attendance === "present"
+											? "success"
+											: record.attendance === "late"
+												? "warning"
+												: record.attendance === "absent"
+													? "danger"
+													: "neutral"
+									}
 									label={
 										record.attendance === "present"
 											? "On time"

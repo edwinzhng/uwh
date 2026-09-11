@@ -58,3 +58,19 @@ test("breadcrumb typography belongs to the shared component", (): void => {
 			.length,
 	).toBeGreaterThan(0);
 });
+
+test("page subtitles do not repeat role summaries", (): void => {
+	for (const source of [
+		"const x = <ClubShell subtitle={memberRoles(member, accounts)} />",
+		'const x = <ClubShell subtitle="Player · Coach · Admin" />',
+	])
+		expect(inspectDesignBoundary(source, "member.tsx").length).toBeGreaterThan(
+			0,
+		);
+	expect(
+		inspectDesignBoundary(
+			'const x = <ClubShell subtitle="2026–2027 season" />',
+			"member.tsx",
+		),
+	).toEqual([]);
+});

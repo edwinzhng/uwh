@@ -49,6 +49,19 @@ export const inspectDesignBoundary = (
 	};
 	const inspect = (node: ts.Node): void => {
 		if (
+			ts.isJsxAttribute(node) &&
+			node.name.getText(file) === "subtitle" &&
+			node.initializer &&
+			(/\bmemberRoles\s*\(/.test(node.initializer.getText(file)) ||
+				/Player\s*·\s*(Coach|Admin)|Coach\s*·\s*Admin/.test(
+					node.initializer.getText(file),
+				))
+		)
+			fail(
+				node,
+				"Do not repeat role lists in page subtitles; use contextual role badges on restricted controls.",
+			);
+		if (
 			(ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
 			node.moduleSpecifier &&
 			ts.isStringLiteral(node.moduleSpecifier)

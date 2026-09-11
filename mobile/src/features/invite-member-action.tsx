@@ -18,7 +18,7 @@ export const InviteMemberAction = ({
 	return (
 		<>
 			<Button
-				label="Invite"
+				label="Invite to app"
 				prefix="plus"
 				variant="secondary"
 				onPress={(): void => {
@@ -28,7 +28,7 @@ export const InviteMemberAction = ({
 				}}
 			/>
 			<Dialog
-				title={`Invite ${name}`}
+				title={`Connect an account for ${name}`}
 				isOpen={open}
 				onOpenChange={(value): void => {
 					if (!task.busy) setOpen(value);

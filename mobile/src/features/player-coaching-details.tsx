@@ -37,19 +37,19 @@ export const PlayerCoachingDetails = (
 				{profile ? (
 					<Grid gap="md">
 						<Stack gap="xxs">
-							<Text variant="small" tone="secondary">
+							<Text variant="caption" tone="secondary">
 								Age group
 							</Text>
 							<Text>{profile.ageGroup === "adult" ? "Adult" : "Youth"}</Text>
 						</Stack>
 						<Stack gap="xxs">
-							<Text variant="small" tone="secondary">
+							<Text variant="caption" tone="secondary">
 								Rating
 							</Text>
 							<Text>{profile.rating}</Text>
 						</Stack>
 						<Stack gap="xxs">
-							<Text variant="small" tone="secondary">
+							<Text variant="caption" tone="secondary">
 								Positions
 							</Text>
 							<Text>
@@ -59,7 +59,7 @@ export const PlayerCoachingDetails = (
 						</Stack>
 					</Grid>
 				) : (
-					<Text variant="small" tone="secondary">
+					<Text variant="caption" tone="secondary">
 						Loading…
 					</Text>
 				)}

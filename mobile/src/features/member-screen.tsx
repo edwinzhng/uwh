@@ -2,7 +2,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { useActivePerson, useApp } from "../demo/app-state";
 import {
-	Avatar,
 	Button,
 	Row,
 	Stack,
@@ -11,10 +10,11 @@ import {
 	Tabs,
 	Text,
 } from "../design-system";
-import { canReadProgress, memberRoles } from "../domain/app-rules";
+import { canReadProgress } from "../domain/app-rules";
 import { ClubShell } from "./club-shell";
 import { InviteMemberAction } from "./invite-member-action";
 import { MemberAdmin } from "./member-admin";
+import { MemberProfileDetails } from "./member-profile-details";
 import { MemberProgress } from "./member-progress";
 import { PlayerCoachingPanel } from "./player-coaching-panel";
 
@@ -71,18 +71,6 @@ export const MemberScreen = (): ReactElement => {
 				/>
 			}
 			title={member?.name ?? "Member not found"}
-			subtitle={member ? memberRoles(member, accounts) : undefined}
-			action={
-				account.admin &&
-				member &&
-				!accounts.some((entry) => entry.personId === member.id) ? (
-					<InviteMemberAction
-						key={member.id}
-						personId={member.id}
-						name={member.name}
-					/>
-				) : undefined
-			}
 			back={
 				<Row>
 					<Button
@@ -106,32 +94,30 @@ export const MemberScreen = (): ReactElement => {
 						) : selectedTab === "admin" ? (
 							<Stack gap="xl">
 								<MemberAdmin key={member.id} member={member} />
+								{!accounts.some(
+									(entry) =>
+										entry.personId === member.id ||
+										entry.children.includes(member.id),
+								) ? (
+									<Surface header={<Text variant="h4">Account access</Text>}>
+										<Stack>
+											<Text variant="small" tone="secondary">
+												This roster profile has no linked login or parent
+												account. Send an invitation to connect one.
+											</Text>
+											<Row>
+												<InviteMemberAction
+													key={member.id}
+													personId={member.id}
+													name={member.name}
+												/>
+											</Row>
+										</Stack>
+									</Surface>
+								) : undefined}
 							</Stack>
 						) : (
-							<Surface>
-								<Stack>
-									<Row>
-										<Avatar name={member.name} />
-										<Stack gap="xxs">
-											<Text variant="h4">{member.name}</Text>
-											<Text variant="small" tone="secondary">
-												{memberRoles(member, accounts)}
-											</Text>
-										</Stack>
-									</Row>
-
-									{progress ? (
-										<Row>
-											<Button
-												label="View progress"
-												prefix="target"
-												variant="secondary"
-												onPress={(): void => setTab("progress")}
-											/>
-										</Row>
-									) : undefined}
-								</Stack>
-							</Surface>
+							<MemberProfileDetails member={member} />
 						)}
 					</TabContent>
 				</>

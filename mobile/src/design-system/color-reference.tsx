@@ -54,7 +54,7 @@ export const ColorReference = (): ReactElement => {
 			<Text variant="h4">Semantic treatments</Text>
 			<Text variant="small" tone="secondary">
 				Status and role names describe usage, not additional base colors.
-				Pending is the violet treatment for an unanswered RSVP.
+				Pending is the neutral gray treatment for an unanswered RSVP.
 			</Text>
 			<ColorScaleRow
 				label="Success"

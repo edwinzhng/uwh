@@ -232,3 +232,11 @@ Chart colors use the Geist 700 sRGB scale from https://vercel.com/geist/colors, 
 Use ClubShell for app pages. It delegates visual layout to AppLayout and provides route breadcrumbs, title/subtitle, action, tabs, and footer slots. Put page Tabs in the tabs slot rather than among body children so spacing and dividers are consistent. Use titleSize="section" when the page title and sibling section headings have equal hierarchy. Club management is staff-only; regular members see their membership title once.
 
 Translucent surfaces must use GlassPanel / GlassBackdrop and shared materials tokens. Do not add per-component opacity or blur overrides. Floating glass uses 28% neutral tint in light mode, 20% in dark mode, and the shared 8px web blur. Selection keeps a distinct tint for legibility but shares the blur.
+
+## App page typography and role context
+
+Use the app typography tokens consistently on desktop and mobile: page title 28px, card/section heading 16px, content and row labels 14px, metadata 12px. Reserve 24px for summary numbers and 18px for a deliberate intermediate heading. `SectionHeading` defaults to the card/section size. Do not override font sizes in feature code.
+
+Do not use role lists such as “Player · Coach · Admin” as page subtitles. Subtitles should add useful context, not repeat permissions. Use contextual role badges for restricted actions or tabs; role summaries remain appropriate in member directories where they help identify people.
+
+`check:design` rejects raw feature-level typography overrides and role summaries passed directly as subtitles. The live `/design-system` foundation reference documents the same rules. Indirectly assembled copy still requires review.

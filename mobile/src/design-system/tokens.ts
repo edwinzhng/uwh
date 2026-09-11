@@ -30,9 +30,17 @@ export const font = {
 	semibold: "Inter_600SemiBold",
 } as const;
 
-export { typography } from "@calgarycrocs/design-system/tokens";
+import { typography as sharedTypography } from "@calgarycrocs/design-system/tokens";
 
-import { typography } from "@calgarycrocs/design-system/tokens";
+export const typography = {
+	...sharedTypography,
+	h1: { ...sharedTypography.h1, fontSize: 28, lineHeight: 34 },
+	h2: { ...sharedTypography.h2, fontSize: 24, lineHeight: 30 },
+	h3: { ...sharedTypography.h3, fontSize: 18, lineHeight: 24 },
+	h4: { ...sharedTypography.h4, fontSize: 16, lineHeight: 22 },
+	body: { ...sharedTypography.body, fontSize: 14, lineHeight: 20 },
+	number: { ...sharedTypography.number, fontSize: 24, lineHeight: 30 },
+} as const;
 
 export const geometry = {
 	chart: 220,

@@ -5,7 +5,7 @@ export const chartPalette = {
 	onTime: chartColors.green,
 	late: chartColors.amber,
 	absent: chartColors.red,
-	unmarked: "hsl(0, 0%, 76%)",
+	unmarked: "hsl(0, 0%, 84%)",
 	series: [
 		chartColors.blue,
 		chartColors.purple,

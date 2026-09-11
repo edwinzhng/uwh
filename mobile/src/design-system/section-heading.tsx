@@ -13,7 +13,7 @@ type Props = {
 export const SectionHeading = ({
 	children,
 	action,
-	size = "standard",
+	size = "small",
 }: Props): ReactElement => {
 	const height = useControlSize();
 	return (
