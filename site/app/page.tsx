@@ -7,7 +7,7 @@ import { Policies } from "../components/policies";
 import { PracticeSchedule } from "../components/practice-schedule";
 import { clubPolicies } from "../lib/policies";
 import { getContent } from "../lib/store";
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 const Home = async (): Promise<ReactElement> => {
 	const content = await getContent();
 	return (

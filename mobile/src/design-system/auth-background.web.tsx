@@ -2,7 +2,7 @@ import { LiquidLens } from "@calgarycrocs/design-system/liquid-lens";
 import { LensDistortion } from "@paper-design/shaders-react";
 import type { ReactElement } from "react";
 
-const poolImage = "/auth-pool.jpg";
+const poolImage = "/auth-pool.webp";
 export const AuthBackground = (): ReactElement => (
 	<div
 		aria-hidden

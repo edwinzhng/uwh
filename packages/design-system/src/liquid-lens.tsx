@@ -19,7 +19,7 @@ export const LiquidLens = ({
 		const motion = matchMedia(
 			"(prefers-reduced-motion: reduce), (pointer: coarse)",
 		);
-		if (!canvas || !area) return;
+		if (!canvas || !area || motion.matches) return;
 		const renderer = createLiquidRenderer(canvas, "cursor", imageSrc);
 		if (!renderer) return;
 		const points = new Float32Array(24).fill(0.5);

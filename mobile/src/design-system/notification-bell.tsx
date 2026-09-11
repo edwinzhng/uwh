@@ -66,9 +66,9 @@ export const NotificationBell = ({
 				<View
 					pointerEvents="none"
 					style={{
-						position: "absolute",
-						right: 0,
-						top: 0,
+						position: label ? "relative" : "absolute",
+						right: label ? undefined : 0,
+						top: label ? undefined : 0,
 						minWidth: 18,
 						height: 18,
 						paddingHorizontal: 4,

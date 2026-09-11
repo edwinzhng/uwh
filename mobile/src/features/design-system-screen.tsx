@@ -6,6 +6,7 @@ import {
 	Button,
 	Calendar,
 	ContentRow,
+	CurrentComponentExamples,
 	Dialog,
 	EventActions,
 	EventCard,
@@ -59,7 +60,10 @@ export const DesignSystemScreen = (): ReactElement => {
 	const [calendarDate, setCalendarDate] = useAtom(calendarDateAtom);
 	const [eventResponse, setEventResponse] = useAtom(eventResponseAtom);
 	return (
-		<ClubShell>
+		<ClubShell
+			title="Design system"
+			subtitle="Live components, foundations, and interaction states."
+		>
 			<ThemeToggle value={theme} onValueChange={setTheme} />
 			<Stack>
 				<Text variant="h4">Calendar</Text>
@@ -78,7 +82,7 @@ export const DesignSystemScreen = (): ReactElement => {
 					<Surface>
 						<Text variant="label">Panel</Text>
 					</Surface>
-					<GlassPanel material="floating" shape="pill">
+					<GlassPanel material="floating" shape="panel">
 						<Row justify="between">
 							<Text variant="label">Floating</Text>
 							<Badge label="Navigation" />
@@ -109,7 +113,7 @@ export const DesignSystemScreen = (): ReactElement => {
 						onPress={(): void => setActionOpen(true)}
 					/>
 					<Button
-						label="Ghost"
+						label="Text button"
 						variant="ghost"
 						onPress={(): void => setActionOpen(true)}
 					/>
@@ -147,6 +151,7 @@ export const DesignSystemScreen = (): ReactElement => {
 					<Badge label="Preview" kind="danger" />
 				</Dialog>
 			</Stack>
+			<CurrentComponentExamples />
 			<DropdownExamples />
 			<DateTimeExamples />
 			<Grid>

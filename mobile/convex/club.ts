@@ -40,11 +40,11 @@ export const current = query({
 	handler: async (ctx, { screen, id }): Promise<Workspace | null> => {
 		const membership = await membershipFor(ctx);
 		if (!membership) return null;
-		const data = screen
-			? await screenData(ctx, membership, screen, id)
-			: (await loadData(ctx, membership.clubId)).data;
 		const account = accountFor(membership);
-		const [memberships, requests] = await Promise.all([
+		const [data, memberships, requests] = await Promise.all([
+			screen
+				? screenData(ctx, membership, screen, id)
+				: loadData(ctx, membership.clubId).then((result) => result.data),
 			!screen || ["settings", "messages", "member"].includes(screen)
 				? ctx.db
 						.query("memberships")

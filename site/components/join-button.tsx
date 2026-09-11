@@ -1,7 +1,12 @@
 "use client";
 import { Button } from "@calgarycrocs/design-system/button";
-import { type ReactElement, type ReactNode, useRef } from "react";
-import { InterestForm } from "./interest-form";
+import dynamic from "next/dynamic";
+import { type ReactElement, type ReactNode, useRef, useState } from "react";
+
+const InterestForm = dynamic(
+	() => import("./interest-form").then((module) => module.InterestForm),
+	{ loading: () => <p>Loading registration…</p> },
+);
 export const JoinButton = ({
 	children,
 	className,
@@ -10,12 +15,16 @@ export const JoinButton = ({
 	className?: string;
 }): ReactElement => {
 	const dialog = useRef<HTMLDialogElement>(null);
+	const [opened, setOpened] = useState(false);
 	return (
 		<>
 			<Button
 				type="button"
 				className={className}
-				onClick={() => dialog.current?.showModal()}
+				onClick={() => {
+					setOpened(true);
+					dialog.current?.showModal();
+				}}
 			>
 				<span className="join-label">{children}</span>
 			</Button>
@@ -41,7 +50,7 @@ export const JoinButton = ({
 							×
 						</button>
 					</div>
-					<InterestForm />
+					{opened ? <InterestForm /> : undefined}
 				</div>
 			</dialog>
 		</>

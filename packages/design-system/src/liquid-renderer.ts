@@ -26,7 +26,7 @@ export const createLiquidRenderer = (
 		alpha: true,
 		antialias: false,
 		premultipliedAlpha: false,
-		preserveDrawingBuffer: true,
+		preserveDrawingBuffer: false,
 		powerPreference: "low-power",
 	});
 	if (!gl) return;

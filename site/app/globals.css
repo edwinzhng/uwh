@@ -1400,12 +1400,12 @@ body > footer {
 	}
 }
 .hero-title h1 {
-	letter-spacing: 0;
+	letter-spacing: 0.015em;
 	line-height: 1.06;
 }
 @media (max-width: 700px) {
 	.hero-title h1 {
-		letter-spacing: 0.2px;
+		letter-spacing: 0.015em;
 		line-height: 1.08;
 	}
 }
@@ -1811,7 +1811,7 @@ body > footer {
 	text-align: center;
 }
 .video-preview .video-caption > span {
-	color: #606663;
+	color: #173e3c;
 }
 .youtube-player {
 	width: 100%;
@@ -1822,9 +1822,9 @@ body > footer {
 	isolation: isolate;
 	overflow: hidden;
 	background:
-		radial-gradient(ellipse at 15% 10%, #ffffffed, transparent 48%),
-		radial-gradient(ellipse at 90% 85%, #aacfdc99, transparent 55%),
-		linear-gradient(135deg, #e9f2f4, #d6e7ef 55%, #eef4f4);
+		radial-gradient(ellipse at 100% 0%, #52eced, transparent 65%),
+		radial-gradient(ellipse at 0% 100%, #76e2ad, transparent 60%),
+		linear-gradient(140deg, #08b66d, #00c9b0 48%, #00aadd);
 }
 .video-preview::before {
 	display: block;
@@ -1939,7 +1939,7 @@ body > footer {
 
 .club-overview { padding-bottom: 32px; }
 .video-preview { gap: 20px; }
-.video-poster-title { text-shadow: none; letter-spacing: 0; }
+.video-poster-title { text-shadow: none; letter-spacing: 0.02em; }
 .video-preview::before {
  opacity: 0.55;
  animation: water-light-drift 14s ease-in-out infinite alternate;
@@ -2060,3 +2060,18 @@ body > footer {
 .coach-name-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 12px; }
 .coach-name-row h2 { margin: 0; }
 .coach-name-row > span { color: #73797d; font-size: 14px; }
+
+.hero-photo { filter: saturate(1.05) contrast(0.88) brightness(1.1); }
+.hero-title .hero-description { letter-spacing: 0.01em; }
+.not-found-page { min-height: calc(100svh - 120px); padding-block: clamp(80px, 15vh, 160px); background: #fff; }
+body:has(.not-found-page) { background: #fff; }
+.not-found-page .eyebrow { color: #64716b; }
+.not-found-page h1 { margin: 16px 0; font-size: clamp(36px, 5vw, 56px); letter-spacing: 0.01em; }
+.not-found-page p:not(.eyebrow) { color: #606663; margin-bottom: 28px; line-height: 1.5; }
+.not-found-page .button { color: #fff; }
+.video-preview { position: relative; color: #fff; background: #124e69; }
+.video-preview::before { display: none; }
+.video-preview::after { background: linear-gradient(#001d3040, #001d3010); opacity: 1; z-index: -1; }
+.video-poster-image { object-fit: cover; z-index: -2; }
+.video-preview .video-caption > span { color: #fff; }
+.video-poster-title { text-shadow: 0 2px 20px #001d3060; }

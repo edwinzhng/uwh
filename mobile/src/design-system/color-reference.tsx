@@ -1,4 +1,6 @@
+import { chartColors } from "@calgarycrocs/design-system/tokens";
 import type { ReactElement } from "react";
+import { chartPalette } from "./chart-palette";
 import { ColorScaleRow } from "./color-scale-row";
 import type { ColorScale } from "./color-scales";
 import { Stack } from "./stack";
@@ -49,6 +51,11 @@ export const ColorReference = (): ReactElement => {
 				label="Accent"
 				steps={scaleSteps(theme.colorScales.accent)}
 			/>
+			<Text variant="h4">Semantic treatments</Text>
+			<Text variant="small" tone="secondary">
+				Status and role names describe usage, not additional base colors.
+				Pending is the violet treatment for an unanswered RSVP.
+			</Text>
 			<ColorScaleRow
 				label="Success"
 				steps={scaleSteps(theme.colorScales.success)}
@@ -58,7 +65,7 @@ export const ColorReference = (): ReactElement => {
 				steps={scaleSteps(theme.colorScales.warning)}
 			/>
 			<ColorScaleRow
-				label="Pending"
+				label="Unanswered RSVP (pending)"
 				steps={scaleSteps(theme.colorScales.pending)}
 			/>
 			<ColorScaleRow
@@ -72,6 +79,22 @@ export const ColorReference = (): ReactElement => {
 			<ColorScaleRow
 				label="Admin"
 				steps={scaleSteps(theme.colorScales.admin)}
+			/>
+			<ColorScaleRow
+				label="Chart palette · 700"
+				steps={Object.entries(chartColors).map(([label, color]) => ({
+					label,
+					color,
+				}))}
+			/>
+			<ColorScaleRow
+				label="Attendance chart"
+				steps={[
+					{ label: "On time", color: chartPalette.onTime },
+					{ label: "Late", color: chartPalette.late },
+					{ label: "No-show", color: chartPalette.absent },
+					{ label: "Unmarked", color: chartPalette.unmarked },
+				]}
 			/>
 		</Stack>
 	);

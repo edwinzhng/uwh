@@ -1,5 +1,6 @@
 "use client";
 import { atom, useAtom } from "jotai";
+import Image from "next/image";
 import type { ReactElement } from "react";
 import { YouTubePlayer } from "./youtube-player";
 
@@ -20,6 +21,13 @@ export const ClubVideo = (): ReactElement => {
 						onClick={() => setPlaying(true)}
 						aria-label="Play underwater hockey video"
 					>
+						<Image
+							src="/video-poster.webp"
+							alt=""
+							fill
+							sizes="(max-width: 700px) 100vw, 90vw"
+							className="video-poster-image"
+						/>
 						<strong className="video-poster-title">Underwater hockey</strong>
 						<span className="video-play">
 							<svg

@@ -1,4 +1,5 @@
 import { makeFunctionReference } from "convex/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { authorized, sameOrigin } from "../../../lib/auth";
 import { isContent } from "../../../lib/content";
 import { backend, serverKey } from "../../../lib/store";
@@ -15,5 +16,7 @@ export const POST = async (request: Request): Promise<Response> => {
 		makeFunctionReference<"mutation">("website:saveContent"),
 		{ key: serverKey(), json: JSON.stringify(value) },
 	);
+	revalidateTag("club-content", { expire: 0 });
+	revalidatePath("/");
 	return Response.json({ ok: true });
 };
