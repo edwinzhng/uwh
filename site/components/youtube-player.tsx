@@ -52,7 +52,7 @@ export const YouTubePlayer = (): ReactElement => {
 			container.current.append(mount);
 			state.player = new api.Player(mount, {
 				host: "https://www.youtube-nocookie.com",
-				videoId: "m_fSe3qh5Ww",
+				videoId: "SAukrpTEvZA",
 				playerVars: { playsinline: 1, rel: 0, origin: window.location.origin },
 				events: {
 					onReady: ({ target }): void => {

@@ -40,7 +40,7 @@ export const ClubVideo = (): ReactElement => {
 			</div>
 			<a
 				className="video-source"
-				href="https://www.youtube.com/watch?v=m_fSe3qh5Ww"
+				href="https://www.youtube.com/watch?v=SAukrpTEvZA"
 				target="_blank"
 				rel="noopener noreferrer"
 			>
