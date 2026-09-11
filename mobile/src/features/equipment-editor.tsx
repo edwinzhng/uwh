@@ -53,7 +53,11 @@ export const EquipmentEditor = ({
 				<Button
 					label={item ? "Save" : "Add item"}
 					isLoading={busy}
-					isDisabled={!name.trim() || Boolean(error)}
+					validationError={
+						!name.trim() || Boolean(error)
+							? "Check the required fields"
+							: undefined
+					}
 					onPress={(): void => {
 						void save();
 					}}

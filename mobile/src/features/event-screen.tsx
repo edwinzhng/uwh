@@ -53,6 +53,31 @@ export const EventScreen = (): ReactElement => {
 				: "overview";
 	return (
 		<ClubShell
+			tabs={
+				<Tabs
+					page
+					label="Event"
+					hideLabel
+					value={activeTab}
+					onValueChange={setTab}
+					options={[
+						{ value: "overview", label: "Overview" },
+						{
+							value: "people",
+							label: "Attendance",
+						},
+						...(coach
+							? [
+									{
+										value: "coaching",
+										label: "Coaching",
+										staffRole: "coach" as const,
+									},
+								]
+							: []),
+					]}
+				/>
+			}
 			title={event?.title ?? "Event not found"}
 			subtitle={
 				event
@@ -77,16 +102,16 @@ export const EventScreen = (): ReactElement => {
 				account.admin && event && !event.cancelled ? (
 					<Row gap="xs">
 						<Button
+							label="Cancel event"
+							variant="ghost"
+							onPress={(): void => setCancel(true)}
+						/>
+						<Button
 							label="Edit"
 							staffRole="admin"
 							prefix="edit"
 							variant="secondary"
 							onPress={(): void => setEdit(true)}
-						/>
-						<Button
-							label="Cancel event"
-							variant="ghost"
-							onPress={(): void => setCancel(true)}
 						/>
 					</Row>
 				) : undefined
@@ -94,28 +119,6 @@ export const EventScreen = (): ReactElement => {
 		>
 			{event ? (
 				<>
-					<Tabs
-						label="Event"
-						hideLabel
-						value={activeTab}
-						onValueChange={setTab}
-						options={[
-							{ value: "overview", label: "Overview" },
-							{
-								value: "people",
-								label: "Attendance",
-							},
-							...(coach
-								? [
-										{
-											value: "coaching",
-											label: "Coaching",
-											staffRole: "coach" as const,
-										},
-									]
-								: []),
-						]}
-					/>
 					{event.parts?.length ? (
 						<SegmentedControl
 							label="Practice part"

@@ -27,7 +27,7 @@ export const DeleteAccountAction = (): ReactElement | undefined => {
 		<>
 			<Button
 				label="Delete account"
-				variant="ghost"
+				variant="danger-text"
 				onPress={(): void => changeOpen(true)}
 			/>
 			<Dialog
@@ -39,12 +39,14 @@ export const DeleteAccountAction = (): ReactElement | undefined => {
 						label="Delete account"
 						variant="danger"
 						isLoading={task.busy}
-						isDisabled={
+						validationError={
 							confirmed !== "DELETE" ||
 							(user.hasPassword
 								? !password
 								: !backend.social?.info?.reauthenticated) ||
 							(user.mustTransfer && !transferTo)
+								? "Check the required fields"
+								: undefined
 						}
 						onPress={(): void => {
 							void task.run(async (): Promise<void> => {

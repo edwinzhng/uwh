@@ -60,6 +60,19 @@ export const MessagesScreen = (): ReactElement => {
 	};
 	return (
 		<ClubShell
+			tabs={
+				<Tabs
+					page
+					label="Messages"
+					hideLabel
+					value={tab}
+					onValueChange={(tab): void => router.setParams({ tab })}
+					options={[
+						{ value: "chats", label: "Chats" },
+						{ value: "notices", label: "Announcements" },
+					]}
+				/>
+			}
 			title="Messages"
 			action={
 				tab === "chats" ? (
@@ -82,16 +95,6 @@ export const MessagesScreen = (): ReactElement => {
 				) : undefined
 			}
 		>
-			<Tabs
-				label="Messages"
-				hideLabel
-				value={tab}
-				onValueChange={(tab): void => router.setParams({ tab })}
-				options={[
-					{ value: "chats", label: "Chats" },
-					{ value: "notices", label: "Announcements" },
-				]}
-			/>
 			<TabContent value={tab}>
 				{tab === "chats" ? <ConversationList /> : <NoticeList />}
 			</TabContent>
@@ -109,8 +112,10 @@ export const MessagesScreen = (): ReactElement => {
 						label={
 							compose === "chat" ? "Open conversation" : "Publish announcement"
 						}
-						isDisabled={
-							compose === "chat" ? !recipient : !title.trim() || !body.trim()
+						validationError={
+							(compose === "chat" ? !recipient : !title.trim() || !body.trim())
+								? "Check the required fields"
+								: undefined
 						}
 						isLoading={busy || task.busy}
 						onPress={(): void => {

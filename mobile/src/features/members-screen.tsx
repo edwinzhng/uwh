@@ -33,6 +33,21 @@ export const MembersScreen = (): ReactElement => {
 	);
 	return (
 		<ClubShell
+			tabs={
+				account.admin ? (
+					<Tabs
+						page
+						label="Members"
+						hideLabel
+						value={tab}
+						onValueChange={(tab): void => router.setParams({ tab })}
+						options={[
+							{ value: "members", label: "Members" },
+							{ value: "invites", label: "Invites" },
+						]}
+					/>
+				) : undefined
+			}
 			title="Members"
 			action={
 				account.admin ? (
@@ -45,18 +60,6 @@ export const MembersScreen = (): ReactElement => {
 				) : undefined
 			}
 		>
-			{account.admin ? (
-				<Tabs
-					label="Members"
-					hideLabel
-					value={tab}
-					onValueChange={(tab): void => router.setParams({ tab })}
-					options={[
-						{ value: "members", label: "Members" },
-						{ value: "invites", label: "Invites" },
-					]}
-				/>
-			) : undefined}
 			<TabContent value={tab}>
 				{tab === "invites" ? (
 					<InviteList />

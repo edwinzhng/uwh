@@ -182,3 +182,53 @@ The showcase includes family and single-profile account menus, event cards, soli
 Place section headings outside cards using `SectionHeading`, with relevant actions in its `action` slot. Use `Stack gap="sm"` between a heading and its card; use `gap="xl"` between independent sections. Cards contain content, not repeated section titles. Page-level permissions appear beside the page title. Keep contextual staff badges on actions, and reserve staff collections for mixed-access screens.
 
 Keep nested collections flat with separators rather than cards inside cards. Omit empty private-note collections and charts without recorded data. Display unavailable attendance percentages as N/A. Use compact toggles in dense option groups with no inter-row gap while preserving the control's touch target. Use flush list rows inside already-padded content to preserve alignment.
+
+## Action feedback
+
+Use semantic success, warning, error (danger), and info variants.
+
+Use Sonner through the public design-system `actionToast` API. Never import Sonner directly in features. Web and native hosts live once in `DesignProvider`, outside route content so feedback survives navigation.
+
+Use `useTask("savedName")` for a confirmed asynchronous action. Success fires only after the promise resolves; errors use a short toast and keep actionable details inline. Never announce success for an unavailable backend, a no-op, an optimistic update before confirmation, page loads, or ordinary navigation. For callbacks outside `useTask`, call `actionToast` after confirmation. Do not toast every keystroke or duplicate a toast from both caller and callee.
+
+Copy is a past-tense verb plus the action/object: “Saved name”, “Sent invite”, “Switched profile”. Errors use an imperative: “Retry action”. No punctuation, descriptions, congratulations, “successfully”, or filler. Keep copy to five words or fewer. Put every message in `toast-messages.ts`; callers accept catalog keys, never free-form strings or backend errors. Add precise catalog entries for new actions.
+
+Toasts use the shared typography, colours, and corner tokens, appear at the bottom right on web (bottom centre on native), dismiss after three seconds, and can be dismissed manually. Keep essential error details in the form rather than relying on a transient toast.
+
+Enforcement: TypeScript restricts message keys, `check:design` blocks direct provider imports in features, and `check:toast` validates catalog copy as part of lint. Semantic correctness (whether the action actually happened) still requires review. Run all three checks for changes to feedback.
+
+## Component boundaries and motion
+
+Product features compose the public design-system API. Raw HTML, CSS imports, style overrides, injected markup, animation libraries, and shader packages belong inside the design system. Add a reusable component or a semantic variant instead of bypassing this boundary. The landing site's HTML remains in its own web component layer; do not apply the native feature boundary to that layer.
+
+Use shared motion durations and easing. Keep labels stationary; animate the selection surface. Honour reduced motion with `useMotion` or a media query. Animate opacity and transforms rather than layout; clean up observers, listeners and animation frames. Pause offscreen work. Keep decorative canvases inaccessible and noninteractive, provide a static image fallback, and cap resolution and shader work. Do not delay navigation to wait for an animation. Verify both short/mobile layouts and desktop performance.
+
+`check:design` rejects product-level HTML, CSS overrides, DOM injection, motion props, and direct visual-library imports. Unit tests cover these escape hatches. Biome handles hooks, unused imports and standard correctness. Reduced-motion behaviour, semantic token choice, cleanup and performance still require review; static checks cannot prove them.
+
+## Form validation
+
+Keep submission actions enabled for incomplete or invalid input. Pass an actionable `validationError` to Button/ConfirmButton; pressing reveals the error and prevents the handler from running. Keep the error visible while correcting it, and clear it when valid. Prefer field-specific messages (for example “Enter a valid email address”). Do not validate through `isDisabled`. Use Field's `error` for field-level feedback. Preserve server validation.
+
+Loading, authorization, unavailable operations and immutable fields may still be disabled. Block duplicate requests with `isLoading`/busy guards. The design-boundary checker rejects common form-validity expressions in disabled submission props; review complex expressions that static checks cannot recognize.
+
+
+### Typography hierarchy
+- Breadcrumbs must use the shared Breadcrumbs component. Ancestors, separators, and the current page use the same small typography token; the current page is not a heading.
+- Use small text for navigation context, metadata, and field labels; body for prose and values; heading variants only for actual section titles.
+- Do not mix Button typography and default Text typography in a single navigation trail.
+- Keep font size, line height, letter spacing, and weight inside the design system. Product code selects semantic components or typography variants.
+- Review adjacent labels together at desktop and mobile widths. Lint prevents style overrides and custom breadcrumb composition; visual review still checks whether the chosen hierarchy fits the content.
+
+
+### Card headers and dividers
+Use the Surface header slot for a card heading and actions, typically with SectionHeading. Surface owns header/body padding and the edge-to-edge divider. Do not place a Divider inside a padded Stack to separate a card header from its body. Keep content aligned to the shared inset while separators reach the card edges.
+
+Page-level Tabs use the page prop for an edge-to-edge separator. Attendance and other charts use chartPalette rather than action colors; keep legend labels neutral. ListItem cardRow extends interaction backgrounds to the standard Surface inset while retaining internal text padding.
+
+Chart colors use the Geist 700 sRGB scale from https://vercel.com/geist/colors, exported as chartColors from @calgarycrocs/design-system/tokens. Use green for on time, amber for late, red for no-show, and gray for unmarked. Trend series use the full eight-color palette; keep labels readable with neutral text tokens.
+
+
+### Page composition
+Use ClubShell for app pages. It delegates visual layout to AppLayout and provides route breadcrumbs, title/subtitle, action, tabs, and footer slots. Put page Tabs in the tabs slot rather than among body children so spacing and dividers are consistent. Use titleSize="section" when the page title and sibling section headings have equal hierarchy. Club management is staff-only; regular members see their membership title once.
+
+Translucent surfaces must use GlassPanel / GlassBackdrop and shared materials tokens. Do not add per-component opacity or blur overrides. Floating glass uses 28% neutral tint in light mode, 20% in dark mode, and the shared 8px web blur. Selection keeps a distinct tint for legibility but shares the blur.

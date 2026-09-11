@@ -8,6 +8,7 @@ export type ConfirmationProps = {
 	confirmLabel: string;
 	danger?: boolean;
 	isDisabled?: boolean;
+	validationError?: string;
 	onConfirm: (() => Promise<boolean>) | (() => Promise<void>);
 };
 
@@ -17,6 +18,7 @@ export const ConfirmationDialog = ({
 	confirmLabel,
 	danger,
 	isDisabled,
+	validationError,
 	onConfirm,
 	onClose,
 }: ConfirmationProps & { onClose: () => void }): ReactElement => {
@@ -49,6 +51,7 @@ export const ConfirmationDialog = ({
 						variant={danger ? "danger" : "solid"}
 						isLoading={task.busy}
 						isDisabled={isDisabled}
+						validationError={validationError}
 						onPress={(): void => {
 							void confirm();
 						}}

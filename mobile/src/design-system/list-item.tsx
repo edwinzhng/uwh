@@ -19,6 +19,7 @@ type Props = {
 	onPress?: () => void;
 	selected?: boolean;
 	flush?: boolean;
+	cardRow?: boolean;
 };
 export const ListItem = ({
 	title,
@@ -31,6 +32,7 @@ export const ListItem = ({
 	onPress,
 	selected = false,
 	flush = false,
+	cardRow = false,
 }: Props): ReactElement => {
 	const theme = useTheme();
 	const [hovered, setHovered] = useState(false);
@@ -67,9 +69,10 @@ export const ListItem = ({
 			onBlur={(): void => setFocused(false)}
 			style={({ pressed }) => ({
 				paddingVertical: space.sm,
-				paddingHorizontal: flush ? space.none : space.sm,
+				paddingHorizontal: cardRow ? space.md : flush ? space.none : space.sm,
+				marginHorizontal: cardRow ? -space.md : 0,
 				minHeight: geometry.touch,
-				borderRadius: corners.panel,
+				borderRadius: cardRow ? 0 : corners.panel,
 				backgroundColor: selected
 					? theme.background.secondary
 					: hovered || pressed
@@ -85,7 +88,8 @@ export const ListItem = ({
 		<View
 			style={{
 				paddingVertical: space.sm,
-				paddingHorizontal: flush ? space.none : space.sm,
+				paddingHorizontal: cardRow ? space.md : flush ? space.none : space.sm,
+				marginHorizontal: cardRow ? -space.md : 0,
 			}}
 		>
 			{content}

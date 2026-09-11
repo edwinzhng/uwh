@@ -58,10 +58,11 @@ export const AuthForm = ({
 	const needsPassword =
 		step === "signIn" || step === "signUp" || step === "resetCode";
 	return (
-		<Stack>
+		<Stack gap="sm">
 			{step === "signIn" || step === "signUp" ? (
 				<SegmentedControl
 					label="Account"
+					hideLabel
 					value={step}
 					onValueChange={(value): void => {
 						setStep(value);
@@ -131,30 +132,40 @@ export const AuthForm = ({
 					{task.error}
 				</Text>
 			) : undefined}
-			<Button
-				label={
-					step === "signUp"
-						? "Create account"
-						: step === "signIn"
-							? "Sign in"
-							: step === "verify"
-								? "Verify email"
-								: step === "reset"
-									? "Send code"
-									: "Reset password"
-				}
-				isLoading={task.busy}
-				isDisabled={
-					!normalizedEmail.includes("@") ||
-					(verify && !/^\d{8}$/.test(code)) ||
-					(needsPassword &&
-						(step === "signIn" ? !password : password.length < 12)) ||
-					(step === "signUp" && !name.trim())
-				}
-				onPress={(): void => {
-					void submit();
-				}}
-			/>
+			<Stack gap="lg">
+				<Stack>{undefined}</Stack>
+				<Button
+					label={
+						step === "signUp"
+							? "Create account"
+							: step === "signIn"
+								? "Sign in"
+								: step === "verify"
+									? "Verify email"
+									: step === "reset"
+										? "Send code"
+										: "Reset password"
+					}
+					isLoading={task.busy}
+					validationError={
+						!normalizedEmail.includes("@")
+							? "Enter a valid email address"
+							: verify && !/^\d{8}$/.test(code)
+								? "Enter the 8-digit code"
+								: needsPassword &&
+										(step === "signIn" ? !password : password.length < 12)
+									? step === "signIn"
+										? "Enter your password"
+										: "Use at least 12 characters"
+									: step === "signUp" && !name.trim()
+										? "Enter your name"
+										: undefined
+					}
+					onPress={(): void => {
+						void submit();
+					}}
+				/>
+			</Stack>
 			<Row wrap>
 				{step === "signIn" ? (
 					<Button

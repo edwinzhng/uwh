@@ -12,19 +12,22 @@ import {
 	useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { BrandIdentity } from "./brand-identity";
+import { GlassPanel } from "./glass-panel";
 import type { NavigationItem } from "./navigation-control";
 import { Row } from "./row";
 import { SidebarNavigation } from "./sidebar-navigation";
 import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
-import { control, geometry, layer, space } from "./tokens";
+import { geometry, layer, space } from "./tokens";
 import { useKeyboardVisible } from "./use-keyboard-visible";
 import { WaterBackground } from "./water-background";
 
 type Props = {
 	children: ReactNode;
 	title?: string;
+	titleSize?: "page" | "section";
+	tabs?: ReactNode;
 	subtitle?: string;
 	brand: string;
 	brandLogo?: ImageSourcePropType;
@@ -37,10 +40,13 @@ type Props = {
 	back?: ReactNode;
 	footer?: ReactNode;
 	scrollable?: boolean;
+	persistentNavigation?: boolean;
 };
 export const AppLayout = ({
 	children,
 	title,
+	titleSize = "page",
+	tabs,
 	subtitle,
 	brand,
 	brandLogo,
@@ -53,12 +59,14 @@ export const AppLayout = ({
 	back,
 	footer,
 	scrollable = true,
+	persistentNavigation = false,
 }: Props): ReactElement => {
 	const theme = useTheme();
 	const { width } = useWindowDimensions();
 	const insets = useSafeAreaInsets();
 	const wide = width >= geometry.wide;
 	const keyboard = useKeyboardVisible();
+	const pagePadding = wide ? space.xxl : space.lg;
 	const heading =
 		back || title ? (
 			<View style={{ gap: space.sm }}>
@@ -66,7 +74,6 @@ export const AppLayout = ({
 					<View
 						style={{
 							alignSelf: "flex-start",
-							marginStart: -(control.paddingX + geometry.border),
 						}}
 					>
 						{back}
@@ -85,7 +92,9 @@ export const AppLayout = ({
 						>
 							<Row justify="between" align="start">
 								<Stack grow>
-									<Text variant="h2">{title}</Text>
+									<Text variant={titleSize === "section" ? "h3" : "h2"}>
+										{title}
+									</Text>
 								</Stack>
 								{titleAccessory}
 							</Row>
@@ -113,8 +122,11 @@ export const AppLayout = ({
 				enabled={Platform.OS !== "web"}
 				style={{ flex: 1, flexDirection: "row" }}
 			>
-				{wide ? (
+				{wide && persistentNavigation ? (
+					<View style={{ width: geometry.popupWidth }} />
+				) : wide ? (
 					<View
+						nativeID="club-navigation-surface"
 						style={{
 							width: geometry.popupWidth,
 							backgroundColor: "transparent",
@@ -124,6 +136,7 @@ export const AppLayout = ({
 						}}
 					>
 						<WaterBackground />
+
 						<Stack gap="xl">
 							<BrandIdentity
 								name={brand}
@@ -135,41 +148,58 @@ export const AppLayout = ({
 					</View>
 				) : undefined}
 				<View style={{ flex: 1, minWidth: 0 }}>
-					<View
-						style={{
-							paddingHorizontal: wide ? space.lg : space.md,
-							paddingVertical: space.sm,
-							zIndex: layer.sticky,
-							borderBottomWidth: geometry.border,
-							borderBottomColor: theme.border,
-							backgroundColor: "transparent",
-						}}
-					>
-						<Row justify={wide ? "end" : "between"}>
-							{!wide ? (
-								<BrandIdentity
-									name={brand}
-									logo={brandLogo}
-									onPress={onBrandPress}
-								/>
-							) : undefined}
-							<Row gap="xs">
-								{accessory}
-								{profile}
-							</Row>
-						</Row>
-					</View>
+					{!wide ? (
+						<>
+							<View
+								style={{
+									position: "absolute",
+									left: space.md,
+									top: space.md,
+									zIndex: layer.sticky,
+								}}
+							>
+								<GlassPanel
+									interactive
+									shape="panel"
+									material="floating"
+									padding="none"
+								>
+									{accessory}
+								</GlassPanel>
+							</View>
+							<View
+								style={{
+									position: "absolute",
+									right: space.md,
+									top: space.md,
+									zIndex: layer.sticky,
+									maxWidth: "70%",
+								}}
+							>
+								<GlassPanel
+									interactive
+									shape="panel"
+									material="floating"
+									padding="none"
+								>
+									{profile}
+								</GlassPanel>
+							</View>
+						</>
+					) : undefined}
 					{scrollable ? (
 						<ScrollView
 							keyboardShouldPersistTaps="handled"
 							keyboardDismissMode="on-drag"
 							contentContainerStyle={{
 								paddingHorizontal: wide ? space.lg : space.md,
-								paddingTop: space.md,
+								paddingTop: wide
+									? pagePadding
+									: geometry.touch + space.sm + space.lg + pagePadding,
 								paddingBottom:
-									footer || keyboard
-										? space.md
-										: geometry.tab + space.xxl + insets.bottom,
+									wide || footer || keyboard
+										? pagePadding
+										: geometry.tab + pagePadding + space.sm + insets.bottom,
 							}}
 						>
 							<View
@@ -181,6 +211,7 @@ export const AppLayout = ({
 								}}
 							>
 								{heading}
+								{tabs}
 								{children}
 							</View>
 						</ScrollView>
@@ -193,11 +224,15 @@ export const AppLayout = ({
 								maxWidth: geometry.content,
 								alignSelf: "center",
 								paddingHorizontal: wide ? space.lg : space.md,
-								paddingTop: space.md,
+								paddingTop: wide
+									? pagePadding
+									: geometry.touch + space.sm + space.lg + pagePadding,
+								paddingBottom: pagePadding,
 								gap: space.md,
 							}}
 						>
 							{heading}
+							{tabs}
 							{children}
 						</View>
 					)}

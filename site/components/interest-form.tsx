@@ -1,9 +1,14 @@
 "use client";
+import { Field } from "@calgarycrocs/design-system/field";
+import { SegmentedControl } from "@calgarycrocs/design-system/segmented-control";
 import { atom, useAtom } from "jotai";
 import Script from "next/script";
-import { type FormEvent, type ReactElement, useMemo } from "react";
+import { type FormEvent, type ReactElement, useId, useMemo } from "react";
+
+import { trialDateLabel, trialDates } from "../lib/trial-dates";
 
 export const InterestForm = (): ReactElement => {
+	const fieldId = useId();
 	const [status, setStatus] = useAtom(useMemo(() => atom(""), []));
 	const [referral, setReferral] = useAtom(useMemo(() => atom(""), []));
 	const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
@@ -42,13 +47,20 @@ export const InterestForm = (): ReactElement => {
 		);
 	return (
 		<form className="form" onSubmit={submit}>
-			<label>
+			<label htmlFor={`${fieldId}-name`}>
 				Your name
-				<input name="name" autoComplete="name" required maxLength={100} />
+				<Field
+					id={`${fieldId}-name`}
+					name="name"
+					autoComplete="name"
+					required
+					maxLength={100}
+				/>
 			</label>
-			<label>
+			<label htmlFor={`${fieldId}-email`}>
 				Email
-				<input
+				<Field
+					id={`${fieldId}-email`}
 					name="email"
 					type="email"
 					autoComplete="email"
@@ -56,28 +68,30 @@ export const InterestForm = (): ReactElement => {
 					maxLength={200}
 				/>
 			</label>
-			<label>
+			<label htmlFor={`${fieldId}-phone`}>
 				<span>
 					Phone number <small>(optional)</small>
 				</span>
-				<input name="phone" type="tel" autoComplete="tel" maxLength={40} />
+				<Field
+					id={`${fieldId}-phone`}
+					name="phone"
+					type="tel"
+					autoComplete="tel"
+					maxLength={40}
+				/>
 			</label>
 			<fieldset className="player-group">
 				<legend>Player group</legend>
-				<div className="group-segments">
-					{["Youth", "Adult"].map((group) => (
-						<label key={group}>
-							<input
-								type="radio"
-								name="group"
-								value={group}
-								required
-								defaultChecked={group === "Adult"}
-							/>
-							<span>{group}</span>
-						</label>
-					))}
-				</div>
+				<SegmentedControl
+					name="group"
+					defaultValue="Adult"
+					required
+					className="group-segments"
+					options={[
+						{ value: "Youth", label: "Youth" },
+						{ value: "Adult", label: "Adult" },
+					]}
+				/>
 			</fieldset>
 			<label>
 				<span>
@@ -95,11 +109,26 @@ export const InterestForm = (): ReactElement => {
 					))}
 				</select>
 			</label>
-			<label>
+			<label htmlFor={`${fieldId}-firstSessionDate`}>
 				<span>
 					First session date <small>(optional)</small>
 				</span>
-				<input type="date" name="firstSessionDate" />
+				<select
+					id={`${fieldId}-firstSessionDate`}
+					name="firstSessionDate"
+					defaultValue=""
+				>
+					<option value="">Choose a Sunday</option>
+					{trialDates().map((date) => (
+						<option key={date} value={date}>
+							{trialDateLabel(date)}
+						</option>
+					))}
+				</select>
+				<small>
+					Sunday trials · next two months. We’ll confirm your session time by
+					email.
+				</small>
 			</label>
 			<label>
 				<span>
@@ -135,14 +164,28 @@ export const InterestForm = (): ReactElement => {
 				</select>
 			</label>
 			{referral === "Other" && (
-				<label>
+				<label htmlFor={`${fieldId}-referralOther`}>
 					Please specify
-					<input name="referralOther" required maxLength={200} />
+					<Field
+						id={`${fieldId}-referralOther`}
+						name="referralOther"
+						required
+						maxLength={200}
+					/>
 				</label>
 			)}
-			<label className="honeypot" aria-hidden="true">
+			<label
+				className="honeypot"
+				aria-hidden="true"
+				htmlFor={`${fieldId}-website`}
+			>
 				Website
-				<input name="website" tabIndex={-1} autoComplete="off" />
+				<Field
+					id={`${fieldId}-website`}
+					name="website"
+					tabIndex={-1}
+					autoComplete="off"
+				/>
 			</label>
 			<small>
 				For youth players, please use a parent or guardian’s contact details.

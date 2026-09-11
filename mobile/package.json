@@ -10,7 +10,7 @@
 		"web": "expo start --web",
 		"preview": "bun scripts/preview.ts",
 		"typecheck": "tsc --noEmit",
-		"lint": "biome check .",
+		"lint": "biome check . && bun run check:toast && bun run check:design",
 		"format": "biome check --write .",
 		"test": "bun test",
 		"check:design": "bun scripts/check-design-boundary.ts",
@@ -32,17 +32,20 @@
 		"verify:fitness": "bun scripts/verify-fitness.ts",
 		"verify:coaching-teams": "bun scripts/verify-coaching-teams.ts",
 		"verify:attendance-reports": "bun scripts/verify-attendance-reports.ts",
-		"verify:coaching-scale": "bun scripts/verify-coaching-scale.ts"
+		"verify:coaching-scale": "bun scripts/verify-coaching-scale.ts",
+		"check:toast": "bun scripts/check-toast-copy.ts"
 	},
 	"dependencies": {
 		"@auth/core": "0.41.1",
 		"@base-ui/react": "^1.8.0",
+		"@calgarycrocs/design-system": "file:../packages/design-system",
 		"@convex-dev/auth": "^0.0.95",
 		"@emoji-mart/data": "^1.2.1",
 		"@emoji-mart/react": "^1.1.1",
 		"@expo-google-fonts/inter": "0.4.2",
 		"@js-temporal/polyfill": "^0.5.1",
 		"@oslojs/crypto": "^1.0.1",
+		"@paper-design/shaders-react": "^0.0.80",
 		"@react-native-community/datetimepicker": "9.1.0",
 		"convex": "^1.45.0",
 		"emoji-mart": "^5.6.0",
@@ -84,7 +87,9 @@
 		"react-native-svg": "15.15.4",
 		"react-native-web": "^0.21.2",
 		"react-native-worklets": "0.10.1",
-		"recharts": "^3"
+		"recharts": "^3",
+		"sonner": "^2.0.8",
+		"sonner-native": "^0.27.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.6",

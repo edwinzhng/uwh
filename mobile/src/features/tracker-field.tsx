@@ -52,7 +52,9 @@ export const TrackerField = ({
 				<Button
 					label="Save"
 					variant="ghost"
-					isDisabled={busy || draft === saved}
+					validationError={
+						busy || draft === saved ? "Check the required fields" : undefined
+					}
 					onPress={(): void => save(draft)}
 				/>
 			</Row>

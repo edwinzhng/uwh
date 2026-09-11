@@ -63,7 +63,11 @@ export const SeasonSettings = (): ReactElement => {
 						<Button
 							label="Create season"
 							isLoading={busy}
-							isDisabled={!name.trim() || !start || !end || end < start}
+							validationError={
+								!name.trim() || !start || !end || end < start
+									? "Check the required fields"
+									: undefined
+							}
 							onPress={(): void => {
 								void save();
 							}}

@@ -12,78 +12,17 @@ export const palette = {
 	white: "#FFFFFF",
 } as const;
 
-export const space = {
-	none: 0,
-	half: 2,
-	xxs: 4,
-	xs: 8,
-	sm: 12,
-	md: 16,
-	lg: 24,
-	xl: 32,
-	xxl: 48,
-	xxxl: 64,
-} as const;
-export const radius = {
-	none: 0,
-	xs: 4,
-	sm: 6,
-	md: 8,
-	lg: 12,
-	xl: 16,
-	xxl: 24,
-	xxxl: 32,
-	round: 9999,
-} as const;
-export const layer = {
-	base: 0,
-	raised: 1,
-	selected: 2,
-	sticky: 10,
-	popover: 20,
-	backdrop: 30,
-	modal: 40,
-	toast: 50,
-	tooltip: 60,
-} as const;
-export const corners = {
-	control: radius.sm,
-	item: radius.sm,
-	panel: radius.md,
-	overlay: radius.lg,
-	pill: radius.round,
-} as const;
-export const elevation = {
-	none: { boxShadow: "none", elevation: 0 },
-	raised: {
-		boxShadow: "0 1px 2px rgba(0,0,0,0.06), 0 3px 8px rgba(0,0,0,0.04)",
-		elevation: 1,
-	},
-	floating: { boxShadow: "0 4px 12px rgba(0,0,0,0.12)", elevation: 4 },
-	overlay: { boxShadow: "0 12px 32px rgba(0,0,0,0.20)", elevation: 8 },
-} as const;
+export {
+	corners,
+	elevation,
+	layer,
+	motion,
+	opacity,
+	radius,
+	space,
+} from "@calgarycrocs/design-system/tokens";
 
-export const opacity = { backdrop: 0.15 } as const;
-
-export const motion = {
-	duration: {
-		instant: 0,
-		fast: 120,
-		reveal: 150,
-		standard: 200,
-		toggle: 220,
-		slow: 280,
-	},
-	easing: {
-		control: [0.25, 0.1, 0.25, 1],
-		out: [0.23, 1, 0.32, 1],
-		move: [0.77, 0, 0.175, 1],
-		sheet: [0.32, 0.72, 0, 1],
-	},
-	pressScale: 0.97,
-	settle: { duration: 400, dampingRatio: 1 },
-} as const;
-
+import { type elevation, space } from "@calgarycrocs/design-system/tokens";
 export const font = {
 	heading: "Inter_600SemiBold",
 	regular: "Inter_400Regular",
@@ -91,29 +30,9 @@ export const font = {
 	semibold: "Inter_600SemiBold",
 } as const;
 
-export const typography = {
-	h1: { fontSize: 32, lineHeight: 38, letterSpacing: -0.7, family: "heading" },
-	h2: { fontSize: 28, lineHeight: 34, letterSpacing: -0.5, family: "heading" },
-	h3: { fontSize: 22, lineHeight: 28, letterSpacing: -0.3, family: "heading" },
-	h4: { fontSize: 18, lineHeight: 24, letterSpacing: -0.2, family: "heading" },
-	body: { fontSize: 16, lineHeight: 24, letterSpacing: 0, family: "regular" },
-	small: { fontSize: 14, lineHeight: 20, letterSpacing: 0, family: "regular" },
-	label: { fontSize: 14, lineHeight: 20, letterSpacing: 0, family: "medium" },
-	field: { fontSize: 13, lineHeight: 18, letterSpacing: 0, family: "regular" },
-	caption: {
-		fontSize: 12,
-		lineHeight: 18,
-		letterSpacing: 0.1,
-		family: "regular",
-	},
-	overline: {
-		fontSize: 11,
-		lineHeight: 16,
-		letterSpacing: 1.5,
-		family: "semibold",
-	},
-	number: { fontSize: 32, lineHeight: 40, letterSpacing: -1, family: "medium" },
-} as const;
+export { typography } from "@calgarycrocs/design-system/tokens";
+
+import { typography } from "@calgarycrocs/design-system/tokens";
 
 export const geometry = {
 	chart: 220,

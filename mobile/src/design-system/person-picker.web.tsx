@@ -88,6 +88,16 @@ export const PersonPicker = ({
 										<Icon name="gear" size="sm" tone="secondary" />
 										<span className="club-popup-item-label">Settings</span>
 									</Menu.Item>
+									{account.onSignOut ? (
+										<Menu.Item
+											label="Sign out"
+											className="club-popup-item"
+											onClick={account.onSignOut}
+										>
+											<Icon name="signOut" size="sm" tone="secondary" />
+											<span className="club-popup-item-label">Sign out</span>
+										</Menu.Item>
+									) : undefined}
 								</Menu.Group>
 							</>
 						) : undefined}

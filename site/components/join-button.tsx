@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@calgarycrocs/design-system/button";
 import { type ReactElement, type ReactNode, useRef } from "react";
 import { InterestForm } from "./interest-form";
 export const JoinButton = ({
@@ -11,13 +12,13 @@ export const JoinButton = ({
 	const dialog = useRef<HTMLDialogElement>(null);
 	return (
 		<>
-			<button
+			<Button
 				type="button"
 				className={className}
 				onClick={() => dialog.current?.showModal()}
 			>
 				<span className="join-label">{children}</span>
-			</button>
+			</Button>
 			<dialog
 				ref={dialog}
 				className="join-dialog"

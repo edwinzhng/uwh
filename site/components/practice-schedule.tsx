@@ -6,7 +6,7 @@ const regularTimes = [
 	{ day: "Sunday*", times: ["9–10:30 am", "or 7–8:30 pm"] },
 	{ day: "Monday**", times: ["8:30–10 pm"] },
 	{ day: "Thursday", times: ["8–9:30 pm"] },
-	{ day: "Every second Friday", times: ["8:30–9:30 pm"] },
+	{ day: "Friday", cadence: "Every other week", times: ["8:30–9:30 pm"] },
 ];
 const schedules = [
 	{
@@ -33,6 +33,7 @@ export const PracticeSchedule = ({
 }: PracticeScheduleProps): ReactElement => (
 	<div className="practice-background">
 		<section
+			id="schedule"
 			className="practice-section wrap"
 			aria-labelledby="practice-heading"
 		>
@@ -47,7 +48,12 @@ export const PracticeSchedule = ({
 						<dl className="practice-times">
 							{schedule.times.map((slot) => (
 								<div key={slot.day}>
-									<dt>{slot.day}</dt>
+									<dt>
+										{slot.day}
+										{"cadence" in slot ? (
+											<small className="practice-cadence">{slot.cadence}</small>
+										) : undefined}
+									</dt>
 									<dd>
 										{slot.times.map((time) => (
 											<span key={time}>{time}</span>

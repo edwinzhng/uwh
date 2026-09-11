@@ -265,7 +265,7 @@ export const BackendProvider = ({
 		process.env.EXPO_PUBLIC_DEMO_MODE === "true" ? (
 		<PreviewProvider>{children}</PreviewProvider>
 	) : (
-		<AuthLayout title="Crocs Club">
+		<AuthLayout title="Calgary Crocs">
 			<Text>The account service isn’t configured for this build.</Text>
 		</AuthLayout>
 	);

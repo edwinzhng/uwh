@@ -2,9 +2,14 @@ import { resolve } from "node:path";
 import ts from "typescript";
 
 const visualImports =
-	/^(react-native($|\/|-)|react-day-picker($|\/)|@react-native-community\/|@rn-primitives\/|@base-ui\/|@radix-ui\/|lucide-|.*\.css$)/;
+	/^(motion($|\/)|framer-motion($|\/)|@paper-design\/|sonner($|\/|-)|react-native($|\/|-)|react-day-picker($|\/)|@react-native-community\/|@rn-primitives\/|@base-ui\/|@radix-ui\/|lucide-|.*\.css$)/;
 const visualProps = new Set([
 	"style",
+	"animationDuration",
+	"transitionDuration",
+	"entering",
+	"exiting",
+	"layout",
 	"className",
 	"css",
 	"color",
@@ -12,6 +17,10 @@ const visualProps = new Set([
 	"fontSize",
 	"fontFamily",
 	"fontWeight",
+	"lineHeight",
+	"letterSpacing",
+	"textTransform",
+	"fontScale",
 	"borderRadius",
 	"zIndex",
 	"boxShadow",
@@ -65,9 +74,30 @@ export const inspectDesignBoundary = (
 				fail(node, "Use the public design-system entry point.");
 		}
 		if (ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) {
+			if (
+				/breadcrumb/i.test(filename) &&
+				["Text", "Button", "Row"].includes(node.tagName.getText(file))
+			)
+				fail(
+					node,
+					"Use Breadcrumbs so navigation labels share the small typography token.",
+				);
 			if (ts.isIdentifier(node.tagName) && /^[a-z]/.test(node.tagName.text))
 				fail(node, "Raw HTML is not allowed in product code.");
 			for (const attribute of node.attributes.properties) {
+				if (
+					ts.isJsxAttribute(attribute) &&
+					attribute.name.getText(file) === "isDisabled" &&
+					["Button", "ConfirmButton"].includes(node.tagName.getText(file)) &&
+					attribute.initializer &&
+					/trim\(|\b(valid|canSave|canSubmit|amount|password|confirmed|email|code|body|draft)\b/.test(
+						attribute.initializer.getText(file),
+					)
+				)
+					fail(
+						attribute,
+						"Keep form submissions enabled; use validationError for input validation.",
+					);
 				if (ts.isJsxSpreadAttribute(attribute))
 					fail(attribute, "Explicit props keep the component API constrained.");
 				if (
@@ -85,6 +115,22 @@ export const inspectDesignBoundary = (
 			/(^|\.)createElement$/.test(node.expression.getText(file))
 		)
 			fail(node, "Compose the UI with declarative design-system JSX.");
+		if (
+			ts.isCallExpression(node) &&
+			/^(document\.(createElement|write)|.*\.(insertAdjacentHTML|animate))$/.test(
+				node.expression.getText(file),
+			)
+		)
+			fail(
+				node,
+				"Keep DOM and animation implementation inside the design system.",
+			);
+		if (
+			ts.isBinaryExpression(node) &&
+			node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+			/\.(innerHTML|outerHTML|cssText)$/.test(node.left.getText(file))
+		)
+			fail(node, "Do not inject HTML or CSS from product code.");
 		ts.forEachChild(node, inspect);
 	};
 	inspect(file);

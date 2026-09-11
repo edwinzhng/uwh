@@ -548,7 +548,7 @@ body {
 .club-section p {
 	margin-top: 0;
 	line-height: 1.6;
-	font-size: 21px;
+	font-size: 18px;
 }
 .practice-section {
 	padding-block: 72px 88px;
@@ -700,7 +700,7 @@ body:has(dialog[open]) {
 	aspect-ratio: 16 / 9;
 	overflow: hidden;
 	border-radius: 16px;
-	background: #021e00;
+	background: #17191c;
 }
 .club-video iframe {
 	display: block;
@@ -728,7 +728,7 @@ body:has(dialog[open]) {
 	place-items: center;
 	width: 76px;
 	height: 76px;
-	padding-left: 4px;
+	padding: 0;
 	border: 1px solid #ffffff90;
 	border-radius: 50%;
 	background: #ffffff25;
@@ -757,6 +757,8 @@ body:has(dialog[open]) {
 	height: 100%;
 	pointer-events: none;
 	z-index: 1;
+	transform: translateZ(0);
+	backface-visibility: hidden;
 	filter: saturate(1.12) brightness(1.04);
 }
 
@@ -1433,17 +1435,12 @@ body > footer {
 		);
 }
 .hero-bottom-blur {
-	position: absolute;
-	inset: 55% 0 0;
-	z-index: 0;
-	pointer-events: none;
-	backdrop-filter: blur(10px);
-	mask-image: linear-gradient(
-		transparent 0%,
-		#00000020 40%,
-		#00000070 75%,
-		#000 100%
-	);
+ position: absolute;
+ inset: 0;
+ pointer-events: none;
+ background: url("/hockey-action.webp") center 58% / cover no-repeat;
+ filter: blur(10px) saturate(1.12) brightness(1.04);
+ mask-image: linear-gradient(transparent 55%, #00000020 73%, #00000070 89%, #000 100%);
 }
 
 .practice-section > h2 {
@@ -1480,7 +1477,7 @@ body > footer {
 	display: grid;
 	grid-template-columns: 1fr auto;
 	gap: 12px;
-	padding: 12px 0;
+	padding: 10px 0;
 	border-top: 1px solid #eceeed;
 }
 .practice-times dd {
@@ -1898,3 +1895,168 @@ body > footer {
 		transform: none;
 	}
 }
+
+:root {
+ --motion-duration-modal: var(--crocs-motion-standard);
+ --motion-ease-out: var(--crocs-motion-ease);
+ --ink: var(--crocs-ink);
+ --paper: var(--crocs-surface);
+}
+.button {
+ background-color: var(--crocs-accent);
+ border-radius: var(--crocs-control-radius);
+}
+.nav-island {
+ background: transparent;
+ border-color: transparent;
+ backdrop-filter: none;
+ -webkit-backdrop-filter: none;
+ border-radius: var(--crocs-panel-radius);
+ isolation: isolate;
+}
+.nav-selection {
+ transition-duration: var(--crocs-motion-standard);
+ transition-timing-function: var(--crocs-motion-ease);
+}
+
+.nav-island {
+ grid-template-columns: repeat(4, minmax(0, 1fr));
+ width: 480px;
+ padding: 4px;
+}
+.nav-selection { left: 4px; top: 4px; bottom: 4px; }
+.nav-island a { padding-inline: 12px; }
+#about, #schedule, #policies { scroll-margin-top: 100px; }
+@media (max-width: 1000px) {
+ .nav-island { top: 82px; width: min(480px, calc(100% - 24px)); }
+ .header:not(.header-overlay) { min-height: 146px; }
+ .hero-title { top: max(164px, 20svh); }
+}
+@media (max-width: 700px) {
+ .nav-island { top: 76px; }
+ .nav-island a { padding-inline: 4px; }
+}
+
+.club-overview { padding-bottom: 32px; }
+.video-preview { gap: 20px; }
+.video-poster-title { text-shadow: none; letter-spacing: 0; }
+.video-preview::before {
+ opacity: 0.55;
+ animation: water-light-drift 14s ease-in-out infinite alternate;
+}
+.video-preview .video-play::after { box-shadow: none; opacity: 0.45; }
+@keyframes water-light-drift {
+ from { transform: rotate(-18deg) translate(-1%, 0) scale(1); }
+ to { transform: rotate(-12deg) translate(2%, 2%) scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+ .video-preview::before { animation: none; }
+}
+
+.nav-island { background: rgba(225,228,230,.65); box-shadow: 0 2px 10px #18212b08; }
+.joining-background { background: #efefef; color: var(--ink); }
+.joining-background h2, .joining-background strong { color: var(--ink); }
+.practice-background { background: #151719; }
+.practice-background #practice-heading, .practice-background .summer-heading { color: #f4f4f4; }
+.practice-background .practice-card { color: var(--ink); }
+.policies-section { padding-block: 80px; background: white; }
+.policies-section h2 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+.policy-intro { margin: 0 0 28px; color: #45494c; }
+.policy-explorer { list-style: none; padding: 0; margin: 0; border: 1px solid #e2e5e7; border-radius: 10px; overflow: hidden; }
+.policy-explorer li:first-child .policy-file { border-top: 0; }
+.policy-file > svg { flex-shrink: 0; }
+.policy-file-copy { min-width: 0; }
+.policy-file { display:flex; align-items:center; gap:16px; padding:20px 22px; text-decoration:none; border-top:1px solid #e7e9eb; }
+.policy-file:hover, .policy-file:focus-visible { background:#f5f7f8; }
+.policy-file small { display:block; color:#73797d; font-size:14px; margin-top:4px; }
+.policy-file-type { margin-left:auto; color:#73797d; font-size:13px; }
+.policy-empty { padding:22px; margin:0; }
+@media(max-width:600px) { .policy-file {padding:16px;gap:12px;} .policy-file-type {display:none;} .policy-file-copy {flex:1;} }
+.practice-background #summer-heading { color: #f4f4f4; }
+.practice-background .summer-schedule > header p { color: #a8abad; }
+.nav-island a { color: #25282a; }
+.club-overview > p,
+.joining-background .club-section p,
+.joining-background .club-section strong,
+.policies-section .policy-explorer,
+.policies-section .policy-file,
+.policies-section .policy-empty a { color: #45494c; }
+.policy-file:hover { color: #202426; }
+.policy-file:hover .policy-external-icon,
+.policy-file:focus-visible .policy-external-icon { color: #0d4ff7; }
+.practice-card .practice-times,
+.practice-card .practice-notes,
+.practice-card details p { color: #45494c; }
+.nav-island a[aria-current], .nav-island a:hover { color: #25282a; }
+.hero-title .hero-description { color: #30373a; }
+.practice-card .practice-note { color: #62686b; }
+
+.practice-background .practice-card { background: #fff; border-color: #e0e4e7; color: #252a2d; }
+.practice-card > header, .summer-schedule > header { display:flex; align-items:baseline; flex-wrap:wrap; gap:8px 18px; }
+.practice-card > header .practice-season, .summer-schedule > header p { margin:0; }
+.practice-card .practice-times { color:#252a2d; font-size:18px; }
+.practice-times dt, .practice-times dd, .summer-sessions h4, .summer-sessions .summer-time { font-weight:500; font-variant-numeric:tabular-nums; }
+.practice-cadence { display:block; margin-top:4px; font-size:13px; font-weight:400; color:#656b6f; }
+.join-dialog { --motion-duration-modal:220ms; --motion-ease-out:cubic-bezier(.23,1,.32,1); }
+
+.practice-card > header { margin-bottom: 20px; }
+.practice-card h3,
+.summer-sessions h4,
+.summer-sessions .summer-time,
+.practice-card .pool-location { color: #252a2d; }
+.practice-card .pool-location:hover,
+.practice-card .pool-location:focus-visible,
+.practice-card .pool-location:hover .pool-name { color: #0d4ff7; }
+
+@media (max-width: 1000px) {
+ .nav-island {
+  width: min(1280px, calc(100% - 96px));
+  top: max(25px, calc(var(--nav-start, 90px) - var(--nav-scroll, 0px)));
+  min-height: 40px;
+  gap: 8px;
+ }
+ .nav-island a { font-size: 13px; padding: 7px 10px; }
+ .nav-inner > .nav-register { padding: 12px; font-size: 13px; min-height: 38px; }
+ .header:not(.header-overlay) { min-height: 152px; }
+ .nav-inner { height: 80px; }
+}
+@media (max-width: 700px) {
+ .nav-island {
+  width: calc(100% - 24px);
+  top: max(12px, calc(var(--nav-start, 76px) - var(--nav-scroll, 0px)));
+ }
+ .nav-inner { height: 80px; }
+ .header:not(.header-overlay) { min-height: 152px; }
+}
+
+.coaches-page > h1 { margin: 0; font-size: 40px; font-weight: 600; letter-spacing: -.5px; }
+.coaches-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; margin-top: 36px; }
+.coach-profile { display: grid; grid-template-columns: minmax(200px, 28%) minmax(0, 1fr); border: 1px solid #e2e5e7; border-radius: 12px; overflow: hidden; background: #fff; }
+.coach-profile-portrait { position: relative; min-height: 280px; background: #edf1ef; display: grid; place-items: center; }
+.coach-profile-portrait > span:first-child { font-size: 64px; font-weight: 400; color: #82948c; letter-spacing: -2px; }
+.coach-profile-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+.coach-role { position: absolute; bottom: 16px; left: 20px; padding: 4px 10px; border-radius: 5px; background: #fff; color: #252a2d; font-size: 13px; }
+.coach-profile-body { padding: 32px; align-self: center; }
+.coach-profile-body h2 { margin: 0 0 12px; font-size: 24px; font-weight: 600; line-height: 1.15; color: #202426; }
+.coach-profile-body > p { font-size: 16px; line-height: 1.5; color: #555c60; margin: 0 0 24px; }
+.coach-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 180px)); gap: 24px; margin: 0; }
+.coach-facts dt { font-size: 13px; color: #73797d; }
+.coach-facts dd { margin: 3px 0 0; font-size: 16px; color: #252a2d; }
+.coach-experience { display: block; margin-top: 24px; font-size: 14px; line-height: 1.5; color: #45494c; text-decoration: none; }
+.coach-experience span { display: block; color: #73797d; font-size: 13px; margin-bottom: 4px; }
+@media (max-width: 600px) { .coaches-grid { margin-top: 24px; } .coach-profile { grid-template-columns: minmax(0, 1fr); } .coach-profile-portrait { min-height: 0; aspect-ratio: 4 / 3; } .coach-profile-body { padding: 24px; } .coaches-page > h1 { font-size: 32px; } }
+.coach-profile-portrait img { position: absolute; inset: 0; }
+.coach-championships { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.coach-photo { opacity: 0; transition: opacity 300ms cubic-bezier(.22, 1, .36, 1); }
+.coach-photo[data-loaded="true"] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .coach-photo { transition: none; } }
+.coach-profile-portrait { overflow: hidden; }
+.coach-gradient { position: absolute; inset: 0; background: radial-gradient(ellipse at 0% 5%, #ece9ff 0%, transparent 45%), radial-gradient(ellipse at 100% 100%, #12bbdc 0%, transparent 50%), linear-gradient(120deg, #8272ff, #b8cdff 62%, #79b9ef); }
+.coach-gradient::before { content: ""; position: absolute; width: 150%; height: 160%; left: 10%; top: -40%; border-radius: 48%; transform: rotate(28deg); background: linear-gradient(100deg, #ffffff65, #ffffff08 52%, transparent 70%); box-shadow: -18px 0 35px #ffffff30; filter: blur(8px); }
+.coach-profile:nth-child(2) .coach-gradient { background: radial-gradient(ellipse at 100% 0%, #52eced, transparent 65%), radial-gradient(ellipse at 0% 100%, #76e2ad, transparent 60%), linear-gradient(140deg, #08b66d, #00c9b0 48%, #00aadd); }
+.coach-profile:nth-child(3) .coach-gradient { background: radial-gradient(ellipse at 0% 65%, #ffe6a3, transparent 52%), radial-gradient(ellipse at 100% 0%, #ffc038, transparent 65%), linear-gradient(145deg, #ff7c05, #ffae30 60%, #ff8c16); }
+.coach-profile:nth-child(4) .coach-gradient { background: radial-gradient(ellipse at 0% 0%, #fad5ef, transparent 60%), radial-gradient(ellipse at 100% 100%, #ffb4a1, transparent 60%), linear-gradient(125deg, #b28af4, #e0b1e9 50%, #f290ad); }
+.coach-profile:nth-child(5) .coach-gradient { background: radial-gradient(ellipse at 0% 0%, #d4f5f9, transparent 55%), radial-gradient(ellipse at 100% 100%, #596ee9, transparent 60%), linear-gradient(130deg, #58cdd8, #a7d6f1 55%, #7fa0f7); }
+.coach-name-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 12px; }
+.coach-name-row h2 { margin: 0; }
+.coach-name-row > span { color: #73797d; font-size: 14px; }

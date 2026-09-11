@@ -1,0 +1,20 @@
+{
+	"name": "@calgarycrocs/design-system",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./tokens": "./src/tokens.ts",
+		"./materials": "./src/materials.ts",
+		"./liquid-lens": "./src/liquid-lens.tsx",
+		"./liquid-renderer": "./src/liquid-renderer.ts",
+		"./glass-backdrop": "./src/glass-backdrop.tsx",
+		"./theme": "./src/theme.tsx",
+		"./button": "./src/button.tsx",
+		"./field": "./src/field.tsx",
+		"./segmented-control": "./src/segmented-control.tsx"
+	},
+	"peerDependencies": {
+		"react": "^19.2.0"
+	}
+}

@@ -5,6 +5,7 @@ import type { api } from "../../convex/_generated/api";
 import { useBackend } from "../backend/context";
 import {
 	ActionMenu,
+	actionToast,
 	Badge,
 	ListItem,
 	Row,
@@ -41,6 +42,7 @@ export const InviteRow = ({ invite }: { invite: Invite }): ReactElement => {
 		void task.run(async (): Promise<void> => {
 			if (!invites) throw new Error("Connect to the club to manage invites.");
 			await invites[action](invite.id);
+			actionToast(action === "resend" ? "sentInvite" : "revokedInvite");
 		});
 	};
 	return (
@@ -92,6 +94,7 @@ export const InviteRow = ({ invite }: { invite: Invite }): ReactElement => {
 																void task.run(async (): Promise<void> => {
 																	await Clipboard.setStringAsync(invite.url);
 																	setCopied(true);
+																	actionToast("copiedLink");
 																});
 															},
 														},

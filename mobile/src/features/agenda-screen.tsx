@@ -1,7 +1,7 @@
 import { atom, useAtom } from "jotai";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
-import { Button, Row, SegmentedControl, Surface } from "../design-system";
+import { Button, Row, SegmentedControl, Surface, Tabs } from "../design-system";
 import { clubDate, clubTimestamp } from "../domain/event-time";
 import { CalendarExportButton } from "./calendar-export-button";
 import { ClubShell } from "./club-shell";
@@ -47,6 +47,22 @@ export const AgendaScreen = (): ReactElement => {
 	return (
 		<ClubShell
 			title="Schedule"
+			tabs={
+				<Tabs
+					page
+					label="Schedule period"
+					hideLabel
+					value={period}
+					onValueChange={(value): void => {
+						setPeriod(value);
+						setSelectedDate(undefined);
+					}}
+					options={[
+						{ value: "upcoming", label: "Upcoming" },
+						{ value: "past", label: "Past" },
+					]}
+				/>
+			}
 			action={
 				<Row gap="xs" wrap>
 					<CalendarExportButton />
@@ -61,20 +77,7 @@ export const AgendaScreen = (): ReactElement => {
 				</Row>
 			}
 		>
-			<Row justify="between" wrap>
-				<SegmentedControl
-					label="Schedule period"
-					hideLabel
-					value={period}
-					onValueChange={(value): void => {
-						setPeriod(value);
-						setSelectedDate(undefined);
-					}}
-					options={[
-						{ value: "upcoming", label: "Upcoming" },
-						{ value: "past", label: "Past" },
-					]}
-				/>
+			<Row justify="end" wrap>
 				<SegmentedControl
 					label="Schedule layout"
 					hideLabel

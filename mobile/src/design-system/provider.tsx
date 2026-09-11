@@ -2,10 +2,12 @@ import { useFonts } from "expo-font";
 import type { ReactElement, ReactNode } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ActionToaster } from "./action-toaster";
 import { DateTimeStyles } from "./date-time-styles";
 import { fontSources } from "./fonts";
 import { MotionProvider } from "./motion-provider";
 import { PopupStyles } from "./popup-styles";
+import { ScrollbarStyles } from "./scrollbar-styles";
 import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
@@ -24,6 +26,7 @@ export const DesignProvider = ({
 			<SafeAreaProvider>
 				<MotionProvider>
 					<PopupStyles />
+					<ScrollbarStyles />
 					<DateTimeStyles />
 					{loaded ? (
 						children
@@ -36,6 +39,7 @@ export const DesignProvider = ({
 							</Text>
 						</Stack>
 					)}
+					<ActionToaster />
 				</MotionProvider>
 			</SafeAreaProvider>
 		</GestureHandlerRootView>

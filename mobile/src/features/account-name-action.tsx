@@ -9,7 +9,7 @@ export const AccountNameAction = ({
 	onSaved: (status: string) => void;
 }): ReactElement => {
 	const backend = useBackend();
-	const task = useTask();
+	const task = useTask("savedName");
 	const [open, setOpen] = useState(false);
 	const [name, setName] = useState("");
 	const changeOpen = (value: boolean): void => {
@@ -33,10 +33,14 @@ export const AccountNameAction = ({
 					<Button
 						label="Save"
 						isLoading={task.busy}
-						isDisabled={!name.trim()}
+						validationError={
+							!name.trim() ? "Check the required fields" : undefined
+						}
 						onPress={(): void => {
 							void task.run(async (): Promise<void> => {
-								await backend.updateName?.(name);
+								if (!backend.updateName)
+									throw new Error("Connect to your account first.");
+								await backend.updateName(name);
 								setOpen(false);
 								onSaved("Name updated.");
 							});

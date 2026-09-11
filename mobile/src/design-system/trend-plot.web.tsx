@@ -9,6 +9,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
+import { chartPalette } from "./chart-palette";
 import { useTheme } from "./theme";
 import { corners, font, geometry, space, typography } from "./tokens";
 import type { TrendChartProps } from "./trend-chart-props";
@@ -19,12 +20,7 @@ export const TrendChart = ({
 }: TrendChartProps): ReactElement => {
 	const theme = useTheme();
 	const animate = useMotion();
-	const colors = [
-		theme.accent.background,
-		theme.coach.foreground,
-		theme.success.foreground,
-		theme.warning.foreground,
-	];
+	const colors = chartPalette.series;
 	const dates = [
 		...new Set(
 			series.flatMap((entry) => entry.points.map((point) => point.date)),

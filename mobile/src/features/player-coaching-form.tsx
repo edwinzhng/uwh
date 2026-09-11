@@ -49,7 +49,7 @@ export const PlayerCoachingForm = ({
 				<Button
 					label="Save"
 					isLoading={busy}
-					isDisabled={!valid}
+					validationError={!valid ? "Check the required fields" : undefined}
 					onPress={(): void => {
 						void submit();
 					}}

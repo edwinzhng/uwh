@@ -10,6 +10,7 @@ import {
 	YAxis,
 } from "recharts";
 import type { AttendancePoint } from "../domain/attendance-summary";
+import { chartPalette } from "./chart-palette";
 import { useTheme } from "./theme";
 import { corners, font, geometry, space, typography } from "./tokens";
 import { useMotion } from "./use-motion";
@@ -60,33 +61,39 @@ export const AttendanceChart = ({
 							color: theme.text.primary,
 						}}
 					/>
-					<Legend iconType="circle" iconSize={space.xs} />
+					<Legend
+						formatter={(value: string): ReactElement => (
+							<span style={{ color: theme.text.secondary }}>{value}</span>
+						)}
+						iconType="circle"
+						iconSize={space.xs}
+					/>
 					<Bar
 						dataKey="onTime"
 						name="On time"
 						stackId="attendance"
-						fill={theme.accent.background}
+						fill={chartPalette.onTime}
 						isAnimationActive={animate}
 					/>
 					<Bar
 						dataKey="late"
 						name="Late"
 						stackId="attendance"
-						fill={theme.warning.foreground}
+						fill={chartPalette.late}
 						isAnimationActive={animate}
 					/>
 					<Bar
 						dataKey="absent"
 						name="No-show"
 						stackId="attendance"
-						fill={theme.danger.foreground}
+						fill={chartPalette.absent}
 						isAnimationActive={animate}
 					/>
 					<Bar
 						dataKey="unmarked"
 						name="Unmarked"
 						stackId="attendance"
-						fill={theme.controlBorder}
+						fill={chartPalette.unmarked}
 						radius={[corners.item, corners.item, 0, 0]}
 						isAnimationActive={animate}
 					/>

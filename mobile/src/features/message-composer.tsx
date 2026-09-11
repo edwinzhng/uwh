@@ -170,11 +170,13 @@ export const MessageComposer = ({
 						label="Send"
 						prefix="arrowRight"
 						isLoading={sending}
-						isDisabled={
+						validationError={
 							photos.pending ||
 							dictating ||
 							draft.length > 5000 ||
 							(!draft.trim() && !photos.photos.length)
+								? "Check the required fields"
+								: undefined
 						}
 						onPress={(): void => {
 							void send();

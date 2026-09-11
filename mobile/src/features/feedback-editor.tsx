@@ -81,7 +81,9 @@ export const FeedbackEditor = ({
 							<Button
 								label="Save draft"
 								variant="ghost"
-								isDisabled={busy || !body.trim()}
+								validationError={
+									busy || !body.trim() ? "Check the required fields" : undefined
+								}
 								onPress={(): void => {
 									void save("draft");
 								}}
@@ -91,7 +93,9 @@ export const FeedbackEditor = ({
 							<Button
 								label="Save note"
 								isLoading={busy}
-								isDisabled={!body.trim()}
+								validationError={
+									!body.trim() ? "Check the required fields" : undefined
+								}
 								onPress={(): void => {
 									void save("private");
 								}}
@@ -102,7 +106,9 @@ export const FeedbackEditor = ({
 								title="Publish feedback?"
 								description={`Share with ${memberName(data, personId)} and linked parents. Published feedback can’t be edited or deleted.`}
 								confirmLabel="Publish feedback"
-								isDisabled={busy || !body.trim()}
+								validationError={
+									busy || !body.trim() ? "Check the required fields" : undefined
+								}
 								onConfirm={(): Promise<boolean> => save("published")}
 							/>
 						)}

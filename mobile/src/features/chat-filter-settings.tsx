@@ -15,7 +15,7 @@ import { useTask } from "./use-task";
 export const ChatFilterSettings = (): ReactElement => {
 	const phrases = useQuery(api.chat_policy.current, {});
 	const save = useMutation(api.chat_policy.save);
-	const task = useTask();
+	const task = useTask("savedFilters");
 	const [open, setOpen] = useState(false);
 	const [text, setText] = useState("");
 	return (

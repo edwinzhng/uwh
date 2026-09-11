@@ -9,6 +9,7 @@ export const ConfirmButton = ({
 	label,
 	variant,
 	isDisabled,
+	validationError,
 	title,
 	description,
 	confirmLabel,
@@ -25,6 +26,7 @@ export const ConfirmButton = ({
 				label={label}
 				variant={variant}
 				isDisabled={isDisabled}
+				validationError={validationError}
 				onPress={(): void => setOpen(true)}
 			/>
 			{open ? (
@@ -35,6 +37,7 @@ export const ConfirmButton = ({
 					danger={danger}
 					onConfirm={onConfirm}
 					isDisabled={isDisabled}
+					validationError={validationError}
 					onClose={(): void => setOpen(false)}
 				/>
 			) : undefined}

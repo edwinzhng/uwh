@@ -30,6 +30,19 @@ export const PopupStyles = (): ReactElement => {
 		.join("\n");
 	return (
 		<style>{`
+[data-sonner-toast][data-type="success"] [data-icon] { color:${theme.success.foreground}; }
+[data-sonner-toast][data-type="error"] [data-icon] { color:${theme.danger.foreground}; }
+[data-sonner-toast][data-type="warning"] [data-icon] { color:${theme.warning.foreground}; }
+[data-sonner-toast][data-type="info"] [data-icon] { color:${theme.accent.background}; }
+
+[id^="floating-control-"] { position:relative; }
+[id^="floating-control-"]::after { content:""; pointer-events:none; position:absolute; inset:0; border-radius:inherit; background:transparent; }
+[id^="floating-control-"]:has(button:hover)::after,
+[id^="floating-control-"]:has([role="button"]:hover)::after,
+[id^="floating-control-"]:has([data-popup-open])::after { background:${colors.hover}; }
+[id^="floating-control-"] button,
+[id^="floating-control-"] [role="button"] { background:transparent !important; }
+
 .club-picker-field { display:flex; flex-direction:column; align-items:flex-start; gap:${space.xs}px; min-width:0; max-width:100%; }
 .club-picker-label { color:${theme.text.secondary}; font-family:${font.regular}; font-size:${typography.caption.fontSize}px; line-height:${typography.caption.lineHeight}px; }
 .club-picker-trigger, .club-combo { box-sizing:border-box; display:flex; align-items:center; gap:${control.gap}px; min-height:${control.height}px; max-width:100%; padding:${control.paddingY}px ${control.paddingX}px; border:${geometry.border}px solid ${theme.border}; border-radius:${corners.control}px; background:${theme.background.primary}; color:${theme.text.primary}; font-family:${font.medium}; font-size:${control.typography.fontSize}px; line-height:${control.typography.lineHeight}px; }
@@ -69,6 +82,7 @@ export const PopupStyles = (): ReactElement => {
 .club-combo-action:focus-visible { outline:${geometry.focus}px solid ${theme.focus}; outline-offset:-${geometry.focus}px; }
 @media ${control.touchQuery} { .club-picker-trigger, .club-combo, .club-popup-item { min-height:${geometry.touch}px; } .club-combo-action { width:${geometry.touch}px; height:${geometry.touch}px; } .club-combo-actions { margin-block:${-(geometry.touch - control.typography.lineHeight) / 2}px; margin-right:${-(geometry.touch - control.icon) / 2}px; } }
 .club-person-trigger { border:0; padding:${space.xxs}px; border-radius:${corners.control}px; background:transparent; cursor:pointer; color:${theme.text.primary}; }
+@media (min-width:${geometry.wide}px) { .club-person-trigger { width:100%; text-align:left; } }
 .club-person-trigger:hover, .club-person-trigger[data-popup-open] { background:${theme.background.hover}; }
 .club-person-trigger:focus-visible { outline:${geometry.focus}px solid ${theme.focus}; outline-offset:${space.half}px; }
 .club-person-option { cursor:pointer; padding:${space.xs}px; }

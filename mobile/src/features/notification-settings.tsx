@@ -10,6 +10,7 @@ import {
 	setPushEnabled,
 } from "../backend/native-push";
 import {
+	actionToast,
 	Button,
 	Row,
 	SectionHeading,
@@ -54,6 +55,7 @@ export const NotificationSettings = (): ReactElement => {
 												kind: item.key,
 												enabled: value,
 											});
+											actionToast("savedNotifications");
 										});
 									}}
 								/>
@@ -76,6 +78,7 @@ export const NotificationSettings = (): ReactElement => {
 											await register(registration);
 											await setPushEnabled(true);
 											setStatus("Notifications enabled.");
+											actionToast("enabledNotifications");
 										}
 									});
 								}}
@@ -91,6 +94,7 @@ export const NotificationSettings = (): ReactElement => {
 											installationId: await installationId(),
 										});
 										setStatus("Notifications disabled.");
+										actionToast("disabledNotifications");
 									});
 								}}
 							/>

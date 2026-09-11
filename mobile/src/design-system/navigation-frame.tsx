@@ -16,7 +16,6 @@ import { useTheme } from "./theme";
 import { corners, geometry, layer, space } from "./tokens";
 import { useKeyboardVisible } from "./use-keyboard-visible";
 import { useMotion } from "./use-motion";
-import { WaterBackground } from "./water-background";
 
 export const NavigationFrame = ({
 	children,
@@ -89,12 +88,7 @@ export const NavigationFrame = ({
 						zIndex: layer.sticky,
 					}}
 				>
-					<GlassPanel
-						shape="pill"
-						material="floating"
-						padding="xxs"
-						background={<WaterBackground />}
-					>
+					<GlassPanel shape="panel" material="floating" padding="xxs">
 						<View
 							accessibilityRole="tablist"
 							accessibilityLabel="Main navigation"
@@ -117,7 +111,7 @@ export const NavigationFrame = ({
 										top: space.xxs,
 										width: itemWidth - space.xxs * 2,
 										height: barSize.height - space.xxs * 2,
-										borderRadius: corners.pill,
+										borderRadius: corners.panel,
 										backgroundColor: colors.hover,
 										zIndex: layer.base,
 									}}
@@ -131,7 +125,6 @@ export const NavigationFrame = ({
 										width: itemWidth - space.xxs * 2,
 										height: barSize.height - space.xxs * 2,
 									}}
-									isRound
 									appearance="glass"
 								/>
 							) : undefined}

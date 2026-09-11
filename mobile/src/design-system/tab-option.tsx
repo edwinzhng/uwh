@@ -32,9 +32,11 @@ export const TabOption = ({
 			paddingHorizontal: space.xs,
 		}}
 	>
-		<Text variant="label" tone={selected ? "primary" : "secondary"}>
-			{label}
-		</Text>
+		{label.toLowerCase() !== staffRole ? (
+			<Text variant="label" tone={selected ? "primary" : "secondary"}>
+				{label}
+			</Text>
+		) : undefined}
 		{staffRole ? (
 			<Badge
 				label={staffRole === "coach" ? "Coach" : "Admin"}

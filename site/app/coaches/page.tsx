@@ -1,39 +1,54 @@
+import type { Metadata } from "next";
 import type { ReactElement } from "react";
 import { Footer } from "../../components/footer";
-import { getContent } from "../../lib/store";
-export const dynamic = "force-dynamic";
-const Coaches = async (): Promise<ReactElement> => {
-	const c = await getContent();
-	return (
-		<>
-			<main className="page wrap">
-				<p className="eyebrow">The people behind the practice</p>
-				<h1>Our coaches.</h1>
-				{c.coaches.length ? (
-					<div className="coach-grid">
-						{c.coaches.map((p) => (
-							<article className="coach" key={p.name}>
-								<h2>{p.name}</h2>
-								<p className="eyebrow">{p.role}</p>
-								<p>{p.bio}</p>
-							</article>
-						))}
-					</div>
-				) : (
-					<p className="empty">
-						Coach profiles are being updated.{" "}
-						<a
-							href={`mailto:${c.email}`}
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							Contact the club
-						</a>
-					</p>
-				)}
-			</main>
-			<Footer />
-		</>
-	);
-};
+import { coaches } from "../../lib/coaches";
+export const metadata: Metadata = { title: "Coaches" };
+const Coaches = (): ReactElement => (
+	<>
+		<main className="page wrap coaches-page">
+			<h1>Coaches</h1>
+			<div className="coaches-grid">
+				{coaches.map((coach) => (
+					<article className="coach-profile" key={coach.name}>
+						<div className="coach-profile-portrait">
+							<div className="coach-gradient" aria-hidden="true" />
+						</div>
+						<div className="coach-profile-body">
+							<div className="coach-name-row">
+								<h2>{coach.name}</h2>
+								{coach.role === "Head coach" ? (
+									<span>Head coach</span>
+								) : undefined}
+							</div>
+							<p>{coach.bio}</p>
+							<dl className="coach-facts">
+								<div>
+									<dt>Playing since</dt>
+									<dd>{coach.playingSince}</dd>
+								</div>
+								<div>
+									<dt>Home club</dt>
+									<dd>{coach.club}</dd>
+								</div>
+							</dl>
+							{coach.experience ? (
+								<div className="coach-experience">
+									<span>International experience</span>
+									<ul className="coach-championships">
+										{coach.experience.map((entry) => (
+											<li key={entry.role}>
+												{entry.role}: {entry.details}
+											</li>
+										))}
+									</ul>
+								</div>
+							) : undefined}
+						</div>
+					</article>
+				))}
+			</div>
+		</main>
+		<Footer />
+	</>
+);
 export default Coaches;

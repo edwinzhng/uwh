@@ -76,6 +76,16 @@ export const PersonPicker = ({
 									account.onSettings();
 								}}
 							/>
+							{account.onSignOut ? (
+								<PopupRow
+									label="Sign out"
+									icon="signOut"
+									onSelect={(): void => {
+										setOpen(false);
+										account.onSignOut?.();
+									}}
+								/>
+							) : undefined}
 						</>
 					) : undefined}
 				</Stack>

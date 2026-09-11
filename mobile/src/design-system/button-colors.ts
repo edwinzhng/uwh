@@ -5,7 +5,8 @@ export type ButtonVariant =
 	| "secondary"
 	| "ghost"
 	| "selection"
-	| "danger";
+	| "danger"
+	| "danger-text";
 export type ButtonInteraction = "rest" | "hover" | "pressed" | "disabled";
 
 export const buttonColors = (
@@ -16,9 +17,20 @@ export const buttonColors = (
 	if (interaction === "disabled")
 		return {
 			background:
-				variant === "ghost" ? "transparent" : theme.background.secondary,
+				variant === "ghost" || variant === "danger-text"
+					? "transparent"
+					: theme.background.secondary,
 			foreground: theme.text.secondary,
 			border: variant === "secondary" ? theme.border : "transparent",
+		};
+	if (variant === "danger-text" || variant === "ghost")
+		return {
+			background: "transparent",
+			foreground:
+				variant === "danger-text"
+					? theme.danger.foreground
+					: theme.text.primary,
+			border: "transparent",
 		};
 	if (variant === "solid" || variant === "danger") {
 		const colors = variant === "danger" ? theme.dangerAction : theme.accent;
@@ -29,25 +41,16 @@ export const buttonColors = (
 			border: "transparent",
 		};
 	}
-	const restingBackground =
-		variant === "ghost"
-			? "transparent"
-			: variant === "selection"
-				? theme.background.tertiary
-				: theme.background.secondary;
 	return {
 		background:
 			interaction === "rest"
-				? restingBackground
+				? variant === "selection"
+					? theme.background.tertiary
+					: theme.background.secondary
 				: interaction === "pressed"
 					? theme.background.pressed
-					: variant === "ghost"
-						? theme.background.secondary
-						: theme.background.hover,
-		foreground:
-			variant === "ghost" && interaction === "rest"
-				? theme.text.secondary
-				: theme.text.primary,
+					: theme.background.hover,
+		foreground: theme.text.primary,
 		border: variant === "secondary" ? theme.border : "transparent",
 	};
 };

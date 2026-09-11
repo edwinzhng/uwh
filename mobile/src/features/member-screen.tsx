@@ -29,12 +29,30 @@ export const MemberScreen = (): ReactElement => {
 	const setTab = (tab: string): void => router.setParams({ tab });
 	const progress = member ? canReadProgress(account, member) : false;
 	const tab = params.tab ?? (progress ? "progress" : "profile");
-	const tabs = [
+	const tabs: {
+		value: string;
+		label: string;
+		staffRole?: "admin" | "coach";
+	}[] = [
 		{ value: "profile", label: "Profile" },
 		...(progress ? [{ value: "progress", label: "Progress" }] : []),
-		...(account.admin ? [{ value: "admin", label: "Admin" }] : []),
+		...(account.admin
+			? [
+					{
+						value: "admin",
+						label: "Admin",
+						staffRole: "admin" as const,
+					},
+				]
+			: []),
 		...(account.coachPrograms.length
-			? [{ value: "coach", label: "Coach" }]
+			? [
+					{
+						value: "coach",
+						label: "Coach",
+						staffRole: "coach" as const,
+					},
+				]
 			: []),
 	];
 	const selectedTab = tabs.some((entry) => entry.value === tab)
@@ -42,6 +60,16 @@ export const MemberScreen = (): ReactElement => {
 		: "profile";
 	return (
 		<ClubShell
+			tabs={
+				<Tabs
+					page
+					label="Member"
+					hideLabel
+					value={selectedTab}
+					onValueChange={setTab}
+					options={tabs}
+				/>
+			}
 			title={member?.name ?? "Member not found"}
 			subtitle={member ? memberRoles(member, accounts) : undefined}
 			action={
@@ -68,13 +96,6 @@ export const MemberScreen = (): ReactElement => {
 		>
 			{member ? (
 				<>
-					<Tabs
-						label="Member"
-						hideLabel
-						value={selectedTab}
-						onValueChange={setTab}
-						options={tabs}
-					/>
 					<TabContent value={selectedTab}>
 						{selectedTab === "progress" ? (
 							<MemberProgress member={member} />

@@ -89,13 +89,15 @@ export const SeasonLedgerForm = ({
 								? "Record refund"
 								: "Record payment"
 					}
-					isDisabled={
+					validationError={
 						busy ||
 						!amount ||
 						!Number.isFinite(Number(amount)) ||
 						Number(amount) < 0 ||
 						(kind !== "dues" && Number(amount) === 0) ||
 						!note.trim()
+							? "Check the required fields"
+							: undefined
 					}
 					onConfirm={submit}
 				/>

@@ -95,11 +95,13 @@ export const SettingsScreen = (): ReactElement => {
 									<Button
 										label="Save changes"
 										isLoading={busy}
-										isDisabled={
+										validationError={
 											!name.trim() ||
 											(name === data.clubName &&
 												reminders === data.reminders &&
 												timeZone === (data.timeZone ?? defaultClubTimeZone))
+												? "Check the required fields"
+												: undefined
 										}
 										onPress={(): void => {
 											void dispatch({
@@ -174,7 +176,9 @@ export const SettingsScreen = (): ReactElement => {
 					<Button
 						label="Add tracker"
 						isLoading={busy}
-						isDisabled={!trackerName.trim()}
+						validationError={
+							!trackerName.trim() ? "Check the required fields" : undefined
+						}
 						onPress={(): void => {
 							void saveTracker();
 						}}

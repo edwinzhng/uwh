@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useBackend } from "../backend/context";
-import { Button, Divider, Stack, Text } from "../design-system";
+import { Button, Divider, ProviderLogo, Stack, Text } from "../design-system";
 import { providerName, socialProviders } from "../domain/social-auth";
 import { useTask } from "./use-task";
 
@@ -18,26 +18,26 @@ export const SocialSignIn = ({
 					key={provider}
 					label={`Continue with ${providerName(provider)}`}
 					variant="secondary"
-					isDisabled={disabled || !social?.info?.[provider]}
+					leading={<ProviderLogo provider={provider} />}
+					isDisabled={disabled}
 					isLoading={task.busy}
 					onPress={(): void => {
 						void task.run(async (): Promise<void> => {
-							await social?.signIn(provider);
+							if (!social?.info?.[provider])
+								throw new Error(
+									`${providerName(provider)} sign-in isn’t available yet. Please use email for now.`,
+								);
+							await social.signIn(provider);
 						});
 					}}
 				/>
 			))}
-			{social?.info && !social.info.google && !social.info.apple ? (
-				<Text variant="small" tone="secondary">
-					Google and Apple sign-in aren’t available yet.
-				</Text>
-			) : undefined}
 			{task.error ? (
 				<Text variant="small" tone="danger">
 					{task.error}
 				</Text>
 			) : undefined}
-			<Divider />
+			<Divider label="OR" />
 		</Stack>
 	);
 };

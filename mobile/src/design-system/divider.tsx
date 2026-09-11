@@ -1,11 +1,34 @@
 import type { ReactElement } from "react";
 import { View } from "react-native";
+import { Text } from "./text";
 import { useTheme } from "./theme";
-import { geometry } from "./tokens";
+import { geometry, space } from "./tokens";
 
-export const Divider = (): ReactElement => {
+export const Divider = ({ label }: { label?: string }): ReactElement => {
 	const theme = useTheme();
 	return (
-		<View style={{ height: geometry.border, backgroundColor: theme.border }} />
+		<View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+			<View
+				style={{
+					flex: 1,
+					height: geometry.border,
+					backgroundColor: theme.border,
+				}}
+			/>
+			{label ? (
+				<Text variant="small" tone="secondary">
+					{label}
+				</Text>
+			) : undefined}
+			{label ? (
+				<View
+					style={{
+						flex: 1,
+						height: geometry.border,
+						backgroundColor: theme.border,
+					}}
+				/>
+			) : undefined}
+		</View>
 	);
 };

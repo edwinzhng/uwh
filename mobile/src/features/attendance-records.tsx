@@ -13,10 +13,10 @@ export const AttendanceRecords = ({
 	return (
 		<LocalPage items={records.toReversed()}>
 			{(items) => (
-				<Stack gap="xs">
+				<Stack gap="none">
 					{items.map((record) => (
 						<ListItem
-							flush
+							cardRow
 							key={record.id}
 							title={record.title}
 							description={formatDate(record.date)}

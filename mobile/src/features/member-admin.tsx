@@ -69,7 +69,7 @@ export const MemberAdmin = ({
 			) : (
 				<>
 					<Stack gap="sm">
-						<SectionHeading>Registration</SectionHeading>
+						<SectionHeading size="small">Registration</SectionHeading>
 						<Surface>
 							<Stack>
 								{editable ? (
@@ -135,6 +135,7 @@ export const MemberAdmin = ({
 					</Stack>
 					<Stack gap="sm">
 						<SectionHeading
+							size="small"
 							action={
 								<Badge
 									label={outstanding > 0 ? `${money(outstanding)} due` : "Paid"}
@@ -165,7 +166,7 @@ export const MemberAdmin = ({
 				</>
 			)}
 			<Stack gap="sm">
-				<SectionHeading>Equipment</SectionHeading>
+				<SectionHeading size="small">Equipment</SectionHeading>
 				<Surface>
 					<Stack>
 						{loans.length ? (
@@ -208,11 +209,13 @@ export const MemberAdmin = ({
 						title="Record payment?"
 						description={`Record ${money(Math.round(Number(amount) * 100))} received from ${member.name}. This entry can’t be undone.`}
 						confirmLabel="Record payment"
-						isDisabled={
+						validationError={
 							busy ||
 							!Number.isFinite(Number(amount)) ||
 							Number(amount) <= 0 ||
 							Math.round(Number(amount) * 100) > outstanding
+								? "Check the required fields"
+								: undefined
 						}
 						onConfirm={savePayment}
 					/>

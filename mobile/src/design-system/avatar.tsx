@@ -4,15 +4,21 @@ import { avatarColors } from "./avatar-colors";
 import { useTheme } from "./theme";
 import { corners, font, geometry, typography } from "./tokens";
 
-export const Avatar = ({ name }: { name: string }): ReactElement => {
+export const Avatar = ({
+	name,
+	compact = false,
+}: {
+	name: string;
+	compact?: boolean;
+}): ReactElement => {
 	const theme = useTheme();
 	const colors = avatarColors(theme, name);
 	return (
 		<View
 			accessible={false}
 			style={{
-				width: geometry.avatar,
-				height: geometry.avatar,
+				width: compact ? 28 : geometry.avatar,
+				height: compact ? 28 : geometry.avatar,
 				borderRadius: corners.pill,
 				alignItems: "center",
 				justifyContent: "center",

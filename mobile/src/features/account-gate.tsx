@@ -22,7 +22,7 @@ export const AccountGate = (): ReactElement => {
 	const requests = backend.accountInfo?.pending ?? [];
 	const pending = requests.some((request) => request.state === "pending");
 	return (
-		<AuthLayout title="Crocs Club">
+		<AuthLayout title="Calgary Crocs">
 			{!backend.authenticated ? (
 				<AuthForm />
 			) : !backend.accountInfo ? (
@@ -84,7 +84,11 @@ export const AccountGate = (): ReactElement => {
 							<Button
 								label={mode === "join" ? "Request access" : "Create club"}
 								isLoading={task.busy}
-								isDisabled={mode === "join" ? !club.trim() : !name.trim()}
+								validationError={
+									(mode === "join" ? !club.trim() : !name.trim())
+										? "Check the required fields"
+										: undefined
+								}
 								onPress={(): void => {
 									void task.run(async (): Promise<void> => {
 										if (mode === "join") await backend.joinClub?.(club);

@@ -1,11 +1,21 @@
 import type { ReactElement, ReactNode } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import {
+	Image,
+	KeyboardAvoidingView,
+	Text as NativeText,
+	Platform,
+	ScrollView,
+	View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import clubLogo from "../../assets/club-logo.png";
+import { AuthBackground } from "./auth-background";
+import { GlassPanel } from "./glass-panel";
+import { Row } from "./row";
 import { Stack } from "./stack";
-import { Surface } from "./surface";
-import { Text } from "./text";
+
 import { useTheme } from "./theme";
-import { geometry, space } from "./tokens";
+import { font, space } from "./tokens";
 
 export const AuthLayout = ({
 	title,
@@ -17,8 +27,10 @@ export const AuthLayout = ({
 	const theme = useTheme();
 	return (
 		<SafeAreaView
+			nativeID="auth-surface"
 			style={{ flex: 1, backgroundColor: theme.background.secondary }}
 		>
+			<AuthBackground />
 			<KeyboardAvoidingView
 				style={{ flex: 1 }}
 				behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -34,16 +46,28 @@ export const AuthLayout = ({
 					<View
 						style={{
 							width: "100%",
-							maxWidth: geometry.reading,
+							maxWidth: 440,
 							alignSelf: "center",
 						}}
 					>
-						<Surface>
+						<GlassPanel padding="lg">
 							<Stack gap="lg">
-								<Text variant="h2">{title}</Text>
+								<Row gap="sm">
+									<Image source={clubLogo} style={{ width: 32, height: 32 }} />
+									<NativeText
+										accessibilityRole="header"
+										style={{
+											fontFamily: font.semibold,
+											fontSize: 28,
+											color: "#002900",
+										}}
+									>
+										{title}
+									</NativeText>
+								</Row>
 								{children}
 							</Stack>
-						</Surface>
+						</GlassPanel>
 					</View>
 				</ScrollView>
 			</KeyboardAvoidingView>

@@ -19,6 +19,7 @@ import ImagePlus from "lucide-react-native/icons/image-plus";
 import Layers from "lucide-react-native/icons/layers";
 import List from "lucide-react-native/icons/list";
 import LockKeyhole from "lucide-react-native/icons/lock-keyhole";
+import LogOut from "lucide-react-native/icons/log-out";
 import Menu from "lucide-react-native/icons/menu";
 import MessageSquare from "lucide-react-native/icons/message-square";
 import Mic from "lucide-react-native/icons/mic";
@@ -62,6 +63,7 @@ const icons = {
 	arrowLeft: ArrowLeft,
 	arrowRight: ArrowRight,
 	bell: Bell,
+	signOut: LogOut,
 	calendar: CalendarDays,
 	check: Check,
 	chevron: ChevronRight,

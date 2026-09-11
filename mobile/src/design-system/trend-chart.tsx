@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { View } from "react-native";
 import Svg, { Circle, G, Line, Text as SvgText } from "react-native-svg";
+import { chartPalette } from "./chart-palette";
 import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
@@ -12,12 +13,7 @@ export const TrendChart = ({
 	formatValue = String,
 }: TrendChartProps): ReactElement => {
 	const theme = useTheme();
-	const colors = [
-		theme.accent.background,
-		theme.coach.foreground,
-		theme.success.foreground,
-		theme.warning.foreground,
-	];
+	const colors = chartPalette.series;
 	const dates = [
 		...new Set(
 			series.flatMap((entry) => entry.points.map((point) => point.date)),

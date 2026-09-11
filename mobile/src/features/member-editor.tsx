@@ -14,7 +14,7 @@ export const MemberEditor = ({
 	onInvited?: () => void;
 }): ReactElement => {
 	const backend = useBackend();
-	const task = useTask();
+	const task = useTask("sentInvite");
 	const [id] = useState(newId);
 	const [email, setEmail] = useState("");
 	const [name, setName] = useState("");
@@ -49,7 +49,7 @@ export const MemberEditor = ({
 				<Button
 					label="Send invite"
 					isLoading={task.busy}
-					isDisabled={!valid}
+					validationError={!valid ? "Check the required fields" : undefined}
 					onPress={(): void => {
 						void save();
 					}}

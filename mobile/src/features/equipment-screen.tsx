@@ -75,6 +75,20 @@ export const EquipmentScreen = (): ReactElement => {
 	};
 	return (
 		<ClubShell
+			tabs={
+				<Tabs
+					page
+					hideLabel
+					label="Equipment"
+					value={tab}
+					onValueChange={setTab}
+					options={[
+						{ value: "items", label: "Items" },
+						{ value: "loans", label: "Loans" },
+						{ value: "history", label: "Returns" },
+					]}
+				/>
+			}
 			staffRole={account.admin ? "admin" : undefined}
 			title="Equipment"
 			back={
@@ -101,18 +115,6 @@ export const EquipmentScreen = (): ReactElement => {
 				<Text>You don’t have access to equipment management.</Text>
 			) : (
 				<Stack>
-					<Tabs
-						hideLabel
-						label="Equipment"
-						value={tab}
-						onValueChange={setTab}
-						options={[
-							{ value: "items", label: "Items" },
-							{ value: "loans", label: "Loans" },
-							{ value: "history", label: "Returns" },
-						]}
-					/>
-
 					<Field
 						label="Search"
 						value={search}

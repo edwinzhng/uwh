@@ -1,6 +1,13 @@
 import { type ReactElement, useState } from "react";
 import { useBackend } from "../backend/context";
-import { Button, Dialog, Field, Stack, Text } from "../design-system";
+import {
+	actionToast,
+	Button,
+	Dialog,
+	Field,
+	Stack,
+	Text,
+} from "../design-system";
 import { useTask } from "./use-task";
 
 export const AccountPasswordAction = ({
@@ -24,12 +31,16 @@ export const AccountPasswordAction = ({
 		setOpen(value);
 	};
 	const sendCode = async (): Promise<void> => {
-		await backend.authenticate?.({ flow: "reset", email });
+		if (!backend.authenticate)
+			throw new Error("Connect to your account first.");
+		await backend.authenticate({ flow: "reset", email });
 		setSent(true);
 		setCode("");
 	};
 	const save = async (): Promise<void> => {
-		await backend.authenticate?.({
+		if (!backend.authenticate)
+			throw new Error("Connect to your account first.");
+		await backend.authenticate({
 			flow: "reset-verification",
 			email,
 			newPassword: password,
@@ -39,6 +50,7 @@ export const AccountPasswordAction = ({
 		setCode("");
 		setOpen(false);
 		onSaved("Password updated. Other devices signed out.");
+		actionToast("savedPassword");
 	};
 	return (
 		<>
@@ -55,7 +67,11 @@ export const AccountPasswordAction = ({
 					<Button
 						label={sent ? "Save" : "Send code"}
 						isLoading={task.busy}
-						isDisabled={sent && (password.length < 12 || !/^\d{8}$/.test(code))}
+						validationError={
+							sent && (password.length < 12 || !/^\d{8}$/.test(code))
+								? "Check the required fields"
+								: undefined
+						}
 						onPress={(): void => {
 							void task.run(sent ? save : sendCode);
 						}}

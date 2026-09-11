@@ -14,8 +14,16 @@ export const ClubHomeScreen = (): ReactElement => {
 	const { account } = useApp();
 	const active = useActivePerson();
 	const router = useRouter();
+	const staff = account.admin || account.coachPrograms.length > 0;
+	const membershipTitle =
+		active.id === account.personId
+			? "My membership"
+			: `${active.name.split(" ").at(0)}’s membership`;
 	return (
-		<ClubShell title="Club management">
+		<ClubShell
+			title={staff ? "Club management" : membershipTitle}
+			titleSize="section"
+		>
 			{account.admin ? (
 				<StaffSection staffRole="admin" padding="xs">
 					<Stack gap="none">
@@ -74,11 +82,7 @@ export const ClubHomeScreen = (): ReactElement => {
 				</StaffSection>
 			) : undefined}
 			<Stack gap="sm">
-				<SectionHeading>
-					{active.id === account.personId
-						? "My membership"
-						: `${active.name.split(" ").at(0)}’s membership`}
-				</SectionHeading>
+				{staff ? <SectionHeading>{membershipTitle}</SectionHeading> : undefined}
 				<MemberAdmin key={active.id} member={active} readOnly />
 			</Stack>
 		</ClubShell>

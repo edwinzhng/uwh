@@ -5,7 +5,10 @@ import { Editor } from "../../components/editor";
 import { authorized } from "../../lib/auth";
 import { backend, getContent, serverKey } from "../../lib/store";
 export const dynamic = "force-dynamic";
-export const metadata = { robots: { index: false, follow: false } };
+export const metadata = {
+	title: "Admin",
+	robots: { index: false, follow: false },
+};
 type Inquiry = {
 	phone?: string;
 	gender?: string;

@@ -39,7 +39,7 @@ export const SeasonMembership = ({
 			) : (
 				<>
 					<Stack gap="sm">
-						<SectionHeading>Registration</SectionHeading>
+						<SectionHeading size="small">Registration</SectionHeading>
 						<Surface>
 							<Stack>
 								<Select
@@ -77,6 +77,7 @@ export const SeasonMembership = ({
 					</Stack>
 					<Stack gap="sm">
 						<SectionHeading
+							size="small"
 							action={
 								<Badge
 									label={
@@ -127,7 +128,7 @@ export const SeasonMembership = ({
 						</Surface>
 					</Stack>
 					<Stack gap="sm">
-						<SectionHeading>History</SectionHeading>
+						<SectionHeading size="small">History</SectionHeading>
 						<Surface>
 							<Stack>
 								<DataPage

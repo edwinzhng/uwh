@@ -98,7 +98,7 @@ export const NavigationControl = ({
 					) : undefined}
 				</View>
 				<Text
-					variant={vertical ? "caption" : "label"}
+					variant={vertical ? "caption" : "small"}
 					tone={
 						item.selected || (!vertical && hovered) ? "primary" : "secondary"
 					}

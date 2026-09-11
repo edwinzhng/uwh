@@ -139,7 +139,9 @@ export const MessageActions = ({
 					<Button
 						label="Send report"
 						isLoading={task.busy}
-						isDisabled={!reason.trim()}
+						validationError={
+							!reason.trim() ? "Check the required fields" : undefined
+						}
 						onPress={(): void => {
 							void task.run(async (): Promise<void> => {
 								await safety.report?.(message.id, reason, blockAuthor);
@@ -203,9 +205,11 @@ export const MessageActions = ({
 						label={mode === "edit" ? "Save" : "Delete"}
 						variant={mode === "edit" ? "solid" : "danger"}
 						isLoading={busy}
-						isDisabled={
+						validationError={
 							mode === "edit" &&
 							((!body.trim() && !message.images?.length) || body.length > 5000)
+								? "Check the required fields"
+								: undefined
 						}
 						onPress={(): void => {
 							void save();

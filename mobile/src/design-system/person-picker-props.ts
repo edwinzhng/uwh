@@ -9,5 +9,6 @@ export type PersonPickerProps = {
 	onValueChange: (id: string) => void;
 	account?: {
 		onSettings: () => void;
+		onSignOut?: () => void;
 	};
 };

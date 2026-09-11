@@ -3,7 +3,9 @@ import { ClubVideo } from "../components/club-video";
 import { Footer } from "../components/footer";
 import { Hero } from "../components/hero";
 import { JoinButton } from "../components/join-button";
+import { Policies } from "../components/policies";
 import { PracticeSchedule } from "../components/practice-schedule";
+import { clubPolicies } from "../lib/policies";
 import { getContent } from "../lib/store";
 export const dynamic = "force-dynamic";
 const Home = async (): Promise<ReactElement> => {
@@ -12,7 +14,7 @@ const Home = async (): Promise<ReactElement> => {
 		<>
 			<main>
 				<Hero headline={content.headline} intro={content.intro} />
-				<section className="club-section club-overview wrap">
+				<section id="about" className="club-section club-overview wrap">
 					<h2>Underwater hockey</h2>
 					<p>
 						A low-contact, co-ed sport played six-a-side on the bottom of a
@@ -50,6 +52,16 @@ const Home = async (): Promise<ReactElement> => {
 				<PracticeSchedule
 					location={content.location}
 					address={content.address}
+				/>
+				<Policies
+					documents={[
+						...clubPolicies,
+						...content.documents.filter(
+							(document) =>
+								!clubPolicies.some((policy) => policy.url === document.url),
+						),
+					]}
+					email={content.email}
 				/>
 			</main>
 			<Footer />

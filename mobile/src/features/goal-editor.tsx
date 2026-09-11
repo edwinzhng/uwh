@@ -37,8 +37,10 @@ export const GoalEditor = ({ member }: { member: Member }): ReactElement => {
 					<Button
 						label={proposed ? "Submit for approval" : "Save goal"}
 						isLoading={busy}
-						isDisabled={
+						validationError={
 							!goal.trim() || goal.trim() === member.goal || goal.length > 500
+								? "Check the required fields"
+								: undefined
 						}
 						onPress={(): void => {
 							void dispatch({

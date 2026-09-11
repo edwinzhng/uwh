@@ -11,7 +11,7 @@ export const InviteMemberAction = ({
 	name: string;
 }): ReactElement => {
 	const backend = useBackend();
-	const task = useTask();
+	const task = useTask("sentInvite");
 	const [open, setOpen] = useState(false);
 	const [email, setEmail] = useState("");
 	const [sent, setSent] = useState(false);
@@ -37,7 +37,9 @@ export const InviteMemberAction = ({
 					<Button
 						label={sent ? "Done" : "Send invite"}
 						isLoading={task.busy}
-						isDisabled={!sent && !email.trim()}
+						validationError={
+							!sent && !email.trim() ? "Check the required fields" : undefined
+						}
 						onPress={(): void => {
 							if (sent) {
 								setOpen(false);

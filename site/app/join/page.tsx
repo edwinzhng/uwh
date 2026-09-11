@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import type { ReactElement } from "react";
 import { Footer } from "../../components/footer";
 import { InterestForm } from "../../components/interest-form";
 
+export const metadata: Metadata = { title: "Join" };
 const Join = (): ReactElement => (
 	<>
 		<main className="page wrap join-grid">

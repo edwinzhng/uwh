@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import { makeFunctionReference } from "convex/server";
 import { sameOrigin } from "../../../lib/auth";
 import { backend, serverKey } from "../../../lib/store";
+import { trialDates } from "../../../lib/trial-dates";
 export const POST = async (request: Request): Promise<Response> => {
 	if (!sameOrigin(request))
 		return Response.json({ error: "Invalid request" }, { status: 403 });
@@ -40,9 +41,7 @@ export const POST = async (request: Request): Promise<Response> => {
 			(field) => typeof body[field] !== "string" || body[field].length > 200,
 		) ||
 		(body.referral === "Other" && !body.referralOther.trim()) ||
-		(body.firstSessionDate &&
-			(!/^\d{4}-\d{2}-\d{2}$/.test(body.firstSessionDate) ||
-				!Number.isFinite(Date.parse(body.firstSessionDate))))
+		(body.firstSessionDate && !trialDates().includes(body.firstSessionDate))
 	)
 		return Response.json(
 			{ error: "Please check your details." },
