@@ -175,6 +175,7 @@ export const appAction = v.union(
 	}),
 	v.object({
 		type: v.literal("settings"),
+		venues: v.optional(v.array(v.string())),
 		timeZone: v.optional(v.string()),
 		clubName: v.string(),
 		reminders: v.boolean(),

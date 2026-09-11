@@ -274,7 +274,7 @@ test("practice structure rejects overlaps, mismatched bounds and duplicate activ
 			...draft,
 			parts: draft.parts?.map((part) => ({ ...part, kind: "hockey" })),
 		}),
-	).toBeDefined();
+	).toBeUndefined();
 	expect(
 		validatePracticeParts({
 			...draft,

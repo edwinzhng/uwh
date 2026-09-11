@@ -138,13 +138,34 @@ export const validateEvent = (draft: EventDraft): string | undefined => {
 	)
 		return "End time must be after the start.";
 	if (
-		!Number.isInteger(draft.capacity) ||
-		draft.capacity < 1 ||
-		draft.capacity > 200
+		draft.capacity !== undefined &&
+		(!Number.isInteger(draft.capacity) ||
+			draft.capacity < 1 ||
+			draft.capacity > 200)
 	)
 		return "Capacity must be 1–200.";
+	if (
+		draft.registrationCloseHours !== undefined &&
+		(!Number.isFinite(draft.registrationCloseHours) ||
+			draft.registrationCloseHours < 0 ||
+			draft.registrationCloseHours > 8760)
+	)
+		return "Choose closing hours between 0 and 8760.";
+	if (
+		draft.registrationOpen &&
+		(!Number.isInteger(draft.registrationOpen.weeksBefore) ||
+			draft.registrationOpen.weeksBefore < 0 ||
+			draft.registrationOpen.weeksBefore > 52 ||
+			!Number.isInteger(draft.registrationOpen.weekday) ||
+			draft.registrationOpen.weekday < 1 ||
+			draft.registrationOpen.weekday > 7)
+	)
+		return "Choose a valid registration opening day.";
 	try {
 		for (const date of occurrenceDates(draft)) {
+			const window = signupWindow(date, draft, Date.now());
+			if (draft.registrationOpen && window.opensAt >= window.closesAt)
+				return "Registration must open before it closes.";
 			for (const time of new Set([
 				draft.start,
 				draft.end,
@@ -175,6 +196,10 @@ export const createOccurrences = (id: string, draft: EventDraft): ClubEvent[] =>
 			venue: draft.venue.trim(),
 			program: draft.program,
 			kind: draft.kind,
+			repeatInterval: draft.repeatInterval,
+			repeatUntil: draft.repeatUntil,
+			registrationOpen: draft.registrationOpen,
+			registrationCloseHours: draft.registrationCloseHours,
 			capacity: draft.capacity,
 			description: draft.description.trim(),
 			signup: "open",

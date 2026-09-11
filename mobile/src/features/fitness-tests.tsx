@@ -4,13 +4,15 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import {
 	Button,
+	EmptyState,
+	List,
 	ListItem,
-	SegmentedControl,
-	Stack,
 	Surface,
+	Tabs,
 	Text,
 } from "../design-system";
 import { fitnessUnitLabel } from "../domain/fitness";
+import { ClubShell } from "./club-shell";
 import { FitnessTestForm } from "./fitness-test-form";
 import { FitnessWorkspace } from "./fitness-workspace";
 export const FitnessTests = (): ReactElement => {
@@ -24,15 +26,28 @@ export const FitnessTests = (): ReactElement => {
 	);
 	if (testId)
 		return (
-			<FitnessWorkspace
-				testId={testId}
-				onBack={(): void => setTestId(undefined)}
-			/>
+			<ClubShell title="Fitness" staffRole="coach">
+				<FitnessWorkspace
+					testId={testId}
+					onBack={(): void => setTestId(undefined)}
+				/>
+			</ClubShell>
 		);
 	return (
-		<Stack>
-			<Stack>
-				<SegmentedControl
+		<ClubShell
+			title="Fitness"
+			staffRole="coach"
+			action={
+				<Button
+					label="New test"
+					prefix="plus"
+					onPress={(): void => setCreating(true)}
+				/>
+			}
+			tabs={
+				<Tabs
+					page
+					hideLabel
 					label="Tests"
 					value={view}
 					onValueChange={setView}
@@ -41,14 +56,10 @@ export const FitnessTests = (): ReactElement => {
 						{ value: "archived", label: "Archived" },
 					]}
 				/>
-				<Button
-					label="New test"
-					icon="plus"
-					onPress={(): void => setCreating(true)}
-				/>
-			</Stack>
+			}
+		>
 			<Surface padding="xs">
-				<Stack gap="xs">
+				<List>
 					{tests.results.map((test) => (
 						<ListItem
 							key={test._id}
@@ -58,13 +69,24 @@ export const FitnessTests = (): ReactElement => {
 						/>
 					))}
 					{!tests.results.length ? (
-						<Text tone="secondary">
-							{tests.status === "LoadingFirstPage"
-								? "Loading…"
-								: "No tests yet."}
-						</Text>
+						tests.status === "LoadingFirstPage" ? (
+							<Text tone="secondary">Loading…</Text>
+						) : (
+							<EmptyState
+								title={
+									view === "archived"
+										? "No archived tests"
+										: "No fitness tests yet"
+								}
+								description={
+									view === "archived"
+										? "Archived tests and their results will appear here."
+										: "Create a test to start recording results and tracking progress."
+								}
+							/>
+						)
 					) : undefined}
-				</Stack>
+				</List>
 			</Surface>
 			{tests.status === "CanLoadMore" ? (
 				<Button
@@ -79,6 +101,6 @@ export const FitnessTests = (): ReactElement => {
 					onSaved={setTestId}
 				/>
 			) : undefined}
-		</Stack>
+		</ClubShell>
 	);
 };

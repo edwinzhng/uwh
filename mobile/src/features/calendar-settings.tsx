@@ -1,6 +1,14 @@
 import { type ReactElement, useMemo, useState } from "react";
+import { Linking } from "react-native";
 import { useActivePerson, useApp } from "../demo/app-state";
-import { Checkbox, FileDownload, Stack, Text } from "../design-system";
+import {
+	Button,
+	Checkbox,
+	FileDownload,
+	List,
+	Stack,
+	Text,
+} from "../design-system";
 import { canManagePerson } from "../domain/app-rules";
 import {
 	personalCalendarEvents,
@@ -47,20 +55,22 @@ export const CalendarSettings = (): ReactElement => {
 		<Stack gap="md">
 			<Stack gap="xs">
 				<Text variant="label">Household members</Text>
-				{people.map((person) => (
-					<Checkbox
-						key={person.id}
-						label={`${person.name}${person.id === account.personId ? " · You" : ""}`}
-						checked={selected.includes(person.id)}
-						onChange={(checked): void =>
-							setSelected((current) =>
-								checked
-									? [...current, person.id]
-									: current.filter((id) => id !== person.id),
-							)
-						}
-					/>
-				))}
+				<List>
+					{people.map((person) => (
+						<Checkbox
+							key={person.id}
+							label={`${person.name}${person.id === account.personId ? " · You" : ""}`}
+							checked={selected.includes(person.id)}
+							onChange={(checked): void =>
+								setSelected((current) =>
+									checked
+										? [...current, person.id]
+										: current.filter((id) => id !== person.id),
+								)
+							}
+						/>
+					))}
+				</List>
 			</Stack>
 			{chosen.length ? (
 				source === "convex" ? (
@@ -81,6 +91,24 @@ export const CalendarSettings = (): ReactElement => {
 					Select at least one person.
 				</Text>
 			)}
+			{chosen.length ? (
+				<Stack gap="xs">
+					<Button
+						label="Open Google Calendar"
+						prefix="calendar"
+						variant="secondary"
+						onPress={(): void => {
+							void Linking.openURL(
+								"https://calendar.google.com/calendar/u/0/r/settings/export",
+							).catch(() => setError("Could not open Google Calendar."));
+						}}
+					/>
+					<Text variant="caption" tone="secondary">
+						Download the calendar, then import the .ics file in Google Calendar
+						on a computer. Imported events do not update automatically.
+					</Text>
+				</Stack>
+			) : undefined}
 			{error ? <Text tone="danger">{error}</Text> : undefined}
 		</Stack>
 	);

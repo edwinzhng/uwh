@@ -5,6 +5,7 @@ import {
 	DatePicker,
 	Dialog,
 	Field,
+	List,
 	ListItem,
 	SectionHeading,
 	Stack,
@@ -45,7 +46,7 @@ export const SeasonSettings = (): ReactElement => {
 				Seasons
 			</SectionHeading>
 			<Surface>
-				<Stack>
+				<List>
 					{data.seasons.map((season) => (
 						<ListItem
 							key={season.id}
@@ -53,7 +54,7 @@ export const SeasonSettings = (): ReactElement => {
 							description={`${season.start} – ${season.end}`}
 						/>
 					))}
-				</Stack>
+				</List>
 				<Dialog
 					staffRole="admin"
 					title="New season"

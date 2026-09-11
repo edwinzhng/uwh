@@ -4,6 +4,7 @@ import {
 	Badge,
 	Button,
 	Dialog,
+	EmptyState,
 	Field,
 	Row,
 	SectionHeading,
@@ -191,9 +192,10 @@ export const MemberAdmin = ({
 								</Row>
 							))
 						) : (
-							<Text variant="small" tone="secondary">
-								No loans
-							</Text>
+							<EmptyState
+								title="No loans"
+								description="Equipment issued to this member will appear here."
+							/>
 						)}
 					</Stack>
 				</Surface>

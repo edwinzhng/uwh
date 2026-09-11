@@ -5,7 +5,7 @@ export const importSummary = (record: ImportRecord): string => {
 		case "members":
 			return `${record.memberId ? "Link existing member" : "New player"} · ${record.sourceId}`;
 		case "events":
-			return `${record.draft.date} · ${record.draft.start}–${record.draft.end} · ${record.draft.venue} · ${record.draft.capacity} places · Private`;
+			return `${record.draft.date} · ${record.draft.start}–${record.draft.end} · ${record.draft.venue} · ${record.draft.capacity === undefined ? "No capacity limit" : `${record.draft.capacity} places`} · Private`;
 		case "attendance":
 			return `${record.person} · ${record.event} · ${record.response} · ${record.attendance}`;
 		case "registration":

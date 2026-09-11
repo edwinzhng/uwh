@@ -240,3 +240,6 @@ Use the app typography tokens consistently on desktop and mobile: page title 28p
 Do not use role lists such as “Player · Coach · Admin” as page subtitles. Subtitles should add useful context, not repeat permissions. Use contextual role badges for restricted actions or tabs; role summaries remain appropriate in member directories where they help identify people.
 
 `check:design` rejects raw feature-level typography overrides and role summaries passed directly as subtitles. The live `/design-system` foundation reference documents the same rules. Indirectly assembled copy still requires review.
+
+### Page and list composition
+Use ClubShell action for primary page actions and tabs for switching page views. Use EmptyState with a short title and helpful next step for empty collections; keep loading messages separate. Use List for checkbox and navigation collections: rows own touch targets and padding, and containers must not add inter-row gaps. Avoid placing primary page actions as standalone controls in the content stack.

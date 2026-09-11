@@ -47,7 +47,11 @@ export type ClubEvent = {
 	program: string;
 	kind: "training" | "hockey" | "social";
 	signup: "open" | "scheduled" | "closed";
-	capacity: number;
+	repeatInterval?: number;
+	repeatUntil?: string;
+	registrationOpen?: { weeksBefore: number; weekday: number; time: string };
+	registrationCloseHours?: number;
+	capacity?: number;
 	description: string;
 	cancelled: boolean;
 	seriesId?: string;
@@ -145,6 +149,7 @@ export type AppData = {
 	playerCoaching?: PlayerCoaching[];
 	seasons: Season[];
 	clubName: string;
+	venues?: string[];
 	members: Member[];
 	events: ClubEvent[];
 	responses: EventResponse[];
@@ -176,7 +181,11 @@ export type EventDraft = {
 	venue: string;
 	program: string;
 	kind: ClubEvent["kind"];
-	capacity: number;
+	repeatInterval?: number;
+	repeatUntil?: string;
+	registrationOpen?: { weeksBefore: number; weekday: number; time: string };
+	registrationCloseHours?: number;
+	capacity?: number;
 	repeat: "once" | "daily" | "weekdays" | "weekly" | "fortnightly" | "monthly";
 	occurrences?: number;
 	eligiblePersonIds?: string[];
@@ -265,6 +274,7 @@ export type AppAction =
 	| {
 			type: "settings";
 			clubName: string;
+			venues?: string[];
 			reminders: boolean;
 			timeZone?: string;
 	  };

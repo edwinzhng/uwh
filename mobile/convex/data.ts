@@ -346,6 +346,7 @@ export const loadData = async (
 		},
 		data: {
 			clubName: club.name,
+			venues: club.venues,
 			timeZone: club.timeZone ?? defaultClubTimeZone,
 			seasons: club.seasons ?? initialSeasons,
 			reminders: club.reminders,
@@ -426,12 +427,14 @@ export const saveData = async (
 		club.name !== data.clubName ||
 		(club.timeZone ?? defaultClubTimeZone) !==
 			(data.timeZone ?? defaultClubTimeZone) ||
+		JSON.stringify(club.venues) !== JSON.stringify(data.venues) ||
 		club.reminders !== data.reminders ||
 		JSON.stringify(club.seasons ?? initialSeasons) !==
 			JSON.stringify(data.seasons)
 	)
 		await ctx.db.patch(clubId, {
 			name: data.clubName,
+			venues: data.venues,
 			timeZone: data.timeZone ?? defaultClubTimeZone,
 			seasons: data.seasons,
 			reminders: data.reminders,

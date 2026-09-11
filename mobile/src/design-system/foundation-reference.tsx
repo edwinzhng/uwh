@@ -1,6 +1,9 @@
 import type { ReactElement } from "react";
+import { Checkbox } from "./checkbox";
 import { ColorReference } from "./color-reference";
+import { EmptyState } from "./empty-state";
 import { Grid } from "./grid";
+import { List } from "./list";
 import { Stack } from "./stack";
 import { Surface } from "./surface";
 import { Text } from "./text";
@@ -30,6 +33,26 @@ export const FoundationReference = (): ReactElement => (
 			<Text variant="caption" tone="secondary">
 				Caption
 			</Text>
+		</Stack>
+		<Stack gap="sm">
+			<Text variant="h4">Lists and empty states</Text>
+			<Text variant="small" tone="secondary">
+				Use List for compact collections. Rows keep their touch targets without
+				extra gaps. Put primary actions in the page header and use tabs for
+				views.
+			</Text>
+			<List>
+				<Checkbox label="Selected player" checked onChange={(): void => {}} />
+				<Checkbox
+					label="Another player"
+					checked={false}
+					onChange={(): void => {}}
+				/>
+			</List>
+			<EmptyState
+				title="No fitness tests yet"
+				description="Create a test to start recording results and tracking progress."
+			/>
 		</Stack>
 		<TokenSamples />
 		<Stack>

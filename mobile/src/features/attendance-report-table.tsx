@@ -1,6 +1,13 @@
 import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
-import { AttendanceMatrix, Button, Row, Stack, Text } from "../design-system";
+import {
+	AttendanceMatrix,
+	Button,
+	EmptyState,
+	Row,
+	Stack,
+	Text,
+} from "../design-system";
 import { useAttendanceReport } from "./use-attendance-report";
 
 export const AttendanceReportTable = ({
@@ -40,7 +47,10 @@ export const AttendanceReportTable = ({
 							}
 						/>
 					) : (
-						<Text tone="secondary">No players found.</Text>
+						<EmptyState
+							title="No players found"
+							description="Try changing your filters."
+						/>
 					)}
 				</>
 			) : (

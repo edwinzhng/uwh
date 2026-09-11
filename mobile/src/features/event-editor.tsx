@@ -13,6 +13,7 @@ import {
 } from "../design-system";
 import { validateEvent } from "../domain/app-rules";
 import type { ClubEvent, EventDraft } from "../domain/app-types";
+import { toggleEventParts } from "../domain/event-part-draft";
 import {
 	eventDraft,
 	recurrenceChoices,
@@ -38,26 +39,29 @@ export const EventEditor = ({
 	const [draft, setDraft] = useState<EventDraft>(() =>
 		event
 			? eventDraft(event)
-			: {
-					title: "",
-					date: initialEventDate,
-					timeZone: data.timeZone,
-					start: "19:45",
-					end: "21:00",
-					venue: "MNP Community & Sport Centre",
-					program: "club",
-					kind: "training",
-					capacity: 24,
-					repeat: "once",
-					occurrences: 4,
-					description: "",
-					seasonId:
-						data.seasons.find(
-							(season) =>
-								season.start <= initialEventDate &&
-								season.end >= initialEventDate,
-						)?.id ?? data.seasons.at(-1)?.id,
-				},
+			: toggleEventParts(
+					{
+						title: "",
+						date: initialEventDate,
+						timeZone: data.timeZone,
+						start: "19:45",
+						end: "21:00",
+						venue: data.venues?.at(0) ?? "",
+						program: "club",
+						kind: "training",
+						capacity: undefined,
+						repeat: "once",
+						occurrences: 4,
+						description: "",
+						seasonId:
+							data.seasons.find(
+								(season) =>
+									season.start <= initialEventDate &&
+									season.end >= initialEventDate,
+							)?.id ?? data.seasons.at(-1)?.id,
+					},
+					true,
+				),
 	);
 	const [editId] = useState(newId);
 	const [error, setError] = useState<string>();
@@ -181,26 +185,6 @@ export const EventEditor = ({
 								setDraft({ ...draft, seasonId })
 							}
 						/>
-						<Select
-							label="Type"
-							value={draft.kind}
-							options={[
-								{
-									value: "training",
-									label: draft.parts?.length ? "Practice" : "Training",
-								},
-								{ value: "hockey", label: "Hockey" },
-								{ value: "social", label: "Social" },
-							]}
-							onValueChange={(kind): void => {
-								if (kind)
-									setDraft({
-										...draft,
-										kind,
-										parts: kind === "training" ? draft.parts : undefined,
-									});
-							}}
-						/>
 					</Grid>
 					<DatePicker
 						label="Date"
@@ -210,10 +194,23 @@ export const EventEditor = ({
 						}
 					/>
 					<EventPartsEditor draft={draft} onChange={setDraft} />
-					<Field
+					{!data.venues?.length ? (
+						<Text variant="caption" tone="secondary">
+							Configure venues in Club settings before creating an event.
+						</Text>
+					) : undefined}
+					<Select
 						label="Venue"
+						options={[
+							...new Set([
+								...(data.venues ?? []),
+								...(event?.venue ? [event.venue] : []),
+							]),
+						].map((venue) => ({ label: venue, value: venue }))}
 						value={draft.venue}
-						onValueChange={(venue): void => setDraft({ ...draft, venue })}
+						onValueChange={(venue): void =>
+							setDraft({ ...draft, venue: venue ?? "" })
+						}
 					/>
 					{!event || scope !== "single" || !event.seriesId ? (
 						<Grid gap="md">
@@ -226,14 +223,59 @@ export const EventEditor = ({
 								}}
 							/>
 							{draft.repeat !== "once" ? (
-								<Field
-									label="Occurrences"
-									inputMode="numeric"
-									value={String(draft.occurrences ?? 4)}
-									onValueChange={(value): void =>
-										setDraft({ ...draft, occurrences: Number(value) })
-									}
-								/>
+								<Stack gap="sm">
+									<Field
+										label={
+											draft.repeat === "monthly"
+												? "Every X months"
+												: draft.repeat === "daily"
+													? "Every X days"
+													: draft.repeat === "fortnightly"
+														? "Every X two-week cycles"
+														: "Every X weeks"
+										}
+										inputMode="numeric"
+										value={String(draft.repeatInterval ?? 1)}
+										onValueChange={(value): void =>
+											setDraft({ ...draft, repeatInterval: Number(value) })
+										}
+									/>
+									<Select
+										label="Series ends"
+										value={draft.repeatUntil ? "date" : "count"}
+										options={[
+											{ value: "count", label: "After a number of events" },
+											{ value: "date", label: "On a date" },
+										]}
+										onValueChange={(value): void =>
+											setDraft({
+												...draft,
+												repeatUntil: value === "date" ? draft.date : undefined,
+											})
+										}
+									/>
+									{draft.repeatUntil ? (
+										<DatePicker
+											label="End date"
+											value={draft.repeatUntil}
+											onValueChange={(repeatUntil): void =>
+												setDraft({
+													...draft,
+													repeatUntil: repeatUntil ?? draft.date,
+												})
+											}
+										/>
+									) : (
+										<Field
+											label="Number of events"
+											inputMode="numeric"
+											value={String(draft.occurrences ?? 4)}
+											onValueChange={(value): void =>
+												setDraft({ ...draft, occurrences: Number(value) })
+											}
+										/>
+									)}
+								</Stack>
 							) : undefined}
 						</Grid>
 					) : undefined}
@@ -270,9 +312,9 @@ export const EventEditor = ({
 				<Stack>
 					{scope !== "single" ? (
 						<Text variant="caption" tone="secondary">
-							Rebuilds {draft.repeat === "once" ? 1 : draft.occurrences} events
-							from {draft.date}. Existing RSVPs stay with their events. Extra
-							events are cancelled. Individual edits are kept.
+							Rebuilds the series from {draft.date}. Existing RSVPs stay with
+							their events. Extra events are cancelled. Individual edits are
+							kept.
 						</Text>
 					) : undefined}
 					{removed > 0 ? (

@@ -2,13 +2,14 @@ import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import {
 	Button,
+	Checkbox,
 	Dialog,
 	Field,
+	List,
 	Row,
 	Select,
 	Stack,
 	Text,
-	Toggle,
 } from "../design-system";
 
 export const EventEligibility = ({
@@ -65,24 +66,26 @@ export const EventEligibility = ({
 							onPress={(): void => onChange([])}
 						/>
 					</Row>
-					{players
-						.filter((player) =>
-							player.name.toLowerCase().includes(search.toLowerCase()),
-						)
-						.map((player) => (
-							<Toggle
-								key={player.id}
-								label={player.name}
-								value={value?.includes(player.id) ?? false}
-								onValueChange={(checked): void =>
-									onChange(
-										checked
-											? [...(value ?? []), player.id]
-											: value?.filter((id) => id !== player.id),
-									)
-								}
-							/>
-						))}
+					<List>
+						{players
+							.filter((player) =>
+								player.name.toLowerCase().includes(search.toLowerCase()),
+							)
+							.map((player) => (
+								<Checkbox
+									key={player.id}
+									label={player.name}
+									checked={value?.includes(player.id) ?? false}
+									onChange={(checked): void =>
+										onChange(
+											checked
+												? [...(value ?? []), player.id]
+												: value?.filter((id) => id !== player.id),
+										)
+									}
+								/>
+							))}
+					</List>
 					<Text variant="caption" tone="secondary">
 						Only selected players can register. Parents can register their
 						eligible children.

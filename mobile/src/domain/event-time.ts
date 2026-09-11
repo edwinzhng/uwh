@@ -60,9 +60,22 @@ export const signupWindow = (
 				? 72
 				: 0;
 	const closeHours =
-		draft.signupCloses === "day" ? 24 : draft.signupCloses === "hour" ? 1 : 0;
+		draft.registrationCloseHours ??
+		(draft.signupCloses === "day" ? 24 : draft.signupCloses === "hour" ? 1 : 0);
 	return {
-		opensAt: openHours ? start - openHours * 3600000 : now,
+		opensAt: draft.registrationOpen
+			? clubTimestamp(
+					Temporal.PlainDate.from(date)
+						.subtract({ days: Temporal.PlainDate.from(date).dayOfWeek - 1 })
+						.subtract({ weeks: draft.registrationOpen.weeksBefore })
+						.add({ days: draft.registrationOpen.weekday - 1 })
+						.toString(),
+					draft.registrationOpen.time,
+					draft.timeZone,
+				)
+			: openHours
+				? start - openHours * 3600000
+				: now,
 		closesAt: start - closeHours * 3600000,
 	};
 };

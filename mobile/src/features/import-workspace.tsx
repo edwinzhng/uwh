@@ -5,6 +5,7 @@ import { pickImportFile } from "../backend/pick-import-file";
 import { useImportJob } from "../backend/use-import-job";
 import {
 	Button,
+	EmptyState,
 	Field,
 	FileDownload,
 	Progress,
@@ -244,9 +245,10 @@ export const ImportWorkspace = (): ReactElement => {
 										</Stack>
 									))}
 									{!entries.length ? (
-										<Text variant="small" tone="secondary">
-											No imports yet.
-										</Text>
+										<EmptyState
+											title="No imports yet"
+											description="Upload a file to bring existing club records into the app."
+										/>
 									) : undefined}
 								</Stack>
 							)}

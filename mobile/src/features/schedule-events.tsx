@@ -3,8 +3,10 @@ import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import {
 	Dialog,
+	EmptyState,
 	EventActions,
 	EventCard,
+	List,
 	ListItem,
 	Stack,
 	Text,
@@ -42,7 +44,7 @@ export const ScheduleEvents = ({
 				}}
 				title={`Attendees${attendeeEvent ? ` · ${attendeeEvent.title}` : ""}`}
 			>
-				<Stack gap="none">
+				<List>
 					{attendees.map((member) => (
 						<ListItem
 							key={member.id}
@@ -51,11 +53,12 @@ export const ScheduleEvents = ({
 						/>
 					))}
 					{!attendees.length ? (
-						<Text variant="small" tone="secondary">
-							No attendees yet.
-						</Text>
+						<EmptyState
+							title="No attendees yet"
+							description="Players will appear here when they register."
+						/>
 					) : undefined}
-				</Stack>
+				</List>
 			</Dialog>
 			{dates.map((date) => (
 				<Stack key={date} gap="xs">
@@ -97,9 +100,10 @@ export const ScheduleEvents = ({
 				</Stack>
 			))}
 			{!events.length ? (
-				<Text variant="small" tone="secondary">
-					No events
-				</Text>
+				<EmptyState
+					title="No events"
+					description="Try another date or add an event."
+				/>
 			) : undefined}
 		</Stack>
 	);

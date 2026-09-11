@@ -6,6 +6,7 @@ import {
 	Badge,
 	Button,
 	Field,
+	List,
 	ListItem,
 	Row,
 	SectionHeading,
@@ -101,7 +102,7 @@ export const FitnessProgress = ({
 				}}
 			/>
 			<Surface padding="xs">
-				<Stack gap="xs">
+				<List>
 					{page?.page.map((row) => (
 						<ListItem
 							key={row.personId}
@@ -132,7 +133,7 @@ export const FitnessProgress = ({
 							{page ? "No players found." : "Loading…"}
 						</Text>
 					) : undefined}
-				</Stack>
+				</List>
 			</Surface>
 			<Row justify="between">
 				<Button

@@ -5,6 +5,7 @@ import {
 	Badge,
 	Button,
 	Dialog,
+	List,
 	ListItem,
 	Stack,
 	Surface,
@@ -21,7 +22,7 @@ const NoticeRows = ({ items }: { items: Notice[] }): ReactElement => {
 	return (
 		<>
 			<Surface padding="xs">
-				<Stack gap="xs">
+				<List>
 					{items.map((entry) => (
 						<ListItem
 							key={entry.id}
@@ -47,7 +48,7 @@ const NoticeRows = ({ items }: { items: Notice[] }): ReactElement => {
 							No announcements
 						</Text>
 					) : undefined}
-				</Stack>
+				</List>
 			</Surface>
 			{notice ? (
 				<Dialog

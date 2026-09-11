@@ -4,6 +4,7 @@ import { useMessaging } from "../backend/messaging-context";
 import {
 	Badge,
 	Field,
+	List,
 	ListItem,
 	Row,
 	Stack,
@@ -28,7 +29,7 @@ export const ConversationList = (): ReactElement => {
 				onValueChange={setSearch}
 			/>
 			<Surface padding="xs">
-				<Stack gap="xxs">
+				<List>
 					{visible.map((thread) => (
 						<ListItem
 							key={thread.id}
@@ -73,7 +74,7 @@ export const ConversationList = (): ReactElement => {
 							{loading ? "Loading conversations…" : "No conversations found."}
 						</Text>
 					) : undefined}
-				</Stack>
+				</List>
 			</Surface>
 		</Stack>
 	);

@@ -8,6 +8,7 @@ import {
 	Badge,
 	Button,
 	Dialog,
+	List,
 	ListItem,
 	Row,
 	SectionHeading,
@@ -80,7 +81,7 @@ export const ModerationScreen = (): ReactElement => {
 					>
 						{(items) => (
 							<Surface>
-								<Stack>
+								<List>
 									{items.map((entry) => (
 										<ListItem
 											key={entry._id}
@@ -111,7 +112,7 @@ export const ModerationScreen = (): ReactElement => {
 											No reports
 										</Text>
 									) : undefined}
-								</Stack>
+								</List>
 							</Surface>
 						)}
 					</DataPage>
@@ -119,7 +120,7 @@ export const ModerationScreen = (): ReactElement => {
 						<Stack gap="sm">
 							<SectionHeading>Paused chat access</SectionHeading>
 							<Surface>
-								<Stack>
+								<List>
 									{safety.queue?.restrictions.map((entry) => (
 										<ListItem
 											key={entry.id}
@@ -138,7 +139,7 @@ export const ModerationScreen = (): ReactElement => {
 											}
 										/>
 									))}
-								</Stack>
+								</List>
 							</Surface>
 						</Stack>
 					) : undefined}

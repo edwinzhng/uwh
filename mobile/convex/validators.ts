@@ -52,7 +52,17 @@ export const eventsValue = v.object({
 		v.literal("scheduled"),
 		v.literal("closed"),
 	),
-	capacity: v.number(),
+	repeatInterval: v.optional(v.number()),
+	repeatUntil: v.optional(v.string()),
+	registrationOpen: v.optional(
+		v.object({
+			weeksBefore: v.number(),
+			weekday: v.number(),
+			time: v.string(),
+		}),
+	),
+	registrationCloseHours: v.optional(v.number()),
+	capacity: v.optional(v.number()),
 	description: v.string(),
 	cancelled: v.boolean(),
 	seriesId: v.optional(v.string()),

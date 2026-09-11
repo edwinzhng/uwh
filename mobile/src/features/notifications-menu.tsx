@@ -5,10 +5,10 @@ import {
 	Badge,
 	Button,
 	Dialog,
+	EmptyState,
+	List,
 	ListItem,
 	NotificationBell,
-	Stack,
-	Text,
 } from "../design-system";
 export const NotificationsMenu = ({
 	labeled = false,
@@ -46,7 +46,7 @@ export const NotificationsMenu = ({
 					/>
 				}
 			>
-				<Stack>
+				<List>
 					{unread.length ? (
 						unread.map((entry) => (
 							<ListItem
@@ -64,9 +64,12 @@ export const NotificationsMenu = ({
 							/>
 						))
 					) : (
-						<Text tone="secondary">No unread recent announcements.</Text>
+						<EmptyState
+							title="You’re all caught up"
+							description="New announcements will appear here."
+						/>
 					)}
-				</Stack>
+				</List>
 			</Dialog>
 		</>
 	);

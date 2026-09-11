@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
-import { Badge, ListItem, Stack } from "../design-system";
+import { Badge, List, ListItem } from "../design-system";
 import { DataPage } from "./data-page";
 import { useSearchTerm } from "./use-search-term";
 export const EquipmentReturns = ({
@@ -36,7 +36,7 @@ export const EquipmentReturns = ({
 			}}
 		>
 			{(items) => (
-				<Stack gap="xs">
+				<List>
 					{items.map((item) => (
 						<ListItem
 							key={item.id}
@@ -48,7 +48,7 @@ export const EquipmentReturns = ({
 					{!items.length ? (
 						<ListItem title={term ? "No matches on this page" : "No returns"} />
 					) : undefined}
-				</Stack>
+				</List>
 			)}
 		</DataPage>
 	);

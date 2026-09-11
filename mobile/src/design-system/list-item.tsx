@@ -68,7 +68,7 @@ export const ListItem = ({
 			onFocus={(): void => setFocused(true)}
 			onBlur={(): void => setFocused(false)}
 			style={({ pressed }) => ({
-				paddingVertical: space.sm,
+				paddingVertical: space.xs,
 				paddingHorizontal: cardRow ? space.md : flush ? space.none : space.sm,
 				marginHorizontal: cardRow ? -space.md : 0,
 				minHeight: geometry.touch,
@@ -87,7 +87,7 @@ export const ListItem = ({
 	) : (
 		<View
 			style={{
-				paddingVertical: space.sm,
+				paddingVertical: space.xs,
 				paddingHorizontal: cardRow ? space.md : flush ? space.none : space.sm,
 				marginHorizontal: cardRow ? -space.md : 0,
 			}}

@@ -2,7 +2,16 @@ import { usePaginatedQuery } from "convex/react";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
-import { Button, ListItem, Row, Stack, Surface, Text } from "../design-system";
+import {
+	Button,
+	EmptyState,
+	List,
+	ListItem,
+	Row,
+	Stack,
+	Surface,
+	Text,
+} from "../design-system";
 import { FitnessSessionForm } from "./fitness-session-form";
 export const FitnessSessions = ({
 	test,
@@ -31,7 +40,7 @@ export const FitnessSessions = ({
 				</Row>
 			) : undefined}
 			<Surface padding="xs">
-				<Stack gap="xs">
+				<List>
 					{sessions.results.map((session) => (
 						<ListItem
 							key={session._id}
@@ -41,13 +50,16 @@ export const FitnessSessions = ({
 						/>
 					))}
 					{!sessions.results.length ? (
-						<Text tone="secondary">
-							{sessions.status === "LoadingFirstPage"
-								? "Loading…"
-								: "No sessions this season."}
-						</Text>
+						sessions.status === "LoadingFirstPage" ? (
+							<Text tone="secondary">Loading…</Text>
+						) : (
+							<EmptyState
+								title="No sessions this season"
+								description="Add a session to record this test’s results."
+							/>
+						)
 					) : undefined}
-				</Stack>
+				</List>
 			</Surface>
 			{sessions.status === "CanLoadMore" ? (
 				<Button

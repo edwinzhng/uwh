@@ -50,6 +50,7 @@ export const PopupStyles = (): ReactElement => {
 .club-picker-trigger[data-icon] { justify-content:center; padding-inline:${space.xs}px; }
 .club-picker-trigger[data-picker], .club-combo { width:${geometry.popupWidth}px; }
 .club-picker-trigger[data-picker] { justify-content:space-between; }
+[role="dialog"] .club-picker-trigger[data-picker]:not([data-compact]), [role="dialog"] .club-combo { width:100%; }
 .club-picker-trigger[data-picker][data-compact] { width:${geometry.compactPickerWidth}px; }
 .club-picker-trigger:hover:not(:disabled), .club-picker-trigger[data-popup-open] { background:${theme.background.secondary}; }
 .club-picker-trigger:focus-visible, .club-combo:focus-within { outline:${geometry.focus}px solid ${theme.focus}; outline-offset:${geometry.focus}px; }

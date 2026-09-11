@@ -4,6 +4,7 @@ import { useSeasonRecord } from "../backend/use-season-record";
 import {
 	Badge,
 	Button,
+	EmptyState,
 	LoadingContent,
 	Row,
 	SectionHeading,
@@ -159,9 +160,10 @@ export const SeasonMembership = ({
 												</Stack>
 											))}
 											{!entries.length ? (
-												<Text variant="small" tone="secondary">
-													No changes this season.
-												</Text>
+												<EmptyState
+													title="No changes this season"
+													description="Membership changes will appear here."
+												/>
 											) : undefined}
 										</Stack>
 									)}

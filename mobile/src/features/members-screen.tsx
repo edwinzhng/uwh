@@ -5,6 +5,7 @@ import { useActivePerson, useApp } from "../demo/app-state";
 import {
 	Button,
 	Field,
+	List,
 	ListItem,
 	Row,
 	Stack,
@@ -99,7 +100,7 @@ export const MembersScreen = (): ReactElement => {
 							>
 								{(items) => (
 									<Surface padding="xs">
-										<Stack gap="xxs">
+										<List>
 											{items.map(({ member, roles }) => (
 												<ListItem
 													key={member.id}
@@ -117,7 +118,7 @@ export const MembersScreen = (): ReactElement => {
 											{!items.length ? (
 												<ListItem title="No members found" />
 											) : undefined}
-										</Stack>
+										</List>
 									</Surface>
 								)}
 							</DataPage>

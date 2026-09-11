@@ -7,6 +7,7 @@ import {
 	Combobox,
 	Dialog,
 	Field,
+	List,
 	ListItem,
 	Row,
 	SectionHeading,
@@ -26,6 +27,7 @@ import { SeasonSettings } from "./season-settings";
 export const SettingsScreen = (): ReactElement => {
 	const { data, account, dispatch, busy, source } = useApp();
 	const router = useRouter();
+	const [venues, setVenues] = useState((data.venues ?? []).join("\n"));
 	const [name, setName] = useState(data.clubName);
 	const [timeZone, setTimeZone] = useState(
 		data.timeZone ?? defaultClubTimeZone,
@@ -73,6 +75,12 @@ export const SettingsScreen = (): ReactElement => {
 						<SectionHeading>General</SectionHeading>
 						<Surface>
 							<Stack>
+								<Field
+									label="Venues (one per line)"
+									value={venues}
+									onValueChange={setVenues}
+									multiline
+								/>
 								<Field label="Club name" value={name} onValueChange={setName} />
 								<Combobox
 									label="Timezone"
@@ -97,7 +105,8 @@ export const SettingsScreen = (): ReactElement => {
 										isLoading={busy}
 										validationError={
 											!name.trim() ||
-											(name === data.clubName &&
+											(venues === (data.venues ?? []).join("\n") &&
+												name === data.clubName &&
 												reminders === data.reminders &&
 												timeZone === (data.timeZone ?? defaultClubTimeZone))
 												? "Check the required fields"
@@ -107,6 +116,7 @@ export const SettingsScreen = (): ReactElement => {
 											void dispatch({
 												type: "settings",
 												clubName: name,
+												venues: venues.split("\n"),
 												reminders,
 												timeZone,
 											});
@@ -130,7 +140,7 @@ export const SettingsScreen = (): ReactElement => {
 							Member trackers
 						</SectionHeading>
 						<Surface>
-							<Stack>
+							<List>
 								{data.trackers.map((tracker) => (
 									<ListItem
 										key={tracker.id}
@@ -159,7 +169,7 @@ export const SettingsScreen = (): ReactElement => {
 										}
 									/>
 								))}
-							</Stack>
+							</List>
 						</Surface>
 					</Stack>
 					<AccessPanel />

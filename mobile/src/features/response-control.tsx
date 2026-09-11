@@ -32,7 +32,7 @@ export const ResponseControl = ({
 	const full =
 		data.responses.filter(
 			(entry) => entry.eventId === event.id && entry.response === "going",
-		).length >= event.capacity;
+		).length >= (event.capacity ?? Infinity);
 	const respond = async (
 		value: Response,
 		partIds?: string[],

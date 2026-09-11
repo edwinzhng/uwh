@@ -3,6 +3,7 @@ import { useApp } from "../demo/app-state";
 import {
 	Button,
 	Combobox,
+	EmptyState,
 	Row,
 	SectionHeading,
 	Select,
@@ -97,9 +98,10 @@ const EventCoachList = ({
 								</Stack>
 							))}
 							{!controls.assignments.length ? (
-								<Text variant="small" tone="secondary">
-									No coaches assigned
-								</Text>
+								<EmptyState
+									title="No coaches assigned"
+									description="Assign a coach to this practice."
+								/>
 							) : undefined}
 							{available.length && !event.cancelled ? (
 								<Stack gap="sm">

@@ -6,7 +6,9 @@ import {
 	Combobox,
 	DatePicker,
 	Dialog,
+	EmptyState,
 	Field,
+	List,
 	ListItem,
 	Row,
 	Stack,
@@ -137,7 +139,7 @@ export const EquipmentScreen = (): ReactElement => {
 							) : (
 								<LocalPage key={search + tab} items={loans}>
 									{(items) => (
-										<Stack gap="xs">
+										<List>
 											{items.map((loan) => (
 												<ListItem
 													key={loan.id}
@@ -153,9 +155,12 @@ export const EquipmentScreen = (): ReactElement => {
 												/>
 											))}
 											{!items.length ? (
-												<ListItem title="No loans found" />
+												<EmptyState
+													title="No loans found"
+													description="Try another filter or issue equipment to a member."
+												/>
 											) : undefined}
-										</Stack>
+										</List>
 									)}
 								</LocalPage>
 							)}

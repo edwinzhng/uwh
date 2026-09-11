@@ -1,6 +1,14 @@
 import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
-import { Button, ListItem, Row, Stack, Surface, Text } from "../design-system";
+import {
+	Button,
+	List,
+	ListItem,
+	Row,
+	Stack,
+	Surface,
+	Text,
+} from "../design-system";
 import {
 	type CoachingPractice,
 	coachingHoursLabel,
@@ -31,7 +39,7 @@ export const CoachingHoursReport = ({
 			<Surface padding="xs">
 				<LocalPage items={totals}>
 					{(page) => (
-						<Stack gap="xs">
+						<List>
 							{page.map((total) => (
 								<ListItem
 									key={total.coachId}
@@ -48,7 +56,7 @@ export const CoachingHoursReport = ({
 									description="Assign coaches on a practice’s Coaching tab."
 								/>
 							) : undefined}
-						</Stack>
+						</List>
 					)}
 				</LocalPage>
 			</Surface>
@@ -65,7 +73,7 @@ export const CoachingHoursReport = ({
 					<Surface padding="xs">
 						<LocalPage key={selected} items={history}>
 							{(page) => (
-								<Stack gap="xs">
+								<List>
 									{page.map((practice) => (
 										<ListItem
 											key={practice.eventId}
@@ -79,7 +87,7 @@ export const CoachingHoursReport = ({
 											}
 										/>
 									))}
-								</Stack>
+								</List>
 							)}
 						</LocalPage>
 					</Surface>

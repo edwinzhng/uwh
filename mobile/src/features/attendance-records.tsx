@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
-import { Badge, ListItem, Stack } from "../design-system";
+import { Badge, List, ListItem } from "../design-system";
 import { formatDate } from "../domain/app-rules";
 import type { attendanceSummary } from "../domain/attendance-summary";
 import { LocalPage } from "./local-page";
@@ -13,7 +13,7 @@ export const AttendanceRecords = ({
 	return (
 		<LocalPage items={records.toReversed()}>
 			{(items) => (
-				<Stack gap="none">
+				<List>
 					{items.map((record) => (
 						<ListItem
 							cardRow
@@ -50,7 +50,7 @@ export const AttendanceRecords = ({
 							}
 						/>
 					))}
-				</Stack>
+				</List>
 			)}
 		</LocalPage>
 	);

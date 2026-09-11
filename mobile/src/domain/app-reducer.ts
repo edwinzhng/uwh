@@ -110,7 +110,7 @@ export const reduceApp = (
 					entry.response === "going",
 			).length;
 			const response =
-				action.response === "going" && going >= event.capacity
+				action.response === "going" && going >= (event.capacity ?? Infinity)
 					? "waiting"
 					: action.response;
 			const updated: EventResponse = {
@@ -135,7 +135,7 @@ export const reduceApp = (
 			const space =
 				responses.filter(
 					(entry) => entry.eventId === event.id && entry.response === "going",
-				).length < event.capacity;
+				).length < (event.capacity ?? Infinity);
 			return {
 				...data,
 				responses:
@@ -762,6 +762,13 @@ export const reduceApp = (
 			return {
 				...data,
 				clubName: action.clubName.trim(),
+				venues: action.venues
+					? [
+							...new Set(
+								action.venues.map((venue) => venue.trim()).filter(Boolean),
+							),
+						]
+					: data.venues,
 				timeZone: canonicalTimeZone(
 					action.timeZone ?? data.timeZone ?? defaultClubTimeZone,
 				),

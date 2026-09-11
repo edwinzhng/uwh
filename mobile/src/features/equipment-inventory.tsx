@@ -3,6 +3,7 @@ import {
 	Badge,
 	Button,
 	Divider,
+	EmptyState,
 	IconButton,
 	Row,
 	Stack,
@@ -77,9 +78,10 @@ export const EquipmentInventory = ({
 				})}
 				{!page.length ? (
 					<Stack padding="sm">
-						<Text variant="small" tone="secondary">
-							No items
-						</Text>
+						<EmptyState
+							title="No items"
+							description="Add equipment to start tracking your inventory."
+						/>
 					</Stack>
 				) : undefined}
 			</Stack>

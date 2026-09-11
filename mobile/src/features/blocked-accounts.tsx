@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { useChatSafety } from "../backend/chat-safety";
 import {
 	Button,
+	List,
 	ListItem,
 	SectionHeading,
 	Stack,
@@ -17,7 +18,7 @@ export const BlockedAccounts = (): ReactElement => {
 		<Stack gap="sm">
 			<SectionHeading>Blocked accounts</SectionHeading>
 			<Surface>
-				<Stack>
+				<List>
 					{safety.status?.blocked.length ? (
 						safety.status.blocked.map((account) => (
 							<ListItem
@@ -47,7 +48,7 @@ export const BlockedAccounts = (): ReactElement => {
 							{task.error}
 						</Text>
 					) : undefined}
-				</Stack>
+				</List>
 			</Surface>
 		</Stack>
 	);

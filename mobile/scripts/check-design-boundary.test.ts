@@ -74,3 +74,33 @@ test("page subtitles do not repeat role summaries", (): void => {
 		),
 	).toEqual([]);
 });
+
+test("selection lists use shared compact spacing", (): void => {
+	expect(
+		inspectDesignBoundary(
+			'<Stack><Checkbox label="Player" /></Stack>',
+			"example.tsx",
+		),
+	).toHaveLength(1);
+	expect(
+		inspectDesignBoundary(
+			'<List><Checkbox label="Player" /></List>',
+			"example.tsx",
+		),
+	).toHaveLength(0);
+});
+
+test("mapped row collections use List", (): void => {
+	expect(
+		inspectDesignBoundary(
+			"<Stack>{items.map(item => <ListItem title={item.name} />)}</Stack>",
+			"example.tsx",
+		),
+	).toHaveLength(1);
+	expect(
+		inspectDesignBoundary(
+			"<List>{items.map(item => <ListItem title={item.name} />)}</List>",
+			"example.tsx",
+		),
+	).toHaveLength(0);
+});

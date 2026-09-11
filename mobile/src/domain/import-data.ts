@@ -130,7 +130,7 @@ export const importRecord = (
 			end: required(row, "end"),
 			venue: required(row, "venue"),
 			seasonId,
-			capacity: row.capacity ? Number(row.capacity) : 24,
+			capacity: row.capacity ? Number(row.capacity) : undefined,
 			kind: choice(row.type?.trim() || "training", [
 				"training",
 				"hockey",

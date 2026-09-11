@@ -5,6 +5,7 @@ import {
 	Button,
 	Dialog,
 	Field,
+	List,
 	ListItem,
 	SectionHeading,
 	Stack,
@@ -71,7 +72,7 @@ export const SessionCoaching = ({
 			<Stack gap="sm">
 				<SectionHeading>Player feedback</SectionHeading>
 				<Surface padding="sm">
-					<Stack gap="sm">
+					<List>
 						{data.members
 							.filter((member) => canRegister(member, event))
 							.map((member) => (
@@ -88,7 +89,7 @@ export const SessionCoaching = ({
 									}
 								/>
 							))}
-					</Stack>
+					</List>
 				</Surface>
 			</Stack>
 			<Dialog

@@ -7,6 +7,8 @@ import { FitnessTests } from "./fitness-tests";
 export const FitnessScreen = (): ReactElement => {
 	const { account, source } = useApp();
 	const router = useRouter();
+	if (account.coachPrograms.length && source === "convex")
+		return <FitnessTests />;
 	return (
 		<ClubShell
 			title="Fitness"

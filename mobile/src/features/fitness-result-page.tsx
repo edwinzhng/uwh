@@ -2,7 +2,15 @@ import { useMutation } from "convex/react";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Doc } from "../../convex/_generated/dataModel";
-import { Button, Divider, Row, Stack, Surface, Text } from "../design-system";
+import {
+	Button,
+	Divider,
+	EmptyState,
+	Row,
+	Stack,
+	Surface,
+	Text,
+} from "../design-system";
 import { formatFitnessValue } from "../domain/fitness";
 import { type FitnessEntry, FitnessResultRow } from "./fitness-result-row";
 import { useFitnessTask } from "./use-fitness-task";
@@ -106,7 +114,12 @@ export const FitnessResultPage = ({
 							</Stack>
 						) : undefined;
 					})}
-					{!rows.length ? <Text>No players found.</Text> : undefined}
+					{!rows.length ? (
+						<EmptyState
+							title="No players found"
+							description="Choose a different group to record results."
+						/>
+					) : undefined}
 				</Stack>
 			</Surface>
 			{dirty ? (

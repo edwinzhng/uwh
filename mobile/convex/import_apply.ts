@@ -67,7 +67,7 @@ export const applyImportRow = async (
 			if (
 				record.response === "going" &&
 				responses.filter((row) => row.value.response === "going").length >=
-					(event?.value.capacity ?? 0)
+					(event?.value.capacity ?? Infinity)
 			)
 				throw new Error(
 					"Attendance exceeds event capacity. Update capacity first.",

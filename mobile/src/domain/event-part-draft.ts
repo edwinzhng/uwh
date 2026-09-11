@@ -77,3 +77,30 @@ export const updateEventPartTime = (
 		end: parts.at(-1)?.end ?? draft.end,
 	};
 };
+
+export const appendEventPart = (draft: EventDraft, id: string): EventDraft => {
+	if (!draft.parts?.length) return toggleEventParts(draft, true);
+	const last = draft.parts.at(-1);
+	if (!last) return draft;
+	const startMinutes = timeMinutes(last.start);
+	const endMinutes = timeMinutes(last.end);
+	const split = clockTime(Math.floor((startMinutes + endMinutes) / 2));
+	return {
+		...draft,
+		parts: [
+			...draft.parts.map((part) =>
+				part.id === last.id ? { ...part, end: split } : part,
+			),
+			{
+				id,
+				title:
+					Array.from({ length: 13 }, (_, index) => `Section ${index + 1}`).find(
+						(title) => !draft.parts?.some((part) => part.title === title),
+					) ?? "New section",
+				kind: "training",
+				start: split,
+				end: last.end,
+			},
+		],
+	};
+};

@@ -90,8 +90,8 @@ export const AppLayout = ({
 								gap: space.xxs,
 							}}
 						>
-							<Row justify="between" align="start">
-								<Stack grow>
+							<Row align="center" gap="xs" wrap>
+								<Stack>
 									<Text variant={titleSize === "section" ? "h3" : "h2"}>
 										{title}
 									</Text>
@@ -104,11 +104,8 @@ export const AppLayout = ({
 								</Text>
 							) : undefined}
 						</View>
-						{titleAccessory ? undefined : action}
+						{action}
 					</Row>
-				) : undefined}
-				{titleAccessory && action ? (
-					<Row justify="end">{action}</Row>
 				) : undefined}
 			</View>
 		) : undefined;

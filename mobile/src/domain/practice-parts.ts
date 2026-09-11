@@ -63,13 +63,13 @@ export const validatePracticeParts = (
 	const parts = draft.parts;
 	if (
 		draft.kind === "social" ||
-		parts.length !== 2 ||
+		parts.length < 1 ||
+		parts.length > 12 ||
 		new Set(parts.map((part) => part.id)).size !== parts.length ||
-		new Set(parts.map((part) => part.kind)).size !== parts.length ||
 		new Set(parts.map((part) => part.title.trim().toLowerCase())).size !==
 			parts.length
 	)
-		return "Use two distinct practice parts.";
+		return "Use 1–12 distinctly named practice sections.";
 	if (
 		parts.some(
 			(part) =>
@@ -86,7 +86,10 @@ export const validatePracticeParts = (
 	if (
 		parts.at(0)?.start !== draft.start ||
 		parts.at(-1)?.end !== draft.end ||
-		(parts.at(0)?.end ?? "") > (parts.at(1)?.start ?? "")
+		parts.some(
+			(part, index) =>
+				index > 0 && (parts.at(index - 1)?.end ?? "") > part.start,
+		)
 	)
 		return "Parts must fit the practice times without overlapping.";
 	return undefined;

@@ -99,6 +99,7 @@ export default defineSchema({
 		.index("by_owner", ["ownerId"])
 		.index("by_owner_message", ["ownerId", "messageId"]),
 	clubs: defineTable({
+		venues: v.optional(v.array(v.string())),
 		timeZone: v.optional(v.string()),
 		publicSlug: v.optional(v.string()),
 		publicSchedule: v.optional(v.boolean()),

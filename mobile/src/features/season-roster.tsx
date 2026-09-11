@@ -2,7 +2,14 @@ import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
-import { Badge, ListItem, Stack, Surface, Text } from "../design-system";
+import {
+	Badge,
+	EmptyState,
+	List,
+	ListItem,
+	Surface,
+	Text,
+} from "../design-system";
 import { money } from "../domain/app-rules";
 import type { Member } from "../domain/app-types";
 import { useSeason } from "./use-season";
@@ -21,7 +28,7 @@ export const SeasonRoster = ({
 	});
 	return (
 		<Surface padding="xs">
-			<Stack gap="xs">
+			<List>
 				{!records ? (
 					<Text>Loading…</Text>
 				) : (
@@ -71,9 +78,12 @@ export const SeasonRoster = ({
 					})
 				)}
 				{records && !members.length ? (
-					<Text>No members found.</Text>
+					<EmptyState
+						title="No members found"
+						description="Try a different search or season."
+					/>
 				) : undefined}
-			</Stack>
+			</List>
 		</Surface>
 	);
 };

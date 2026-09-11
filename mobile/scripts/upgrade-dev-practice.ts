@@ -128,7 +128,7 @@ try {
 		});
 		assert(
 			responses.filter((response) => response.response === "going").length <=
-				training.capacity,
+				(training.capacity ?? Infinity),
 			"Combined RSVPs exceed practice capacity.",
 		);
 		await client.mutation(api.club.apply, {

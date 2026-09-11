@@ -1,11 +1,19 @@
 import type { ReactElement } from "react";
-import { Grid, Stack, Text, TimeSelector, Toggle } from "../design-system";
+import { newId } from "../demo/app-state";
+import {
+	Button,
+	Field,
+	Grid,
+	Row,
+	Stack,
+	Text,
+	TimeSelector,
+} from "../design-system";
 import type { EventDraft } from "../domain/app-types";
 import {
-	toggleEventParts,
+	appendEventPart,
 	updateEventPartTime,
 } from "../domain/event-part-draft";
-
 export const EventPartsEditor = ({
 	draft,
 	onChange,
@@ -13,23 +21,57 @@ export const EventPartsEditor = ({
 	draft: EventDraft;
 	onChange: (draft: EventDraft) => void;
 }): ReactElement => (
-	<Stack>
-		{draft.kind !== "social" ? (
-			<Toggle
-				label="Training + hockey"
-				value={Boolean(draft.parts?.length)}
-				onValueChange={(enabled): void =>
-					onChange(toggleEventParts(draft, enabled))
+	<Stack gap="sm">
+		<Row justify="between">
+			<Text variant="h4">Practice sections</Text>
+			<Button
+				label="Add section"
+				validationError={
+					(draft.parts?.length ?? 0) >= 12 ? "Use up to 12 sections" : undefined
 				}
+				variant="ghost"
+				onPress={(): void => {
+					onChange(appendEventPart(draft, newId()));
+				}}
 			/>
-		) : undefined}
+		</Row>
 		{draft.parts?.length ? (
 			draft.parts.map((part) => (
-				<Stack key={part.id} gap="sm">
-					<Text variant="small">{part.title}</Text>
-					<Grid gap="md">
+				<Stack key={part.id} gap="xs">
+					<Row>
+						<Stack grow>
+							<Field
+								label="Section name"
+								value={part.title}
+								onValueChange={(title): void =>
+									onChange({
+										...draft,
+										parts: draft.parts?.map((entry) =>
+											entry.id === part.id ? { ...entry, title } : entry,
+										),
+									})
+								}
+							/>
+						</Stack>
+						<Button
+							label="Remove section"
+							variant="ghost"
+							onPress={(): void => {
+								const parts = draft.parts?.filter(
+									(entry) => entry.id !== part.id,
+								);
+								onChange({
+									...draft,
+									parts: parts?.length ? parts : undefined,
+									start: parts?.at(0)?.start ?? draft.start,
+									end: parts?.at(-1)?.end ?? draft.end,
+								});
+							}}
+						/>
+					</Row>
+					<Grid gap="sm">
 						<TimeSelector
-							label={`${part.title} starts`}
+							label="Start time"
 							value={part.start}
 							onValueChange={(value): void =>
 								onChange(
@@ -38,7 +80,7 @@ export const EventPartsEditor = ({
 							}
 						/>
 						<TimeSelector
-							label={`${part.title} ends`}
+							label="End time"
 							value={part.end}
 							onValueChange={(value): void =>
 								onChange(
@@ -50,16 +92,16 @@ export const EventPartsEditor = ({
 				</Stack>
 			))
 		) : (
-			<Grid gap="md">
+			<Grid gap="sm">
 				<TimeSelector
-					label="Starts"
+					label="Start time"
 					value={draft.start}
 					onValueChange={(start): void =>
 						onChange({ ...draft, start: start ?? "" })
 					}
 				/>
 				<TimeSelector
-					label="Ends"
+					label="End time"
 					value={draft.end}
 					onValueChange={(end): void => onChange({ ...draft, end: end ?? "" })}
 				/>

@@ -18,32 +18,54 @@ export const recurrenceChoices = [
 ] as const;
 
 export const occurrenceDates = (draft: EventDraft): string[] => {
-	const count = draft.repeat === "once" ? 1 : (draft.occurrences ?? 4);
-	if (!Number.isInteger(count) || count < 1 || count > 52)
-		throw new Error("Choose 1–52 occurrences.");
+	const interval = draft.repeatInterval ?? 1;
+	if (!Number.isInteger(interval) || interval < 1 || interval > 52)
+		throw new Error("Choose an interval of 1–52.");
 	const start = Temporal.PlainDate.from(draft.date);
-	if (draft.repeat === "weekdays")
-		return Array.from({ length: count * 2 + 2 }, (_, index) =>
-			start.add({ days: index }),
-		)
-			.filter((date) => date.dayOfWeek <= 5)
-			.slice(0, count)
-			.map((date) => date.toString());
-	return Array.from({ length: count }, (_, index) =>
-		draft.repeat === "monthly"
-			? start.add({ months: index }).toString()
-			: start
-					.add({
-						days:
-							index *
-							(draft.repeat === "weekly"
-								? 7
-								: draft.repeat === "fortnightly"
-									? 14
-									: 1),
-					})
-					.toString(),
-	);
+	const until = draft.repeatUntil
+		? Temporal.PlainDate.from(draft.repeatUntil).toString()
+		: undefined;
+	if (until && until < draft.date)
+		throw new Error("End date must be on or after the first event.");
+	const count =
+		draft.repeat === "once" ? 1 : until ? 53 : (draft.occurrences ?? 4);
+	if (!Number.isInteger(count) || count < 1 || (!until && count > 52))
+		throw new Error("Choose 1–52 occurrences.");
+	const dates =
+		draft.repeat === "weekdays"
+			? Array.from({ length: count * 7 * interval + 7 }, (_, index) =>
+					start.add({ days: index }),
+				)
+					.filter(
+						(date) =>
+							date.dayOfWeek <= 5 &&
+							Math.floor((start.dayOfWeek - 1 + start.until(date).days) / 7) %
+								interval ===
+								0,
+					)
+					.slice(0, count)
+					.map((date) => date.toString())
+			: Array.from({ length: count }, (_, index) =>
+					draft.repeat === "monthly"
+						? start.add({ months: index * interval }).toString()
+						: start
+								.add({
+									days:
+										index *
+										interval *
+										(draft.repeat === "weekly"
+											? 7
+											: draft.repeat === "fortnightly"
+												? 14
+												: 1),
+								})
+								.toString(),
+				);
+	const result = dates.filter((date) => !until || date <= until);
+	if (result.length > 52)
+		throw new Error("Choose an end date within 52 events.");
+	if (!result.length) throw new Error("No events fall in this date range.");
+	return result;
 };
 
 export const editedOccurrences = (
@@ -84,11 +106,15 @@ export const editedOccurrences = (
 			now,
 		);
 		const opensAt =
+			!draft.registrationOpen &&
+			!previous.registrationOpen &&
 			event.opensAt !== undefined &&
 			(draft.signupOpens ?? "now") === previous.signupOpens
 				? event.opensAt + (previous.signupOpens === "now" ? 0 : offset)
 				: window.opensAt;
 		const closesAt =
+			draft.registrationCloseHours === undefined &&
+			previous.registrationCloseHours === undefined &&
 			event.closesAt !== undefined &&
 			(draft.signupCloses ?? "start") === previous.signupCloses
 				? event.closesAt + offset
@@ -108,6 +134,10 @@ export const editedOccurrences = (
 			venue: draft.venue.trim(),
 			description: draft.description.trim(),
 			kind: draft.kind,
+			repeatInterval: draft.repeatInterval,
+			repeatUntil: draft.repeatUntil,
+			registrationOpen: draft.registrationOpen,
+			registrationCloseHours: draft.registrationCloseHours,
 			capacity: draft.capacity,
 			eligiblePersonIds: draft.eligiblePersonIds,
 			signupOpens: draft.signupOpens ?? "now",
@@ -155,7 +185,7 @@ export const eligibleResponses = (
 				entry.response === "going" &&
 				eligible(entry.personId),
 		);
-		if (registered.length > event.capacity)
+		if (registered.length > (event.capacity ?? Infinity))
 			throw new Error("Capacity can’t be below the number already going.");
 		const promoted = revised
 			.filter(
@@ -164,7 +194,7 @@ export const eligibleResponses = (
 					entry.response === "waiting" &&
 					eligible(entry.personId),
 			)
-			.slice(0, event.capacity - registered.length)
+			.slice(0, (event.capacity ?? Infinity) - registered.length)
 			.map((entry) => entry.personId);
 		return revised.map((entry) =>
 			entry.eventId !== id
@@ -191,6 +221,10 @@ export const eventDraft = (event: ClubEvent): EventDraft => ({
 	venue: event.venue,
 	program: "club",
 	kind: event.kind,
+	repeatInterval: event.repeatInterval,
+	repeatUntil: event.repeatUntil,
+	registrationOpen: event.registrationOpen,
+	registrationCloseHours: event.registrationCloseHours,
 	capacity: event.capacity,
 	description: event.description,
 	repeat: event.repeat ?? (event.seriesId ? "weekly" : "once"),

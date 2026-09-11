@@ -47,7 +47,43 @@ export const inspectDesignBoundary = (
 			`${filename}:${file.getLineAndCharacterOfPosition(node.getStart()).line + 1} ${reason}`,
 		);
 	};
+	const insideList = (node: ts.Node | undefined): boolean =>
+		Boolean(
+			node &&
+				((ts.isJsxElement(node) &&
+					node.openingElement.tagName.getText(file) === "List") ||
+					insideList(node.parent)),
+		);
 	const inspect = (node: ts.Node): void => {
+		if (
+			ts.isJsxElement(node) &&
+			node.openingElement.tagName.getText(file) === "Stack"
+		) {
+			const children = node.children.filter(
+				(child) => !ts.isJsxText(child) || Boolean(child.text.trim()),
+			);
+			if (
+				children.length &&
+				children.every((child) => ts.isJsxExpression(child)) &&
+				children.some(
+					(child) =>
+						/\.map\(/.test(child.getText(file)) &&
+						/<ListItem\b/.test(child.getText(file)),
+				)
+			)
+				fail(
+					node,
+					"Use List for row collections; spacing belongs to the shared rows.",
+				);
+		}
+
+		if (
+			ts.isJsxSelfClosingElement(node) &&
+			node.tagName.getText(file) === "Checkbox" &&
+			!insideList(node.parent)
+		)
+			fail(node, "Place selection rows in List to keep spacing consistent.");
+
 		if (
 			ts.isJsxAttribute(node) &&
 			node.name.getText(file) === "subtitle" &&
