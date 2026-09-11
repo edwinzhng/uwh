@@ -44,3 +44,6 @@ yarn-error.log*
 
 # convex generated
 /convex/_generated/
+
+/site/.next/
+/site/node_modules/

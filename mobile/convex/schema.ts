@@ -30,6 +30,25 @@ import {
 } from "./validators";
 
 export default defineSchema({
+	websiteLoginAttempts: defineTable({ fingerprint: v.string() }).index(
+		"by_fingerprint",
+		["fingerprint"],
+	),
+	websiteContent: defineTable({ json: v.string() }),
+	websiteEnquiries: defineTable({
+		phone: v.optional(v.string()),
+		gender: v.optional(v.string()),
+		firstSessionDate: v.optional(v.string()),
+		referral: v.optional(v.string()),
+		referralOther: v.optional(v.string()),
+		name: v.string(),
+		email: v.string(),
+		interest: v.string(),
+		message: v.string(),
+		fingerprint: v.string(),
+	})
+		.index("by_fingerprint", ["fingerprint"])
+		.index("by_email", ["email"]),
 	...authTables,
 	...attendanceReportTables,
 	...playerCoachingTables,

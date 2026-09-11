@@ -1,0 +1,22 @@
+{
+	"name": "calgary-crocs-site",
+	"private": true,
+	"scripts": {
+		"dev": "next dev --port 3001",
+		"build": "next build",
+		"start": "next start --port 3001",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"next": "16.1.6",
+		"react": "19.2.3",
+		"react-dom": "19.2.3",
+		"convex": "^1.32.0",
+		"jotai": "^2.18.0"
+	},
+	"devDependencies": {
+		"typescript": "^5",
+		"@types/react": "^19",
+		"@types/node": "^20"
+	}
+}

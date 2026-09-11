@@ -75,6 +75,7 @@ import type * as signup from "../signup.js";
 import type * as social_config from "../social_config.js";
 import type * as thread_access from "../thread_access.js";
 import type * as validators from "../validators.js";
+import type * as website from "../website.js";
 
 import type {
   ApiFromModules,
@@ -150,6 +151,7 @@ declare const fullApi: ApiFromModules<{
   social_config: typeof social_config;
   thread_access: typeof thread_access;
   validators: typeof validators;
+  website: typeof website;
 }>;
 
 /**
