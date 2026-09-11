@@ -1,4 +1,11 @@
-import { describe, expect, test } from "bun:test";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+} from "bun:test";
 import {
 	initialAppData,
 	previewAccounts,
@@ -319,4 +326,11 @@ describe("club workflows", () => {
 			"closed",
 		);
 	});
+});
+
+beforeEach((): void => {
+	setSystemTime(new Date("2026-09-08T18:00:00Z"));
+});
+afterEach((): void => {
+	setSystemTime();
 });

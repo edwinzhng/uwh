@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { afterEach, beforeEach, expect, setSystemTime, test } from "bun:test";
 import ICAL from "ical.js";
 import { initialAppData, primaryAccount } from "../src/demo/app-data";
 import { reduceApp } from "../src/domain/app-reducer";
@@ -286,4 +286,11 @@ test("local/private hosts never advertise Google connectivity", (): void => {
 	])
 		expect(isHostedCalendarOrigin(origin)).toBe(false);
 	expect(isHostedCalendarOrigin("https://crocs.convex.site")).toBe(true);
+});
+
+beforeEach((): void => {
+	setSystemTime(new Date("2026-09-08T18:00:00Z"));
+});
+afterEach((): void => {
+	setSystemTime();
 });

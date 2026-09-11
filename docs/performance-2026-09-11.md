@@ -16,3 +16,7 @@
 - Local API stress checks: passed with 400 events, 2,000 attendance records, 400 feedback entries, and 120-item histories. Existing compact schedule payload: 25,909 bytes versus 508,516 bytes for the full workspace. Paging, permissions, totals, concurrent payment handling and unrelated history preserved.
 - Unit suite: 126 pass; 3 existing date-dependent RSVP tests fail because fixture signup windows have closed. These also failed before this pass.
 - Browser: inspected thumbnail and verified registration loads on demand with the expected fields.
+
+## Follow-up
+
+The three RSVP fixture suites now set the clock to September 8, 2026 before each test and restore the real clock afterward. Full suite: 129 pass, 0 fail. Production signup validation is unchanged.

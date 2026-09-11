@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { afterEach, beforeEach, expect, setSystemTime, test } from "bun:test";
 import { createStore } from "jotai";
 import {
 	previewActionAtom,
@@ -46,4 +46,11 @@ test("family selection survives navigation-style subscriptions and resets for an
 	expect(store.get(selectedPersonAtom)).toBe("mila");
 	store.set(selectPreviewAccountAtom, "taylor");
 	expect(store.get(selectedPersonAtom)).toBe("taylor");
+});
+
+beforeEach((): void => {
+	setSystemTime(new Date("2026-09-08T18:00:00Z"));
+});
+afterEach((): void => {
+	setSystemTime();
 });
