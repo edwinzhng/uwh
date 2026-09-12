@@ -64,7 +64,7 @@ export const AttendanceChart = ({
 					{ label: "On time", color: chartColors.green },
 					{ label: "Late", color: chartColors.amber },
 					{ label: "No-show", color: chartColors.red },
-					{ label: "Unmarked", color: theme.colorScales.pending.muted },
+					{ label: "Unmarked", color: theme.colorScales.pending.border },
 				].map((item) => (
 					<Row key={item.label} gap="xxs">
 						<View
@@ -103,7 +103,7 @@ const ReactChartColumn = ({
 		{ value: point.onTime, color: chartColors.green },
 		{ value: point.late, color: chartColors.amber },
 		{ value: point.absent, color: chartColors.red },
-		{ value: point.unmarked, color: theme.colorScales.pending.muted },
+		{ value: point.unmarked, color: theme.colorScales.pending.border },
 	];
 	return (
 		<>

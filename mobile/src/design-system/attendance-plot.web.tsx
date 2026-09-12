@@ -93,7 +93,7 @@ export const AttendanceChart = ({
 						dataKey="unmarked"
 						name="Unmarked"
 						stackId="attendance"
-						fill={theme.colorScales.pending.muted}
+						fill={theme.colorScales.pending.border}
 						radius={[corners.item, corners.item, 0, 0]}
 						isAnimationActive={animate}
 					/>
