@@ -10,6 +10,5 @@ export const chartPalette = {
 		chartColors.pink,
 		chartColors.green,
 		chartColors.red,
-		chartColors.gray,
 	],
 };

@@ -1,14 +1,18 @@
-import type { Theme } from "./tokens";
+import { chartColors } from "@calgarycrocs/design-system/tokens";
+import { palette } from "./tokens";
 
 export const avatarColors = (
-	theme: Theme,
 	name: string,
 ): { background: string; foreground: string } => {
-	const scales = Object.values(theme.colorScales);
+	const colors = Object.values(chartColors);
 	const index = Array.from(name.trim().toLowerCase()).reduce(
-		(hash, character) => (hash * 31 + character.charCodeAt(0)) % scales.length,
+		(hash, character) => (hash * 31 + character.charCodeAt(0)) % colors.length,
 		0,
 	);
-	const scale = scales.at(index) ?? theme.colorScales.accent;
-	return { background: scale.muted, foreground: scale.text };
+	const background = colors.at(index) ?? chartColors.blue;
+	return {
+		background,
+		foreground:
+			background === chartColors.purple ? palette.white : palette.black,
+	};
 };

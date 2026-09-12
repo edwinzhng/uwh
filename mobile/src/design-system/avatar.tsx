@@ -1,7 +1,6 @@
 import type { ReactElement } from "react";
 import { Text, View } from "react-native";
 import { avatarColors } from "./avatar-colors";
-import { useTheme } from "./theme";
 import { corners, font, geometry, typography } from "./tokens";
 
 export const Avatar = ({
@@ -11,8 +10,7 @@ export const Avatar = ({
 	name: string;
 	compact?: boolean;
 }): ReactElement => {
-	const theme = useTheme();
-	const colors = avatarColors(theme, name);
+	const colors = avatarColors(name);
 	return (
 		<View
 			accessible={false}

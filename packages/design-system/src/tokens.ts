@@ -225,6 +225,5 @@ export const chartColors = {
 	green: "hsl(131, 41%, 46%)",
 	teal: "hsl(173, 80%, 36%)",
 	purple: "hsl(272, 51%, 54%)",
-	gray: "hsl(0, 0%, 56%)",
 	pink: "hsl(336, 80%, 58%)",
 } as const;

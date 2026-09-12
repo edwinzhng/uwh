@@ -13,7 +13,7 @@ export const TrendChart = ({
 	formatValue = String,
 }: TrendChartProps): ReactElement => {
 	const theme = useTheme();
-	const colors = chartPalette.series;
+	const colors = [...chartPalette.series, theme.colorScales.pending.muted];
 	const dates = [
 		...new Set(
 			series.flatMap((entry) => entry.points.map((point) => point.date)),
