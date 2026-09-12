@@ -196,29 +196,6 @@ export const EventEditor = ({
 									setDraft({ ...draft, date: date ?? "" })
 								}
 							/>
-						</Stack>
-					</Surface>
-					<EventPartsEditor draft={draft} onChange={setDraft} />
-					<Surface header={<Text variant="h4">Location and repeat</Text>}>
-						<Stack gap="sm">
-							{!data.venues?.length ? (
-								<Text variant="caption" tone="secondary">
-									Configure venues in Club settings before creating an event.
-								</Text>
-							) : undefined}
-							<Select
-								label="Venue"
-								options={[
-									...new Set([
-										...(data.venues ?? []),
-										...(event?.venue ? [event.venue] : []),
-									]),
-								].map((venue) => ({ label: venue, value: venue }))}
-								value={draft.venue}
-								onValueChange={(venue): void =>
-									setDraft({ ...draft, venue: venue ?? "" })
-								}
-							/>
 							{!event || scope !== "single" || !event.seriesId ? (
 								<Grid gap="md">
 									<Select
@@ -287,6 +264,29 @@ export const EventEditor = ({
 									) : undefined}
 								</Grid>
 							) : undefined}
+						</Stack>
+					</Surface>
+					<EventPartsEditor draft={draft} onChange={setDraft} />
+					<Surface header={<Text variant="h4">Location</Text>}>
+						<Stack gap="sm">
+							{!data.venues?.length ? (
+								<Text variant="caption" tone="secondary">
+									Configure venues in Club settings before creating an event.
+								</Text>
+							) : undefined}
+							<Select
+								label="Venue"
+								options={[
+									...new Set([
+										...(data.venues ?? []),
+										...(event?.venue ? [event.venue] : []),
+									]),
+								].map((venue) => ({ label: venue, value: venue }))}
+								value={draft.venue}
+								onValueChange={(venue): void =>
+									setDraft({ ...draft, venue: venue ?? "" })
+								}
+							/>
 						</Stack>
 					</Surface>
 					<Surface header={<Text variant="h4">Registration</Text>}>
