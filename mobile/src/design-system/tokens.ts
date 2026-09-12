@@ -49,6 +49,7 @@ export const geometry = {
 	touch: 44,
 	control: 44,
 	compactControl: 32,
+	listRow: 36,
 	calendarDay: 36,
 	popupWidth: 224,
 	compactPickerWidth: 144,

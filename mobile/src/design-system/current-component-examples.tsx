@@ -70,22 +70,24 @@ export const CurrentComponentExamples = (): ReactElement => {
 					match the app navigation. Hover the floating controls to darken the
 					whole surface.
 				</Text>
-				<SidebarNavigation
-					navigation={[
-						{
-							label: "Schedule",
-							icon: "calendar",
-							selected: navigation === "Schedule",
-							onPress: (): void => setNavigation("Schedule"),
-						},
-						{
-							label: "Members",
-							icon: "users",
-							selected: navigation === "Members",
-							onPress: (): void => setNavigation("Members"),
-						},
-					]}
-				/>
+				<View style={{ width: "100%", maxWidth: geometry.drawer }}>
+					<SidebarNavigation
+						navigation={[
+							{
+								label: "Schedule",
+								icon: "calendar",
+								selected: navigation === "Schedule",
+								onPress: (): void => setNavigation("Schedule"),
+							},
+							{
+								label: "Members",
+								icon: "users",
+								selected: navigation === "Members",
+								onPress: (): void => setNavigation("Members"),
+							},
+						]}
+					/>
+				</View>
 				<Row justify="between" wrap>
 					<GlassPanel padding="none" interactive>
 						<NotificationBell count={0} onPress={notify} />
@@ -98,6 +100,7 @@ export const CurrentComponentExamples = (): ReactElement => {
 								{ id: "sam", name: "Sam Rivera", relationship: "Child" },
 							]}
 							onValueChange={setPerson}
+							account={{ onSettings: notify }}
 						/>
 					</GlassPanel>
 				</Row>

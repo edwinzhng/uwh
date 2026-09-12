@@ -1,6 +1,5 @@
 import { atom, useAtom } from "jotai";
 import type { ReactElement } from "react";
-import { familyProfiles } from "../demo/profiles";
 import {
 	Badge,
 	Button,
@@ -8,14 +7,13 @@ import {
 	ContentRow,
 	CurrentComponentExamples,
 	Dialog,
+	EmptyState,
 	EventActions,
 	EventCard,
 	Field,
 	FoundationReference,
 	GlassPanel,
 	Grid,
-	PersonPicker,
-	ProfileSwitcher,
 	Progress,
 	RollingNumber,
 	Row,
@@ -34,17 +32,17 @@ import { ClubShell } from "./club-shell";
 import { DateTimeExamples } from "./date-time-examples";
 import { DialogExample } from "./dialog-example";
 import { DropdownExamples } from "./dropdown-examples";
+import { responseOptions } from "./response-options";
 
 const countAtom = atom(24);
 const inputAtom = atom("");
 const validationAtom = atom("");
 const notificationAtom = atom(true);
-const profileDemoAtom = atom("sam");
 const actionDialogAtom = atom(false);
 const dangerDialogAtom = atom(false);
 const periodAtom = atom("week");
 const calendarDateAtom = atom("2026-09-10");
-const eventResponseAtom = atom("unanswered");
+const eventResponseAtom = atom("unavailable");
 
 export const DesignSystemScreen = (): ReactElement => {
 	const [theme, setTheme] = useAtom(themePreferenceAtom);
@@ -54,7 +52,6 @@ export const DesignSystemScreen = (): ReactElement => {
 	const [input, setInput] = useAtom(inputAtom);
 	const [validation, setValidation] = useAtom(validationAtom);
 	const [notifications, setNotifications] = useAtom(notificationAtom);
-	const [profile, setProfile] = useAtom(profileDemoAtom);
 	const [actionOpen, setActionOpen] = useAtom(actionDialogAtom);
 	const [dangerOpen, setDangerOpen] = useAtom(dangerDialogAtom);
 	const [calendarDate, setCalendarDate] = useAtom(calendarDateAtom);
@@ -207,43 +204,8 @@ export const DesignSystemScreen = (): ReactElement => {
 					<Badge label="Danger" kind="danger" />
 				</Row>
 			</Stack>
-			<ProfileSwitcher
-				label="Profiles"
-				value={profile}
-				options={familyProfiles.map((member) => ({
-					id: member.id,
-					name: member.name,
-					description: member.program,
-				}))}
-				onValueChange={setProfile}
-			/>
 			<Stack>
 				<Text variant="h4">App controls</Text>
-				<Row justify="between" wrap>
-					<PersonPicker
-						value="alex"
-						options={[{ id: "alex", name: "Alex Rivera", relationship: "You" }]}
-						onValueChange={(): void => undefined}
-						account={{
-							onSettings: (): void => setActionOpen(true),
-						}}
-					/>
-					<PersonPicker
-						value={profile}
-						options={[
-							{ id: "alex", name: "Alex Rivera", relationship: "You" },
-							...familyProfiles.map((person) => ({
-								id: person.id,
-								name: person.name,
-								relationship: "Child" as const,
-							})),
-						]}
-						onValueChange={setProfile}
-						account={{
-							onSettings: (): void => setActionOpen(true),
-						}}
-					/>
-				</Row>
 				<EventCard
 					title="Club training"
 					time="7:45 PM"
@@ -256,19 +218,10 @@ export const DesignSystemScreen = (): ReactElement => {
 								<Select
 									label="Status"
 									value={eventResponse}
-									options={[
-										{
-											value: "unanswered",
-											label: "Not responded",
-											tone: "pending",
-										},
-										{ value: "going", label: "Going", tone: "success" },
-										{
-											value: "unavailable",
-											label: "Not going",
-											tone: "danger",
-										},
-									]}
+									options={responseOptions({
+										full: false,
+										response: eventResponse,
+									})}
 									onValueChange={(value): void =>
 										setEventResponse(value ?? "unanswered")
 									}
@@ -309,7 +262,10 @@ export const DesignSystemScreen = (): ReactElement => {
 						identity="Sam Rivera"
 						control={<Badge label="Going" kind="success" />}
 					/>
-					<ContentRow title="No sessions" />
+					<EmptyState
+						title="No sessions yet"
+						description="Scheduled sessions will appear here."
+					/>
 				</Stack>
 			</Grid>
 			<Stack>

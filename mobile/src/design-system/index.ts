@@ -41,7 +41,6 @@ export { PageLayout } from "./page-layout";
 export { PageReveal } from "./page-reveal";
 export { PersonPicker } from "./person-picker";
 export type { ChoiceOption, MenuAction, MenuGroup } from "./picker-props";
-export { ProfileSwitcher } from "./profile-switcher";
 export { Progress } from "./progress";
 export { DesignProvider } from "./provider";
 export { ProviderLogo } from "./provider-logo";

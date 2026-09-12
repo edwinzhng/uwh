@@ -21,12 +21,12 @@ export const Checkbox = ({
 		style={{
 			flexDirection: "row",
 			alignItems: "center",
-			gap: space.sm,
-			minHeight: geometry.touch,
+			gap: space.xs,
+			minHeight: geometry.listRow,
 			cursor: "pointer",
 		}}
 	>
-		<Icon name={checked ? "checkboxChecked" : "stop"} />
+		<Icon name={checked ? "checkboxChecked" : "stop"} size="sm" />
 		<Text variant="small">{label}</Text>
 	</Pressable>
 );

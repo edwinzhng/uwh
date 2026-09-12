@@ -243,3 +243,5 @@ Do not use role lists such as “Player · Coach · Admin” as page subtitles. 
 
 ### Page and list composition
 Use ClubShell action for primary page actions and tabs for switching page views. Use EmptyState with a short title and helpful next step for empty collections; keep loading messages separate. Use List for checkbox and navigation collections: rows own touch targets and padding, and containers must not add inter-row gaps. Avoid placing primary page actions as standalone controls in the content stack.
+
+Showcase examples must use production components and shared option builders. Use PersonPicker for both profile switching and account actions; do not create a second account dropdown. Compact lists use geometry.listRow and shared Checkbox/ListItem spacing. Avatars derive their hues from chart colors with darker backgrounds and white initials.

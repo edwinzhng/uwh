@@ -9,10 +9,12 @@ export const avatarColors = (
 		(hash, character) => (hash * 31 + character.charCodeAt(0)) % colors.length,
 		0,
 	);
-	const background = colors.at(index) ?? chartColors.blue;
+	const background = (colors.at(index) ?? chartColors.blue).replace(
+		/([\d.]+)%\)$/,
+		(value): string => `${Math.min(Number.parseFloat(value), 32)}%)`,
+	);
 	return {
 		background,
-		foreground:
-			background === chartColors.purple ? palette.white : palette.black,
+		foreground: palette.white,
 	};
 };

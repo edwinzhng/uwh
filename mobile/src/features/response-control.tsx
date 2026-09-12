@@ -5,6 +5,7 @@ import { canRegister, eventResponse } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import type { Response } from "../domain/club";
 import { signupState } from "../domain/event-time";
+import { responseOptions } from "./response-options";
 
 export const ResponseControl = ({
 	event,
@@ -55,37 +56,7 @@ export const ResponseControl = ({
 			label="Status"
 			value={response === "going" && part ? `part:${part.id}` : response}
 			isDisabled={locked || pending}
-			options={[
-				{
-					value: "going",
-					tone: full && response !== "going" ? "warning" : "success",
-					label:
-						full && response !== "going"
-							? "Join waitlist"
-							: event.parts?.length
-								? "Going · Both"
-								: "Going",
-				},
-				...(event.parts ?? []).map((part) => ({
-					value: `part:${part.id}`,
-					label: `${part.title} only`,
-					tone:
-						full && response !== "going"
-							? ("warning" as const)
-							: ("success" as const),
-				})),
-				...(response === "waiting"
-					? [
-							{
-								value: "waiting",
-								label: part ? `Waitlisted · ${part.title}` : "Waitlisted",
-								tone: "warning" as const,
-								isDisabled: true,
-							},
-						]
-					: []),
-				{ value: "unavailable", label: "Absent", tone: "danger" },
-			]}
+			options={responseOptions({ full, response, parts: event.parts, part })}
 			onValueChange={(value): void => {
 				const part = event.parts?.find((part) => value === `part:${part.id}`);
 				if (part) {

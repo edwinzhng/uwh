@@ -3,7 +3,6 @@ import type { ReactElement } from "react";
 import { players } from "../demo/data";
 import {
 	ActionMenu,
-	type ChoiceOption,
 	Combobox,
 	Grid,
 	Row,
@@ -11,17 +10,12 @@ import {
 	Stack,
 	Text,
 } from "../design-system";
+import { responseOptions } from "./response-options";
 
 const eventTypeAtom = atom<string | undefined>("practice");
 const playerAtom = atom<string | undefined>(undefined);
 const selectedActionAtom = atom("");
 const statusAtom = atom<string | undefined>("going");
-const statuses: ChoiceOption<string>[] = [
-	{ value: "going", label: "Going", tone: "success" },
-	{ value: "unavailable", label: "Not going", tone: "danger" },
-	{ value: "unanswered", label: "Not responded", tone: "pending" },
-	{ value: "waiting", label: "Waitlisted", tone: "warning" },
-];
 
 export const DropdownExamples = (): ReactElement => {
 	const [eventType, setEventType] = useAtom(eventTypeAtom);
@@ -36,10 +30,13 @@ export const DropdownExamples = (): ReactElement => {
 					label="Status"
 					value={status}
 					onValueChange={setStatus}
-					options={statuses}
+					options={responseOptions({
+						full: false,
+						response: status ?? "unavailable",
+					})}
 				/>
 				<Select
-					label="Event type"
+					label="Icon options"
 					value={eventType}
 					onValueChange={setEventType}
 					options={[
