@@ -1,3 +1,4 @@
+import { chartColors } from "@calgarycrocs/design-system/tokens";
 import type { ReactElement } from "react";
 import {
 	Bar,
@@ -10,7 +11,6 @@ import {
 	YAxis,
 } from "recharts";
 import type { AttendancePoint } from "../domain/attendance-summary";
-import { chartPalette } from "./chart-palette";
 import { useTheme } from "./theme";
 import { corners, font, geometry, space, typography } from "./tokens";
 import { useMotion } from "./use-motion";
@@ -72,28 +72,28 @@ export const AttendanceChart = ({
 						dataKey="onTime"
 						name="On time"
 						stackId="attendance"
-						fill={chartPalette.onTime}
+						fill={chartColors.green}
 						isAnimationActive={animate}
 					/>
 					<Bar
 						dataKey="late"
 						name="Late"
 						stackId="attendance"
-						fill={chartPalette.late}
+						fill={chartColors.amber}
 						isAnimationActive={animate}
 					/>
 					<Bar
 						dataKey="absent"
 						name="No-show"
 						stackId="attendance"
-						fill={chartPalette.absent}
+						fill={chartColors.red}
 						isAnimationActive={animate}
 					/>
 					<Bar
 						dataKey="unmarked"
 						name="Unmarked"
 						stackId="attendance"
-						fill={chartPalette.unmarked}
+						fill={theme.colorScales.pending.border}
 						radius={[corners.item, corners.item, 0, 0]}
 						isAnimationActive={animate}
 					/>

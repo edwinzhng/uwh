@@ -1,8 +1,8 @@
+import { chartColors } from "@calgarycrocs/design-system/tokens";
 import type { ReactElement } from "react";
 import { View } from "react-native";
 import Svg, { Line, Rect, Text as SvgText } from "react-native-svg";
 import type { AttendancePoint } from "../domain/attendance-summary";
-import { chartPalette } from "./chart-palette";
 import { Row } from "./row";
 import { Text } from "./text";
 import { useTheme } from "./theme";
@@ -61,10 +61,10 @@ export const AttendanceChart = ({
 			</Svg>
 			<Row wrap gap="sm" justify="center">
 				{[
-					{ label: "On time", color: chartPalette.onTime },
-					{ label: "Late", color: chartPalette.late },
-					{ label: "No-show", color: chartPalette.absent },
-					{ label: "Unmarked", color: chartPalette.unmarked },
+					{ label: "On time", color: chartColors.green },
+					{ label: "Late", color: chartColors.amber },
+					{ label: "No-show", color: chartColors.red },
+					{ label: "Unmarked", color: theme.colorScales.pending.border },
 				].map((item) => (
 					<Row key={item.label} gap="xxs">
 						<View
@@ -100,10 +100,10 @@ const ReactChartColumn = ({
 }): ReactElement => {
 	const theme = useTheme();
 	const parts = [
-		{ value: point.onTime, color: chartPalette.onTime },
-		{ value: point.late, color: chartPalette.late },
-		{ value: point.absent, color: chartPalette.absent },
-		{ value: point.unmarked, color: chartPalette.unmarked },
+		{ value: point.onTime, color: chartColors.green },
+		{ value: point.late, color: chartColors.amber },
+		{ value: point.absent, color: chartColors.red },
+		{ value: point.unmarked, color: theme.colorScales.pending.border },
 	];
 	return (
 		<>
