@@ -9,6 +9,7 @@ import {
 	Row,
 	Select,
 	Stack,
+	Surface,
 	Text,
 } from "../design-system";
 import { validateEvent } from "../domain/app-rules";
@@ -168,118 +169,129 @@ export const EventEditor = ({
 							}}
 						/>
 					) : undefined}
-					<Field
-						label="Title"
-						value={draft.title}
-						onValueChange={(title): void => setDraft({ ...draft, title })}
-					/>
-					<Grid gap="md">
-						<Select
-							label="Season"
-							value={draft.seasonId}
-							options={data.seasons.map((season) => ({
-								value: season.id,
-								label: season.name,
-							}))}
-							onValueChange={(seasonId): void =>
-								setDraft({ ...draft, seasonId })
-							}
-						/>
-					</Grid>
-					<DatePicker
-						label="Date"
-						value={draft.date}
-						onValueChange={(date): void =>
-							setDraft({ ...draft, date: date ?? "" })
-						}
-					/>
-					<EventPartsEditor draft={draft} onChange={setDraft} />
-					{!data.venues?.length ? (
-						<Text variant="caption" tone="secondary">
-							Configure venues in Club settings before creating an event.
-						</Text>
-					) : undefined}
-					<Select
-						label="Venue"
-						options={[
-							...new Set([
-								...(data.venues ?? []),
-								...(event?.venue ? [event.venue] : []),
-							]),
-						].map((venue) => ({ label: venue, value: venue }))}
-						value={draft.venue}
-						onValueChange={(venue): void =>
-							setDraft({ ...draft, venue: venue ?? "" })
-						}
-					/>
-					{!event || scope !== "single" || !event.seriesId ? (
-						<Grid gap="md">
-							<Select
-								label="Repeat"
-								value={draft.repeat}
-								options={recurrenceChoices}
-								onValueChange={(repeat): void => {
-									if (repeat) setDraft({ ...draft, repeat });
-								}}
+					<Surface header={<Text variant="h4">Event details</Text>}>
+						<Stack gap="sm">
+							<Field
+								label="Title"
+								value={draft.title}
+								onValueChange={(title): void => setDraft({ ...draft, title })}
 							/>
-							{draft.repeat !== "once" ? (
-								<Stack gap="sm">
-									<Field
-										label={
-											draft.repeat === "monthly"
-												? "Every X months"
-												: draft.repeat === "daily"
-													? "Every X days"
-													: draft.repeat === "fortnightly"
-														? "Every X two-week cycles"
-														: "Every X weeks"
-										}
-										inputMode="numeric"
-										value={String(draft.repeatInterval ?? 1)}
-										onValueChange={(value): void =>
-											setDraft({ ...draft, repeatInterval: Number(value) })
-										}
-									/>
-									<Select
-										label="Series ends"
-										value={draft.repeatUntil ? "date" : "count"}
-										options={[
-											{ value: "count", label: "After a number of events" },
-											{ value: "date", label: "On a date" },
-										]}
-										onValueChange={(value): void =>
-											setDraft({
-												...draft,
-												repeatUntil: value === "date" ? draft.date : undefined,
-											})
-										}
-									/>
-									{draft.repeatUntil ? (
-										<DatePicker
-											label="End date"
-											value={draft.repeatUntil}
-											onValueChange={(repeatUntil): void =>
-												setDraft({
-													...draft,
-													repeatUntil: repeatUntil ?? draft.date,
-												})
-											}
-										/>
-									) : (
-										<Field
-											label="Number of events"
-											inputMode="numeric"
-											value={String(draft.occurrences ?? 4)}
-											onValueChange={(value): void =>
-												setDraft({ ...draft, occurrences: Number(value) })
-											}
-										/>
-									)}
-								</Stack>
+							<Grid gap="md">
+								<Select
+									label="Season"
+									value={draft.seasonId}
+									options={data.seasons.map((season) => ({
+										value: season.id,
+										label: season.name,
+									}))}
+									onValueChange={(seasonId): void =>
+										setDraft({ ...draft, seasonId })
+									}
+								/>
+							</Grid>
+							<DatePicker
+								label="Date"
+								value={draft.date}
+								onValueChange={(date): void =>
+									setDraft({ ...draft, date: date ?? "" })
+								}
+							/>
+						</Stack>
+					</Surface>
+					<EventPartsEditor draft={draft} onChange={setDraft} />
+					<Surface header={<Text variant="h4">Location and repeat</Text>}>
+						<Stack gap="sm">
+							{!data.venues?.length ? (
+								<Text variant="caption" tone="secondary">
+									Configure venues in Club settings before creating an event.
+								</Text>
 							) : undefined}
-						</Grid>
-					) : undefined}
-					<EventOptions draft={draft} onChange={setDraft} />
+							<Select
+								label="Venue"
+								options={[
+									...new Set([
+										...(data.venues ?? []),
+										...(event?.venue ? [event.venue] : []),
+									]),
+								].map((venue) => ({ label: venue, value: venue }))}
+								value={draft.venue}
+								onValueChange={(venue): void =>
+									setDraft({ ...draft, venue: venue ?? "" })
+								}
+							/>
+							{!event || scope !== "single" || !event.seriesId ? (
+								<Grid gap="md">
+									<Select
+										label="Repeat"
+										value={draft.repeat}
+										options={recurrenceChoices}
+										onValueChange={(repeat): void => {
+											if (repeat) setDraft({ ...draft, repeat });
+										}}
+									/>
+									{draft.repeat !== "once" ? (
+										<Stack gap="sm">
+											<Field
+												label={
+													draft.repeat === "monthly"
+														? "Every X months"
+														: draft.repeat === "daily"
+															? "Every X days"
+															: draft.repeat === "fortnightly"
+																? "Every X two-week cycles"
+																: "Every X weeks"
+												}
+												inputMode="numeric"
+												value={String(draft.repeatInterval ?? 1)}
+												onValueChange={(value): void =>
+													setDraft({ ...draft, repeatInterval: Number(value) })
+												}
+											/>
+											<Select
+												label="Series ends"
+												value={draft.repeatUntil ? "date" : "count"}
+												options={[
+													{ value: "count", label: "After a number of events" },
+													{ value: "date", label: "On a date" },
+												]}
+												onValueChange={(value): void =>
+													setDraft({
+														...draft,
+														repeatUntil:
+															value === "date" ? draft.date : undefined,
+													})
+												}
+											/>
+											{draft.repeatUntil ? (
+												<DatePicker
+													label="End date"
+													value={draft.repeatUntil}
+													onValueChange={(repeatUntil): void =>
+														setDraft({
+															...draft,
+															repeatUntil: repeatUntil ?? draft.date,
+														})
+													}
+												/>
+											) : (
+												<Field
+													label="Number of events"
+													inputMode="numeric"
+													value={String(draft.occurrences ?? 4)}
+													onValueChange={(value): void =>
+														setDraft({ ...draft, occurrences: Number(value) })
+													}
+												/>
+											)}
+										</Stack>
+									) : undefined}
+								</Grid>
+							) : undefined}
+						</Stack>
+					</Surface>
+					<Surface header={<Text variant="h4">Registration</Text>}>
+						<EventOptions draft={draft} onChange={setDraft} />
+					</Surface>
 					{error ? (
 						<Text variant="small" tone="danger">
 							{error}

@@ -15,6 +15,7 @@ import {
 	reconcileCalendar,
 	renderCalendar,
 } from "../domain/calendar-export";
+import { CalendarSubscriptions } from "./calendar-subscriptions";
 import { HouseholdCalendarDownload } from "./household-calendar-download";
 
 export const CalendarSettings = (): ReactElement => {
@@ -72,6 +73,9 @@ export const CalendarSettings = (): ReactElement => {
 					))}
 				</List>
 			</Stack>
+			{source === "convex" && chosen.length ? (
+				<CalendarSubscriptions people={chosen} />
+			) : undefined}
 			{chosen.length ? (
 				source === "convex" ? (
 					<HouseholdCalendarDownload
@@ -94,7 +98,7 @@ export const CalendarSettings = (): ReactElement => {
 			{chosen.length ? (
 				<Stack gap="xs">
 					<Button
-						label="Open Google Calendar"
+						label="Import a one-time copy"
 						prefix="calendar"
 						variant="secondary"
 						onPress={(): void => {

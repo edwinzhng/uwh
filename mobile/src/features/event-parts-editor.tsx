@@ -6,6 +6,7 @@ import {
 	Grid,
 	Row,
 	Stack,
+	Surface,
 	Text,
 	TimeSelector,
 } from "../design-system";
@@ -29,7 +30,8 @@ export const EventPartsEditor = ({
 				validationError={
 					(draft.parts?.length ?? 0) >= 12 ? "Use up to 12 sections" : undefined
 				}
-				variant="ghost"
+				variant="secondary"
+				prefix="plus"
 				onPress={(): void => {
 					onChange(appendEventPart(draft, newId()));
 				}}
@@ -37,59 +39,62 @@ export const EventPartsEditor = ({
 		</Row>
 		{draft.parts?.length ? (
 			draft.parts.map((part) => (
-				<Stack key={part.id} gap="xs">
-					<Row>
-						<Stack grow>
-							<Field
-								label="Section name"
-								value={part.title}
-								onValueChange={(title): void =>
+				<Surface key={part.id} variant="subtle" padding="sm">
+					<Stack gap="sm">
+						<Row align="end">
+							<Stack grow>
+								<Field
+									label="Section name"
+									value={part.title}
+									onValueChange={(title): void =>
+										onChange({
+											...draft,
+											parts: draft.parts?.map((entry) =>
+												entry.id === part.id ? { ...entry, title } : entry,
+											),
+										})
+									}
+								/>
+							</Stack>
+							<Button
+								label={`Remove ${part.title || "section"}`}
+								icon="trash"
+								variant="ghost"
+								onPress={(): void => {
+									const parts = draft.parts?.filter(
+										(entry) => entry.id !== part.id,
+									);
 									onChange({
 										...draft,
-										parts: draft.parts?.map((entry) =>
-											entry.id === part.id ? { ...entry, title } : entry,
-										),
-									})
+										parts: parts?.length ? parts : undefined,
+										start: parts?.at(0)?.start ?? draft.start,
+										end: parts?.at(-1)?.end ?? draft.end,
+									});
+								}}
+							/>
+						</Row>
+						<Grid gap="sm">
+							<TimeSelector
+								label="Start time"
+								value={part.start}
+								onValueChange={(value): void =>
+									onChange(
+										updateEventPartTime(draft, part.id, "start", value ?? ""),
+									)
 								}
 							/>
-						</Stack>
-						<Button
-							label="Remove section"
-							variant="ghost"
-							onPress={(): void => {
-								const parts = draft.parts?.filter(
-									(entry) => entry.id !== part.id,
-								);
-								onChange({
-									...draft,
-									parts: parts?.length ? parts : undefined,
-									start: parts?.at(0)?.start ?? draft.start,
-									end: parts?.at(-1)?.end ?? draft.end,
-								});
-							}}
-						/>
-					</Row>
-					<Grid gap="sm">
-						<TimeSelector
-							label="Start time"
-							value={part.start}
-							onValueChange={(value): void =>
-								onChange(
-									updateEventPartTime(draft, part.id, "start", value ?? ""),
-								)
-							}
-						/>
-						<TimeSelector
-							label="End time"
-							value={part.end}
-							onValueChange={(value): void =>
-								onChange(
-									updateEventPartTime(draft, part.id, "end", value ?? ""),
-								)
-							}
-						/>
-					</Grid>
-				</Stack>
+							<TimeSelector
+								label="End time"
+								value={part.end}
+								onValueChange={(value): void =>
+									onChange(
+										updateEventPartTime(draft, part.id, "end", value ?? ""),
+									)
+								}
+							/>
+						</Grid>
+					</Stack>
+				</Surface>
 			))
 		) : (
 			<Grid gap="sm">

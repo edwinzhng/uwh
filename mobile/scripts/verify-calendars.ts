@@ -3,6 +3,7 @@ import { ConvexHttpClient } from "convex/browser";
 import ICAL from "ical.js";
 import { api } from "../convex/_generated/api";
 import { calendarFeedUrl } from "../src/domain/calendar-links";
+import { eventDraft } from "../src/domain/event-recurrence";
 import { signInVerified } from "./test-auth";
 
 const url = process.env.EXPO_PUBLIC_CONVEX_URL;
@@ -33,6 +34,22 @@ const parent = await signUp("parent");
 await parent.mutation(api.club.requestToJoin, { clubCode: clubId });
 const initial = await owner.query(api.club.current, {});
 assert(initial);
+const practice = initial.data.events.find((event) => event.id === "youth-thu");
+assert(practice);
+await owner.mutation(api.club.apply, {
+	action: {
+		type: "edit-event",
+		eventId: practice.id,
+		scope: "single",
+		draft: {
+			...eventDraft(practice),
+			date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+			signupOpens: "now",
+			signupCloses: "start",
+		},
+	},
+});
+
 const request = initial.requests.at(0);
 assert(request);
 await owner.mutation(api.club.approveRequest, {

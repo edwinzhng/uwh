@@ -5,6 +5,8 @@ import {
 	Platform,
 	Pressable,
 	ScrollView,
+	useWindowDimensions,
+	View,
 } from "react-native";
 import Animated, { cubicBezier } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,7 +16,6 @@ import { IconButton } from "./icon-button";
 import { materialColors } from "./materials";
 import { PopupPortalProvider } from "./popup-portal-provider";
 import { Row } from "./row";
-import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, geometry, layer, motion, opacity, space } from "./tokens";
@@ -37,6 +38,7 @@ export const Dialog = ({
 	staffRole,
 }: Props): ReactElement => {
 	const theme = useTheme();
+	const { height } = useWindowDimensions();
 	const animate = useMotion();
 	const [retained, setRetained] = useState(isOpen);
 	useEffect(() => {
@@ -115,7 +117,12 @@ export const Dialog = ({
 								animationDuration: motion.duration.toggle,
 								animationFillMode: "forwards",
 								animationTimingFunction: cubicBezier(...motion.easing.out),
-								maxHeight: "100%",
+								maxHeight:
+									height -
+									Math.max(space.lg, insets.top) -
+									Math.max(space.lg, insets.bottom),
+								minHeight: 0,
+								overflow: "hidden",
 								width: "100%",
 								maxWidth: geometry.reading,
 								alignSelf: "center",
@@ -127,49 +134,56 @@ export const Dialog = ({
 								boxShadow: colors.overlayShadow,
 							}}
 						>
+							<View
+								style={{
+									padding: space.md,
+									borderBottomWidth: geometry.border,
+									borderBottomColor: theme.border,
+								}}
+							>
+								<Row justify="between" align="center">
+									<Row gap="xs" wrap>
+										<Text variant="h3">{title}</Text>
+										{staffRole ? (
+											<Badge
+												compact
+												label={staffRole === "coach" ? "Coach" : "Admin"}
+												kind={staffRole}
+											/>
+										) : undefined}
+									</Row>
+									<IconButton
+										label="Close dialog"
+										icon="close"
+										onPress={(): void => onOpenChange(false)}
+									/>
+								</Row>
+							</View>
 							<ScrollView
 								keyboardShouldPersistTaps="handled"
-								style={{
-									flexGrow: 0,
-									flexShrink: 1,
-									borderRadius: corners.overlay,
-									overflow: "hidden",
-								}}
+								style={{ flexGrow: 0, flexShrink: 1, minHeight: 0 }}
 								contentContainerStyle={{ padding: space.md }}
 							>
-								<Stack gap="lg">
-									<Row align="start" justify="between">
-										<Stack grow>
-											<Row gap="xs" wrap>
-												<Text variant="h3">{title}</Text>
-												{staffRole ? (
-													<Badge
-														compact
-														label={staffRole === "coach" ? "Coach" : "Admin"}
-														kind={staffRole}
-													/>
-												) : undefined}
-											</Row>
-										</Stack>
-										<IconButton
-											label="Close dialog"
-											icon="close"
-											onPress={(): void => onOpenChange(false)}
-										/>
-									</Row>
-									{children}
-									{footer !== false ? (
-										<Row justify="end">
-											{footer ?? (
-												<Button
-													label="Done"
-													onPress={(): void => onOpenChange(false)}
-												/>
-											)}
-										</Row>
-									) : undefined}
-								</Stack>
+								{children}
 							</ScrollView>
+							{footer !== false ? (
+								<View
+									style={{
+										padding: space.md,
+										borderTopWidth: geometry.border,
+										borderTopColor: theme.border,
+									}}
+								>
+									<Row justify="end">
+										{footer ?? (
+											<Button
+												label="Done"
+												onPress={(): void => onOpenChange(false)}
+											/>
+										)}
+									</Row>
+								</View>
+							) : undefined}
 						</Animated.View>
 					</KeyboardAvoidingView>
 				</Animated.View>
