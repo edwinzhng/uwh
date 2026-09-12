@@ -1,4 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
+import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
 
@@ -12,10 +13,12 @@ export const EmptyState = ({
 	action?: ReactNode;
 }): ReactElement => (
 	<Stack gap="xs" padding="lg">
-		<Text variant="h4">{title}</Text>
-		<Text variant="small" tone="secondary">
+		<Text variant="body" align="center">
+			{title}
+		</Text>
+		<Text variant="small" tone="secondary" align="center">
 			{description}
 		</Text>
-		{action}
+		{action ? <Row justify="center">{action}</Row> : undefined}
 	</Stack>
 );
