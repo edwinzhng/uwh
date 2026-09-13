@@ -4,6 +4,12 @@ The Vercel projects are `edwinzhang/uwh-club` (root `mobile`) and `edwinzhang/ca
 
 ## App domain
 
+On September 13, 2026, Namecheap DNS was connected to Vercel: `@` uses A record `216.198.79.1`, `www` uses CNAME `c89c35d3d7becdde.vercel-dns-017.com`, and `app` uses CNAME `e6c5c6b36725b997.vercel-dns-017.com`. Existing email and verification records were preserved. The main site project now includes `calgaryuwh.com` and `www.calgaryuwh.com`.
+
+The coaches page and navigation are temporarily disabled by `site/lib/features.ts`. Set `coachesEnabled` to `true` when the profiles are ready. The site deployment passed its checks and `/coaches` returns HTTP 404.
+
+The September 13 production deployments are `dpl_E4MSgJNDYzn8wVCWfTWuuJXVuPJJ` (site) and `dpl_8RG1oxJmUcDjH98TJGa27KX8pL9r` (app). Both are ready; the main site and app sign-in screen were verified over HTTPS on their custom domains. Site checks passed with 6 tests, and app checks passed with 171 tests. The site project still has no production environment variables, so enquiry submissions and editor configuration remain outstanding.
+
 The web app links `/manifest.webmanifest` on every static route, with same-origin `/` scope, `/` start URL and standalone display. Internal navigation uses Expo Router. Home Screen shortcuts installed before this manifest was added may need to be removed and added again from the chosen app domain. Verify navigation on the actual installed device after reinstalling; desktop browser checks cannot reproduce iOS Home Screen behavior fully.
 
 The public testing URL is `https://uwh-club.vercel.app`. The old `calgary-crocs-app.vercel.app` alias remains available. Deployment `dpl_BFPGEivcbq3J6ZbwjuWR9QrMzesF` was published and its UWH Club sign-in screen verified on September 12, 2026. Account creation and email delivery are not yet verified end to end: domain DNS verification remains pending.
@@ -47,7 +53,7 @@ The legacy production database contains 12 practices on or after September 3, 20
 
 ## Email
 
-Create a Resend account, verify a sending domain with its supplied DNS records, and create a sending API key. Configure these secrets on the hosted Convex backend:
+Resend is configured in the club-owned `hello@calgaryuwh.com` account. These variables are configured on production `brainy-albatross-874`:
 
 - `AUTH_EMAIL_MODE=resend`
 - `AUTH_RESEND_KEY`: the Resend sending API key
@@ -55,26 +61,27 @@ Create a Resend account, verify a sending domain with its supplied DNS records, 
 
 These enable verification codes, password recovery and invitations. Keep the API key out of browser variables and Git. Google login may be configured separately with `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`; register the actual backend callback URL. Resend is still required for email signup and invitations.
 
-`calgaryuwh.com` was added to Resend on September 12, 2026. The configured sender is `UWH Club <notifications@calgaryuwh.com>`. The sending-only `UWH Club authentication` key is saved as `AUTH_RESEND_KEY` on the production Convex deployment. Domain verification is still required before it can deliver mail. Resend supplied these records for domain verification and sending:
+On September 13, 2026, the domain was released from the personal Resend account and verified in the club account (domain ID `1149e803-351c-48e6-b267-7ce6ee42cde4`). The configured sender is `UWH Club <notifications@calgaryuwh.com>`. The `UWH Club production` key is restricted to sending from `calgaryuwh.com` and replaces the old `AUTH_RESEND_KEY` on production. Resend verified these DNS records:
 
 | Type | Host | Value |
 | --- | --- | --- |
-| TXT | resend._domainkey | p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDDOwHeUOlOVlCceDGM0PX7JvgMQnOEpSbhQZ2fyIhxRcsB0iMNqQbU5F4Rm1WHK63JXalJV/BnnFQKJnh+8GzVN5/nn+/5vwyYqoeYyTCtFjwtclh8Q59yo3lpOTSAvx+7Aj7y+mJe3nO7Btx6sbD0VWDW4TZH12/4EaRkocxcPwIDAQAB |
+| TXT | resend._domainkey | p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDUpejxYdKehxSx/WS/MC4qejW13pW8GoYcwk7ewbXgoAlfk67cRXyvdIEFxfq0EIuOvMRVGD00F5pJqilhgG4NTvV1id3so9kvddNKJ30IbbnnE5IZCamcVu/w4CrnQvW188aldi/SdzjX/BdlsWxFnyInCMxoiFSAZoC14LPWAQIDAQAB |
 | CNAME | rsend | rsend.forge.rmta.net |
 | CNAME | send | send.forge.rmta.net |
 
 Use automatic TTL. Receiving is disabled; preserve existing mail records. Verify these values against the Resend dashboard before adding them if the domain has been recreated.
 
+The obsolete `_webflow` TXT record was removed. The former Webflow apex and `www` targets were already replaced with Vercel during the site cutover. Google mail, SPF, DKIM, DMARC and Google verification records remain unchanged.
+
 ## Landing page
 
-The landing page can display bundled content without a backend. Its editor and enquiry submissions require:
+The landing page displays bundled content. Website inquiries are separate from app accounts: the Vercel `/api/interest` endpoint validates the form and sends a plain-text email through Resend to `hello@calgaryuwh.com`, from `Calgary Crocs <notifications@calgaryuwh.com>`, with the visitor's email as Reply-To.
 
-- `CONVEX_URL`: the hosted mobile backend
-- `WEBSITE_SERVER_KEY`: a random secret shared between the site server and Convex
-- `WEBSITE_ADMIN_PASSWORD`: a new strong editor password
-- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`: Turnstile keys allowing the deployed hostname
+The only production variable needed for inquiry delivery is the server-only `RESEND_API_KEY`. Production uses the existing calgaryuwh.com-scoped sending key, also used by the app. No inquiry is written to Convex and no Cloudflare widget is loaded.
 
-Until configured, enquiries fail closed. They are stored in Convex; the current implementation does not email enquiries through Resend.
+Vercel Firewall limits POST requests to `/api/interest` to five attempts per IP per hour. The route retains same-origin validation, request-size limits, a honeypot, and the Calgary trial-date cutoff. Resend idempotency keys deduplicate identical email payloads for 24 hours. Failed sends preserve the form for retry.
+
+The legacy content editor still uses `CONVEX_URL`, `WEBSITE_SERVER_KEY`, and `WEBSITE_ADMIN_PASSWORD`; it is independent of the inquiry email path and is not configured on the production site.
 
 ## App Store
 

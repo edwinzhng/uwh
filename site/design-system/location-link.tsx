@@ -1,10 +1,10 @@
 import type { ReactElement } from "react";
 
-type LocationLinkProps = { name: string; address: string; href: string };
+type LocationLinkProps = { name: string; address: string; href?: string };
 export const LocationLink = ({
 	name,
 	address,
-	href,
+	href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${address}`)}`,
 }: LocationLinkProps): ReactElement => (
 	<a
 		className="pool-location"

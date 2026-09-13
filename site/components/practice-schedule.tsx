@@ -4,12 +4,12 @@ import {
 	Disclosure,
 	Grid,
 	Heading,
+	LocationLink,
 	ScheduleCard,
 	Section,
 	SectionHeading,
 	Text,
 } from "../design-system";
-import { PoolLocation } from "./pool-location";
 
 type PracticeScheduleProps = { location: string; address: string };
 const regularTimes = [
@@ -56,11 +56,7 @@ export const PracticeSchedule = ({
 							"** Mondays are for committed players.",
 						]}
 					>
-						<PoolLocation
-							name={location}
-							address={address}
-							href="https://www.google.com/maps/search/?api=1&query=MNP+Community+%26+Sport+Centre+2225+Macleod+Trail+SE+Calgary"
-						/>
+						<LocationLink name={location} address={address} />
 						<Disclosure
 							label={`About ${schedule.name.toLowerCase()} practices`}
 						>
@@ -80,19 +76,14 @@ export const PracticeSchedule = ({
 				<Grid variant="summer">
 					<ScheduleCard title="Tuesday">
 						<Text variant="time">7:30–9 pm</Text>
-						<PoolLocation
+						<LocationLink
 							name="Millican-Ogden Outdoor Pool"
 							address="2094 69 Avenue SE, Calgary"
-							href="https://www.google.com/maps/search/?api=1&query=Millican+Ogden+Outdoor+Pool+2094+69+Avenue+SE+Calgary"
 						/>
 					</ScheduleCard>
 					<ScheduleCard title="Thursday">
 						<Text variant="time">7:30–9 pm</Text>
-						<PoolLocation
-							name={location}
-							address={address}
-							href="https://www.google.com/maps/search/?api=1&query=MNP+Community+%26+Sport+Centre+2225+Macleod+Trail+SE+Calgary"
-						/>
+						<LocationLink name={location} address={address} />
 					</ScheduleCard>
 				</Grid>
 			</Section>

@@ -27,20 +27,6 @@ export const Field = (
 export const TextArea = (
 	props: SafeProps<ComponentProps<"textarea">>,
 ): ReactElement => <textarea {...props} />;
-export const Select = ({
-	options,
-	...props
-}: SafeProps<Omit<ComponentProps<"select">, "children">> & {
-	options: { value: string; label: string }[];
-}): ReactElement => (
-	<select {...props}>
-		{options.map((option) => (
-			<option key={option.value} value={option.value}>
-				{option.label}
-			</option>
-		))}
-	</select>
-);
 export const SegmentedControl = (
 	props: SafeProps<ComponentProps<typeof SharedSegments>>,
 ): ReactElement => <SharedSegments {...props} className="group-segments" />;
@@ -64,8 +50,26 @@ export const Form = ({
 export const FieldLabel = ({
 	htmlFor,
 	children,
-}: SafeProps<ComponentProps<"label">>): ReactElement => (
-	<label htmlFor={htmlFor}>{children}</label>
+	label,
+	optional = false,
+}: SafeProps<ComponentProps<"label">> & {
+	label?: ReactNode;
+	optional?: boolean;
+}): ReactElement => (
+	<label htmlFor={htmlFor}>
+		{label && (
+			<span>
+				{label}
+				{optional && (
+					<>
+						{" "}
+						<small>(optional)</small>
+					</>
+				)}
+			</span>
+		)}
+		{children}
+	</label>
 );
 export const FieldGroup = ({
 	children,

@@ -10,50 +10,61 @@ import {
 	Form,
 	Hint,
 	Honeypot,
-	Inline,
 	SegmentedControl,
 	Select,
 	Status,
 	Text,
 	TextArea,
-	Turnstile,
 } from "../design-system";
 
+import { genderOptions, inquiryLimits, referralOptions } from "../lib/inquiry";
 import { trialDateLabel, trialDates } from "../lib/trial-dates";
+import { useFormTask } from "../lib/use-form-task";
 
 export const InterestForm = (): ReactElement => {
 	const fieldId = useId();
-	const [status, setStatus] = useAtom(useMemo(() => atom(""), []));
+	const task = useFormTask();
+	const [received, setReceived] = useAtom(useMemo(() => atom(false), []));
 	const [referral, setReferral] = useAtom(useMemo(() => atom(""), []));
 	const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
 		event.preventDefault();
 		const form = new FormData(event.currentTarget);
-		setStatus("Sending…");
-		try {
-			const response = await fetch("/api/interest", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					name: form.get("name"),
-					email: form.get("email"),
-					interest: `${form.get("group")} trial`,
-					phone: form.get("phone"),
-					gender: form.get("gender"),
-					firstSessionDate: form.get("firstSessionDate"),
-					referral: form.get("referral"),
-					referralOther: form.get("referralOther") ?? "",
-					message: form.get("message"),
-					website: form.get("website"),
-					token: form.get("cf-turnstile-response"),
-				}),
-			});
-			const result = await response.json();
-			setStatus(response.ok ? "Received" : result.error);
-		} catch {
-			setStatus("Could not connect. Please try again.");
-		}
+		await task.submit(
+			() => undefined,
+			async (): Promise<void> => {
+				const response = await fetch("/api/interest", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						...Object.fromEntries(
+							Object.keys(inquiryLimits).map((field) => [
+								field,
+								form.get(field) ?? "",
+							]),
+						),
+						interest: `${form.get("group")} trial`,
+						website: form.get("website"),
+					}),
+				});
+				if (response.status === 429)
+					throw new Error(
+						"Too many attempts. Please try again later or email hello@calgaryuwh.com.",
+					);
+				const result: unknown = await response.json();
+				if (!response.ok)
+					throw new Error(
+						result &&
+							typeof result === "object" &&
+							"error" in result &&
+							typeof result.error === "string"
+							? result.error
+							: "Unable to send. Please try again shortly.",
+					);
+				setReceived(true);
+			},
+		);
 	};
-	if (status === "Received")
+	if (received)
 		return (
 			<Status notice>
 				Thanks for getting in touch. We’ll email you about the next steps.
@@ -82,10 +93,7 @@ export const InterestForm = (): ReactElement => {
 					maxLength={200}
 				/>
 			</FieldLabel>
-			<FieldLabel htmlFor={`${fieldId}-phone`}>
-				<Inline>
-					Phone number <Hint>(optional)</Hint>
-				</Inline>
+			<FieldLabel htmlFor={`${fieldId}-phone`} label="Phone number" optional>
 				<Field
 					id={`${fieldId}-phone`}
 					name="phone"
@@ -105,26 +113,18 @@ export const InterestForm = (): ReactElement => {
 					]}
 				/>
 			</FieldGroup>
-			<FieldLabel>
-				<Inline>
-					Gender <Hint>(optional)</Hint>
-				</Inline>
+			<FieldLabel label="Gender" optional>
 				<Select
 					name="gender"
 					defaultValue="Not specified"
-					options={[
-						"Not specified",
-						"Female",
-						"Male",
-						"Non-binary",
-						"Prefer not to say",
-					].map((value) => ({ value, label: value }))}
+					options={genderOptions}
 				/>
 			</FieldLabel>
-			<FieldLabel htmlFor={`${fieldId}-firstSessionDate`}>
-				<Inline>
-					First session date <Hint>(optional)</Hint>
-				</Inline>
+			<FieldLabel
+				htmlFor={`${fieldId}-firstSessionDate`}
+				label="First session date"
+				optional
+			>
 				<Select
 					id={`${fieldId}-firstSessionDate`}
 					name="firstSessionDate"
@@ -137,15 +137,9 @@ export const InterestForm = (): ReactElement => {
 						})),
 					]}
 				/>
-				<Hint>
-					Sunday trials · next two months. We’ll confirm your session time by
-					email.
-				</Hint>
+				<Hint>Sundays are our beginner tryout days.</Hint>
 			</FieldLabel>
-			<FieldLabel>
-				<Inline>
-					Message <Hint>(optional)</Hint>
-				</Inline>
+			<FieldLabel label="Message" optional>
 				<TextArea
 					name="message"
 					rows={2}
@@ -153,25 +147,12 @@ export const InterestForm = (): ReactElement => {
 					placeholder="Questions, comments, e.g. will you be bringing other friends/family"
 				/>
 			</FieldLabel>
-			<FieldLabel>
-				<Inline>
-					How did you hear about us? <Hint>(optional)</Hint>
-				</Inline>
+			<FieldLabel label="How did you hear about us?" optional>
 				<Select
 					name="referral"
 					value={referral}
-					onChange={(event): void => setReferral(event.target.value)}
-					options={[
-						{ value: "", label: "Select an option" },
-						...[
-							"Friend",
-							"Social Media",
-							"Movie Theatre Ads",
-							"Community Signs",
-							"Highway Banners",
-							"Other",
-						].map((value) => ({ value, label: value })),
-					]}
+					onValueChange={setReferral}
+					options={referralOptions}
 				/>
 			</FieldLabel>
 			{referral === "Other" && (
@@ -190,15 +171,12 @@ export const InterestForm = (): ReactElement => {
 				For youth players, please use a parent or guardian’s contact details.
 				We’ll only use these details to respond to your inquiry.
 			</Hint>
-			{process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? (
-				<Turnstile siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY} />
-			) : undefined}
-			<Button disabled={status === "Sending…"} type="submit">
-				{status === "Sending…" ? status : "Send inquiry"}
+			<Button disabled={task.busy} type="submit">
+				{task.busy ? "Sending…" : "Send inquiry"}
 			</Button>
-			{status && status !== "Sending…" ? (
+			{task.error ? (
 				<Text variant="error" role="alert">
-					{status}
+					{task.error}
 				</Text>
 			) : undefined}
 		</Form>

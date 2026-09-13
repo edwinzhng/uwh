@@ -34,8 +34,15 @@ export const Text = ({
 		{children}
 	</p>
 );
-export const Strong = ({ children }: CopyProps): ReactElement => (
-	<strong>{children}</strong>
+export const Strong = ({
+	children,
+	weight = "bold",
+}: CopyProps & {
+	weight?: "bold" | "semibold";
+}): ReactElement => (
+	<strong className={weight === "semibold" ? "text-semibold" : undefined}>
+		{children}
+	</strong>
 );
 export const Inline = ({ children }: CopyProps): ReactElement => (
 	<span>{children}</span>
@@ -50,5 +57,7 @@ export const Status = ({
 	children,
 	notice = false,
 }: CopyProps & { notice?: boolean }): ReactElement => (
-	<output className={notice ? "notice" : undefined}>{children}</output>
+	<div className={notice ? "notice" : undefined}>
+		<output>{children}</output>
+	</div>
 );

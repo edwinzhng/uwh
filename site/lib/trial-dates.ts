@@ -21,7 +21,7 @@ export const trialDates = (now = new Date()): string[] => {
 	);
 	return Array.from(
 		{ length: 63 },
-		(_, offset) => new Date(start.getTime() + offset * 86400000),
+		(_, offset) => new Date(start.getTime() + (offset + 2) * 86400000),
 	)
 		.filter((date) => date.getUTCDay() === 0 && date <= end)
 		.map((date) => date.toISOString().slice(0, 10));

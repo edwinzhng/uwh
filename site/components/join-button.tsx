@@ -1,24 +1,20 @@
 "use client";
-import dynamic from "next/dynamic";
+import { useSetAtom } from "jotai";
 import type { ReactElement, ReactNode } from "react";
-import { DialogTrigger, Text } from "../design-system";
+import { Button } from "../design-system";
+import { joinDialogOpen } from "../lib/join-dialog";
 
-const InterestForm = dynamic(
-	() => import("./interest-form").then((module) => module.InterestForm),
-	{ loading: () => <Text>Loading registration…</Text> },
-);
 export const JoinButton = ({
 	children,
 	variant,
 }: {
 	children: ReactNode;
 	variant?: "primary" | "navigation";
-}): ReactElement => (
-	<DialogTrigger
-		title="Registration"
-		variant={variant}
-		content={<InterestForm />}
-	>
-		{children}
-	</DialogTrigger>
-);
+}): ReactElement => {
+	const setOpen = useSetAtom(joinDialogOpen);
+	return (
+		<Button type="button" variant={variant} onClick={(): void => setOpen(true)}>
+			{children}
+		</Button>
+	);
+};

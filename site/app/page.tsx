@@ -8,6 +8,7 @@ import { PracticeSchedule } from "../components/practice-schedule";
 import {
 	Background,
 	Container,
+	FeeSchedule,
 	Heading,
 	Main,
 	Section,
@@ -41,11 +42,24 @@ const Home = async (): Promise<ReactElement> => {
 						<Stack>
 							<Text>
 								New players are always welcome! The{" "}
-								<Strong>first two weeks are free</Strong>, and our annual club
-								membership costs $200/year. The club will provide trial starter
-								equipment including mask, snorkel, water polo caps, fins,
-								sticks, glove, and mouthguard.
+								<Strong weight="semibold">first two weeks are free</Strong>. The
+								club will provide trial starter equipment including mask,
+								snorkel, water polo caps, fins, sticks, glove, and mouthguard.
 							</Text>
+							<Text>Annual membership fees depend on when you pay.</Text>
+							<FeeSchedule
+								season="2026–27"
+								fees={[
+									{
+										period: "Before Sep 1, 2026",
+										amount: "$200",
+										label: "Early bird",
+									},
+									{ period: "Sep 1 – Dec 31, 2026", amount: "$300" },
+									{ period: "Jan 1 – Mar 31, 2027", amount: "$200" },
+									{ period: "Apr 1 – Aug 31, 2027", amount: "$100" },
+								]}
+							/>
 							<Text>
 								Our players span a wide variety of skill levels, ranging from
 								absolute beginners to players who've competed at multiple world

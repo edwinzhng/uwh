@@ -16,11 +16,16 @@ export const Navigation = ({
 	items: NavigationItem[];
 	selected?: number;
 }): ReactElement => (
-	<nav className="nav-island" aria-label="Main navigation">
+	<nav
+		className="nav-island"
+		aria-label="Main navigation"
+		style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+	>
 		<span
 			className="nav-selection"
 			aria-hidden="true"
 			style={{
+				width: `calc((100% - ${(items.length + 1) * 4}px) / ${items.length})`,
 				opacity: selected === undefined ? 0 : 1,
 				transform: `translateX(calc(${(selected ?? 0) * 100}% + ${(selected ?? 0) * 4}px))`,
 			}}
