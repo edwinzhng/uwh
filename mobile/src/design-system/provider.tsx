@@ -3,8 +3,10 @@ import type { ReactElement, ReactNode } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ActionToaster } from "./action-toaster";
+import { AppTitle } from "./app-title";
 import { DateTimeStyles } from "./date-time-styles";
 import { fontSources } from "./fonts";
+import { InputStyles } from "./input-styles";
 import { MotionProvider } from "./motion-provider";
 import { PopupStyles } from "./popup-styles";
 import { ScrollbarStyles } from "./scrollbar-styles";
@@ -25,9 +27,11 @@ export const DesignProvider = ({
 		>
 			<SafeAreaProvider>
 				<MotionProvider>
+					<AppTitle />
 					<PopupStyles />
 					<ScrollbarStyles />
 					<DateTimeStyles />
+					<InputStyles />
 					{loaded ? (
 						children
 					) : (
@@ -35,7 +39,7 @@ export const DesignProvider = ({
 							<Text>
 								{error
 									? "The fonts could not load. Restart the preview to retry."
-									: "Opening Crocs Club…"}
+									: "Opening UWH Club…"}
 							</Text>
 						</Stack>
 					)}

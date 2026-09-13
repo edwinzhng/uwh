@@ -10,6 +10,28 @@ const routes: Record<
 		label: string;
 	}
 > = {
+	"/account-settings": {
+		parent: "/account",
+		parentLabel: "Account",
+		label: "Settings",
+	},
+	"/membership": {
+		parent: "/account",
+		parentLabel: "Account",
+		label: "Membership",
+	},
+	"/my-progress": {
+		parent: "/account",
+		parentLabel: "Account",
+		label: "Progress",
+	},
+	"/members": { parent: "/club", parentLabel: "Club", label: "People" },
+	"/club-information": {
+		parent: "/club",
+		parentLabel: "Club",
+		label: "Information",
+	},
+	"/series": { parent: "/schedule", parentLabel: "Schedule", label: "Series" },
 	"/member": { parent: "/members", parentLabel: "Members", label: "Profile" },
 	"/progress": { parent: "/members", parentLabel: "Members", label: "Profile" },
 	"/conversation": {

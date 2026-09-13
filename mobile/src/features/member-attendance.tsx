@@ -4,6 +4,8 @@ import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
 import {
 	AttendanceChart,
+	EmptyState,
+	LoadingContent,
 	Row,
 	SectionHeading,
 	Select,
@@ -52,7 +54,7 @@ const AttendanceContent = ({
 				<Stack>
 					<Row gap="xl" wrap>
 						<Stack gap="xxs">
-							<Text variant="h2">
+							<Text variant="number">
 								{summary.attended === undefined
 									? "N/A"
 									: `${summary.attended}%`}
@@ -63,7 +65,7 @@ const AttendanceContent = ({
 							</Text>
 						</Stack>
 						<Stack gap="xxs">
-							<Text variant="h2">
+							<Text variant="number">
 								{summary.onTime === undefined ? "N/A" : `${summary.onTime}%`}
 							</Text>
 							<Text variant="small">On time</Text>
@@ -75,11 +77,18 @@ const AttendanceContent = ({
 					{summary.recorded > 0 && summary.points.length ? (
 						<AttendanceChart data={summary.points} />
 					) : (
-						<Text variant="small" tone="secondary">
-							{summary.total
-								? "Attendance hasn’t been recorded yet"
-								: "No completed practices this season"}
-						</Text>
+						<EmptyState
+							title={
+								summary.total
+									? "Attendance hasn’t been recorded yet"
+									: "No completed practices this season"
+							}
+							description={
+								summary.total
+									? "Attendance trends will appear after a coach records practice attendance."
+									: "Completed practices and recorded attendance will appear here as the season progresses."
+							}
+						/>
 					)}
 					<Text variant="caption" tone="secondary">
 						{summary.recorded} of {summary.total} practices recorded ·{" "}
@@ -118,9 +127,11 @@ const LiveAttendance = ({
 			onSeason={onSeason}
 			summary={summary}
 		/>
+	) : summary === undefined ? (
+		<LoadingContent />
 	) : (
 		<Text variant="small" tone="secondary">
-			{summary === undefined ? "Loading attendance…" : "Attendance unavailable"}
+			Attendance unavailable
 		</Text>
 	);
 };

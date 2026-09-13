@@ -59,7 +59,14 @@ export const actionData = async (
 				if (error) throw new Error(error);
 				return {
 					select: {
-						members: action.draft.eligiblePersonIds ?? [],
+						members: [
+							...new Set([
+								...(action.draft.eligiblePersonIds ?? []),
+								...(action.draft.tournamentRoster ?? []).map(
+									(entry) => entry.personId,
+								),
+							]),
+						],
 						events: createOccurrences(action.id, action.draft).map(
 							(entry) => entry.id,
 						),
@@ -191,6 +198,8 @@ export const actionData = async (
 				};
 			case "create-notice":
 				return { select: { notices: [action.notice.id] } };
+			case "dismiss-notice":
+			case "expire-notice":
 			case "acknowledge":
 				return { select: { notices: [action.noticeId], members: true } };
 			case "settings":

@@ -5,9 +5,11 @@ import type { Doc } from "../../convex/_generated/dataModel";
 import {
 	Badge,
 	Button,
+	EmptyState,
 	Field,
 	List,
 	ListItem,
+	LoadingContent,
 	Row,
 	SectionHeading,
 	Stack,
@@ -63,10 +65,13 @@ export const FitnessProgress = ({
 											: formatFitnessValue(test.unit, value)
 									}
 								/>
+							) : trends ? (
+								<EmptyState
+									title="No results for these players"
+									description="Record results for the selected players to compare their progress."
+								/>
 							) : (
-								<Text tone="secondary">
-									{trends ? "No results for these players." : "Loading…"}
-								</Text>
+								<LoadingContent />
 							)}
 							{trends?.some((series) => series.limited) ? (
 								<Text variant="caption" tone="secondary">
@@ -129,9 +134,14 @@ export const FitnessProgress = ({
 						/>
 					))}
 					{!page?.page.length ? (
-						<Text tone="secondary">
-							{page ? "No players found." : "Loading…"}
-						</Text>
+						page ? (
+							<EmptyState
+								title="No players found"
+								description="Try a different name or clear the search to see more players."
+							/>
+						) : (
+							<LoadingContent />
+						)
 					) : undefined}
 				</List>
 			</Surface>

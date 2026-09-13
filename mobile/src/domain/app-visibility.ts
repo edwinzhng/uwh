@@ -74,6 +74,7 @@ export const visibleAppData = (data: AppData, account: Account): AppData => {
 		messages: data.messages.filter((entry) => threadIds.has(entry.threadId)),
 		notices: visibleNotices(data, account).map((entry) => ({
 			...entry,
+			dismissedBy: entry.dismissedBy?.filter((id) => id === account.id),
 			acknowledgedBy: account.admin
 				? entry.acknowledgedBy
 				: entry.acknowledgedBy.filter((id) => id === account.id),

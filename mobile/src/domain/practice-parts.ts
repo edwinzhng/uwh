@@ -63,6 +63,7 @@ export const validatePracticeParts = (
 	const parts = draft.parts;
 	if (
 		draft.kind === "social" ||
+		draft.kind === "tournament" ||
 		parts.length < 1 ||
 		parts.length > 12 ||
 		new Set(parts.map((part) => part.id)).size !== parts.length ||

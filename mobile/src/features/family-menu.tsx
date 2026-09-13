@@ -37,7 +37,7 @@ export const FamilyMenu = (): ReactElement => {
 								.catch((): void => actionToast("retryAction", "error"));
 						}
 					: undefined,
-				onSettings: (): void => router.navigate("/account"),
+				onSettings: (): void => router.navigate("/account-settings"),
 			}}
 		/>
 	);

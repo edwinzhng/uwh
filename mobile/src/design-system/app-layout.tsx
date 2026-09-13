@@ -26,7 +26,6 @@ import { WaterBackground } from "./water-background";
 type Props = {
 	children: ReactNode;
 	title?: string;
-	titleSize?: "page" | "section";
 	tabs?: ReactNode;
 	subtitle?: string;
 	brand: string;
@@ -45,7 +44,6 @@ type Props = {
 export const AppLayout = ({
 	children,
 	title,
-	titleSize = "page",
 	tabs,
 	subtitle,
 	brand,
@@ -92,9 +90,7 @@ export const AppLayout = ({
 						>
 							<Row align="center" gap="xs" wrap>
 								<Stack>
-									<Text variant={titleSize === "section" ? "h3" : "h2"}>
-										{title}
-									</Text>
+									<Text variant="h1">{title}</Text>
 								</Stack>
 								{titleAccessory}
 							</Row>

@@ -8,7 +8,7 @@ import type {
 	PaginationOptions,
 	PaginationResult,
 } from "convex/server";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 import { useRetainedQuery } from "../backend/use-retained-query";
 import { useApp } from "../demo/app-state";
 import { Button, LoadingContent, Row, Text } from "../design-system";
@@ -21,7 +21,7 @@ type PageConfig<Query extends PaginatedQueryReference> = {
 };
 type Props<Query extends PaginatedQueryReference> = {
 	config: PageConfig<Query>;
-	children: (items: PaginatedQueryItem<Query>[]) => ReactElement;
+	children: (items: PaginatedQueryItem<Query>[]) => ReactNode;
 };
 const PageButtons = ({
 	page,

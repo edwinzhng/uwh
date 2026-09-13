@@ -150,6 +150,8 @@ export const appAction = v.union(
 		title: v.string(),
 		recipientId: v.string(),
 	}),
+	v.object({ type: v.literal("dismiss-notice"), noticeId: v.string() }),
+	v.object({ type: v.literal("expire-notice"), noticeId: v.string() }),
 	v.object({ type: v.literal("acknowledge"), noticeId: v.string() }),
 	v.object({ type: v.literal("create-notice"), notice: noticesValue }),
 	v.object({

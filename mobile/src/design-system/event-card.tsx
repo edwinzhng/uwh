@@ -58,7 +58,7 @@ export const EventCard = ({
 				<Row align="start" gap="sm">
 					<Stack grow gap={parts?.length ? "xs" : "xxs"}>
 						<Row wrap gap="sm">
-							<Text variant="label">{title}</Text>
+							<Text variant="h4">{title}</Text>
 							{!parts?.length ? (
 								<Text variant="label">
 									{time}–{endTime}

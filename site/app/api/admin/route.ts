@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import { makeFunctionReference } from "convex/server";
 import { cookies } from "next/headers";
 import { matchesPassword, sameOrigin, sessionToken } from "../../../lib/auth";
+import { readJsonBody } from "../../../lib/request-body";
 import { backend, serverKey } from "../../../lib/store";
 export const POST = async (request: Request): Promise<Response> => {
 	if (!sameOrigin(request))
@@ -22,10 +23,16 @@ export const POST = async (request: Request): Promise<Response> => {
 			{ error: "Too many attempts. Try again later." },
 			{ status: 429 },
 		);
-	const body = await request.json().catch(() => undefined);
+	const parsed = await readJsonBody(request, 4096);
+	if (parsed.error) return parsed.error;
+	const body = parsed.value;
 	if (!body || typeof body !== "object")
 		return Response.json({ error: "Invalid request" }, { status: 400 });
-	if (typeof body.password !== "string" || !matchesPassword(body.password))
+	if (
+		!("password" in body) ||
+		typeof body.password !== "string" ||
+		!matchesPassword(body.password)
+	)
 		return Response.json({ error: "Incorrect password" }, { status: 401 });
 	(await cookies()).set("website-admin", sessionToken(), {
 		httpOnly: true,

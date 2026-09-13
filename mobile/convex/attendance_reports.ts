@@ -68,7 +68,8 @@ const rangeEvents = async (
 				(value.seasonId ?? defaultSeasonId) === seasonId &&
 				!value.cancelled &&
 				value.kind !== "social" &&
-				clubTimestamp(value.date, value.end, value.timeZone) <= Date.now(),
+				clubTimestamp(value.endDate ?? value.date, value.end, value.timeZone) <=
+					Date.now(),
 		)
 		.sort(
 			(a, b) =>

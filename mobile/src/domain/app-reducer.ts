@@ -16,7 +16,7 @@ import type { Account, AppAction, AppData, EventResponse } from "./app-types";
 import { generatePreviewTeams } from "./club";
 import { equipmentStock, validateEquipment } from "./equipment";
 import { editedOccurrences, eligibleResponses } from "./event-recurrence";
-import { signupState } from "./event-time";
+import { clubDate, signupState } from "./event-time";
 import { reduceMessages } from "./message-reducer";
 import { defaultPlayerCoaching } from "./player-coaching";
 import {
@@ -107,7 +107,7 @@ export const reduceApp = (
 				(entry) =>
 					entry.eventId === event.id &&
 					entry.personId !== action.personId &&
-					entry.response === "going",
+					(entry.response === "going" || entry.seriesExpected),
 			).length;
 			const response =
 				action.response === "going" && going >= (event.capacity ?? Infinity)
@@ -134,7 +134,9 @@ export const reduceApp = (
 			);
 			const space =
 				responses.filter(
-					(entry) => entry.eventId === event.id && entry.response === "going",
+					(entry) =>
+						entry.eventId === event.id &&
+						(entry.response === "going" || entry.seriesExpected),
 				).length < (event.capacity ?? Infinity);
 			return {
 				...data,
@@ -202,7 +204,12 @@ export const reduceApp = (
 			requireAccess(account.admin);
 			const draft = {
 				...action.draft,
-				timeZone: data.timeZone ?? defaultClubTimeZone,
+				timeZone:
+					(action.draft.kind === "tournament"
+						? action.draft.timeZone
+						: undefined) ??
+					data.timeZone ??
+					defaultClubTimeZone,
 			};
 			if (
 				!data.seasons.some(
@@ -221,6 +228,16 @@ export const reduceApp = (
 				)
 			)
 				throw new Error("Choose players from this club.");
+			if (
+				draft.tournamentRoster?.some(
+					(entry) =>
+						!data.members.some(
+							(member) =>
+								member.id === entry.personId && member.programs.length > 0,
+						),
+				)
+			)
+				throw new Error("Choose roster players from this club.");
 			const events = createOccurrences(action.id, draft);
 			if (
 				data.events.some((entry) =>
@@ -237,7 +254,12 @@ export const reduceApp = (
 			if (!event) throw new Error("Event unavailable.");
 			const draft = {
 				...action.draft,
-				timeZone: event.timeZone ?? defaultClubTimeZone,
+				timeZone:
+					(action.draft.kind === "tournament"
+						? action.draft.timeZone
+						: undefined) ??
+					event.timeZone ??
+					defaultClubTimeZone,
 			};
 			if (
 				!data.seasons.some(
@@ -256,6 +278,16 @@ export const reduceApp = (
 				)
 			)
 				throw new Error("Choose players from this club.");
+			if (
+				draft.tournamentRoster?.some(
+					(entry) =>
+						!data.members.some(
+							(member) =>
+								member.id === entry.personId && member.programs.length > 0,
+						),
+				)
+			)
+				throw new Error("Choose roster players from this club.");
 			const events = editedOccurrences(
 				data.events,
 				event,
@@ -614,6 +646,33 @@ export const reduceApp = (
 		case "set-reaction":
 		case "create-thread":
 			return { ...data, ...reduceMessages(data, account, action) };
+		case "dismiss-notice":
+		case "expire-notice": {
+			const notice = visibleNotices(data, account).find(
+				(entry) => entry.id === action.noticeId,
+			);
+			requireAccess(Boolean(notice));
+			if (action.type === "expire-notice")
+				requireAccess(
+					account.admin ||
+						account.coachPrograms.includes(notice?.program ?? ""),
+				);
+			return {
+				...data,
+				notices: data.notices.map((entry) =>
+					entry.id !== action.noticeId
+						? entry
+						: action.type === "expire-notice"
+							? { ...entry, expiresAt: clubDate(undefined, data.timeZone) }
+							: {
+									...entry,
+									dismissedBy: [
+										...new Set([...(entry.dismissedBy ?? []), account.id]),
+									],
+								},
+				),
+			};
+		}
 		case "acknowledge":
 			requireAccess(
 				visibleNotices(data, account).some(
@@ -633,14 +692,25 @@ export const reduceApp = (
 				),
 			};
 		case "create-notice":
-			requireAccess(account.admin || canCoach(account, action.notice.program));
+			requireAccess(
+				account.admin || account.coachPrograms.includes(action.notice.program),
+			);
+			if (
+				action.notice.expiresAt &&
+				(!validDate(action.notice.expiresAt) ||
+					action.notice.expiresAt <= action.notice.date)
+			)
+				throw new Error("Expiry must be after the publication date.");
 			if (!action.notice.title.trim() || !action.notice.body.trim())
 				throw new Error("Add a title and message.");
 			if (data.notices.some((entry) => entry.id === action.notice.id))
 				return data;
 			return {
 				...data,
-				notices: [{ ...action.notice, acknowledgedBy: [] }, ...data.notices],
+				notices: [
+					{ ...action.notice, acknowledgedBy: [], dismissedBy: [] },
+					...data.notices,
+				],
 			};
 		case "registration":
 			requireAccess(account.admin && Boolean(member));

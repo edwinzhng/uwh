@@ -12,7 +12,7 @@ export const authRedirect = (destination: string, site: string): string => {
 	const base = new URL(site);
 	const target = new URL(destination, base);
 	const native =
-		target.protocol === "crocs-club:" &&
+		target.protocol === "uwh-club:" &&
 		["auth-callback", "connect-account"].includes(target.hostname) &&
 		(target.pathname === "" || target.pathname === "/");
 	if (

@@ -5,7 +5,7 @@ export const chartPalette = {
 	series: [
 		chartColors.blue,
 		chartColors.purple,
-		chartColors.teal,
+		chartColors.indigo,
 		chartColors.amber,
 		chartColors.pink,
 		chartColors.green,

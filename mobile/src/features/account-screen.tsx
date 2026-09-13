@@ -1,116 +1,50 @@
-import { useAtom, useSetAtom } from "jotai";
+import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
-import { useBackend } from "../backend/context";
-import { previewAccounts } from "../demo/app-data";
-import {
-	previewAccountIdAtom,
-	selectPreviewAccountAtom,
-	useApp,
-} from "../demo/app-state";
-import {
-	Badge,
-	Button,
-	Row,
-	reduceMotionAtom,
-	Select,
-	Stack,
-	Surface,
-	Text,
-	ThemeToggle,
-	Toggle,
-	themePreferenceAtom,
-} from "../design-system";
-import { AccountSecurity } from "./account-security";
-import { BlockedAccounts } from "./blocked-accounts";
+import { useActivePerson } from "../demo/app-state";
+import { ListItem, SectionHeading, Stack, Surface } from "../design-system";
+import { AccountParticipation } from "./account-participation";
+import { CalendarExportButton } from "./calendar-export-button";
 import { ClubShell } from "./club-shell";
-import { NotificationSettings } from "./notification-settings";
-import { useTask } from "./use-task";
+
 export const AccountScreen = (): ReactElement => {
-	const { account, source, data } = useApp();
-	const backend = useBackend();
-	const task = useTask();
-	const [theme, setTheme] = useAtom(themePreferenceAtom);
-	const [reduceMotion, setReduceMotion] = useAtom(reduceMotionAtom);
-	const [previewAccount] = useAtom(previewAccountIdAtom);
-	const selectAccount = useSetAtom(selectPreviewAccountAtom);
+	const person = useActivePerson();
+	const router = useRouter();
 	return (
-		<ClubShell title="Settings">
-			<Surface>
-				<Stack>
-					<Text variant="h4">
-						{source === "convex" ? account.name : "App preview"}
-					</Text>
-					<Row wrap>
-						{source === "convex" ? (
-							<Badge label="Signed in" kind="success" />
-						) : (
-							<Badge label="Sample data" />
-						)}
-						{account.admin ? <Badge label="Admin" kind="admin" /> : undefined}
-						{account.coachPrograms.length ? (
-							<Badge label="Coach" kind="coach" />
-						) : undefined}
-						{account.children.length ? <Badge label="Parent" /> : undefined}
-						{data.members.find((member) => member.id === account.personId)
-							?.programs.length ? (
-							<Badge label="Player" />
-						) : undefined}
-					</Row>
-					{source === "preview" ? (
-						<Select
-							label="Preview account"
-							value={previewAccount}
-							options={previewAccounts.map((entry) => ({
-								value: entry.id,
-								label:
-									entry.name +
-									(entry.admin && entry.coachPrograms.length
-										? " · All roles"
-										: entry.admin
-											? " · Admin"
-											: entry.coachPrograms.length
-												? " · Coach"
-												: entry.children.length
-													? " · Parent"
-													: " · Player"),
-							}))}
-							onValueChange={(value): void => {
-								if (value) selectAccount(value);
-							}}
+		<ClubShell
+			title="Account"
+			subtitle={`${person.name} · Choose a household member using the profile menu.`}
+		>
+			<AccountParticipation />
+			<Stack gap="sm">
+				<SectionHeading size="small">Personal records</SectionHeading>
+				<Surface padding="xs">
+					<Stack gap="none">
+						<ListItem
+							title="Membership, payments & equipment"
+							description="Registration, payment history and borrowed equipment"
+							icon="shield"
+							onPress={(): void => router.push("/membership")}
 						/>
-					) : undefined}
-					<ThemeToggle value={theme} onValueChange={setTheme} />
-					<Toggle
-						label="Reduce motion"
-						value={reduceMotion}
-						onValueChange={setReduceMotion}
+						<ListItem
+							title="Progress & feedback"
+							icon="target"
+							onPress={(): void => router.push("/my-progress")}
+						/>
+					</Stack>
+				</Surface>
+			</Stack>
+			<Stack gap="sm">
+				<SectionHeading size="small">Household & settings</SectionHeading>
+				<Surface padding="xs">
+					<ListItem
+						title="Account settings"
+						description="Household access, notifications, appearance and sign-in"
+						icon="settings"
+						onPress={(): void => router.push("/account-settings")}
 					/>
-				</Stack>
-			</Surface>
-			{source === "convex" ? (
-				<>
-					<NotificationSettings />
-					<BlockedAccounts />
-					<AccountSecurity />
-					<Row>
-						<Button
-							label="Sign out"
-							variant="secondary"
-							isLoading={task.busy}
-							onPress={(): void => {
-								void task.run(async (): Promise<void> => {
-									await backend.signOut?.();
-								});
-							}}
-						/>
-					</Row>
-				</>
-			) : undefined}
-			{task.error ? (
-				<Text variant="small" tone="danger">
-					{task.error}
-				</Text>
-			) : undefined}
+				</Surface>
+				<CalendarExportButton />
+			</Stack>
 		</ClubShell>
 	);
 };

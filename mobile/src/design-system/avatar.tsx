@@ -11,16 +11,18 @@ export const Avatar = ({
 	compact?: boolean;
 }): ReactElement => {
 	const colors = avatarColors(name);
+	const size = compact ? 28 : geometry.avatar;
 	return (
 		<View
 			accessible={false}
 			style={{
-				width: compact ? 28 : geometry.avatar,
-				height: compact ? 28 : geometry.avatar,
+				backgroundColor: colors.background,
+				width: size,
+				height: size,
+				overflow: "hidden",
 				borderRadius: corners.pill,
 				alignItems: "center",
 				justifyContent: "center",
-				backgroundColor: colors.background,
 			}}
 		>
 			<Text

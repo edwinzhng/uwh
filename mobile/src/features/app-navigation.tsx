@@ -27,7 +27,7 @@ export const AppNavigation = ({
 				<DesktopNavigation
 					brand={data.clubName}
 					logo={data.clubName === "Calgary Crocs" ? clubLogo : undefined}
-					onBrandPress={(): void => router.navigate("/club")}
+					onBrandPress={(): void => router.navigate("/")}
 					navigation={navigation}
 					profile={<FamilyMenu />}
 					notifications={<NotificationsMenu labeled />}

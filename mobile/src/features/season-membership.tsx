@@ -86,7 +86,9 @@ export const SeasonMembership = ({
 											? `${money(record.due - record.paid)} due`
 											: record.paid > record.due
 												? `${money(record.paid - record.due)} credit`
-												: "Settled"
+												: record.due === 0
+													? "No dues"
+													: "Paid in full"
 									}
 									kind={record.due > record.paid ? "warning" : "success"}
 								/>
@@ -96,10 +98,30 @@ export const SeasonMembership = ({
 						</SectionHeading>
 						<Surface>
 							<Stack>
-								<Row justify="between">
-									<Text variant="small">Dues {money(record.due)}</Text>
-									<Text variant="small">Paid {money(record.paid)}</Text>
-								</Row>
+								<Stack gap="xs">
+									<Row justify="between">
+										<Text variant="small" tone="secondary">
+											Season dues
+										</Text>
+										<Text variant="small">{money(record.due)}</Text>
+									</Row>
+									<Row justify="between">
+										<Text variant="small" tone="secondary">
+											Payments received
+										</Text>
+										<Text variant="small">{money(record.paid)}</Text>
+									</Row>
+									<Row justify="between">
+										<Text variant="label">
+											{record.paid > record.due
+												? "Account credit"
+												: "Remaining balance"}
+										</Text>
+										<Text variant="label">
+											{money(Math.abs(record.due - record.paid))}
+										</Text>
+									</Row>
+								</Stack>
 								{editable ? (
 									<Row wrap>
 										<Button

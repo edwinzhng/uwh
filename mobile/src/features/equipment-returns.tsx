@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
-import { Badge, List, ListItem } from "../design-system";
+import { Badge, EmptyState, List, ListItem } from "../design-system";
 import { DataPage } from "./data-page";
 import { useSearchTerm } from "./use-search-term";
 export const EquipmentReturns = ({
@@ -46,7 +46,14 @@ export const EquipmentReturns = ({
 						/>
 					))}
 					{!items.length ? (
-						<ListItem title={term ? "No matches on this page" : "No returns"} />
+						<EmptyState
+							title={term ? "No returns found" : "No returns yet"}
+							description={
+								term
+									? "Try another item or member name."
+									: "Returned equipment will appear here after a loan is marked returned."
+							}
+						/>
 					) : undefined}
 				</List>
 			)}

@@ -3,7 +3,13 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { useBackend } from "../backend/context";
-import { AuthLayout, Button, Stack, Text } from "../design-system";
+import {
+	AuthLayout,
+	Button,
+	LoadingContent,
+	Stack,
+	Text,
+} from "../design-system";
 import { AuthForm } from "./auth-form";
 import { useTask } from "./use-task";
 
@@ -30,7 +36,7 @@ export const JoinInviteScreen = (): ReactElement => {
 		>
 			<Stack>
 				{valid && details === undefined ? (
-					<Text>Loading invitation…</Text>
+					<LoadingContent />
 				) : !details || details.state !== "pending" ? (
 					<>
 						<Text>

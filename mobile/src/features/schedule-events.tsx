@@ -73,9 +73,17 @@ export const ScheduleEvents = ({
 							return (
 								<EventCard
 									key={event.id}
-									title={event.title}
+									title={
+										event.kind === "tournament"
+											? `Tournament · ${event.title}`
+											: event.title
+									}
 									time={formatTime(event.start)}
-									endTime={formatTime(event.end)}
+									endTime={
+										event.endDate && event.endDate !== event.date
+											? `${formatDate(event.endDate)} ${formatTime(event.end)}`
+											: formatTime(event.end)
+									}
 									venue={event.venue}
 									parts={event.parts?.map((part) => ({
 										label: part.title,

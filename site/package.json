@@ -3,21 +3,29 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev --port 3001",
-		"build": "next build",
+		"build": "bun run check:design && next build",
 		"start": "next start --port 3001",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"check:design": "bun scripts/check-design-boundary.ts && bun run check:motion",
+		"lint": "biome check . && bun run check:design",
+		"test": "bun test",
+		"check": "bun run typecheck && bun run lint && bun test",
+		"check:motion": "bun scripts/check-motion-tokens.ts"
 	},
 	"dependencies": {
-		"next": "16.1.6",
-		"react": "19.2.3",
-		"react-dom": "19.2.3",
+		"@calgarycrocs/design-system": "file:../packages/design-system",
+		"@vercel/analytics": "^2.0.1",
 		"convex": "^1.32.0",
 		"jotai": "^2.18.0",
-		"@calgarycrocs/design-system": "file:../packages/design-system"
+		"next": "16.3.3",
+		"react": "19.2.3",
+		"react-dom": "19.2.3"
 	},
 	"devDependencies": {
-		"typescript": "^5",
+		"@biomejs/biome": "2.4.6",
+		"@types/bun": "^1.4.2",
+		"@types/node": "^20",
 		"@types/react": "^19",
-		"@types/node": "^20"
+		"typescript": "^5"
 	}
 }

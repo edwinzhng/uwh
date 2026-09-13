@@ -3,6 +3,7 @@ import type { PlayerCoachingState } from "../backend/use-player-coaching";
 import {
 	Button,
 	Grid,
+	LoadingContent,
 	SectionHeading,
 	Stack,
 	Surface,
@@ -59,9 +60,7 @@ export const PlayerCoachingDetails = (
 						</Stack>
 					</Grid>
 				) : (
-					<Text variant="caption" tone="secondary">
-						Loading…
-					</Text>
+					<LoadingContent />
 				)}
 
 				{editing && profile ? (

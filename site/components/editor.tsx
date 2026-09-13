@@ -1,7 +1,22 @@
 "use client";
+
 import { atom, useAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import type { FormEvent, ReactElement } from "react";
+import {
+	Actions,
+	Button,
+	Field,
+	FieldGroup,
+	FieldLabel,
+	Form,
+	Heading,
+	Section,
+	Status,
+	Text,
+	TextArea,
+	TextLink,
+} from "../design-system";
 import type { SiteContent } from "../lib/content";
 
 const messageAtom = atom("");
@@ -53,106 +68,100 @@ export const Editor = ({ content }: { content: SiteContent }): ReactElement => {
 		}
 	};
 	return (
-		<form className="form admin-form" onSubmit={save}>
-			<section className="form admin-section">
-				<h2>Homepage</h2>
-				<label>
+		<Form variant="admin" onSubmit={save}>
+			<Section variant="fields">
+				<Heading level={2}>Homepage</Heading>
+				<FieldLabel>
 					Headline
-					<input
+					<Field
 						name="headline"
 						defaultValue={content.headline}
 						required
 						maxLength={119}
 					/>
-				</label>
-				<label>
+				</FieldLabel>
+				<FieldLabel>
 					Introduction
-					<textarea name="intro" defaultValue={content.intro} />
-				</label>
-				<label>
+					<TextArea name="intro" defaultValue={content.intro} />
+				</FieldLabel>
+				<FieldLabel>
 					Pool name
-					<input name="location" defaultValue={content.location} />
-				</label>
-				<label>
+					<Field name="location" defaultValue={content.location} />
+				</FieldLabel>
+				<FieldLabel>
 					Address
-					<input name="address" defaultValue={content.address} />
-				</label>
-				<label>
+					<Field name="address" defaultValue={content.address} />
+				</FieldLabel>
+				<FieldLabel>
 					Practice information
-					<textarea name="practiceNote" defaultValue={content.practiceNote} />
-				</label>
-				<label>
+					<TextArea name="practiceNote" defaultValue={content.practiceNote} />
+				</FieldLabel>
+				<FieldLabel>
 					Contact email
-					<input name="email" type="email" defaultValue={content.email} />
-				</label>
-			</section>
-			<section className="admin-section">
-				<h2>Coaches</h2>
-				<p className="lede">
+					<Field name="email" type="email" defaultValue={content.email} />
+				</FieldLabel>
+			</Section>
+			<Section variant="editor">
+				<Heading level={2}>Coaches</Heading>
+				<Text variant="lead">
 					Fill a blank row to add a coach. Clear a name to remove a profile.
-				</p>
+				</Text>
 				{[
 					...content.coaches.map((c) => ({ ...c, key: c.name })),
 					{ name: "", role: "", bio: "", key: "new-coach-one" },
 					{ name: "", role: "", bio: "", key: "new-coach-two" },
 				].map((c, index) => (
-					<fieldset className="form admin-row" key={c.key}>
-						<legend>Coach {index + 1}</legend>
-						<label>
+					<FieldGroup key={c.key} label={`Coach ${index + 1}`}>
+						<FieldLabel>
 							Name
-							<input name="coach-name" defaultValue={c.name} />
-						</label>
-						<label>
+							<Field name="coach-name" defaultValue={c.name} />
+						</FieldLabel>
+						<FieldLabel>
 							Role
-							<input name="coach-role" defaultValue={c.role} />
-						</label>
-						<label>
+							<Field name="coach-role" defaultValue={c.role} />
+						</FieldLabel>
+						<FieldLabel>
 							Short bio
-							<textarea name="coach-bio" defaultValue={c.bio} />
-						</label>
-					</fieldset>
+							<TextArea name="coach-bio" defaultValue={c.bio} />
+						</FieldLabel>
+					</FieldGroup>
 				))}
-			</section>
-			<section className="admin-section">
-				<h2>Documents</h2>
-				<p className="lede">
+			</Section>
+			<Section variant="editor">
+				<Heading level={2}>Documents</Heading>
+				<Text variant="lead">
 					Link to an existing public document. Clear a title to remove it.
-				</p>
+				</Text>
 				{[
 					...content.documents.map((d) => ({ ...d, key: d.url })),
 					{ title: "", url: "", category: "", key: "new-doc-one" },
 					{ title: "", url: "", category: "", key: "new-doc-two" },
 				].map((d, index) => (
-					<fieldset className="form admin-row" key={d.key}>
-						<legend>Document {index + 1}</legend>
-						<label>
+					<FieldGroup key={d.key} label={`Document ${index + 1}`}>
+						<FieldLabel>
 							Title
-							<input name="doc-title" defaultValue={d.title} />
-						</label>
-						<label>
+							<Field name="doc-title" defaultValue={d.title} />
+						</FieldLabel>
+						<FieldLabel>
 							Category
-							<input name="doc-category" defaultValue={d.category} />
-						</label>
-						<label>
+							<Field name="doc-category" defaultValue={d.category} />
+						</FieldLabel>
+						<FieldLabel>
 							HTTPS link
-							<input name="doc-url" type="url" defaultValue={d.url} />
-						</label>
-					</fieldset>
+							<Field name="doc-url" type="url" defaultValue={d.url} />
+						</FieldLabel>
+					</FieldGroup>
 				))}
-			</section>
-			<div className="admin-actions">
-				<button
-					className="button button-green"
-					type="submit"
-					disabled={message === "Saving…"}
-				>
+			</Section>
+			<Actions>
+				<Button type="submit" disabled={message === "Saving…"}>
 					Publish changes
-				</button>
-				<a href="/" target="_blank" rel="noreferrer">
+				</Button>
+				<TextLink href="/" external>
 					View website
-				</a>
-			</div>
-			<output>{message}</output>
-		</form>
+				</TextLink>
+			</Actions>
+			<Status>{message}</Status>
+		</Form>
 	);
 };

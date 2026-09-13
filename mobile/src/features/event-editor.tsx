@@ -1,3 +1,4 @@
+import { useSetAtom } from "jotai";
 import { type ReactElement, useState } from "react";
 import { newId, useApp } from "../demo/app-state";
 import {
@@ -23,6 +24,10 @@ import {
 import { clubDate } from "../domain/event-time";
 import { EventOptions } from "./event-options";
 import { EventPartsEditor } from "./event-parts-editor";
+import { RecurrencePreview } from "./recurrence-preview";
+import { TournamentOptions } from "./tournament-options";
+import { useFormTask } from "./use-form-task";
+import { previewSessionSeries } from "./use-session-series";
 
 export const EventEditor = ({
 	open,
@@ -35,7 +40,9 @@ export const EventEditor = ({
 	initialDate?: string;
 	event?: ClubEvent;
 }): ReactElement => {
-	const { data, dispatch, busy } = useApp();
+	const { data, dispatch, busy, source } = useApp();
+	const setPreviewSeries = useSetAtom(previewSessionSeries);
+	const [creationId] = useState(newId);
 	const initialEventDate = initialDate ?? clubDate(undefined, data.timeZone);
 	const [draft, setDraft] = useState<EventDraft>(() =>
 		event
@@ -65,19 +72,32 @@ export const EventEditor = ({
 				),
 	);
 	const [editId] = useState(newId);
+	const task = useFormTask();
 	const [error, setError] = useState<string>();
 	const [confirm, setConfirm] = useState(false);
 	const [scope, setScope] = useState<"single" | "series" | "following">(
 		"single",
 	);
+	const targets = event ? seriesTargets(data.events, event, scope) : [];
+	const anchor = scope === "series" ? (targets.at(0) ?? event) : event;
+	const scheduleChanged = Boolean(
+		anchor &&
+			(draft.date !== (anchor.seriesDate ?? anchor.date) ||
+				draft.repeat !== (anchor.repeat ?? "once") ||
+				(draft.repeatInterval ?? 1) !== (anchor.repeatInterval ?? 1) ||
+				draft.repeatUntil !== anchor.repeatUntil ||
+				Boolean(draft.excludedDates?.length) ||
+				(draft.occurrences !== undefined &&
+					draft.occurrences !== targets.length)),
+	);
 	const prepared = {
 		...draft,
 		rebuild: Boolean(
 			event &&
-				(scope !== "single" || (!event.seriesId && draft.repeat !== "once")),
+				((scope !== "single" && scheduleChanged) ||
+					(!event.seriesId && draft.repeat !== "once")),
 		),
 	};
-	const targets = event ? seriesTargets(data.events, event, scope) : [];
 	const removed = data.responses.filter(
 		(response) =>
 			targets.some((event) => event.id === response.eventId) &&
@@ -93,25 +113,51 @@ export const EventEditor = ({
 			),
 	).length;
 	const save = async (): Promise<void> => {
-		const issue = validateEvent(
-			event && !prepared.rebuild ? { ...draft, repeat: "once" } : draft,
+		await task.submit(
+			() =>
+				validateEvent(
+					event && !prepared.rebuild ? { ...draft, repeat: "once" } : draft,
+				),
+			async (): Promise<void> => {
+				const issue = validateEvent(
+					event && !prepared.rebuild ? { ...draft, repeat: "once" } : draft,
+				);
+				setError(issue);
+				if (issue) return;
+				if (
+					await dispatch(
+						event
+							? {
+									type: "edit-event",
+									eventId: event.id,
+									draft: prepared,
+									scope,
+									editId,
+								}
+							: { type: "create-event", id: creationId, draft },
+					)
+				) {
+					if (
+						!event &&
+						source === "preview" &&
+						draft.committedRoster &&
+						draft.repeat !== "once"
+					)
+						setPreviewSeries((series) => [
+							...series.filter((entry) => entry.id !== creationId),
+							{
+								id: creationId,
+								seriesIds: [creationId],
+								title: draft.title,
+								capacity: draft.capacity,
+								waitlist: draft.seriesWaitlist ?? true,
+								enrollments: [],
+							},
+						]);
+					onClose();
+				}
+			},
 		);
-		setError(issue);
-		if (issue) return;
-		if (
-			await dispatch(
-				event
-					? {
-							type: "edit-event",
-							eventId: event.id,
-							draft: prepared,
-							scope,
-							editId,
-						}
-					: { type: "create-event", id: newId(), draft },
-			)
-		)
-			onClose();
 	};
 	return (
 		<>
@@ -125,7 +171,7 @@ export const EventEditor = ({
 				footer={
 					<Button
 						label={event ? "Save" : "Create event"}
-						isLoading={busy}
+						isLoading={busy || task.busy}
 						onPress={(): void => {
 							const issue = validateEvent(
 								event && !prepared.rebuild
@@ -171,6 +217,30 @@ export const EventEditor = ({
 					) : undefined}
 					<Surface header={<Text variant="h4">Event details</Text>}>
 						<Stack gap="sm">
+							<Select
+								label="Event type"
+								value={draft.kind}
+								options={[
+									{ value: "training", label: "Practice" },
+									{ value: "hockey", label: "Scrimmage" },
+									{ value: "social", label: "Social" },
+									{ value: "tournament", label: "Tournament" },
+								]}
+								onValueChange={(kind): void => {
+									if (kind)
+										setDraft({
+											...draft,
+											kind,
+											parts: undefined,
+											repeat: kind === "tournament" ? "once" : draft.repeat,
+											endDate: undefined,
+											responseDeadline: undefined,
+											tournamentRoster: undefined,
+											capacity:
+												kind === "tournament" ? undefined : draft.capacity,
+										});
+								}}
+							/>
 							<Field
 								label="Title"
 								value={draft.title}
@@ -196,7 +266,8 @@ export const EventEditor = ({
 									setDraft({ ...draft, date: date ?? "" })
 								}
 							/>
-							{!event || scope !== "single" || !event.seriesId ? (
+							{draft.kind !== "tournament" &&
+							(!event || scope !== "single" || !event.seriesId) ? (
 								<Grid gap="md">
 									<Select
 										label="Repeat"
@@ -266,7 +337,18 @@ export const EventEditor = ({
 							) : undefined}
 						</Stack>
 					</Surface>
-					<EventPartsEditor draft={draft} onChange={setDraft} />
+					{!event || scope !== "single" ? (
+						<RecurrencePreview
+							draft={draft}
+							onChange={setDraft}
+							creating={!event}
+						/>
+					) : undefined}
+					{draft.kind === "tournament" ? (
+						<TournamentOptions draft={draft} onChange={setDraft} />
+					) : (
+						<EventPartsEditor draft={draft} onChange={setDraft} />
+					)}
 					<Surface header={<Text variant="h4">Location</Text>}>
 						<Stack gap="sm">
 							{!data.venues?.length ? (
@@ -274,27 +356,35 @@ export const EventEditor = ({
 									Configure venues in Club settings before creating an event.
 								</Text>
 							) : undefined}
-							<Select
-								label="Venue"
-								options={[
-									...new Set([
-										...(data.venues ?? []),
-										...(event?.venue ? [event.venue] : []),
-									]),
-								].map((venue) => ({ label: venue, value: venue }))}
-								value={draft.venue}
-								onValueChange={(venue): void =>
-									setDraft({ ...draft, venue: venue ?? "" })
-								}
-							/>
+							{draft.kind === "tournament" ? (
+								<Field
+									label="Venue and city"
+									value={draft.venue}
+									onValueChange={(venue): void => setDraft({ ...draft, venue })}
+								/>
+							) : (
+								<Select
+									label="Venue"
+									options={[
+										...new Set([
+											...(data.venues ?? []),
+											...(event?.venue ? [event.venue] : []),
+										]),
+									].map((venue) => ({ label: venue, value: venue }))}
+									value={draft.venue}
+									onValueChange={(venue): void =>
+										setDraft({ ...draft, venue: venue ?? "" })
+									}
+								/>
+							)}
 						</Stack>
 					</Surface>
 					<Surface header={<Text variant="h4">Registration</Text>}>
 						<EventOptions draft={draft} onChange={setDraft} />
 					</Surface>
-					{error ? (
+					{error || task.error ? (
 						<Text variant="small" tone="danger">
-							{error}
+							{error ?? task.error}
 						</Text>
 					) : undefined}
 				</Stack>
@@ -313,7 +403,7 @@ export const EventEditor = ({
 						/>
 						<Button
 							label="Save changes"
-							isLoading={busy}
+							isLoading={busy || task.busy}
 							onPress={(): void => {
 								void save();
 							}}
@@ -324,9 +414,10 @@ export const EventEditor = ({
 				<Stack>
 					{scope !== "single" ? (
 						<Text variant="caption" tone="secondary">
-							Rebuilds the series from {draft.date}. Existing RSVPs stay with
-							their events. Extra events are cancelled. Individual edits are
-							kept.
+							{prepared.rebuild
+								? `Updates the recurrence from ${draft.date}.`
+								: "Updates the selected events while keeping their dates and cancelled practices."}{" "}
+							Existing RSVPs and individual edits are kept.
 						</Text>
 					) : undefined}
 					{removed > 0 ? (
@@ -340,9 +431,9 @@ export const EventEditor = ({
 							{resetParts} partial registrations will reset to Not responded.
 						</Text>
 					) : undefined}
-					{error ? (
+					{error || task.error ? (
 						<Text variant="small" tone="danger">
-							{error}
+							{error ?? task.error}
 						</Text>
 					) : undefined}
 				</Stack>

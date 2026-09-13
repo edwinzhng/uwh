@@ -4,6 +4,7 @@ import { useApp } from "../demo/app-state";
 import {
 	Button,
 	Dialog,
+	EmptyState,
 	Field,
 	List,
 	ListItem,
@@ -64,7 +65,18 @@ export const SessionCoaching = ({
 				</SectionHeading>
 				<Surface>
 					<Stack>
-						<Text variant="small">{data.plans[planKey] || "No plan"}</Text>
+						{data.plans[planKey] ? (
+							<Text variant="small">{data.plans[planKey]}</Text>
+						) : (
+							<EmptyState
+								title="No session plan yet"
+								description={
+									event.cancelled
+										? "No plan was added before this session was cancelled."
+										: "Use Edit to add drills, activities and coaching notes for this session."
+								}
+							/>
+						)}
 					</Stack>
 				</Surface>
 			</Stack>
@@ -89,6 +101,12 @@ export const SessionCoaching = ({
 									}
 								/>
 							))}
+						{!data.members.some((member) => canRegister(member, event)) ? (
+							<EmptyState
+								title="No eligible players"
+								description="Player feedback becomes available when players are eligible for this session."
+							/>
+						) : undefined}
 					</List>
 				</Surface>
 			</Stack>

@@ -2,7 +2,7 @@ import { openAuthSessionAsync } from "expo-web-browser";
 
 export const callbackAddress = (
 	path: "auth-callback" | "connect-account",
-): string => `crocs-club://${path}`;
+): string => `uwh-club://${path}`;
 
 export const openAuthBrowser = async (
 	url: string,

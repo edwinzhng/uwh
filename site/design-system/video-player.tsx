@@ -42,7 +42,7 @@ const loadYouTube = (): Promise<YouTubeApi> => {
 		}
 	});
 };
-export const YouTubePlayer = (): ReactElement => {
+export const VideoPlayer = ({ videoId }: { videoId: string }): ReactElement => {
 	const container = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		const state: { disposed: boolean; player?: Player } = { disposed: false };
@@ -52,7 +52,7 @@ export const YouTubePlayer = (): ReactElement => {
 			container.current.append(mount);
 			state.player = new api.Player(mount, {
 				host: "https://www.youtube-nocookie.com",
-				videoId: "SAukrpTEvZA",
+				videoId,
 				playerVars: { playsinline: 1, rel: 0, origin: window.location.origin },
 				events: {
 					onReady: ({ target }): void => {
@@ -66,6 +66,6 @@ export const YouTubePlayer = (): ReactElement => {
 			state.disposed = true;
 			state.player?.destroy();
 		};
-	}, []);
+	}, [videoId]);
 	return <div ref={container} className="youtube-player" />;
 };

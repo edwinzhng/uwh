@@ -45,7 +45,8 @@ export const attendanceReportRow = (
 			!event.cancelled &&
 			event.kind !== "social" &&
 			canRegister(member, event) &&
-			clubTimestamp(event.date, event.end, event.timeZone) <= now,
+			clubTimestamp(event.endDate ?? event.date, event.end, event.timeZone) <=
+				now,
 	);
 	const eligibleIds = new Set(eligible.map((event) => event.id));
 	const cells = events.map((event) => ({

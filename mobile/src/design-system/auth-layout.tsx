@@ -2,7 +2,6 @@ import type { ReactElement, ReactNode } from "react";
 import {
 	Image,
 	KeyboardAvoidingView,
-	Text as NativeText,
 	Platform,
 	ScrollView,
 	View,
@@ -13,9 +12,10 @@ import { AuthBackground } from "./auth-background";
 import { GlassPanel } from "./glass-panel";
 import { Row } from "./row";
 import { Stack } from "./stack";
+import { Text } from "./text";
 
 import { useTheme } from "./theme";
-import { font, space } from "./tokens";
+import { space } from "./tokens";
 
 export const AuthLayout = ({
 	title,
@@ -54,16 +54,7 @@ export const AuthLayout = ({
 							<Stack gap="lg">
 								<Row gap="sm">
 									<Image source={clubLogo} style={{ width: 32, height: 32 }} />
-									<NativeText
-										accessibilityRole="header"
-										style={{
-											fontFamily: font.semibold,
-											fontSize: 28,
-											color: "#002900",
-										}}
-									>
-										{title}
-									</NativeText>
+									<Text variant="h1">{title}</Text>
 								</Row>
 								{children}
 							</Stack>

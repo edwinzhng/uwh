@@ -46,9 +46,9 @@ export const SegmentIndicator = memo(
 					borderRadius: isRound ? corners.pill : corners.control,
 					transitionProperty: ["transform", "width", "height"],
 					transitionDuration: canAnimate
-						? motion.duration.toggle
+						? motion.duration.standard
 						: motion.duration.instant,
-					transitionTimingFunction: cubicBezier(...motion.easing.control),
+					transitionTimingFunction: cubicBezier(...motion.easing.standard),
 				}}
 			>
 				{glass ? <GlassBackdrop material="selection" /> : undefined}

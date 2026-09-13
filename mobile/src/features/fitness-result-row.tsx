@@ -24,7 +24,7 @@ export const FitnessResultRow = ({
 }): ReactElement => (
 	<Stack gap="sm">
 		<Stack gap="xxs">
-			<Text variant="h4">{name}</Text>
+			<Text variant="label">{name}</Text>
 			{stats ? (
 				<Text variant="caption" tone="secondary">
 					Best {formatFitnessValue(unit, stats.best)} ·{" "}

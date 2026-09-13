@@ -1,3 +1,4 @@
+import { Temporal } from "@js-temporal/polyfill";
 import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { validDate } from "../src/domain/app-rules";
@@ -77,6 +78,7 @@ export const events = query({
 				| "id"
 				| "title"
 				| "date"
+				| "endDate"
 				| "start"
 				| "end"
 				| "venue"
@@ -104,8 +106,19 @@ export const events = query({
 				q
 					.eq("clubId", club._id)
 					.eq("value.public", true)
-					.gte("value.date", args.from)
+					.gte(
+						"value.date",
+						Temporal.PlainDate.from(args.from)
+							.subtract({ days: 13 })
+							.toString(),
+					)
 					.lte("value.date", args.to),
+			)
+			.filter((q) =>
+				q.or(
+					q.gte(q.field("value.date"), args.from),
+					q.gte(q.field("value.endDate"), args.from),
+				),
 			)
 			.paginate({
 				...args.paginationOpts,
@@ -118,6 +131,7 @@ export const events = query({
 				timeZone: value.timeZone ?? defaultClubTimeZone,
 				title: value.title,
 				date: value.date,
+				endDate: value.endDate,
 				start: value.start,
 				end: value.end,
 				venue: value.venue,

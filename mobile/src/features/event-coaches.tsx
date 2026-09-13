@@ -4,6 +4,7 @@ import {
 	Button,
 	Combobox,
 	EmptyState,
+	LoadingContent,
 	Row,
 	SectionHeading,
 	Select,
@@ -41,7 +42,7 @@ const EventCoachList = ({
 			<Surface>
 				<Stack>
 					{controls.loading ? (
-						<Text tone="secondary">Loading…</Text>
+						<LoadingContent />
 					) : (
 						<>
 							{controls.assignments.map((assignment) => (

@@ -1,0 +1,10 @@
+{
+	"extends": ["../biome.json"],
+	"files": {
+		"includes": ["**", "!!.next", "!!node_modules", "!!next-env.d.ts"]
+	},
+	"root": false,
+	"vcs": {
+		"enabled": false
+	}
+}

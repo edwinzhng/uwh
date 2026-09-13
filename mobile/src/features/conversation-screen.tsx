@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { useMessaging } from "../backend/messaging-context";
 import { useApp } from "../demo/app-state";
-import { Button, Text } from "../design-system";
+import { Button, EmptyState, LoadingContent } from "../design-system";
 import { ClubShell } from "./club-shell";
 import { LiveConversation } from "./live-conversation";
 import { PreviewConversation } from "./preview-conversation";
@@ -26,9 +26,14 @@ export const ConversationScreen = (): ReactElement => {
 					/>
 				}
 			>
-				<Text variant="small" tone="secondary">
-					{loading ? "Loading conversation…" : "Conversation unavailable."}
-				</Text>
+				{loading ? (
+					<LoadingContent />
+				) : (
+					<EmptyState
+						title="Conversation unavailable"
+						description="Return to Messages to choose a conversation you can access."
+					/>
+				)}
 			</ClubShell>
 		);
 	const key = `${account.id}:${thread.id}`;

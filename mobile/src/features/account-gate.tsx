@@ -22,7 +22,7 @@ export const AccountGate = (): ReactElement => {
 	const requests = backend.accountInfo?.pending ?? [];
 	const pending = requests.some((request) => request.state === "pending");
 	return (
-		<AuthLayout title="Calgary Crocs">
+		<AuthLayout title="UWH Club">
 			{!backend.authenticated ? (
 				<AuthForm />
 			) : !backend.accountInfo ? (

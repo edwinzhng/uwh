@@ -4,6 +4,7 @@ import type { ConversationSummary } from "../domain/messaging";
 type Messaging = {
 	threads: ConversationSummary[];
 	loading: boolean;
+	openSession: (eventId: string) => Promise<string>;
 	openDirect: (recipientId: string) => Promise<string>;
 	markRead: (threadId: string, messageId: string) => Promise<void>;
 };

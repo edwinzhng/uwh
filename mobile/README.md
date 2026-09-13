@@ -1,4 +1,4 @@
-# Crocs Club
+# UWH Club
 
 An Expo / React Native club app beside the existing UWH app. TypeScript, Bun, Biome, Inter and a constrained shared design system.
 

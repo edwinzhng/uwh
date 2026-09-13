@@ -1,45 +1,62 @@
 import { useRouter } from "expo-router";
-import { type ReactElement, useState } from "react";
-import { useActivePerson, useApp } from "../demo/app-state";
-import { ListItem, Stack, Surface, TabContent, Tabs } from "../design-system";
+import type { ReactElement } from "react";
+import { useApp } from "../demo/app-state";
+import { ListItem, SectionHeading, Stack, Surface } from "../design-system";
 import { ClubShell } from "./club-shell";
-import { MemberAdmin } from "./member-admin";
 
 export const ClubHomeScreen = (): ReactElement => {
-	const { account } = useApp();
-	const active = useActivePerson();
+	const { account, data } = useApp();
 	const router = useRouter();
-	const staff = account.admin || account.coachPrograms.length > 0;
-	const [selected, setSelected] = useState("membership");
-	const options = [
-		{ value: "membership", label: "Membership" },
-		...(account.admin ? [{ value: "admin", label: "Admin" }] : []),
-		...(account.coachPrograms.length
-			? [{ value: "coaching", label: "Coaching" }]
-			: []),
-	];
-	const tab = options.some((option) => option.value === selected)
-		? selected
-		: "membership";
-
 	return (
-		<ClubShell
-			title={staff ? "Club" : "Membership"}
-			tabs={
-				staff ? (
-					<Tabs
-						page
-						hideLabel
-						label="Club views"
-						value={tab}
-						onValueChange={setSelected}
-						options={options}
+		<ClubShell title="Club" subtitle={data.clubName}>
+			<Surface padding="xs">
+				<Stack gap="none">
+					<ListItem
+						title="People"
+						description="Players, parents and coaches"
+						icon="users"
+						onPress={(): void => router.push("/members")}
 					/>
-				) : undefined
-			}
-		>
-			<TabContent value={tab}>
-				{tab === "admin" && account.admin ? (
+					<ListItem
+						title="Programs & club information"
+						description="Programs, pools and club timezone"
+						icon="waves"
+						onPress={(): void => router.push("/club-information")}
+					/>
+				</Stack>
+			</Surface>
+			{account.coachPrograms.length ? (
+				<Stack gap="sm">
+					<SectionHeading size="small">Coaching</SectionHeading>
+					<Surface padding="xs">
+						<Stack gap="none">
+							<ListItem
+								title="Players & progress"
+								icon="users"
+								onPress={(): void => router.push("/members")}
+							/>
+							<ListItem
+								title="Coaching hours"
+								icon="clock"
+								onPress={(): void => router.push("/coaching-hours")}
+							/>
+							<ListItem
+								title="Fitness tests"
+								icon="lab"
+								onPress={(): void => router.push("/fitness")}
+							/>
+							<ListItem
+								title="Attendance reports"
+								icon="layers"
+								onPress={(): void => router.push("/attendance-report")}
+							/>
+						</Stack>
+					</Surface>
+				</Stack>
+			) : undefined}
+			{account.admin ? (
+				<Stack gap="sm">
+					<SectionHeading size="small">Manage club</SectionHeading>
 					<Surface padding="xs">
 						<Stack gap="none">
 							<ListItem
@@ -60,7 +77,7 @@ export const ClubHomeScreen = (): ReactElement => {
 							<ListItem
 								title="Club settings"
 								icon="settings"
-								onPress={(): void => router.navigate("/settings")}
+								onPress={(): void => router.push("/settings")}
 							/>
 							<ListItem
 								title="Moderation"
@@ -74,32 +91,8 @@ export const ClubHomeScreen = (): ReactElement => {
 							/>
 						</Stack>
 					</Surface>
-				) : undefined}
-				{tab === "coaching" && account.coachPrograms.length ? (
-					<Surface padding="xs">
-						<Stack gap="none">
-							<ListItem
-								title="Coaching hours"
-								icon="clock"
-								onPress={(): void => router.push("/coaching-hours")}
-							/>
-							<ListItem
-								title="Fitness tests"
-								icon="lab"
-								onPress={(): void => router.push("/fitness")}
-							/>
-							<ListItem
-								title="Attendance reports"
-								icon="layers"
-								onPress={(): void => router.push("/attendance-report")}
-							/>
-						</Stack>
-					</Surface>
-				) : undefined}
-				{tab === "membership" ? (
-					<MemberAdmin key={active.id} member={active} readOnly />
-				) : undefined}
-			</TabContent>
+				</Stack>
+			) : undefined}
 		</ClubShell>
 	);
 };

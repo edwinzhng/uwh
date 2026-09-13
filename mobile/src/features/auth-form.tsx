@@ -9,7 +9,7 @@ import {
 	Text,
 } from "../design-system";
 import { SocialSignIn } from "./social-sign-in";
-import { useTask } from "./use-task";
+import { useFormTask } from "./use-form-task";
 
 type Step = "signIn" | "signUp" | "verify" | "reset" | "resetCode";
 export const AuthForm = ({
@@ -24,35 +24,51 @@ export const AuthForm = ({
 	const [name, setName] = useState("");
 	const [code, setCode] = useState("");
 	const [sentAt, setSentAt] = useState(0);
-	const task = useTask();
+	const task = useFormTask();
 	const normalizedEmail = email.trim().toLowerCase();
 	const submit = async (): Promise<void> => {
-		await task.run(async (): Promise<void> => {
-			if (!backend.authenticate) return;
-			const result = await backend.authenticate({
-				flow:
-					step === "verify"
-						? "email-verification"
-						: step === "resetCode"
-							? "reset-verification"
-							: step,
-				email: normalizedEmail,
-				password: step === "signIn" || step === "signUp" ? password : undefined,
-				newPassword: step === "resetCode" ? password : undefined,
-				name: step === "signUp" ? name.trim() : undefined,
-				code:
-					step === "verify" || step === "resetCode" ? code.trim() : undefined,
-			});
-			setPassword("");
-			setCode("");
-			if (step === "reset") {
-				setStep("resetCode");
-				setSentAt(Date.now());
-			} else if (!result && (step === "signIn" || step === "signUp")) {
-				setStep("verify");
-				setSentAt(Date.now());
-			}
-		});
+		await task.submit(
+			(): string | undefined =>
+				!normalizedEmail.includes("@")
+					? "Enter a valid email address"
+					: verify && !/^\d{8}$/.test(code)
+						? "Enter the 8-digit code"
+						: needsPassword &&
+								(step === "signIn" ? !password : password.length < 12)
+							? step === "signIn"
+								? "Enter your password"
+								: "Use at least 12 characters"
+							: step === "signUp" && !name.trim()
+								? "Enter your name"
+								: undefined,
+			async (): Promise<void> => {
+				if (!backend.authenticate) return;
+				const result = await backend.authenticate({
+					flow:
+						step === "verify"
+							? "email-verification"
+							: step === "resetCode"
+								? "reset-verification"
+								: step,
+					email: normalizedEmail,
+					password:
+						step === "signIn" || step === "signUp" ? password : undefined,
+					newPassword: step === "resetCode" ? password : undefined,
+					name: step === "signUp" ? name.trim() : undefined,
+					code:
+						step === "verify" || step === "resetCode" ? code.trim() : undefined,
+				});
+				setPassword("");
+				setCode("");
+				if (step === "reset") {
+					setStep("resetCode");
+					setSentAt(Date.now());
+				} else if (!result && (step === "signIn" || step === "signUp")) {
+					setStep("verify");
+					setSentAt(Date.now());
+				}
+			},
+		);
 	};
 	const verify = step === "verify" || step === "resetCode";
 	const needsPassword =
@@ -65,6 +81,7 @@ export const AuthForm = ({
 					hideLabel
 					value={step}
 					onValueChange={(value): void => {
+						if (task.busy) return;
 						setStep(value);
 						task.clear();
 					}}
@@ -83,6 +100,7 @@ export const AuthForm = ({
 			) : undefined}
 			{step === "signUp" ? (
 				<Field
+					labelTone="primary"
 					label="Name"
 					autoComplete="name"
 					value={name}
@@ -98,6 +116,7 @@ export const AuthForm = ({
 				</Text>
 			) : (
 				<Field
+					labelTone="primary"
 					label="Email"
 					inputMode="email"
 					autoComplete="email"
@@ -108,6 +127,7 @@ export const AuthForm = ({
 			)}
 			{verify ? (
 				<Field
+					labelTone="primary"
 					label="8-digit code"
 					inputMode="numeric"
 					value={code}
@@ -118,6 +138,7 @@ export const AuthForm = ({
 			) : undefined}
 			{needsPassword ? (
 				<Field
+					labelTone="primary"
 					label={step === "resetCode" ? "New password" : "Password"}
 					secure
 					autoComplete={step === "signIn" ? "current-password" : "new-password"}
@@ -147,20 +168,6 @@ export const AuthForm = ({
 										: "Reset password"
 					}
 					isLoading={task.busy}
-					validationError={
-						!normalizedEmail.includes("@")
-							? "Enter a valid email address"
-							: verify && !/^\d{8}$/.test(code)
-								? "Enter the 8-digit code"
-								: needsPassword &&
-										(step === "signIn" ? !password : password.length < 12)
-									? step === "signIn"
-										? "Enter your password"
-										: "Use at least 12 characters"
-									: step === "signUp" && !name.trim()
-										? "Enter your name"
-										: undefined
-					}
 					onPress={(): void => {
 						void submit();
 					}}
@@ -170,6 +177,7 @@ export const AuthForm = ({
 				{step === "signIn" ? (
 					<Button
 						label="Forgot password?"
+						isDisabled={task.busy}
 						variant="ghost"
 						onPress={(): void => {
 							setStep("reset");

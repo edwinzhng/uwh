@@ -25,7 +25,7 @@ export const createLiquidRenderer = (
 	const gl = canvas.getContext("webgl", {
 		alpha: true,
 		antialias: false,
-		premultipliedAlpha: false,
+		premultipliedAlpha: true,
 		preserveDrawingBuffer: false,
 		powerPreference: "low-power",
 	});
@@ -48,8 +48,8 @@ export const createLiquidRenderer = (
 			"liquidField = taperedCapsule(p, vec2(-max(aspect.x * 0.5 - 0.5, 0.0), 0.0), vec2(max(aspect.x * 0.5 - 0.5, 0.0), 0.0), 0.43, 0.43); float field = liquidField.x - (n - 0.5) * 0.025;",
 		)
 		.replace(
-			"gl_FragColor = vec4(finalCol.rgb, mask * u_visibility);",
-			"gl_FragColor = vec4(mix(finalCol.rgb, vec3(0.933, 0.957, 0.945), 0.78), mask * u_visibility);",
+			"gl_FragColor = vec4(finalCol.rgb * alpha, alpha);",
+			"gl_FragColor = vec4(mix(finalCol.rgb, vec3(0.933, 0.957, 0.945), 0.78) * alpha, alpha);",
 		);
 	const fragment = compile(
 		gl.FRAGMENT_SHADER,
@@ -156,6 +156,7 @@ export const createLiquidRenderer = (
 		},
 		render: (time, visibility, points): void => {
 			gl.disable(gl.SCISSOR_TEST);
+			gl.clearColor(0, 0, 0, 0);
 			gl.clear(gl.COLOR_BUFFER_BIT);
 			if (!state.ready) return;
 			gl.uniform1f(uniforms.time, time);

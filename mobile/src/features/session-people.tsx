@@ -4,6 +4,7 @@ import {
 	Badge,
 	ContentRow,
 	Divider,
+	EmptyState,
 	Row,
 	Stack,
 	StaffSection,
@@ -127,7 +128,10 @@ export const SessionPeople = ({
 							</Stack>
 						))}
 					{!members.length ? (
-						<Text tone="secondary">No players</Text>
+						<EmptyState
+							title="No eligible players"
+							description="Players eligible for this session will appear here for attendance."
+						/>
 					) : undefined}
 				</Stack>
 			</StaffSection>

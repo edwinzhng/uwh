@@ -11,6 +11,16 @@ export const responseOptions = ({
 	parts?: ClubEvent["parts"];
 	part?: NonNullable<ClubEvent["parts"]>[number];
 }): ChoiceOption<string>[] => [
+	...(response === "unanswered"
+		? [
+				{
+					value: "unanswered",
+					label: "Respond",
+					tone: "warning" as const,
+					isDisabled: true,
+				},
+			]
+		: []),
 	{
 		value: "going",
 		tone: full && response !== "going" ? "warning" : "success",
@@ -39,5 +49,5 @@ export const responseOptions = ({
 				},
 			]
 		: []),
-	{ value: "unavailable", label: "Absent", tone: "danger" },
+	{ value: "unavailable", label: "Can’t attend", tone: "danger" },
 ];

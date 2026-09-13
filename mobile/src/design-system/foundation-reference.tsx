@@ -27,10 +27,9 @@ export const FoundationReference = (): ReactElement => {
 					content and row labels, and 12px for metadata. Reserve 24px for
 					summary numbers; use the same scale on mobile and desktop.
 				</Text>
-				<Text variant="h1">Heading 1</Text>
-				<Text variant="h2">Heading 2</Text>
-				<Text variant="h3">Heading 3</Text>
-				<Text variant="h4">Heading 4</Text>
+				<Text variant="h1">Page title · 28px</Text>
+				<Text variant="h4">Section heading · 16px</Text>
+				<Text variant="number">24</Text>
 				<Text>Body</Text>
 				<Text variant="label">Label</Text>
 				<Text variant="caption" tone="secondary">

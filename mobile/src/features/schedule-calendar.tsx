@@ -5,6 +5,7 @@ import { useApp } from "../demo/app-state";
 import { Calendar, calendarDays } from "../design-system";
 
 type Props = {
+	audience: "household" | "all";
 	date: string;
 	period: "upcoming" | "past";
 	now: number;
@@ -14,6 +15,7 @@ type Props = {
 	onChange: (date: string) => void;
 };
 const LiveCalendar = ({
+	audience,
 	date,
 	today,
 	season,
@@ -23,6 +25,7 @@ const LiveCalendar = ({
 }: Props): ReactElement => {
 	const days = calendarDays(date);
 	const counts = useQuery(api.pages.calendar, {
+		audience,
 		from: days.at(0) ?? date,
 		to: days.at(-1) ?? date,
 		season,
@@ -41,6 +44,7 @@ const LiveCalendar = ({
 export const ScheduleCalendar = (props: Props): ReactElement =>
 	useApp().source === "convex" ? (
 		<LiveCalendar
+			audience={props.audience}
 			date={props.date}
 			period={props.period}
 			now={props.now}

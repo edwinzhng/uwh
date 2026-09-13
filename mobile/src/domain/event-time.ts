@@ -76,7 +76,12 @@ export const signupWindow = (
 			: openHours
 				? start - openHours * 3600000
 				: now,
-		closesAt: start - closeHours * 3600000,
+		closesAt: draft.responseDeadline
+			? Math.min(
+					start,
+					clubTimestamp(draft.responseDeadline, "23:59", draft.timeZone),
+				)
+			: start - closeHours * 3600000,
 	};
 };
 export const windowLabel = (
@@ -94,3 +99,14 @@ export const windowLabel = (
 				? permanentAlbertaTime.zone
 				: timeZone,
 	}).format(timestamp);
+
+export const eventDates = (
+	event: Pick<ClubEvent, "date" | "endDate">,
+): string[] => {
+	const start = Temporal.PlainDate.from(event.date);
+	const days =
+		start.until(Temporal.PlainDate.from(event.endDate ?? event.date)).days + 1;
+	return Array.from({ length: Math.min(14, Math.max(1, days)) }, (_, index) =>
+		start.add({ days: index }).toString(),
+	);
+};

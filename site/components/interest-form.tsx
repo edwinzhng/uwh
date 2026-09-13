@@ -1,9 +1,23 @@
 "use client";
-import { Field } from "@calgarycrocs/design-system/field";
-import { SegmentedControl } from "@calgarycrocs/design-system/segmented-control";
+
 import { atom, useAtom } from "jotai";
-import Script from "next/script";
 import { type FormEvent, type ReactElement, useId, useMemo } from "react";
+import {
+	Button,
+	Field,
+	FieldGroup,
+	FieldLabel,
+	Form,
+	Hint,
+	Honeypot,
+	Inline,
+	SegmentedControl,
+	Select,
+	Status,
+	Text,
+	TextArea,
+	Turnstile,
+} from "../design-system";
 
 import { trialDateLabel, trialDates } from "../lib/trial-dates";
 
@@ -41,13 +55,13 @@ export const InterestForm = (): ReactElement => {
 	};
 	if (status === "Received")
 		return (
-			<output className="notice">
+			<Status notice>
 				Thanks for getting in touch. We’ll email you about the next steps.
-			</output>
+			</Status>
 		);
 	return (
-		<form className="form" onSubmit={submit}>
-			<label htmlFor={`${fieldId}-name`}>
+		<Form onSubmit={submit}>
+			<FieldLabel htmlFor={`${fieldId}-name`}>
 				Your name
 				<Field
 					id={`${fieldId}-name`}
@@ -56,8 +70,8 @@ export const InterestForm = (): ReactElement => {
 					required
 					maxLength={100}
 				/>
-			</label>
-			<label htmlFor={`${fieldId}-email`}>
+			</FieldLabel>
+			<FieldLabel htmlFor={`${fieldId}-email`}>
 				Email
 				<Field
 					id={`${fieldId}-email`}
@@ -67,11 +81,11 @@ export const InterestForm = (): ReactElement => {
 					required
 					maxLength={200}
 				/>
-			</label>
-			<label htmlFor={`${fieldId}-phone`}>
-				<span>
-					Phone number <small>(optional)</small>
-				</span>
+			</FieldLabel>
+			<FieldLabel htmlFor={`${fieldId}-phone`}>
+				<Inline>
+					Phone number <Hint>(optional)</Hint>
+				</Inline>
 				<Field
 					id={`${fieldId}-phone`}
 					name="phone"
@@ -79,92 +93,89 @@ export const InterestForm = (): ReactElement => {
 					autoComplete="tel"
 					maxLength={40}
 				/>
-			</label>
-			<fieldset className="player-group">
-				<legend>Player group</legend>
+			</FieldLabel>
+			<FieldGroup variant="player" label="Player group">
 				<SegmentedControl
 					name="group"
 					defaultValue="Adult"
 					required
-					className="group-segments"
 					options={[
 						{ value: "Youth", label: "Youth" },
 						{ value: "Adult", label: "Adult" },
 					]}
 				/>
-			</fieldset>
-			<label>
-				<span>
-					Gender <small>(optional)</small>
-				</span>
-				<select name="gender" defaultValue="Not specified">
-					{[
+			</FieldGroup>
+			<FieldLabel>
+				<Inline>
+					Gender <Hint>(optional)</Hint>
+				</Inline>
+				<Select
+					name="gender"
+					defaultValue="Not specified"
+					options={[
 						"Not specified",
 						"Female",
 						"Male",
 						"Non-binary",
 						"Prefer not to say",
-					].map((gender) => (
-						<option key={gender}>{gender}</option>
-					))}
-				</select>
-			</label>
-			<label htmlFor={`${fieldId}-firstSessionDate`}>
-				<span>
-					First session date <small>(optional)</small>
-				</span>
-				<select
+					].map((value) => ({ value, label: value }))}
+				/>
+			</FieldLabel>
+			<FieldLabel htmlFor={`${fieldId}-firstSessionDate`}>
+				<Inline>
+					First session date <Hint>(optional)</Hint>
+				</Inline>
+				<Select
 					id={`${fieldId}-firstSessionDate`}
 					name="firstSessionDate"
 					defaultValue=""
-				>
-					<option value="">Choose a Sunday</option>
-					{trialDates().map((date) => (
-						<option key={date} value={date}>
-							{trialDateLabel(date)}
-						</option>
-					))}
-				</select>
-				<small>
+					options={[
+						{ value: "", label: "Choose a Sunday" },
+						...trialDates().map((date) => ({
+							value: date,
+							label: trialDateLabel(date),
+						})),
+					]}
+				/>
+				<Hint>
 					Sunday trials · next two months. We’ll confirm your session time by
 					email.
-				</small>
-			</label>
-			<label>
-				<span>
-					Message <small>(optional)</small>
-				</span>
-				<textarea
+				</Hint>
+			</FieldLabel>
+			<FieldLabel>
+				<Inline>
+					Message <Hint>(optional)</Hint>
+				</Inline>
+				<TextArea
 					name="message"
 					rows={2}
 					maxLength={2000}
 					placeholder="Questions, comments, e.g. will you be bringing other friends/family"
 				/>
-			</label>
-			<label>
-				<span>
-					How did you hear about us? <small>(optional)</small>
-				</span>
-				<select
+			</FieldLabel>
+			<FieldLabel>
+				<Inline>
+					How did you hear about us? <Hint>(optional)</Hint>
+				</Inline>
+				<Select
 					name="referral"
 					value={referral}
-					onChange={(event) => setReferral(event.target.value)}
-				>
-					<option value="">Select an option</option>
-					{[
-						"Friend",
-						"Social Media",
-						"Movie Theatre Ads",
-						"Community Signs",
-						"Highway Banners",
-						"Other",
-					].map((source) => (
-						<option key={source}>{source}</option>
-					))}
-				</select>
-			</label>
+					onChange={(event): void => setReferral(event.target.value)}
+					options={[
+						{ value: "", label: "Select an option" },
+						...[
+							"Friend",
+							"Social Media",
+							"Movie Theatre Ads",
+							"Community Signs",
+							"Highway Banners",
+							"Other",
+						].map((value) => ({ value, label: value })),
+					]}
+				/>
+			</FieldLabel>
 			{referral === "Other" && (
-				<label htmlFor={`${fieldId}-referralOther`}>
+				<FieldLabel htmlFor={`${fieldId}-referralOther`}>
 					Please specify
 					<Field
 						id={`${fieldId}-referralOther`}
@@ -172,49 +183,24 @@ export const InterestForm = (): ReactElement => {
 						required
 						maxLength={200}
 					/>
-				</label>
+				</FieldLabel>
 			)}
-			<label
-				className="honeypot"
-				aria-hidden="true"
-				htmlFor={`${fieldId}-website`}
-			>
-				Website
-				<Field
-					id={`${fieldId}-website`}
-					name="website"
-					tabIndex={-1}
-					autoComplete="off"
-				/>
-			</label>
-			<small>
+			<Honeypot id={`${fieldId}-website`} />
+			<Hint>
 				For youth players, please use a parent or guardian’s contact details.
 				We’ll only use these details to respond to your inquiry.
-			</small>
+			</Hint>
 			{process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? (
-				<>
-					<Script
-						src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-						strategy="afterInteractive"
-					/>
-					<div
-						className="cf-turnstile"
-						data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-					/>
-				</>
+				<Turnstile siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY} />
 			) : undefined}
-			<button
-				className="button button-green"
-				disabled={status === "Sending…"}
-				type="submit"
-			>
+			<Button disabled={status === "Sending…"} type="submit">
 				{status === "Sending…" ? status : "Send inquiry"}
-			</button>
+			</Button>
 			{status && status !== "Sending…" ? (
-				<p className="error" role="alert">
+				<Text variant="error" role="alert">
 					{status}
-				</p>
+				</Text>
 			) : undefined}
-		</form>
+		</Form>
 	);
 };

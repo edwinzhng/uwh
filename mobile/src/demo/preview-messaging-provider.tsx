@@ -1,8 +1,12 @@
-import { atom, useAtom } from "jotai";
+import { atom, useAtom, useSetAtom } from "jotai";
 import { type ReactElement, type ReactNode, useCallback } from "react";
 import { MessagingContext } from "../backend/messaging-context";
 import { directThreadId, isDirectThread } from "../domain/messaging";
-import { useApp } from "./app-state";
+import {
+	canDiscussSession,
+	sessionThreadId,
+} from "../domain/session-discussion";
+import { previewDataAtom, useApp } from "./app-state";
 
 const readsAtom = atom<Record<string, number>>({});
 export const PreviewMessagingProvider = ({
@@ -11,6 +15,7 @@ export const PreviewMessagingProvider = ({
 	children: ReactNode;
 }): ReactElement => {
 	const { data, account, accounts, dispatch } = useApp();
+	const setData = useSetAtom(previewDataAtom);
 	const [reads, setReads] = useAtom(readsAtom);
 	const markRead = useCallback(
 		async (threadId: string, messageId: string): Promise<void> => {
@@ -38,6 +43,8 @@ export const PreviewMessagingProvider = ({
 							.filter((message) => message.threadId === thread.id);
 						const readThrough = reads[`${account.id}:${thread.id}`] ?? 0;
 						const other =
+							!thread.eventId &&
+							!thread.id.startsWith("session:") &&
 							thread.accountIds.length === 2 &&
 							!["club", "youth"].includes(thread.id)
 								? accounts.find(
@@ -62,6 +69,34 @@ export const PreviewMessagingProvider = ({
 					})
 					.toSorted((a, b) => b.updatedAt - a.updatedAt),
 				markRead,
+				openSession: async (eventId): Promise<string> => {
+					const event = data.events.find((entry) => entry.id === eventId);
+					if (!event || !canDiscussSession(account, event, data.members))
+						throw new Error("Session discussion unavailable.");
+					const id = sessionThreadId(eventId);
+					setData((current) => {
+						const accountIds = accounts
+							.filter((entry) =>
+								canDiscussSession(entry, event, current.members),
+							)
+							.map((entry) => entry.id);
+						const thread = {
+							id,
+							eventId,
+							title: event.title,
+							subtitle: `${event.date} · Session discussion`,
+							accountIds,
+						};
+						return {
+							...current,
+							conversations: [
+								...current.conversations.filter((entry) => entry.id !== id),
+								thread,
+							],
+						};
+					});
+					return id;
+				},
 				openDirect: async (recipientId): Promise<string> => {
 					const existing = data.conversations.find((thread) =>
 						isDirectThread(thread, account.id, recipientId),

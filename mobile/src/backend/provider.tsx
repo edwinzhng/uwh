@@ -26,7 +26,7 @@ import {
 	PreviewProvider,
 	selectedPersonAtom,
 } from "../demo/app-state";
-import { AuthLayout, Stack, Text } from "../design-system";
+import { AuthLayout, LoadingScreen, Text } from "../design-system";
 import type { AppAction } from "../domain/app-types";
 import { AccountGate } from "../features/account-gate";
 import { AuthCallbackScreen } from "../features/auth-callback-screen";
@@ -68,7 +68,11 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 	const params = useGlobalSearchParams<{ id?: string; event?: string }>();
 	const selected = useAtomValue(selectedPersonAtom);
 	const screen =
-		path === "/" ? "schedule" : path === "/progress" ? "member" : path.slice(1);
+		path === "/"
+			? "home"
+			: ["/progress", "/my-progress"].includes(path)
+				? "member"
+				: path.slice(1);
 	const workspaceResult = useRetainedQuery(
 		api.club.current,
 		isAuthenticated
@@ -77,7 +81,9 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 					id:
 						screen === "session"
 							? (params.event ?? params.id)
-							: screen === "member" || screen === "club"
+							: screen === "member" ||
+									screen === "membership" ||
+									screen === "account"
 								? (params.id ?? selected)
 								: undefined,
 				}
@@ -220,9 +226,7 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 				) : isLoading ||
 					(isAuthenticated &&
 						(workspace === undefined || accountInfo === undefined)) ? (
-					<Stack padding="lg">
-						<Text>Connecting…</Text>
-					</Stack>
+					<LoadingScreen />
 				) : workspace ? (
 					<AppContext.Provider
 						value={{
@@ -265,7 +269,7 @@ export const BackendProvider = ({
 		process.env.EXPO_PUBLIC_DEMO_MODE === "true" ? (
 		<PreviewProvider>{children}</PreviewProvider>
 	) : (
-		<AuthLayout title="Calgary Crocs">
+		<AuthLayout title="UWH Club">
 			<Text>The account service isn’t configured for this build.</Text>
 		</AuthLayout>
 	);

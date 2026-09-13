@@ -44,7 +44,7 @@ export const ListItem = ({
 			) : icon ? (
 				<Icon name={icon} tone="secondary" />
 			) : undefined}
-			<Stack gap="xxs" grow>
+			<Stack gap="none" grow>
 				<Text variant="label">{title}</Text>
 				{description ? (
 					<Text variant="small" tone="secondary" lines={descriptionLines}>
@@ -68,10 +68,11 @@ export const ListItem = ({
 			onFocus={(): void => setFocused(true)}
 			onBlur={(): void => setFocused(false)}
 			style={({ pressed }) => ({
-				paddingVertical: space.xxs,
+				paddingVertical: avatar ? space.xs : space.xxs,
 				paddingHorizontal: cardRow ? space.md : flush ? space.none : space.sm,
 				marginHorizontal: cardRow ? -space.md : 0,
 				minHeight: geometry.listRow,
+				justifyContent: "center",
 				borderRadius: cardRow ? 0 : corners.panel,
 				backgroundColor: selected
 					? theme.background.secondary
@@ -87,7 +88,7 @@ export const ListItem = ({
 	) : (
 		<View
 			style={{
-				paddingVertical: space.xxs,
+				paddingVertical: avatar ? space.xs : space.xxs,
 				paddingHorizontal: cardRow ? space.md : flush ? space.none : space.sm,
 				marginHorizontal: cardRow ? -space.md : 0,
 			}}

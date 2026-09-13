@@ -4,6 +4,7 @@ import {
 	AttendanceMatrix,
 	Button,
 	EmptyState,
+	LoadingContent,
 	Row,
 	Stack,
 	Text,
@@ -54,7 +55,7 @@ export const AttendanceReportTable = ({
 					)}
 				</>
 			) : (
-				<Text>Loading attendance…</Text>
+				<LoadingContent />
 			)}
 			{previous || next ? (
 				<Row justify="between">

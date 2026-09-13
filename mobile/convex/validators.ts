@@ -38,6 +38,12 @@ export const eventsValue = v.object({
 	id: v.string(),
 	title: v.string(),
 	date: v.string(),
+	endDate: v.optional(v.string()),
+	responseDeadline: v.optional(v.string()),
+	tournamentRoster: v.optional(
+		v.array(v.object({ personId: v.string(), team: v.string() })),
+	),
+
 	start: v.string(),
 	end: v.string(),
 	venue: v.string(),
@@ -46,6 +52,7 @@ export const eventsValue = v.object({
 		v.literal("training"),
 		v.literal("hockey"),
 		v.literal("social"),
+		v.literal("tournament"),
 	),
 	signup: v.union(
 		v.literal("open"),
@@ -70,6 +77,7 @@ export const eventsValue = v.object({
 	closesAt: v.optional(v.number()),
 });
 export const responsesValue = v.object({
+	seriesExpected: v.optional(v.boolean()),
 	partIds: v.optional(v.array(v.string())),
 	partAttendance: v.optional(
 		v.array(
@@ -135,6 +143,7 @@ export const feedbackValue = v.object({
 	date: v.string(),
 });
 export const conversationsValue = v.object({
+	eventId: v.optional(v.string()),
 	id: v.string(),
 	title: v.string(),
 	subtitle: v.string(),
@@ -162,6 +171,8 @@ export const noticesValue = v.object({
 	program: v.string(),
 	date: v.string(),
 	acknowledgedBy: v.array(v.string()),
+	dismissedBy: v.optional(v.array(v.string())),
+	expiresAt: v.optional(v.string()),
 });
 export const equipmentValue = v.object({
 	id: v.string(),

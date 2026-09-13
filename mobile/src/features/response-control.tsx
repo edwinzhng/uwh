@@ -6,19 +6,23 @@ import type { ClubEvent } from "../domain/app-types";
 import type { Response } from "../domain/club";
 import { signupState } from "../domain/event-time";
 import { responseOptions } from "./response-options";
+import { SeriesResponseControl } from "./series-response-control";
 
 export const ResponseControl = ({
 	event,
+	personId,
 }: {
 	event: ClubEvent;
+	personId?: string;
 }): ReactElement => {
 	const { data, dispatch } = useApp();
-	const person = useActivePerson();
+	const activePerson = useActivePerson();
+	const person =
+		data.members.find((entry) => entry.id === personId) ?? activePerson;
 	const [pending, setPending] = useState(false);
 	const working = useRef(false);
 	const current = eventResponse(data, event.id, person.id);
-	const response =
-		current.response === "unanswered" ? "unavailable" : current.response;
+	const response = current.response;
 	const part =
 		current.partIds?.length === 1
 			? event.parts?.find((entry) => entry.id === current.partIds?.at(0))
@@ -32,7 +36,9 @@ export const ResponseControl = ({
 	);
 	const full =
 		data.responses.filter(
-			(entry) => entry.eventId === event.id && entry.response === "going",
+			(entry) =>
+				entry.eventId === event.id &&
+				(entry.response === "going" || entry.seriesExpected),
 		).length >= (event.capacity ?? Infinity);
 	const respond = async (
 		value: Response,
@@ -51,12 +57,28 @@ export const ResponseControl = ({
 		working.current = false;
 		setPending(false);
 	};
+	if (current.seriesExpected)
+		return (
+			<SeriesResponseControl
+				event={event}
+				personId={person.id}
+				unavailable={current.response === "unavailable"}
+			/>
+		);
 	return (
 		<Select
-			label="Status"
+			label={event.kind === "tournament" ? "Availability" : "Status"}
 			value={response === "going" && part ? `part:${part.id}` : response}
 			isDisabled={locked || pending}
-			options={responseOptions({ full, response, parts: event.parts, part })}
+			options={
+				event.kind === "tournament"
+					? [
+							{ value: "unanswered", label: "Not responded", isDisabled: true },
+							{ value: "going", label: "Available" },
+							{ value: "unavailable", label: "Unavailable" },
+						]
+					: responseOptions({ full, response, parts: event.parts, part })
+			}
 			onValueChange={(value): void => {
 				const part = event.parts?.find((part) => value === `part:${part.id}`);
 				if (part) {

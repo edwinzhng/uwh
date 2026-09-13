@@ -5,6 +5,7 @@ import {
 	Badge,
 	Button,
 	Dialog,
+	EmptyState,
 	List,
 	ListItem,
 	Stack,
@@ -13,10 +14,13 @@ import {
 } from "../design-system";
 import { formatDate } from "../domain/app-rules";
 import type { Notice } from "../domain/app-types";
+import { isNoticeActive } from "../domain/notices";
 import { DataPage } from "./data-page";
+import { useClubToday } from "./use-club-today";
 
 const NoticeRows = ({ items }: { items: Notice[] }): ReactElement => {
 	const { account, dispatch, busy } = useApp();
+	const today = useClubToday();
 	const [selected, setSelected] = useState<string>();
 	const notice = items.find((entry) => entry.id === selected);
 	return (
@@ -31,12 +35,14 @@ const NoticeRows = ({ items }: { items: Notice[] }): ReactElement => {
 							trailing={
 								<Badge
 									label={
-										entry.acknowledgedBy.includes(account.id) ? "Read" : "New"
+										!isNoticeActive(entry, today)
+											? "Expired"
+											: entry.dismissedBy?.includes(account.id)
+												? "Dismissed"
+												: "Active"
 									}
 									kind={
-										entry.acknowledgedBy.includes(account.id)
-											? "neutral"
-											: "info"
+										entry.dismissedBy?.includes(account.id) ? "neutral" : "info"
 									}
 								/>
 							}
@@ -44,9 +50,10 @@ const NoticeRows = ({ items }: { items: Notice[] }): ReactElement => {
 						/>
 					))}
 					{!items.length ? (
-						<Text variant="small" tone="secondary">
-							No announcements
-						</Text>
+						<EmptyState
+							title="No notices"
+							description="Club updates will appear here when they’re published."
+						/>
 					) : undefined}
 				</List>
 			</Surface>
@@ -60,14 +67,14 @@ const NoticeRows = ({ items }: { items: Notice[] }): ReactElement => {
 					footer={
 						<Button
 							label={
-								notice.acknowledgedBy.includes(account.id)
-									? "Acknowledged"
-									: "Acknowledge"
+								notice.dismissedBy?.includes(account.id)
+									? "Dismissed"
+									: "Dismiss banner"
 							}
-							isDisabled={notice.acknowledgedBy.includes(account.id)}
+							isDisabled={notice.dismissedBy?.includes(account.id)}
 							isLoading={busy}
 							onPress={() => {
-								void dispatch({ type: "acknowledge", noticeId: notice.id });
+								void dispatch({ type: "dismiss-notice", noticeId: notice.id });
 							}}
 						/>
 					}
@@ -77,6 +84,18 @@ const NoticeRows = ({ items }: { items: Notice[] }): ReactElement => {
 							{formatDate(notice.date)}
 						</Text>
 						<Text>{notice.body}</Text>
+						{(account.admin ||
+							account.coachPrograms.includes(notice.program)) &&
+						isNoticeActive(notice, today) ? (
+							<Button
+								label="Expire notice now"
+								variant="ghost"
+								isDisabled={busy}
+								onPress={(): void => {
+									void dispatch({ type: "expire-notice", noticeId: notice.id });
+								}}
+							/>
+						) : undefined}
 					</Stack>
 				</Dialog>
 			) : undefined}

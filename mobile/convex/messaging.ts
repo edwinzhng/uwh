@@ -5,11 +5,13 @@ import type {
 	ConversationSummary,
 	ThreadMessage,
 } from "../src/domain/messaging";
+import { sessionThreadId } from "../src/domain/session-discussion";
 import { mutation, query } from "./_generated/server";
 import { memberFor, requireMember } from "./identity";
 import { messageFor, threadFor, visibleMessage } from "./message_access";
 import { openDirectThread } from "./message_commands";
-import { blockedIds } from "./moderation";
+import { blockedIds, canChat } from "./moderation";
+import { resolveSessionThread, sessionAccounts } from "./session_discussion";
 
 export const inbox = query({
 	args: {},
@@ -31,8 +33,11 @@ export const inbox = query({
 				.withIndex("by_club", (q) => q.eq("clubId", member.clubId))
 				.collect(),
 		]);
+		const resolvedThreads = await Promise.all(
+			threads.map((thread) => resolveSessionThread(ctx, thread)),
+		);
 		const results = await Promise.all(
-			threads
+			resolvedThreads
 				.filter((row) => row.value.accountIds.includes(member.userId))
 				.map(async (thread): Promise<ConversationSummary> => {
 					const through =
@@ -71,6 +76,8 @@ export const inbox = query({
 							.take(100),
 					]);
 					const direct =
+						!thread.value.eventId &&
+						!thread.value.id.startsWith("session:") &&
 						thread.value.id !== "club" &&
 						thread.value.id !== "youth" &&
 						thread.value.accountIds.length === 2;
@@ -198,5 +205,40 @@ export const markRead = mutation({
 				threadId,
 				through,
 			});
+	},
+});
+
+export const openSession = mutation({
+	args: { eventId: v.string() },
+	handler: async (ctx, { eventId }): Promise<string> => {
+		const member = await requireMember(ctx);
+		if (!(await canChat(ctx, member.userId)))
+			throw new Error("Your chat access is paused. Contact a club admin.");
+		const accountIds = await sessionAccounts(ctx, member.clubId, eventId);
+		if (!accountIds.includes(member.userId))
+			throw new Error("Session discussion unavailable.");
+		const event = await ctx.db
+			.query("events")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", member.clubId).eq("value.id", eventId),
+			)
+			.unique();
+		if (!event) throw new Error("Session unavailable.");
+		const id = sessionThreadId(eventId);
+		const thread = await threadFor(ctx, member.clubId, id);
+		const value = {
+			id,
+			eventId,
+			title: event.value.title,
+			subtitle: `${event.value.date} · Session discussion`,
+			accountIds,
+		};
+		if (thread) {
+			if (thread.value.eventId !== eventId)
+				throw new Error("Conversation unavailable.");
+			await ctx.db.patch(thread._id, { value });
+		} else
+			await ctx.db.insert("conversations", { clubId: member.clubId, value });
+		return id;
 	},
 });

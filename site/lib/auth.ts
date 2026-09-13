@@ -1,12 +1,17 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { createAdminSession, validAdminSession } from "./admin-session";
 export const sessionToken = (): string =>
-	createHmac("sha256", process.env.WEBSITE_SERVER_KEY || "unconfigured")
-		.update(`website-admin:${Math.floor(Date.now() / 86400000)}`)
-		.digest("hex");
+	createAdminSession(
+		process.env.WEBSITE_SERVER_KEY ?? "",
+		process.env.WEBSITE_ADMIN_PASSWORD ?? "",
+	);
 export const authorized = async (): Promise<boolean> =>
-	Boolean(process.env.WEBSITE_SERVER_KEY) &&
-	(await cookies()).get("website-admin")?.value === sessionToken();
+	validAdminSession(
+		(await cookies()).get("website-admin")?.value,
+		process.env.WEBSITE_SERVER_KEY ?? "",
+		process.env.WEBSITE_ADMIN_PASSWORD ?? "",
+	);
 export const matchesPassword = (value: string): boolean => {
 	const expected = process.env.WEBSITE_ADMIN_PASSWORD;
 	if (!expected) return false;

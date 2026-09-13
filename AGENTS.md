@@ -4,6 +4,8 @@ Edwin explicitly approved browser use whenever needed on September 8, 2026 and r
 
 ## Coding Style
 
+- Follow [the shared motion guidelines](packages/design-system/MOTION.md). Use only shared duration and easing tokens; page and tab fades use `slow` (300ms) and `out`. Run `bun run check:motion` in both `mobile` and `site` after motion changes.
+
 - Avoid writing comments and use self-documenting code instead, with well-named variables and functions
 
 ## TypeScript Usage
@@ -25,6 +27,8 @@ Edwin explicitly approved browser use whenever needed on September 8, 2026 and r
 - Never cast to `unknown` unless required by external schemas/contracts
 
 ## React Usage
+
+- Follow [form submission guidelines](mobile/docs/FORMS.md). Use `useFormTask` for forms, validate at submission time, prevent duplicate requests, and never derive fresh validation errors from successful field resets.
 
 - Use declarative JSX
 - Use Convex generated types and queries when possible, which provides automatic reactive UI updates, and see `CONVEX.md` for specific examples

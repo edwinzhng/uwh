@@ -131,10 +131,43 @@ export const validateEvent = (draft: EventDraft): string | undefined => {
 		return "Add a title and venue.";
 	if (!validDate(draft.date)) return "Choose a date.";
 	if (
+		draft.kind !== "tournament" &&
+		(draft.endDate || draft.responseDeadline || draft.tournamentRoster?.length)
+	)
+		return "Tournament details require a tournament event.";
+	if (draft.kind === "tournament" && draft.capacity !== undefined)
+		return "Tournament availability has no capacity limit; select the confirmed roster separately.";
+	if (draft.kind === "tournament" && draft.repeat !== "once")
+		return "Create tournaments as individual events.";
+	if (
+		draft.endDate &&
+		(!validDate(draft.endDate) ||
+			draft.endDate < draft.date ||
+			Date.parse(draft.endDate) - Date.parse(draft.date) > 13 * 86400000)
+	)
+		return "Tournament dates must span 1–14 days.";
+	if (
+		draft.responseDeadline &&
+		(!validDate(draft.responseDeadline) || draft.responseDeadline > draft.date)
+	)
+		return "Choose a response deadline on or before the tournament starts.";
+	if (
+		draft.tournamentRoster &&
+		(new Set(draft.tournamentRoster.map((entry) => entry.personId)).size !==
+			draft.tournamentRoster.length ||
+			draft.tournamentRoster.some(
+				(entry) =>
+					!entry.personId ||
+					!entry.team.trim() ||
+					entry.team.trim().length > 80,
+			))
+	)
+		return "Choose each roster player once and give them a team name.";
+	if (
 		![draft.start, draft.end].every((time) =>
 			/^([01]\d|2[0-3]):[0-5]\d$/.test(time),
 		) ||
-		draft.end <= draft.start
+		((draft.endDate ?? draft.date) === draft.date && draft.end <= draft.start)
 	)
 		return "End time must be after the start.";
 	if (
@@ -193,6 +226,12 @@ export const createOccurrences = (id: string, draft: EventDraft): ClubEvent[] =>
 			date,
 			start: draft.start,
 			end: draft.end,
+			endDate: draft.kind === "tournament" ? draft.endDate : undefined,
+			responseDeadline:
+				draft.kind === "tournament" ? draft.responseDeadline : undefined,
+			tournamentRoster:
+				draft.kind === "tournament" ? draft.tournamentRoster : undefined,
+
 			venue: draft.venue.trim(),
 			program: draft.program,
 			kind: draft.kind,
@@ -224,5 +263,16 @@ export const applicableTrackers = (
 	);
 export const visibleNotices = (
 	data: AppData,
-	_account: Account,
-): AppData["notices"] => data.notices;
+	account: Account,
+): AppData["notices"] => {
+	const programs = new Set([
+		...account.coachPrograms,
+		...data.members
+			.filter((person) => canManagePerson(account, person.id))
+			.flatMap((person) => person.programs),
+	]);
+	return data.notices.filter(
+		(notice) =>
+			account.admin || notice.program === "all" || programs.has(notice.program),
+	);
+};

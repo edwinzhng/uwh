@@ -11,18 +11,20 @@ export const EventOptions = ({
 	onChange: (draft: EventDraft) => void;
 }): ReactElement => (
 	<Stack>
-		<Field
-			label="Capacity (optional)"
-			placeholder="No limit"
-			inputMode="numeric"
-			value={draft.capacity === undefined ? "" : String(draft.capacity)}
-			onValueChange={(value): void =>
-				onChange({
-					...draft,
-					capacity: value.trim() ? Number(value) : undefined,
-				})
-			}
-		/>
+		{draft.kind !== "tournament" ? (
+			<Field
+				label="Capacity (optional)"
+				placeholder="No limit"
+				inputMode="numeric"
+				value={draft.capacity === undefined ? "" : String(draft.capacity)}
+				onValueChange={(value): void =>
+					onChange({
+						...draft,
+						capacity: value.trim() ? Number(value) : undefined,
+					})
+				}
+			/>
+		) : undefined}
 		<EventEligibility
 			value={draft.eligiblePersonIds}
 			onChange={(eligiblePersonIds): void =>
@@ -30,48 +32,58 @@ export const EventOptions = ({
 			}
 		/>
 		<Field
-			label="Details (optional)"
+			label={
+				draft.kind === "tournament"
+					? "Details, fees, travel and accommodation"
+					: "Details (optional)"
+			}
 			value={draft.description}
 			onValueChange={(description): void => onChange({ ...draft, description })}
 			multiline
 		/>
-		<Grid gap="md">
-			<Select
-				label="Registration opens"
-				value={
-					draft.registrationOpen ? "weekday" : (draft.signupOpens ?? "now")
-				}
-				options={[
-					{ value: "now", label: "Immediately" },
-					{ value: "weekday", label: "Day and time before event" },
-					{ value: "three-days", label: "3 days before" },
-					{ value: "week", label: "1 week before" },
-				]}
-				onValueChange={(signupOpens): void =>
-					signupOpens === "weekday"
-						? onChange({
-								...draft,
-								registrationOpen: { weeksBefore: 1, weekday: 1, time: "12:00" },
-							})
-						: onChange({ ...draft, signupOpens, registrationOpen: undefined })
-				}
-			/>
-			<Field
-				label="Registration closes (hours before start)"
-				inputMode="decimal"
-				value={String(
-					draft.registrationCloseHours ??
-						(draft.signupCloses === "day"
-							? 24
-							: draft.signupCloses === "hour"
-								? 1
-								: 0),
-				)}
-				onValueChange={(value): void =>
-					onChange({ ...draft, registrationCloseHours: Number(value) })
-				}
-			/>
-		</Grid>
+		{draft.kind !== "tournament" ? (
+			<Grid gap="md">
+				<Select
+					label="Registration opens"
+					value={
+						draft.registrationOpen ? "weekday" : (draft.signupOpens ?? "now")
+					}
+					options={[
+						{ value: "now", label: "Immediately" },
+						{ value: "weekday", label: "Day and time before event" },
+						{ value: "three-days", label: "3 days before" },
+						{ value: "week", label: "1 week before" },
+					]}
+					onValueChange={(signupOpens): void =>
+						signupOpens === "weekday"
+							? onChange({
+									...draft,
+									registrationOpen: {
+										weeksBefore: 1,
+										weekday: 1,
+										time: "12:00",
+									},
+								})
+							: onChange({ ...draft, signupOpens, registrationOpen: undefined })
+					}
+				/>
+				<Field
+					label="Registration closes (hours before start)"
+					inputMode="decimal"
+					value={String(
+						draft.registrationCloseHours ??
+							(draft.signupCloses === "day"
+								? 24
+								: draft.signupCloses === "hour"
+									? 1
+									: 0),
+					)}
+					onValueChange={(value): void =>
+						onChange({ ...draft, registrationCloseHours: Number(value) })
+					}
+				/>
+			</Grid>
+		) : undefined}
 		{draft.registrationOpen ? (
 			<Grid gap="sm">
 				<Field

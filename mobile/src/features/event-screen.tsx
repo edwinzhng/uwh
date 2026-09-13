@@ -5,6 +5,7 @@ import {
 	Badge,
 	Button,
 	Dialog,
+	EmptyState,
 	Row,
 	SegmentedControl,
 	Stack,
@@ -18,8 +19,13 @@ import { ClubShell } from "./club-shell";
 import { EventEditor } from "./event-editor";
 import { ResponseControl } from "./response-control";
 import { SessionCoaching } from "./session-coaching";
+import { SessionDiscussionButton } from "./session-discussion-button";
+import { SessionGuestManager } from "./session-guest-manager";
 import { SessionPeople } from "./session-people";
+import { SessionSeriesLink } from "./session-series-link";
 import { TeamPanel } from "./team-panel";
+import { TournamentPeople } from "./tournament-people";
+import { TournamentSummary } from "./tournament-summary";
 
 export const EventScreen = (): ReactElement => {
 	const {
@@ -44,7 +50,9 @@ export const EventScreen = (): ReactElement => {
 	const setTab = (tab: string): void => router.setParams({ tab });
 	const [cancel, setCancel] = useState(false);
 	const [edit, setEdit] = useState(false);
-	const coach = event ? canCoach(account, event.program) : false;
+	const coach = event
+		? event.kind !== "tournament" && canCoach(account, event.program)
+		: false;
 	const activeTab =
 		tab === "people"
 			? "people"
@@ -64,7 +72,8 @@ export const EventScreen = (): ReactElement => {
 						{ value: "overview", label: "Overview" },
 						{
 							value: "people",
-							label: "Attendance",
+							label:
+								event?.kind === "tournament" ? "Availability" : "Attendance",
 						},
 						...(coach
 							? [
@@ -85,7 +94,9 @@ export const EventScreen = (): ReactElement => {
 						" · " +
 						formatTime(event.start) +
 						"–" +
-						formatTime(event.end)
+						(event.endDate && event.endDate !== event.date
+							? `${formatDate(event.endDate)} ${formatTime(event.end)}`
+							: formatTime(event.end))
 					: undefined
 			}
 			back={
@@ -158,16 +169,31 @@ export const EventScreen = (): ReactElement => {
 											</Text>
 										))}
 										<ResponseControl event={event} />
+										<SessionDiscussionButton event={event} />
+										{account.admin && event.seriesId ? (
+											<SessionGuestManager event={event} />
+										) : undefined}
+										{event.seriesId ? (
+											<SessionSeriesLink seriesId={event.seriesId} />
+										) : undefined}
 									</Stack>
 								</Surface>
-								<TeamPanel event={event} partId={partId} readOnly />
+								{event.kind === "tournament" ? (
+									<TournamentSummary event={event} />
+								) : (
+									<TeamPanel event={event} partId={partId} readOnly />
+								)}
 							</Stack>
 						) : activeTab === "people" ? (
-							<SessionPeople
-								key={`${event.id}:${partId}`}
-								event={event}
-								partId={partId}
-							/>
+							event.kind === "tournament" ? (
+								<TournamentPeople event={event} />
+							) : (
+								<SessionPeople
+									key={`${event.id}:${partId}`}
+									event={event}
+									partId={partId}
+								/>
+							)
 						) : (
 							<>
 								<SessionCoaching
@@ -220,7 +246,10 @@ export const EventScreen = (): ReactElement => {
 					) : undefined}
 				</>
 			) : (
-				<Text tone="secondary">Choose another event from Schedule.</Text>
+				<EmptyState
+					title="Event unavailable"
+					description="Return to Schedule to choose another event."
+				/>
 			)}
 		</ClubShell>
 	);

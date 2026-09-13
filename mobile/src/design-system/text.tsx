@@ -35,6 +35,9 @@ export const Text = ({
 			selectable={selectable}
 			numberOfLines={lines}
 			accessibilityRole={variant.startsWith("h") ? "header" : undefined}
+			aria-level={
+				variant === "h1" ? 1 : variant.startsWith("h") ? 2 : undefined
+			}
 			style={{
 				...style,
 				fontFamily: font[family],

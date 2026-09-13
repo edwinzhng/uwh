@@ -40,6 +40,53 @@ const events: ClubEvent[] = [
 ];
 const now = Date.parse("2026-09-01T12:00:00Z");
 
+test("following edits preserve holiday gaps and later event identities", (): void => {
+	const schedule = [base, { ...base, id: "later", date: "2026-10-15" }];
+	const changed = editedOccurrences(
+		schedule,
+		base,
+		{ ...eventDraft(base), start: "20:00", parts: undefined },
+		"following",
+		now,
+		"edit",
+	);
+	expect(changed.map((event) => event.date)).toEqual([
+		"2026-10-01",
+		"2026-10-15",
+	]);
+	expect(changed.map((event) => event.id)).toEqual(["first", "later"]);
+	expect(
+		changed.every(
+			(event) => event.start === "20:00" && event.seriesId === "first~edit",
+		),
+	).toBe(true);
+});
+
+test("rebuilding a series does not replace a cancelled holiday with an active event", (): void => {
+	const holiday = {
+		...base,
+		id: "holiday",
+		date: "2026-10-08",
+		cancelled: true,
+	};
+	const later = { ...base, id: "later", date: "2026-10-15" };
+	const changed = editedOccurrences(
+		[base, holiday, later],
+		base,
+		{ ...draft, rebuild: true },
+		"series",
+		now,
+		"edit",
+	);
+	expect(changed.find((event) => event.id === "holiday")?.cancelled).toBe(true);
+	expect(
+		changed.filter((event) => !event.cancelled).map((event) => event.date),
+	).toEqual(["2026-10-01", "2026-10-15"]);
+	expect(changed.find((event) => event.id === "later")?.date).toBe(
+		"2026-10-15",
+	);
+});
+
 test("optional parts retain the overall time and share an editable split", (): void => {
 	expect(combined.parts?.map((part) => part.id)).toEqual([
 		"training",

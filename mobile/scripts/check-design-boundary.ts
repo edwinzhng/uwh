@@ -5,6 +5,7 @@ const visualImports =
 	/^(motion($|\/)|framer-motion($|\/)|@paper-design\/|sonner($|\/|-)|react-native($|\/|-)|react-day-picker($|\/)|@react-native-community\/|@rn-primitives\/|@base-ui\/|@radix-ui\/|lucide-|.*\.css$)/;
 const visualProps = new Set([
 	"style",
+	"as",
 	"animationDuration",
 	"transitionDuration",
 	"entering",
@@ -55,6 +56,14 @@ export const inspectDesignBoundary = (
 					insideList(node.parent)),
 		);
 	const inspect = (node: ts.Node): void => {
+		if (
+			ts.isVariableDeclaration(node) &&
+			ts.isIdentifier(node.name) &&
+			/^[A-Z]/.test(node.name.text) &&
+			node.initializer &&
+			ts.isStringLiteral(node.initializer)
+		)
+			fail(node, "Do not alias HTML tags as components.");
 		if (
 			ts.isJsxElement(node) &&
 			node.openingElement.tagName.getText(file) === "Stack"
@@ -124,6 +133,21 @@ export const inspectDesignBoundary = (
 		}
 		if (ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) {
 			if (
+				node.tagName.getText(file) === "Text" &&
+				node.attributes.properties.some(
+					(attribute) =>
+						ts.isJsxAttribute(attribute) &&
+						attribute.name.getText(file) === "variant" &&
+						attribute.initializer &&
+						ts.isStringLiteral(attribute.initializer) &&
+						["h2", "h3"].includes(attribute.initializer.text),
+				)
+			)
+				fail(
+					node,
+					"Use h1 for page titles, h4 for section headings, and number for metrics.",
+				);
+			if (
 				/breadcrumb/i.test(filename) &&
 				["Text", "Button", "Row"].includes(node.tagName.getText(file))
 			)
@@ -189,7 +213,7 @@ export const inspectDesignBoundary = (
 if (import.meta.main) {
 	const root = resolve(import.meta.dir, "..");
 	const files = Array.from(
-		new Bun.Glob("{app,src}/**/*.{ts,tsx}").scanSync({ cwd: root }),
+		new Bun.Glob("{app,src}/**/*.{ts,tsx,js,jsx}").scanSync({ cwd: root }),
 	).filter((file) => !file.startsWith("src/design-system/"));
 	const results = await Promise.all(
 		files.map(

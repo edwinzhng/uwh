@@ -26,6 +26,9 @@ export const eventPartValue = v.object({
 	end: v.string(),
 });
 export const eventDraftValue = v.object({
+	committedRoster: v.optional(v.boolean()),
+	seriesWaitlist: v.optional(v.boolean()),
+	excludedDates: v.optional(v.array(v.string())),
 	timeZone: v.optional(v.string()),
 	parts: v.optional(v.array(eventPartValue)),
 	public: v.optional(v.boolean()),
@@ -33,6 +36,12 @@ export const eventDraftValue = v.object({
 	seasonId: v.optional(v.string()),
 	title: v.string(),
 	date: v.string(),
+	endDate: v.optional(v.string()),
+	responseDeadline: v.optional(v.string()),
+	tournamentRoster: v.optional(
+		v.array(v.object({ personId: v.string(), team: v.string() })),
+	),
+
 	start: v.string(),
 	end: v.string(),
 	venue: v.string(),
@@ -41,6 +50,7 @@ export const eventDraftValue = v.object({
 		v.literal("training"),
 		v.literal("hockey"),
 		v.literal("social"),
+		v.literal("tournament"),
 	),
 	repeatInterval: v.optional(v.number()),
 	repeatUntil: v.optional(v.string()),

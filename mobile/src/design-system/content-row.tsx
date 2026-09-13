@@ -25,7 +25,7 @@ export const ContentRow = ({
 	const { width } = useWindowDimensions();
 	const separateActions = Boolean(metadata) && width < geometry.narrow;
 	const identityBlock = (
-		<Stack gap="xxs" grow>
+		<Stack gap="none" grow>
 			<Row gap="xs">
 				<Text variant={titleVariant}>{title}</Text>
 				{metadata}

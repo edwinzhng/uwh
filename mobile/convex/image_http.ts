@@ -2,6 +2,7 @@ import { imageLimits, imageMime } from "../src/domain/messaging";
 import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { actionUserId as getAuthUserId } from "./identity";
+import { boundedBlob } from "./request_body";
 
 const headers = {
 	"Access-Control-Allow-Origin": "*",
@@ -25,8 +26,8 @@ export const upload = httpAction(async (ctx, request): Promise<Response> => {
 		return failure("Conversation unavailable.", 403);
 	if (Number(request.headers.get("Content-Length")) > imageLimits.bytes)
 		return failure("Choose a photo under 5 MB.", 413);
-	const blob = await request.blob();
-	if (!blob.size || blob.size > imageLimits.bytes)
+	const blob = await boundedBlob(request, imageLimits.bytes);
+	if (!blob?.size || blob.size > imageLimits.bytes)
 		return failure("Choose a photo under 5 MB.", 413);
 	const mime = imageMime(new Uint8Array(await blob.slice(0, 16).arrayBuffer()));
 	if (!mime || mime !== blob.type)

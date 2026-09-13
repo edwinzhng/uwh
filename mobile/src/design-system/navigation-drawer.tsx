@@ -49,7 +49,7 @@ export const NavigationDrawer = ({
 		const animation = Animated.timing(progress, {
 			toValue: isOpen ? 1 : 0,
 			duration: canAnimate ? motion.duration.slow : 0,
-			easing: Easing.bezier(...motion.easing.sheet),
+			easing: Easing.bezier(...motion.easing.emphasized),
 			useNativeDriver: Platform.OS !== "web",
 		});
 		animation.start(({ finished }) => {

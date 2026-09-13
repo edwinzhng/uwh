@@ -10,7 +10,11 @@ import { reduceApp } from "../domain/app-reducer";
 import { canManagePerson } from "../domain/app-rules";
 import type { Account, AppAction, AppData, Member } from "../domain/app-types";
 import { visibleAppData } from "../domain/app-visibility";
+import { clubDate } from "../domain/event-time";
+import { canDiscussSession } from "../domain/session-discussion";
+import { syncSeriesResponses } from "../domain/session-series";
 import { initialAppData, previewAccounts, primaryAccount } from "./app-data";
+import { previewSessionSeries } from "./session-series-state";
 
 export const previewDataAtom = atom<AppData>(initialAppData);
 export const previewAccountIdAtom = atom("alex");
@@ -33,6 +37,44 @@ export const selectPreviewAccountAtom = atom(
 export const previewActionAtom = atom(
 	undefined,
 	(get, set, action: AppAction): void => {
+		if (action.type === "edit-event") {
+			const previous = get(previewDataAtom);
+			const next = reduceApp(previous, get(previewAccountAtom), action);
+			const series = get(previewSessionSeries).map((entry) => ({
+				...entry,
+				seriesIds: [
+					...new Set([
+						...entry.seriesIds,
+						...next.events
+							.filter((event) =>
+								previous.events.some(
+									(before) =>
+										before.id === event.id &&
+										before.seriesId &&
+										entry.seriesIds.includes(before.seriesId),
+								),
+							)
+							.flatMap((event) => (event.seriesId ? [event.seriesId] : [])),
+					]),
+				],
+			}));
+			set(previewSessionSeries, series);
+			set(previewDataAtom, {
+				...next,
+				responses: series.reduce(
+					(responses, entry) =>
+						syncSeriesResponses(
+							entry,
+							next.events,
+							responses,
+							clubDate(undefined, next.timeZone),
+							Date.now(),
+						),
+					next.responses,
+				),
+			});
+			return;
+		}
 		set(
 			previewDataAtom,
 			reduceApp(get(previewDataAtom), get(previewAccountAtom), action),
@@ -58,7 +100,26 @@ export const PreviewProvider = ({
 }: {
 	children: ReactNode;
 }): ReactElement => {
-	const allData = useAtomValue(previewDataAtom);
+	const storedData = useAtomValue(previewDataAtom);
+	const allData: AppData = {
+		...storedData,
+		conversations: storedData.conversations.map((thread) => {
+			if (!thread.eventId) return thread;
+			const event = storedData.events.find(
+				(entry) => entry.id === thread.eventId,
+			);
+			return {
+				...thread,
+				accountIds: event
+					? previewAccounts
+							.filter((entry) =>
+								canDiscussSession(entry, event, storedData.members),
+							)
+							.map((entry) => entry.id)
+					: [],
+			};
+		}),
+	};
 	const account = useAtomValue(previewAccountAtom);
 	const act = useSetAtom(previewActionAtom);
 	const [error, setError] = useState<string>();

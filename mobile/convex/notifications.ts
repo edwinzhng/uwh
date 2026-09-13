@@ -1,5 +1,6 @@
 import { getAuthSessionId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
+import { clubDate } from "../src/domain/event-time";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import {
@@ -11,6 +12,7 @@ import {
 	query,
 } from "./_generated/server";
 import { getAuthUserId, memberFor, requireMember } from "./identity";
+import { threadFor } from "./message_access";
 import { blockedIds } from "./moderation";
 import { notificationKind } from "./security_schema";
 
@@ -183,12 +185,7 @@ const eligible = async (
 			)
 			.unique();
 		if (!message || message.value.deleted) return false;
-		const thread = await ctx.db
-			.query("conversations")
-			.withIndex("by_club_and_key", (q) =>
-				q.eq("clubId", job.clubId).eq("value.id", message.value.threadId),
-			)
-			.unique();
+		const thread = await threadFor(ctx, job.clubId, message.value.threadId);
 		return Boolean(thread?.value.accountIds.includes(member.userId));
 	}
 	if (job.kind === "feedback") {
@@ -203,15 +200,40 @@ const eligible = async (
 			[member.personId, ...member.children].includes(row.value.personId)
 		);
 	}
-	if (job.kind === "announcements")
-		return Boolean(
-			await ctx.db
-				.query("notices")
-				.withIndex("by_club_and_key", (q) =>
-					q.eq("clubId", job.clubId).eq("value.id", job.entityId),
-				)
-				.unique(),
+	if (job.kind === "announcements") {
+		const noticeClub = await ctx.db.get(job.clubId);
+		const notice = await ctx.db
+			.query("notices")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", job.clubId).eq("value.id", job.entityId),
+			)
+			.unique();
+		if (
+			!notice ||
+			(notice.value.expiresAt &&
+				notice.value.expiresAt <= clubDate(undefined, noticeClub?.timeZone))
+		)
+			return false;
+		if (
+			member.admin ||
+			notice.value.program === "all" ||
+			member.coachPrograms.includes(notice.value.program)
+		)
+			return true;
+		const people = await Promise.all(
+			[member.personId, ...member.children].map((personId) =>
+				ctx.db
+					.query("members")
+					.withIndex("by_club_and_key", (q) =>
+						q.eq("clubId", job.clubId).eq("value.id", personId),
+					)
+					.unique(),
+			),
 		);
+		return people.some((person) =>
+			person?.value.programs.includes(notice.value.program),
+		);
+	}
 	const club = await ctx.db.get(job.clubId);
 	const row = await ctx.db
 		.query("events")
@@ -405,7 +427,7 @@ export const payload = internalQuery({
 									: "Registration closes in 30 minutes.";
 		return {
 			token: device.token,
-			title: "Crocs Club",
+			title: "UWH Club",
 			body,
 			path,
 			attempt: delivery.attempt,

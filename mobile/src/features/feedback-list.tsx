@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
-import { Badge, Divider, Row, Stack, Text } from "../design-system";
+import { Badge, Divider, EmptyState, Row, Stack, Text } from "../design-system";
 import { DataPage } from "./data-page";
 import { FeedbackCard } from "./feedback-card";
 export const FeedbackList = ({
@@ -55,11 +55,18 @@ export const FeedbackList = ({
 							/>
 						))}
 						{!items.length ? (
-							<Text variant="small" tone="secondary">
-								{visibility === "published"
-									? "No shared feedback"
-									: "No drafts or private notes"}
-							</Text>
+							<EmptyState
+								title={
+									visibility === "published"
+										? "No shared feedback"
+										: "No drafts or private notes"
+								}
+								description={
+									visibility === "published"
+										? "Feedback will appear here when a coach shares it."
+										: "Add feedback to save a draft or a private coaching note."
+								}
+							/>
 						) : undefined}
 					</Stack>
 				)

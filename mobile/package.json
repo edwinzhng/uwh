@@ -1,5 +1,5 @@
 {
-	"name": "crocs-club",
+	"name": "uwh-club",
 	"version": "0.1.0",
 	"private": true,
 	"main": "expo-router/entry",
@@ -8,12 +8,13 @@
 		"ios": "expo run:ios",
 		"android": "expo run:android",
 		"web": "expo start --web",
+		"build:web": "bun run check:design && expo export --platform web --max-workers 2",
 		"preview": "bun scripts/preview.ts",
 		"typecheck": "tsc --noEmit",
 		"lint": "biome check . && bun run check:toast && bun run check:design",
 		"format": "biome check --write .",
 		"test": "bun test",
-		"check:design": "bun scripts/check-design-boundary.ts",
+		"check:design": "bun scripts/check-design-boundary.ts && bun run check:motion",
 		"check": "bun run typecheck && bun run lint && bun run check:design && bun test",
 		"export": "expo export --platform all",
 		"backend": "CONVEX_AGENT_MODE=anonymous convex dev --tail-logs disable",
@@ -33,10 +34,11 @@
 		"verify:coaching-teams": "bun scripts/verify-coaching-teams.ts",
 		"verify:attendance-reports": "bun scripts/verify-attendance-reports.ts",
 		"verify:coaching-scale": "bun scripts/verify-coaching-scale.ts",
-		"check:toast": "bun scripts/check-toast-copy.ts"
+		"check:toast": "bun scripts/check-toast-copy.ts",
+		"check:motion": "bun scripts/check-motion-tokens.ts"
 	},
 	"dependencies": {
-		"@auth/core": "0.41.1",
+		"@auth/core": "0.41.3",
 		"@base-ui/react": "^1.8.0",
 		"@calgarycrocs/design-system": "file:../packages/design-system",
 		"@convex-dev/auth": "^0.0.95",
@@ -89,7 +91,8 @@
 		"react-native-worklets": "0.10.1",
 		"recharts": "^3",
 		"sonner": "^2.0.8",
-		"sonner-native": "^0.27.0"
+		"sonner-native": "^0.27.0",
+		"decode-uri-component": "file:../packages/safe-uri-component"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.6",
@@ -98,5 +101,10 @@
 		"@types/react": "~19.2.2",
 		"ical.js": "^2.2.1",
 		"typescript": "~5.9.2"
+	},
+	"overrides": {
+		"@auth/core": "0.41.3",
+		"decode-uri-component": "file:../packages/safe-uri-component",
+		"uuid": "11.1.1"
 	}
 }

@@ -1,17 +1,17 @@
-import Link from "next/link";
 import type { ReactElement } from "react";
+import { Container, Heading, Main, Text, TextLink } from "../design-system";
 
 const NotFound = (): ReactElement => (
-	<main className="not-found-page">
-		<div className="wrap">
-			<p className="eyebrow">404</p>
-			<h1>Page not found</h1>
-			<p>This page may have moved or no longer exists.</p>
-			<Link href="/" className="button">
+	<Main variant="not-found">
+		<Container>
+			<Text variant="eyebrow">404</Text>
+			<Heading level={1}>Page not found</Heading>
+			<Text>This page may have moved or no longer exists.</Text>
+			<TextLink href="/" button>
 				Back to home
-			</Link>
-		</div>
-	</main>
+			</TextLink>
+		</Container>
+	</Main>
 );
 
 export default NotFound;

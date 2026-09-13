@@ -1,3 +1,4 @@
+import { motionDurations, motionEasings } from "./motion";
 export const space = {
 	none: 0,
 	half: 2,
@@ -52,22 +53,10 @@ export const elevation = {
 export const opacity = { backdrop: 0.15 } as const;
 
 export const motion = {
-	duration: {
-		instant: 0,
-		fast: 120,
-		reveal: 150,
-		standard: 200,
-		toggle: 220,
-		slow: 280,
-	},
-	easing: {
-		control: [0.25, 0.1, 0.25, 1],
-		out: [0.23, 1, 0.32, 1],
-		move: [0.77, 0, 0.175, 1],
-		sheet: [0.32, 0.72, 0, 1],
-	},
+	duration: motionDurations,
+	easing: motionEasings,
 	pressScale: 0.97,
-	settle: { duration: 400, dampingRatio: 1 },
+	settle: { duration: motionDurations.slow, dampingRatio: 1 },
 } as const;
 
 export const brand = {
@@ -219,11 +208,11 @@ export const darkColorScales = {
 } as const satisfies SemanticColorScales;
 
 export const chartColors = {
-	blue: "hsl(212, 100%, 48%)",
-	red: "hsl(358, 75%, 59%)",
-	amber: "hsl(39, 100%, 57%)",
-	green: "hsl(131, 41%, 46%)",
-	teal: "hsl(173, 80%, 36%)",
-	purple: "hsl(272, 51%, 54%)",
-	pink: "hsl(336, 80%, 58%)",
+	blue: "#2878D0",
+	red: "#DC454E",
+	amber: "#C57808",
+	green: "#218653",
+	indigo: "#6261D5",
+	purple: "#9752C5",
+	pink: "#CE438A",
 } as const;

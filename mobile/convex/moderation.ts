@@ -8,6 +8,7 @@ import {
 	query,
 } from "./_generated/server";
 import { memberFor, requireMember } from "./identity";
+import { threadFor } from "./message_access";
 
 export const blockedIds = async (
 	ctx: QueryCtx,
@@ -45,16 +46,12 @@ export const chatAccessError = async (
 ): Promise<string | undefined> => {
 	if (!(await canChat(ctx, membership.userId)))
 		return "Your chat access is paused. Contact a club admin.";
-	const thread = await ctx.db
-		.query("conversations")
-		.withIndex("by_club_and_key", (q) =>
-			q.eq("clubId", membership.clubId).eq("value.id", threadId),
-		)
-		.unique();
+	const thread = await threadFor(ctx, membership.clubId, threadId);
 	if (!thread?.value.accountIds.includes(membership.userId))
 		return "Conversation unavailable.";
 	const blocked = await blockedIds(ctx, membership.userId);
 	if (
+		!thread.value.eventId &&
 		thread.value.id !== "club" &&
 		thread.value.id !== "youth" &&
 		thread.value.accountIds.some((id) => blocked.includes(id))

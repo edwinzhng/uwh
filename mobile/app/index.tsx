@@ -1,1 +1,1 @@
-export { AgendaScreen as default } from "../src/features/agenda-screen";
+export { HomeScreen as default } from "../src/features/home-screen";

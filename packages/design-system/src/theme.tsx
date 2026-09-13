@@ -12,10 +12,20 @@ export const DesignTokens = (): ReactElement => (
  --crocs-panel-radius: ${radius.lg}px;
  --crocs-space-sm: ${space.sm}px;
  --crocs-space-lg: ${space.lg}px;
- --crocs-motion-standard: ${motion.duration.standard}ms;
+${Object.entries(motion.duration)
+	.map(([name, value]) => ` --crocs-motion-${name}: ${value}ms;`)
+	.join("\n")}
+${Object.entries(motion.easing)
+	.map(
+		([name, value]) =>
+			` --crocs-ease-${name}: cubic-bezier(${value.join(",")});`,
+	)
+	.join("\n")}
  --crocs-motion-ease: cubic-bezier(${motion.easing.out.join(",")});
  --crocs-glass: ${materials.light.floating};
  --crocs-glass-blur: ${materials.blur.floating}px;
 }
-@media (prefers-reduced-motion: reduce) { :root { --crocs-motion-standard: 0ms; } }`}</style>
+@media (prefers-reduced-motion: reduce) { :root { ${Object.keys(motion.duration)
+		.map((name) => `--crocs-motion-${name}: 0ms;`)
+		.join(" ")} } }`}</style>
 );

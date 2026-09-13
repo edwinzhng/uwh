@@ -7,11 +7,11 @@ describe("sign-in return addresses", (): void => {
 		expect(authRedirect("/join?invite=abc&revision=2", site)).toBe(
 			`${site}/join?invite=abc&revision=2`,
 		);
-		expect(authRedirect("crocs-club://connect-account?request=abc", site)).toBe(
-			"crocs-club://connect-account?request=abc",
+		expect(authRedirect("uwh-club://connect-account?request=abc", site)).toBe(
+			"uwh-club://connect-account?request=abc",
 		);
-		expect(authRedirect("crocs-club://auth-callback", site)).toBe(
-			"crocs-club://auth-callback",
+		expect(authRedirect("uwh-club://auth-callback", site)).toBe(
+			"uwh-club://auth-callback",
 		);
 	});
 	test("rejects external redirects and arbitrary deep links", (): void => {
@@ -20,9 +20,9 @@ describe("sign-in return addresses", (): void => {
 			"//evil.test",
 			"https://club.example@evil.test",
 			"javascript:alert(1)",
-			"crocs-club://account",
-			"crocs-club://auth-callback.evil",
-			"crocs-club://auth-callback/path",
+			"uwh-club://account",
+			"uwh-club://auth-callback.evil",
+			"uwh-club://auth-callback/path",
 			"https://user:password@club.example/",
 		])
 			expect(() => authRedirect(path, site)).toThrow();

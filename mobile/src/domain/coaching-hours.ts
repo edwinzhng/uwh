@@ -14,7 +14,7 @@ export const completedCoachingEvent = (
 ): boolean =>
 	!event.cancelled &&
 	event.kind !== "social" &&
-	clubTimestamp(event.date, event.end, event.timeZone) <= now;
+	clubTimestamp(event.endDate ?? event.date, event.end, event.timeZone) <= now;
 export type CoachingAssignment = {
 	coachId: string;
 	personId: string;

@@ -51,7 +51,7 @@ export const NotificationBell = ({
 				key={total}
 				style={{
 					animationName: animate && total > 0 ? ring : undefined,
-					animationDuration: motion.duration.reveal,
+					animationDuration: motion.duration.slow,
 					animationIterationCount: 1,
 				}}
 			>

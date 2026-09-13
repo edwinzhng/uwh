@@ -4,6 +4,8 @@ import { api } from "../../convex/_generated/api";
 import {
 	Badge,
 	Button,
+	EmptyState,
+	LoadingContent,
 	Row,
 	Stack,
 	Surface,
@@ -51,13 +53,19 @@ export const AttendanceComparison = ({
 					))}
 				</Row>
 				{!people.length ? (
-					<Text variant="small" tone="secondary">
-						Select players in the table.
-					</Text>
+					<EmptyState
+						title="Choose players to compare"
+						description="Select up to four players in the table to compare their attendance."
+					/>
 				) : data?.limited ? (
 					<Text tone="secondary">
 						Choose a month to compare this large season.
 					</Text>
+				) : data && !data.rows.some((row) => row.points.length) ? (
+					<EmptyState
+						title="No attendance to compare"
+						description="Record practice attendance or choose a different month to see trends."
+					/>
 				) : data ? (
 					<TrendChart
 						series={data.rows.map((row) => ({
@@ -68,7 +76,7 @@ export const AttendanceComparison = ({
 						formatValue={(value): string => `${value}%`}
 					/>
 				) : (
-					<Text variant="small">Loading…</Text>
+					<LoadingContent />
 				)}
 				<Text variant="caption" tone="secondary">
 					Attendance uses recorded practices. On time uses attended practices.

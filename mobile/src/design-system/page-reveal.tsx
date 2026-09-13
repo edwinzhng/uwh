@@ -1,52 +1,42 @@
-import { useFocusEffect } from "expo-router";
-import {
-	type ReactElement,
-	type ReactNode,
-	useCallback,
-	useRef,
-	useState,
-} from "react";
+import { useIsFocused } from "expo-router";
+import type { ReactElement, ReactNode } from "react";
 import Animated, { cubicBezier } from "react-native-reanimated";
 import { pageMotionAllowed } from "./page-motion-input";
 import { motion, space } from "./tokens";
 import { useMotion } from "./use-motion";
 
-const reveal = { from: { opacity: 0.2 }, to: { opacity: 1 } };
+const reveal = { from: { opacity: 0 }, to: { opacity: 1 } };
 
 export const PageReveal = ({
 	children,
 	fill = false,
+	gap,
 	enabled = true,
 	replayOnFocus = true,
 }: {
 	children: ReactNode;
 	fill?: boolean;
+	gap?: "none";
 	enabled?: boolean;
 	replayOnFocus?: boolean;
 }): ReactElement => {
 	const motionEnabled = useMotion();
-	const currentMotion = useRef(motionEnabled);
-	currentMotion.current = motionEnabled;
-	const [active, setActive] = useState(
-		() => motionEnabled && pageMotionAllowed(),
-	);
-	useFocusEffect(
-		useCallback(() => {
-			if (!replayOnFocus) return;
-			setActive(currentMotion.current && pageMotionAllowed());
-			return (): void => setActive(false);
-		}, [replayOnFocus]),
-	);
-	const animate = motionEnabled && active && enabled;
+	const focused = useIsFocused();
+	const animate =
+		motionEnabled &&
+		enabled &&
+		pageMotionAllowed() &&
+		(!replayOnFocus || focused);
 	return (
 		<Animated.View
 			style={{
 				flex: fill ? 1 : undefined,
 				minHeight: fill ? 0 : undefined,
-				gap: fill ? space.md : space.xl,
+				gap: gap === "none" ? space.none : fill ? space.md : space.xl,
 				animationName: animate ? reveal : undefined,
-				animationDuration: motion.duration.reveal,
+				animationDuration: motion.duration.slow,
 				animationTimingFunction: cubicBezier(...motion.easing.out),
+				animationFillMode: "backwards",
 				animationIterationCount: 1,
 			}}
 		>

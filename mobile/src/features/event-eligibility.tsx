@@ -4,6 +4,7 @@ import {
 	Button,
 	Checkbox,
 	Dialog,
+	EmptyState,
 	Field,
 	List,
 	Row,
@@ -23,6 +24,9 @@ export const EventEligibility = ({
 	const [open, setOpen] = useState(false);
 	const [search, setSearch] = useState("");
 	const players = data.members.filter((member) => member.programs.length > 0);
+	const matchingPlayers = players.filter((player) =>
+		player.name.toLowerCase().includes(search.trim().toLowerCase()),
+	);
 	return (
 		<Stack gap="xs">
 			<Select
@@ -57,6 +61,7 @@ export const EventEligibility = ({
 					<Row>
 						<Button
 							label="Select all"
+							isDisabled={!matchingPlayers.length}
 							variant="ghost"
 							onPress={(): void => onChange(players.map((player) => player.id))}
 						/>
@@ -67,24 +72,30 @@ export const EventEligibility = ({
 						/>
 					</Row>
 					<List>
-						{players
-							.filter((player) =>
-								player.name.toLowerCase().includes(search.toLowerCase()),
-							)
-							.map((player) => (
-								<Checkbox
-									key={player.id}
-									label={player.name}
-									checked={value?.includes(player.id) ?? false}
-									onChange={(checked): void =>
-										onChange(
-											checked
-												? [...(value ?? []), player.id]
-												: value?.filter((id) => id !== player.id),
-										)
-									}
-								/>
-							))}
+						{matchingPlayers.map((player) => (
+							<Checkbox
+								key={player.id}
+								label={player.name}
+								checked={value?.includes(player.id) ?? false}
+								onChange={(checked): void =>
+									onChange(
+										checked
+											? [...(value ?? []), player.id]
+											: value?.filter((id) => id !== player.id),
+									)
+								}
+							/>
+						))}
+						{!matchingPlayers.length ? (
+							<EmptyState
+								title={search.trim() ? "No players found" : "No players yet"}
+								description={
+									search.trim()
+										? "Try another name or clear your search."
+										: "Add players to a program before choosing who can register."
+								}
+							/>
+						) : undefined}
 					</List>
 					<Text variant="caption" tone="secondary">
 						Only selected players can register. Parents can register their

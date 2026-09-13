@@ -104,3 +104,35 @@ test("mapped row collections use List", (): void => {
 		),
 	).toHaveLength(0);
 });
+
+test("HTML aliases and polymorphic tags cannot bypass the component boundary", (): void => {
+	expect(
+		inspectDesignBoundary(
+			'const Box="div"; const Page=()=> <Box/>;',
+			"app/test.tsx",
+		).length,
+	).toBeGreaterThan(0);
+	expect(
+		inspectDesignBoundary('const Page=()=> <Text as="div"/>;', "app/test.tsx")
+			.length,
+	).toBeGreaterThan(0);
+});
+
+test("app headings and metrics use the canonical typography scale", (): void => {
+	for (const variant of ["h2", "h3"]) {
+		expect(
+			inspectDesignBoundary(
+				`<Text variant="${variant}">Title</Text>`,
+				"page.tsx",
+			),
+		).toHaveLength(1);
+	}
+	for (const variant of ["h1", "h4", "body", "label", "caption", "number"]) {
+		expect(
+			inspectDesignBoundary(
+				`<Text variant="${variant}">Title</Text>`,
+				"page.tsx",
+			),
+		).toHaveLength(0);
+	}
+});

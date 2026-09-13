@@ -28,7 +28,7 @@ Google uses a Web application OAuth client for this shared server flow. Configur
 
 Apple needs an App ID with Sign in with Apple, a linked Services ID, and a signing key. `AUTH_APPLE_ID` is the Services ID; `AUTH_APPLE_SECRET` is its signed client-secret JWT. Apple requires a public HTTPS deployment and does not support this localhost setup. Its client secret must be rotated before expiry, at most six months. Follow the [Convex Apple setup guide](https://labs.convex.dev/auth/config/oauth/apple). Register the email sender with Apple if sending to private relay addresses; see [Apple’s relay setup](https://developer.apple.com/help/account/capabilities/configure-private-email-relay-service/).
 
-The native apps use Expo’s system authentication browser and return through `crocs-club://auth-callback` or `crocs-club://connect-account`. Build a development client with the registered scheme; Expo Go is not the test target. Only these native destinations and the configured web origin are accepted. See [Expo WebBrowser](https://docs.expo.dev/versions/latest/sdk/webbrowser/).
+The native apps use Expo’s system authentication browser and return through `uwh-club://auth-callback` or `uwh-club://connect-account`. Build a development client with the registered scheme; Expo Go is not the test target. Only these native destinations and the configured web origin are accepted. See [Expo WebBrowser](https://docs.expo.dev/versions/latest/sdk/webbrowser/).
 
 ## Security and maintenance
 

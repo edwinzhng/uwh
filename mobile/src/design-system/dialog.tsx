@@ -48,7 +48,7 @@ export const Dialog = ({
 		}
 		const timeout = setTimeout(
 			() => setRetained(false),
-			animate ? motion.duration.toggle : 0,
+			animate ? motion.duration.standard : 0,
 		);
 		return (): void => clearTimeout(timeout);
 	}, [isOpen, animate]);
@@ -67,7 +67,7 @@ export const Dialog = ({
 						flex: 1,
 						opacity: isOpen ? 1 : 0,
 						transitionProperty: "opacity",
-						transitionDuration: animate ? motion.duration.toggle : 0,
+						transitionDuration: animate ? motion.duration.standard : 0,
 						transitionTimingFunction: cubicBezier(...motion.easing.out),
 					}}
 				>
@@ -114,7 +114,7 @@ export const Dialog = ({
 											},
 										}
 									: undefined,
-								animationDuration: motion.duration.toggle,
+								animationDuration: motion.duration.standard,
 								animationFillMode: "forwards",
 								animationTimingFunction: cubicBezier(...motion.easing.out),
 								maxHeight:
@@ -143,7 +143,7 @@ export const Dialog = ({
 							>
 								<Row justify="between" align="center">
 									<Row gap="xs" wrap>
-										<Text variant="h3">{title}</Text>
+										<Text variant="h4">{title}</Text>
 										{staffRole ? (
 											<Badge
 												compact

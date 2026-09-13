@@ -7,14 +7,10 @@ import { useControlSize } from "./use-control-size";
 type Props = {
 	children: ReactNode;
 	action?: ReactNode;
-	size?: "standard" | "small";
+	size?: "small";
 };
 
-export const SectionHeading = ({
-	children,
-	action,
-	size = "small",
-}: Props): ReactElement => {
+export const SectionHeading = ({ children, action }: Props): ReactElement => {
 	const height = useControlSize();
 	return (
 		<View
@@ -28,7 +24,7 @@ export const SectionHeading = ({
 			}}
 		>
 			<View style={{ flexShrink: 1 }}>
-				<Text variant={size === "small" ? "h4" : "h3"}>{children}</Text>
+				<Text variant="h4">{children}</Text>
 			</View>
 			{action}
 		</View>

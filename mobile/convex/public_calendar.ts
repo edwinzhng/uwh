@@ -42,7 +42,11 @@ export const read = internalMutation({
 				description: calendarPartDescription(value),
 				location: value.venue,
 				start: clubTimestamp(value.date, value.start, value.timeZone),
-				end: clubTimestamp(value.date, value.end, value.timeZone),
+				end: clubTimestamp(
+					value.endDate ?? value.date,
+					value.end,
+					value.timeZone,
+				),
 				status: "CONFIRMED" as const,
 			}));
 		const entries = reconcileCalendar(

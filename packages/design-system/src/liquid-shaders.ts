@@ -1,5 +1,9 @@
 export const vertexShader = `attribute vec2 position; varying vec2 vUv; void main() { vUv = position * 0.5 + 0.5; gl_Position = vec4(position, 0.0, 1.0); }`;
-export const fragmentShader = `precision mediump float;
+export const fragmentShader = `#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
             uniform sampler2D u_imageOuter;
             uniform sampler2D u_imageInner;
             uniform vec2 u_resolution;
@@ -116,6 +120,8 @@ export const fragmentShader = `precision mediump float;
                 }
                 float field = liquidField.x - u_radius * (n - 0.5) * u_distortion * 2.0;
                 float mask = 1.0 - smoothstep(-u_edgeSoftness, u_edgeSoftness, field);
+                float alpha = mask * u_visibility;
+                if (alpha <= 0.001) discard;
                 float edgeProfile = smoothstep(0.0, 0.5, mask) * (1.0 - smoothstep(0.5, 1.0, mask));
                 
                 vec2 refractionDir = liquidField.yz;
@@ -138,6 +144,6 @@ export const fragmentShader = `precision mediump float;
                 
                 vec4 finalCol = mix(colOuter, colInner, mask * u_visibility);
                 
-                gl_FragColor = vec4(finalCol.rgb, mask * u_visibility);
+                gl_FragColor = vec4(finalCol.rgb * alpha, alpha);
             }
         `;

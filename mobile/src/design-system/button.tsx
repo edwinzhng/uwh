@@ -6,7 +6,15 @@ import { type ButtonVariant, buttonColors } from "./button-colors";
 import { ButtonSpinner } from "./button-spinner";
 import { Icon, type IconName } from "./icon";
 import { useTheme } from "./theme";
-import { control, corners, font, geometry, motion, space } from "./tokens";
+import {
+	control,
+	corners,
+	font,
+	geometry,
+	motion,
+	space,
+	typography,
+} from "./tokens";
 import { useControlSize } from "./use-control-size";
 import { useMotion } from "./use-motion";
 
@@ -89,7 +97,7 @@ export const Button = ({
 				}}
 				disabled={blocked}
 				onPress={(): void => {
-					setAttempted(true);
+					setAttempted(Boolean(validationError));
 					if (!validationError) onPress();
 				}}
 				onPressIn={(): void => setPressed(true)}
@@ -178,13 +186,14 @@ export const Button = ({
 					) : undefined}
 				</Animated.View>
 			</Pressable>
-			{attempted && validationError ? (
+			{attempted && validationError && !blocked ? (
 				<NativeText
 					accessibilityRole="alert"
 					style={{
 						color: theme.danger.foreground,
 						fontFamily: font.regular,
-						fontSize: 14,
+						fontSize: typography.body.fontSize,
+						lineHeight: typography.body.lineHeight,
 					}}
 				>
 					{validationError}

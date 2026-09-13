@@ -1,7 +1,9 @@
 "use client";
+
 import { atom, useAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import type { FormEvent, ReactElement } from "react";
+import { Button, Field, FieldLabel, Form, Text } from "../design-system";
 
 const errorAtom = atom("");
 export const AdminLogin = (): ReactElement => {
@@ -19,20 +21,18 @@ export const AdminLogin = (): ReactElement => {
 		else setError("Incorrect password");
 	};
 	return (
-		<form className="form" style={{ maxWidth: 400 }} onSubmit={submit}>
-			<label>
+		<Form variant="login" onSubmit={submit}>
+			<FieldLabel>
 				Admin password
-				<input
+				<Field
 					type="password"
 					name="password"
 					required
 					autoComplete="current-password"
 				/>
-			</label>
-			<button className="button button-green" type="submit">
-				Sign in
-			</button>
-			{error ? <p role="alert">{error}</p> : undefined}
-		</form>
+			</FieldLabel>
+			<Button type="submit">Sign in</Button>
+			{error ? <Text role="alert">{error}</Text> : undefined}
+		</Form>
 	);
 };

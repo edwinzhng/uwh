@@ -9,7 +9,9 @@ import {
 	Badge,
 	Button,
 	Calendar,
+	EmptyState,
 	IconButton,
+	LoadingContent,
 	Row,
 	SectionHeading,
 	SegmentedControl,
@@ -56,9 +58,12 @@ export const PublicScheduleScreen = (): ReactElement => {
 					Schedule
 				</SectionHeading>
 				{info === undefined ? (
-					<Text>Loading…</Text>
+					<LoadingContent />
 				) : !info ? (
-					<Text>This schedule is unavailable.</Text>
+					<EmptyState
+						title="Schedule unavailable"
+						description="Check the club link or contact the club for its public schedule."
+					/>
 				) : (
 					<>
 						<SegmentedControl
@@ -119,14 +124,16 @@ export const PublicScheduleScreen = (): ReactElement => {
 							<Surface key={event.id}>
 								<Stack gap="xs">
 									<Row justify="between" wrap>
-										<Text variant="label">{event.title}</Text>
+										<Text variant="h4">{event.title}</Text>
 										{event.cancelled ? (
 											<Badge label="Cancelled" kind="danger" />
 										) : undefined}
 									</Row>
 									<Text variant="small">
 										{formatDate(event.date)} · {formatTime(event.start)}–
-										{formatTime(event.end)}
+										{event.endDate && event.endDate !== event.date
+											? `${formatDate(event.endDate)} ${formatTime(event.end)}`
+											: formatTime(event.end)}
 									</Text>
 									<Text variant="small" tone="secondary">
 										{event.venue}
@@ -135,11 +142,14 @@ export const PublicScheduleScreen = (): ReactElement => {
 							</Surface>
 						))}
 						{!results.length ? (
-							<Text tone="secondary">
-								{status === "LoadingFirstPage"
-									? "Loading…"
-									: "No public events."}
-							</Text>
+							status === "LoadingFirstPage" ? (
+								<LoadingContent />
+							) : (
+								<EmptyState
+									title="No public events"
+									description="Choose another date or check back when the club publishes more events."
+								/>
+							)
 						) : undefined}
 						{status === "CanLoadMore" || status === "LoadingMore" ? (
 							<Button

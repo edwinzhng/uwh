@@ -9,6 +9,7 @@ import {
 	LoadingContent,
 	PageReveal,
 	Row,
+	Stack,
 	Text,
 } from "../design-system";
 import { FamilyMenu } from "./family-menu";
@@ -22,7 +23,6 @@ type Props = {
 	subtitle?: string;
 	action?: ReactNode;
 	tabs?: ReactNode;
-	titleSize?: "page" | "section";
 	back?: ReactNode;
 	staffRole?: "coach" | "admin";
 	footer?: ReactNode;
@@ -34,7 +34,6 @@ export const ClubShell = ({
 	subtitle,
 	action,
 	tabs,
-	titleSize,
 	back,
 	staffRole,
 	footer,
@@ -46,52 +45,56 @@ export const ClubShell = ({
 	const router = useRouter();
 	const { data, error, clearError, loading } = useApp();
 	return (
-		<AppLayout
-			persistentNavigation
-			brand={data.clubName}
-			onBrandPress={(): void => router.navigate("/club")}
-			brandLogo={data.clubName === "Calgary Crocs" ? clubLogo : undefined}
-			title={title}
-			subtitle={subtitle}
-			action={action}
-			tabs={tabs}
-			titleSize={titleSize}
-			titleAccessory={
-				staffRole ? (
-					<Badge
-						label={staffRole === "admin" ? "Admin" : "Coach"}
-						kind={staffRole}
-					/>
-				) : undefined
-			}
-			back={
-				hasRouteBreadcrumbs(pathname) ? (
-					<RouteBreadcrumbs pathname={pathname} />
+		<PageReveal key={activePerson.id} fill gap="none">
+			<AppLayout
+				persistentNavigation
+				brand={data.clubName}
+				onBrandPress={(): void => router.navigate("/")}
+				brandLogo={data.clubName === "Calgary Crocs" ? clubLogo : undefined}
+				title={title}
+				subtitle={subtitle}
+				action={action}
+				tabs={tabs}
+				titleAccessory={
+					staffRole ? (
+						<Badge
+							label={staffRole === "admin" ? "Admin" : "Coach"}
+							kind={staffRole}
+						/>
+					) : undefined
+				}
+				back={
+					hasRouteBreadcrumbs(pathname) ? (
+						<RouteBreadcrumbs pathname={pathname} />
+					) : (
+						back
+					)
+				}
+				footer={footer}
+				scrollable={scrollable}
+				profile={<FamilyMenu />}
+				accessory={<NotificationsMenu />}
+				navigation={navigation}
+			>
+				{error ? (
+					<Row justify="between" wrap>
+						<Text variant="small" tone="danger">
+							{error}
+						</Text>
+						<Button label="Dismiss" variant="ghost" onPress={clearError} />
+					</Row>
+				) : undefined}
+				{loading ? (
+					<LoadingContent />
 				) : (
-					back
-				)
-			}
-			footer={footer}
-			scrollable={scrollable}
-			profile={<FamilyMenu />}
-			accessory={<NotificationsMenu />}
-			navigation={navigation}
-		>
-			{error ? (
-				<Row justify="between" wrap>
-					<Text variant="small" tone="danger">
-						{error}
-					</Text>
-					<Button label="Dismiss" variant="ghost" onPress={clearError} />
-				</Row>
-			) : undefined}
-			{loading ? (
-				<LoadingContent />
-			) : (
-				<PageReveal key={activePerson.id} fill={scrollable === false}>
-					{children}
-				</PageReveal>
-			)}
-		</AppLayout>
+					<Stack
+						grow={scrollable === false}
+						gap={scrollable === false ? "md" : "xl"}
+					>
+						{children}
+					</Stack>
+				)}
+			</AppLayout>
+		</PageReveal>
 	);
 };

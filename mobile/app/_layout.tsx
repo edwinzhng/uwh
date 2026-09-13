@@ -1,9 +1,8 @@
-import { Stack } from "expo-router";
 import { Provider } from "jotai";
 import type { ReactElement } from "react";
 import { MessagingProvider } from "../src/backend/messaging-provider";
 import { BackendProvider } from "../src/backend/provider";
-import { DesignProvider } from "../src/design-system";
+import { AppRouter, DesignProvider } from "../src/design-system";
 import { AppNavigation } from "../src/features/app-navigation";
 
 const RootLayout = (): ReactElement => (
@@ -12,7 +11,7 @@ const RootLayout = (): ReactElement => (
 			<BackendProvider>
 				<MessagingProvider>
 					<AppNavigation>
-						<Stack screenOptions={{ headerShown: false, animation: "none" }} />
+						<AppRouter />
 					</AppNavigation>
 				</MessagingProvider>
 			</BackendProvider>

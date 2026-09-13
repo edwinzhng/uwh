@@ -40,19 +40,17 @@ Status pairs are `success`, `warning`, and `danger`, with pale backgrounds/dark 
 
 | Variant | Typeface and weight | Size / line height |
 | --- | --- | --- |
-| h1 | Inter Semibold 600 | 32 / 38 |
-| h2 | Inter Semibold 600 | 28 / 34 |
-| h3 | Inter Semibold 600 | 22 / 28 |
-| h4 | Inter Semibold 600 | 18 / 24 |
-| body | Inter Regular 400 | 16 / 24 |
+| h1 (page title) | Inter Semibold 600 | 28 / 34 |
+| h4 (section and dialog title) | Inter Semibold 600 | 16 / 22 |
+| body | Inter Regular 400 | 14 / 20 |
 | small | Inter Regular 400 | 14 / 20 |
 | label | Inter Medium 500 | 14 / 20 |
 | field | Inter Regular 400 | 13 / 18 |
 | caption | Inter Regular 400 | 12 / 18 |
 | overline | Inter Semibold 600 | 11 / 16 |
-| number | Inter Medium 500, tabular digits | 32 / 40 |
+| number | Inter Medium 500, tabular digits | 24 / 30 |
 
-Only four heading sizes and one heading weight. Only three Inter weights. Native text scales with accessibility settings. Rolling digits scale their measured cell dimensions with the system font scale rather than clipping the default-size type. No fake bold or new local font-size variants.
+Use the same page and section heading sizes throughout the app, including sign-in and dialogs. Legacy h2 and h3 tokens are not used on app pages. Empty states use a medium label title and regular body description through `EmptyState`; loading uses `LoadingContent`. Only three Inter weights. Native text scales with accessibility settings. Rolling digits scale their measured cell dimensions with the system font scale rather than clipping the default-size type. No fake bold or new local font-size variants.
 
 Inter is the sole typeface. The heading token maps directly to Inter Semibold; Regular, Medium and Semibold are bundled locally through `src/design-system/fonts.ts`. The showcase displays typography samples without a font-status label.
 
@@ -235,7 +233,7 @@ Translucent surfaces must use GlassPanel / GlassBackdrop and shared materials to
 
 ## App page typography and role context
 
-Use the app typography tokens consistently on desktop and mobile: page title 28px, card/section heading 16px, content and row labels 14px, metadata 12px. Reserve 24px for summary numbers and 18px for a deliberate intermediate heading. `SectionHeading` defaults to the card/section size. Do not override font sizes in feature code.
+Use the app typography tokens consistently on desktop and mobile: page title 28px, card/section/dialog heading 16px, content and row labels 14px, metadata 12px. Reserve 24px for summary numbers. `SectionHeading` always uses the card/section size. Do not override font sizes in feature code.
 
 Do not use role lists such as “Player · Coach · Admin” as page subtitles. Subtitles should add useful context, not repeat permissions. Use contextual role badges for restricted actions or tabs; role summaries remain appropriate in member directories where they help identify people.
 
@@ -244,4 +242,4 @@ Do not use role lists such as “Player · Coach · Admin” as page subtitles. 
 ### Page and list composition
 Use ClubShell action for primary page actions and tabs for switching page views. Use EmptyState with a short title and helpful next step for empty collections; keep loading messages separate. Use List for checkbox and navigation collections: rows own touch targets and padding, and containers must not add inter-row gaps. Avoid placing primary page actions as standalone controls in the content stack.
 
-Showcase examples must use production components and shared option builders. Use PersonPicker for both profile switching and account actions; do not create a second account dropdown. Compact lists use geometry.listRow and shared Checkbox/ListItem spacing. Avatars derive their hues from chart colors with darker backgrounds and white initials.
+Showcase examples must use production components and shared option builders. Use PersonPicker for both profile switching and account actions; do not create a second account dropdown. Compact lists use geometry.listRow and shared Checkbox/ListItem spacing. Avatars use solid backgrounds directly from the shared chart palette with white initials. Normalized names deterministically select the same color everywhere; do not add avatar-only palettes or gradients. Avatar rows retain extra vertical breathing room while their name and description have no added gap.

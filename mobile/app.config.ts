@@ -1,9 +1,9 @@
 import type { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
-	name: "Crocs Club",
-	slug: "crocs-club",
-	scheme: "crocs-club",
+	name: "UWH Club",
+	slug: "uwh-club",
+	scheme: "uwh-club",
 	version: "0.1.0",
 	extra: { eas: { projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID } },
 	userInterfaceStyle: "automatic",
@@ -12,7 +12,11 @@ const config: ExpoConfig = {
 		package: "club.crocs.preview",
 		softwareKeyboardLayoutMode: "resize",
 	},
-	web: { bundler: "metro", output: "static" },
+	web: {
+		bundler: "metro",
+		output: "static",
+		favicon: "./assets/club-logo.png",
+	},
 	plugins: [
 		"expo-notifications",
 		[

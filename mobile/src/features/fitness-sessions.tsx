@@ -7,10 +7,10 @@ import {
 	EmptyState,
 	List,
 	ListItem,
+	LoadingContent,
 	Row,
 	Stack,
 	Surface,
-	Text,
 } from "../design-system";
 import { FitnessSessionForm } from "./fitness-session-form";
 export const FitnessSessions = ({
@@ -51,7 +51,7 @@ export const FitnessSessions = ({
 					))}
 					{!sessions.results.length ? (
 						sessions.status === "LoadingFirstPage" ? (
-							<Text tone="secondary">Loading…</Text>
+							<LoadingContent />
 						) : (
 							<EmptyState
 								title="No sessions this season"

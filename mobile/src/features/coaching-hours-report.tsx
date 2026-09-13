@@ -2,8 +2,10 @@ import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import {
 	Button,
+	EmptyState,
 	List,
 	ListItem,
+	LoadingContent,
 	Row,
 	Stack,
 	Surface,
@@ -30,7 +32,7 @@ export const CoachingHoursReport = ({
 	const history = practices.filter((practice) =>
 		practice.coaches.some((entry) => entry.coachId === selected),
 	);
-	if (loading) return <Text tone="secondary">Calculating season totals…</Text>;
+	if (loading) return <LoadingContent />;
 	return (
 		<Stack>
 			<Text variant="caption" tone="secondary">
@@ -51,7 +53,7 @@ export const CoachingHoursReport = ({
 								/>
 							))}
 							{!page.length ? (
-								<ListItem
+								<EmptyState
 									title="No coaching hours yet"
 									description="Assign coaches on a practice’s Coaching tab."
 								/>

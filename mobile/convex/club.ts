@@ -14,6 +14,7 @@ import { accountFor, getAuthUserId } from "./identity";
 import { applyMessage } from "./message_commands";
 import { notifyChanges } from "./notification_events";
 import { screenData } from "./screen_data";
+import { syncEditedSeries } from "./session_series";
 import { scheduleSignup } from "./signup";
 
 const membershipFor = async (
@@ -124,7 +125,12 @@ export const apply = mutation({
 						...action,
 						draft: {
 							...action.draft,
-							timeZone: club?.timeZone ?? defaultClubTimeZone,
+							timeZone:
+								(action.draft.kind === "tournament"
+									? action.draft.timeZone
+									: undefined) ??
+								club?.timeZone ??
+								defaultClubTimeZone,
 						},
 					}
 				: action;
@@ -142,8 +148,31 @@ export const apply = mutation({
 		};
 		const next = reduceApp(currentData, account, effectiveAction);
 		await saveData(ctx, membership.clubId, rows, next);
+		if (
+			action.type === "create-event" &&
+			action.draft.committedRoster &&
+			action.draft.repeat !== "once"
+		) {
+			const existing = await ctx.db
+				.query("sessionSeries")
+				.withIndex("by_key", (q) =>
+					q.eq("clubId", membership.clubId).eq("id", action.id),
+				)
+				.unique();
+			if (!existing)
+				await ctx.db.insert("sessionSeries", {
+					clubId: membership.clubId,
+					id: action.id,
+					seriesIds: [action.id],
+					title: action.draft.title.trim(),
+					capacity: action.draft.capacity,
+					waitlist: action.draft.seriesWaitlist ?? true,
+					enrollments: [],
+				});
+		}
 		await notifyChanges(ctx, membership.clubId, membership.userId, data, next);
 		if (action.type === "create-event" || action.type === "edit-event") {
+			await syncEditedSeries(ctx, membership.clubId, data.events, next.events);
 			for (const event of next.events.filter(
 				(event) =>
 					JSON.stringify(

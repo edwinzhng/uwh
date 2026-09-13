@@ -1,135 +1,146 @@
 "use client";
-import Link from "next/link";
+
 import { usePathname } from "next/navigation";
 import { type ReactElement, useEffect, useRef, useState } from "react";
+import { Navigation, usePageNavigation } from "../design-system";
+import { activeSectionForScroll } from "../lib/active-section";
+import { coachesEnabled } from "../lib/features";
 
-const items = [
-	{ href: "/#about", label: "About", section: "about" },
-	{ href: "/#schedule", label: "Schedule", section: "schedule" },
-	{ href: "/#policies", label: "Policies", section: "policies" },
-	{ href: "/coaches", label: "Coaches" },
+const sections = [
+	{ id: "about", label: "About" },
+	{ id: "schedule", label: "Schedule" },
+	{ id: "policies", label: "Policies" },
 ];
 
 export const PageNavigation = (): ReactElement => {
 	const pathname = usePathname();
-	const nav = useRef<HTMLElement>(null);
-	useEffect(() => {
-		const update = (): void =>
-			nav.current?.style.setProperty(
-				"--nav-scroll",
-				`${Math.min(window.scrollY, 120)}px`,
-			);
-		const measure = (): void => {
-			const topRow = nav.current?.parentElement;
-			const controls = topRow
-				? Array.from(topRow.children).filter((child) => child !== nav.current)
-				: [];
-			const bottom = Math.max(
-				0,
-				...controls.map(
-					(child) => child.getBoundingClientRect().bottom + window.scrollY,
-				),
-			);
-			nav.current?.style.setProperty("--nav-start", `${bottom + 16}px`);
-		};
-		measure();
-		window.addEventListener("resize", measure);
-		update();
-		window.addEventListener("scroll", update, { passive: true });
-		return (): void => {
-			window.removeEventListener("scroll", update);
-			window.removeEventListener("resize", measure);
-		};
-	}, []);
-	const [section, setSection] = useState<string>();
-	const [pending, setPending] = useState<number>();
-	useEffect(() => {
-		if (pending === undefined) return;
-		const release = (): void => setPending(undefined);
-		const timer = window.setTimeout(release, 1200);
-		window.addEventListener("scrollend", release);
-		return (): void => {
-			window.clearTimeout(timer);
-			window.removeEventListener("scrollend", release);
-		};
-	}, [pending]);
+	const navigate = usePageNavigation();
+	const [destination, setDestination] = useState<string>();
+	const [openingCoaches, setOpeningCoaches] = useState(false);
+	const [activeSection, setActiveSection] = useState<number>();
+	const pendingSection = useRef<string | undefined>(undefined);
+	const selected = destination
+		? sections.findIndex((section): boolean => section.id === destination)
+		: openingCoaches || pathname === "/coaches"
+			? 3
+			: activeSection;
 	useEffect(() => {
 		if (pathname !== "/") return;
+		const frame = { id: 0 };
 		const update = (): void => {
-			const active = items
-				.filter((item) => item.section)
-				.findLast((item) => {
-					const element = document.getElementById(item.section ?? "");
-					return (
-						element &&
-						element.getBoundingClientRect().top < window.innerHeight * 0.4
-					);
-				});
-			setSection(active?.section);
+			frame.id = 0;
+			const nav = document.querySelector(".nav-island");
+			const threshold = (nav?.getBoundingClientRect().bottom ?? 72) + 24;
+			const headings = sections.map(({ id }) =>
+				document.getElementById(id)?.querySelector("h2, h1"),
+			);
+			const pending = pendingSection.current;
+			if (pending) {
+				const heading = document
+					.getElementById(pending)
+					?.querySelector("h2, h1");
+				if (
+					heading &&
+					Math.abs(
+						heading.getBoundingClientRect().top -
+							Number.parseFloat(getComputedStyle(heading).scrollMarginTop),
+					) > 12
+				)
+					return;
+				pendingSection.current = undefined;
+			}
+			const tops = headings.map(
+				(heading): number | undefined => heading?.getBoundingClientRect().top,
+			);
+			setActiveSection((current): number | undefined =>
+				activeSectionForScroll(tops, threshold, current),
+			);
 		};
-		update();
-		window.addEventListener("scroll", update, { passive: true });
-		return (): void => window.removeEventListener("scroll", update);
+		const schedule = (): void => {
+			if (!frame.id) frame.id = requestAnimationFrame(update);
+		};
+		const release = (): void => {
+			pendingSection.current = undefined;
+			schedule();
+		};
+		window.addEventListener("scroll", schedule, { passive: true });
+		window.addEventListener("resize", schedule);
+		window.addEventListener("scrollend", schedule);
+		window.addEventListener("wheel", release, { passive: true });
+		window.addEventListener("touchstart", release, { passive: true });
+		schedule();
+		return (): void => {
+			cancelAnimationFrame(frame.id);
+			window.removeEventListener("scroll", schedule);
+			window.removeEventListener("resize", schedule);
+			window.removeEventListener("scrollend", schedule);
+			window.removeEventListener("wheel", release);
+			window.removeEventListener("touchstart", release);
+		};
 	}, [pathname]);
-	const selected =
-		pending ??
-		items.findIndex((item) =>
-			item.section
-				? pathname === "/" && section === item.section
-				: pathname.startsWith(item.href),
-		);
+	useEffect((): void => {
+		setOpeningCoaches(false);
+		if (pathname === "/coaches")
+			window.scrollTo({ top: 0, behavior: "instant" });
+	}, [pathname]);
+	useEffect(() => {
+		const previous = window.history.scrollRestoration;
+		window.history.scrollRestoration = "manual";
+		window.scrollTo({ top: 0, behavior: "instant" });
+		return (): void => {
+			window.history.scrollRestoration = previous;
+		};
+	}, []);
+	useEffect(() => {
+		if (pathname !== "/" || !destination) return;
+		const frame = requestAnimationFrame((): void => {
+			const section = document.getElementById(destination);
+			const heading = section?.querySelector("h2, h1") ?? section;
+			heading?.scrollIntoView({
+				behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+					? "instant"
+					: "smooth",
+				block: "start",
+			});
+			setDestination(undefined);
+		});
+		return (): void => cancelAnimationFrame(frame);
+	}, [pathname, destination]);
 	return (
-		<nav ref={nav} className="nav-island" aria-label="Main navigation">
-			<span
-				className="nav-selection"
-				aria-hidden
-				style={{
-					width: `calc((100% - ${10 + (items.length - 1) * 8}px) / ${items.length})`,
-					opacity: selected < 0 ? 0 : 1,
-					transform: `translateX(calc(${Math.max(selected, 0) * 100}% + ${Math.max(selected, 0) * 8}px))`,
-				}}
-			/>
-			{items.map((item, index) => (
-				<Link
-					key={item.href}
-					href={item.href}
-					onClick={(event): void => {
-						if (
-							!event.metaKey &&
-							!event.ctrlKey &&
-							!event.shiftKey &&
-							!event.altKey
-						) {
-							setPending(index);
-							if (item.section && pathname === "/") {
-								event.preventDefault();
-								window.history.replaceState(
-									window.history.state,
-									"",
-									item.href,
-								);
-								document.getElementById(item.section)?.scrollIntoView({
-									behavior: window.matchMedia(
-										"(prefers-reduced-motion: reduce)",
-									).matches
-										? "instant"
-										: "smooth",
-									block: "start",
-								});
-							}
-						}
-					}}
-					aria-current={
-						selected === index
-							? item.section
-								? "location"
-								: "page"
-							: undefined
-					}
-				>
-					{item.label}
-				</Link>
-			))}
-		</nav>
+		<Navigation
+			selected={selected}
+			items={[
+				...sections.map((section, index) => ({
+					label: section.label,
+					current: selected === index ? ("location" as const) : undefined,
+					onSelect: (): void => {
+						setOpeningCoaches(false);
+						pendingSection.current = section.id;
+						setActiveSection(index);
+						setDestination(section.id);
+						navigate("/");
+					},
+				})),
+				...(coachesEnabled
+					? [
+							{
+								label: "Coaches",
+								href: "/coaches",
+								onNavigate: (): void => {
+									navigate("/coaches");
+									if (pathname === "/coaches")
+										window.scrollTo({ top: 0, behavior: "smooth" });
+								},
+								onSelect: (): void => {
+									setOpeningCoaches(true);
+									pendingSection.current = undefined;
+									setDestination(undefined);
+								},
+								current: selected === 3 ? ("page" as const) : undefined,
+							},
+						]
+					: []),
+			]}
+		/>
 	);
 };

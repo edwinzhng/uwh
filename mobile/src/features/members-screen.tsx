@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { useActivePerson, useApp } from "../demo/app-state";
 import {
 	Button,
+	EmptyState,
 	Field,
 	List,
 	ListItem,
@@ -116,7 +117,10 @@ export const MembersScreen = (): ReactElement => {
 												/>
 											))}
 											{!items.length ? (
-												<ListItem title="No members found" />
+												<EmptyState
+													title="No members found"
+													description="Try another name or clear your search."
+												/>
 											) : undefined}
 										</List>
 									</Surface>

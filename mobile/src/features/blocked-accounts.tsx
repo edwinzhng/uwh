@@ -2,8 +2,10 @@ import type { ReactElement } from "react";
 import { useChatSafety } from "../backend/chat-safety";
 import {
 	Button,
+	EmptyState,
 	List,
 	ListItem,
+	LoadingContent,
 	SectionHeading,
 	Stack,
 	Surface,
@@ -38,10 +40,13 @@ export const BlockedAccounts = (): ReactElement => {
 								}
 							/>
 						))
+					) : safety.available && safety.status === undefined ? (
+						<LoadingContent />
 					) : (
-						<Text variant="small" tone="secondary">
-							No blocked accounts
-						</Text>
+						<EmptyState
+							title="No blocked accounts"
+							description="Accounts you block from a conversation will appear here."
+						/>
 					)}
 					{task.error ? (
 						<Text variant="small" tone="danger">

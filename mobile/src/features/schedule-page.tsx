@@ -1,10 +1,13 @@
 import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { AppContext, useApp } from "../demo/app-state";
+import { EmptyState, Stack } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import { DataPage } from "./data-page";
+import { HouseholdEventCard } from "./household-event-card";
 import { ScheduleEvents } from "./schedule-events";
 export const SchedulePage = ({
+	audience,
 	view,
 	period,
 	date,
@@ -12,6 +15,7 @@ export const SchedulePage = ({
 	now,
 	preview,
 }: {
+	audience: "household" | "all";
 	view: "upcoming" | "past" | "calendar";
 	period: "upcoming" | "past";
 	date: string;
@@ -24,7 +28,7 @@ export const SchedulePage = ({
 		<DataPage
 			config={{
 				query: api.pages.schedule,
-				args: { view, date, season, now, period },
+				args: { view, date, season, now, period, audience },
 				preview: preview.map((event) => ({
 					event,
 					responses: app.data.responses.filter(
@@ -45,7 +49,22 @@ export const SchedulePage = ({
 						},
 					}}
 				>
-					<ScheduleEvents events={items.map((item) => item.event)} />
+					{audience === "household" ? (
+						<Stack>
+							{items.length ? (
+								items.map((item) => (
+									<HouseholdEventCard key={item.event.id} event={item.event} />
+								))
+							) : (
+								<EmptyState
+									title="No household events"
+									description="Try another date or switch to All club."
+								/>
+							)}
+						</Stack>
+					) : (
+						<ScheduleEvents events={items.map((item) => item.event)} />
+					)}
 				</AppContext.Provider>
 			)}
 		</DataPage>

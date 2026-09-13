@@ -15,7 +15,7 @@ export const DeleteAccountScreen = (): ReactElement => {
 			) : (
 				<>
 					<Text variant="small">
-						Sign in to delete your Crocs Club account and personal data.
+						Sign in to delete your UWH Club account and personal data.
 					</Text>
 					<AuthForm />
 				</>

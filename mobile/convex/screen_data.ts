@@ -4,6 +4,7 @@ import type { Doc } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { eventRows } from "./action_data";
 import { type DataSelection, loadData, type Rows } from "./data";
+import { homeEvents } from "./home_events";
 import { accountFor } from "./identity";
 
 export const screenData = async (
@@ -27,6 +28,14 @@ export const screenData = async (
 		.take(20);
 	const select: DataSelection = { members: roster ? true : people };
 	const rows: Partial<Rows> = { notices };
+	if (["home", "account"].includes(screen)) {
+		rows.events = await homeEvents(ctx, member, screen);
+		rows.responses = await eventRows(
+			ctx,
+			clubId,
+			rows.events.map((row) => row.value.id),
+		);
+	}
 	if (screen === "session" && id) {
 		const event = await ctx.db
 			.query("events")
@@ -52,7 +61,7 @@ export const screenData = async (
 		select.teams = ids;
 		select.plans = ids;
 	}
-	if (["club", "member"].includes(screen)) {
+	if (["membership", "member", "account", "home"].includes(screen)) {
 		const targetIds = people.filter(
 			(personId) =>
 				member.admin || canManagePerson(accountFor(member), personId),

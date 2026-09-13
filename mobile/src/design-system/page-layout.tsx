@@ -49,7 +49,7 @@ export const PageLayout = ({
 					<Row justify="between" wrap>
 						<Row>
 							<Icon name="shield" />
-							<Text variant="h4">Crocs Club</Text>
+							<Text variant="h4">UWH Club</Text>
 							<Text variant="caption" tone="secondary">
 								Preview
 							</Text>

@@ -14,7 +14,7 @@ export const SwitchTrack = ({
 	const theme = useTheme();
 	const canAnimate = useMotion();
 	const duration = canAnimate
-		? motion.duration.toggle
+		? motion.duration.standard
 		: motion.duration.instant;
 	const travel =
 		geometry.switchWidth - geometry.switchThumb - geometry.switchInset * 2;
@@ -35,7 +35,7 @@ export const SwitchTrack = ({
 				opacity: isDisabled ? geometry.disabledOpacity : 1,
 				transitionProperty: ["backgroundColor", "borderColor"],
 				transitionDuration: duration,
-				transitionTimingFunction: cubicBezier(...motion.easing.control),
+				transitionTimingFunction: cubicBezier(...motion.easing.standard),
 			}}
 		>
 			<Animated.View
@@ -50,7 +50,7 @@ export const SwitchTrack = ({
 					transform: [{ translateX: value ? travel : 0 }],
 					transitionProperty: ["transform", "backgroundColor"],
 					transitionDuration: duration,
-					transitionTimingFunction: cubicBezier(...motion.easing.control),
+					transitionTimingFunction: cubicBezier(...motion.easing.standard),
 				}}
 			/>
 		</Animated.View>

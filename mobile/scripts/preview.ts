@@ -38,4 +38,4 @@ if (!(await Bun.file(resolve(root, "index.html")).exists()))
 		"Build the preview first with bun expo export --platform web.",
 	);
 const server = Bun.serve({ hostname: "127.0.0.1", port: 4173, fetch: serve });
-console.log(`Crocs Club preview: ${server.url}`);
+console.log(`UWH Club preview: ${server.url}`);

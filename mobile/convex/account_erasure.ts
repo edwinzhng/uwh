@@ -77,6 +77,7 @@ export const eraseAccount = async (
 				"playerCoaching",
 				"coachingHours",
 				"fitnessTests",
+				"sessionSeries",
 				"fitnessSessions",
 				"fitnessResults",
 				"fitnessStats",
@@ -169,7 +170,11 @@ export const eraseAccount = async (
 				if (
 					!recorded &&
 					event &&
-					clubTimestamp(event.date, event.end, event.timeZone) > Date.now()
+					clubTimestamp(
+						event.endDate ?? event.date,
+						event.end,
+						event.timeZone,
+					) > Date.now()
 				)
 					await ctx.db.delete(row._id);
 			}
@@ -253,6 +258,7 @@ export const eraseAccount = async (
 				await ctx.db.patch(row._id, {
 					value: {
 						...row.value,
+						dismissedBy: row.value.dismissedBy?.filter((id) => id !== userId),
 						acknowledgedBy: row.value.acknowledgedBy.filter(
 							(id) => id !== userId,
 						),

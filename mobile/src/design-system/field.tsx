@@ -8,6 +8,7 @@ import { useControlSize } from "./use-control-size";
 
 type Props = {
 	label: string;
+	labelTone?: "primary" | "secondary";
 	value: string;
 	onValueChange: (value: string) => void;
 	placeholder?: string;
@@ -24,6 +25,7 @@ type Props = {
 };
 export const Field = ({
 	label,
+	labelTone = "secondary",
 	value,
 	onValueChange,
 	placeholder,
@@ -48,7 +50,7 @@ export const Field = ({
 	}, [focusKey]);
 	return (
 		<Stack gap="xs">
-			<Text variant="caption" tone="secondary">
+			<Text variant="caption" tone={labelTone}>
 				{label}
 			</Text>
 			<TextInput

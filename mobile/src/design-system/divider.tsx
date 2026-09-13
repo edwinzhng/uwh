@@ -4,7 +4,13 @@ import { Text } from "./text";
 import { useTheme } from "./theme";
 import { geometry, space } from "./tokens";
 
-export const Divider = ({ label }: { label?: string }): ReactElement => {
+export const Divider = ({
+	label,
+	tone = "secondary",
+}: {
+	label?: string;
+	tone?: "primary" | "secondary";
+}): ReactElement => {
 	const theme = useTheme();
 	return (
 		<View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
@@ -16,7 +22,7 @@ export const Divider = ({ label }: { label?: string }): ReactElement => {
 				}}
 			/>
 			{label ? (
-				<Text variant="small" tone="secondary">
+				<Text variant="small" tone={tone}>
 					{label}
 				</Text>
 			) : undefined}

@@ -7,6 +7,7 @@ import {
 	Badge,
 	Button,
 	Dialog,
+	LoadingContent,
 	Row,
 	Stack,
 	TabContent,
@@ -36,7 +37,7 @@ export const FitnessWorkspace = ({
 	const [sessionId, setSessionId] = useState<Id<"fitnessSessions">>();
 	const archive = useMutation(api.fitness.archiveTest);
 	const task = useFitnessTask();
-	if (!test) return <Text>Loading…</Text>;
+	if (!test) return <LoadingContent />;
 	if (sessionId)
 		return (
 			<FitnessResults
@@ -78,7 +79,7 @@ export const FitnessWorkspace = ({
 			</Row>
 			<Stack gap="xs">
 				<Row>
-					<Text variant="h3">{test.name}</Text>
+					<Text variant="h4">{test.name}</Text>
 					{test.archived ? <Badge label="Archived" /> : undefined}
 				</Row>
 				<Text variant="small" tone="secondary">

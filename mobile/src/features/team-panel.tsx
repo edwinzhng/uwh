@@ -4,6 +4,7 @@ import { useApp } from "../demo/app-state";
 import {
 	Badge,
 	Button,
+	EmptyState,
 	Grid,
 	Row,
 	SectionHeading,
@@ -157,9 +158,14 @@ export const TeamPanel = ({
 							</Row>
 						</>
 					) : (
-						<Text variant="small" tone="secondary">
-							{editable ? "No teams" : "Teams not published"}
-						</Text>
+						<EmptyState
+							title={editable ? "No teams yet" : "Teams not published"}
+							description={
+								editable
+									? "Generate teams once at least two players are attending."
+									: "The lineup will appear here when a coach publishes it."
+							}
+						/>
 					)}
 					{options ? (
 						<TeamOptions

@@ -3,9 +3,11 @@ import { type ReactElement, useState } from "react";
 import { useMessaging } from "../backend/messaging-context";
 import {
 	Badge,
+	EmptyState,
 	Field,
 	List,
 	ListItem,
+	LoadingContent,
 	Row,
 	Stack,
 	Surface,
@@ -70,9 +72,22 @@ export const ConversationList = (): ReactElement => {
 						/>
 					))}
 					{!visible.length ? (
-						<Text variant="small" tone="secondary">
-							{loading ? "Loading conversations…" : "No conversations found."}
-						</Text>
+						loading ? (
+							<LoadingContent />
+						) : (
+							<EmptyState
+								title={
+									search.trim()
+										? "No conversations found"
+										: "No conversations yet"
+								}
+								description={
+									search.trim()
+										? "Try another name or clear your search."
+										: "Start a message or open a session discussion to begin a conversation."
+								}
+							/>
+						)
 					) : undefined}
 				</List>
 			</Surface>

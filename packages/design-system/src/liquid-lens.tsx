@@ -1,6 +1,7 @@
 "use client";
 import { type ReactElement, useEffect, useRef } from "react";
 import { createLiquidRenderer, liquidDefaults } from "./liquid-renderer";
+import { motionDurationSeconds, motionEffects } from "./motion";
 export const LiquidLens = ({
 	imageSrc,
 	areaSelector,
@@ -16,9 +17,7 @@ export const LiquidLens = ({
 		const area = areaSelector
 			? canvas?.closest<HTMLElement>(areaSelector)
 			: canvas?.parentElement;
-		const motion = matchMedia(
-			"(prefers-reduced-motion: reduce), (pointer: coarse)",
-		);
+		const motion = matchMedia("(prefers-reduced-motion: reduce)");
 		if (!canvas || !area || motion.matches) return;
 		const renderer = createLiquidRenderer(canvas, "cursor", imageSrc);
 		if (!renderer) return;
@@ -28,6 +27,11 @@ export const LiquidLens = ({
 			targetY: 0.5,
 			visibility: 0,
 			inside: false,
+			touching: false,
+			clientX: 0,
+			clientY: 0,
+			releaseAt: 0,
+			releaseVisibility: 0,
 			inViewport: true,
 			frame: 0,
 			previous: 0,
@@ -46,13 +50,16 @@ export const LiquidLens = ({
 		const animate = (now: number): void => {
 			const delta = Math.min((now - state.previous) / 1000, 0.05);
 			state.previous = now;
-			state.visibility = Math.max(
-				0,
-				Math.min(
-					1,
-					state.visibility + (state.inside ? delta / 0.2 : -delta / 0.25),
-				),
-			);
+			state.visibility = state.inside
+				? Math.min(
+						1,
+						state.visibility + delta / motionDurationSeconds("standard"),
+					)
+				: state.releaseVisibility *
+					Math.max(
+						0,
+						1 - (now - state.releaseAt) / motionEffects.liquidRelease,
+					);
 			const alpha = 1 - (1 - liquidDefaults.mouseSmoothness) ** (delta * 60);
 			points[0] =
 				(points.at(0) ?? 0.5) + (state.targetX - (points.at(0) ?? 0.5)) * alpha;
@@ -81,9 +88,11 @@ export const LiquidLens = ({
 				state.frame = requestAnimationFrame(animate);
 			}
 		};
-		const move = (event: PointerEvent): void => {
+		const move = (event: { clientX: number; clientY: number }): void => {
 			if (motion.matches || document.hidden || !state.inViewport) return;
 			const bounds = area.getBoundingClientRect();
+			state.clientX = event.clientX;
+			state.clientY = event.clientY;
 			state.targetX = (event.clientX - bounds.left) / state.width;
 			state.targetY = 1 - (event.clientY - bounds.top) / state.height;
 			if (state.visibility === 0) {
@@ -96,10 +105,14 @@ export const LiquidLens = ({
 			start();
 		};
 		const leave = (): void => {
+			if (!state.inside) return;
+			state.releaseAt = performance.now();
+			state.releaseVisibility = state.visibility;
 			state.inside = false;
 			start();
 		};
 		const pause = (): void => {
+			state.touching = false;
 			state.inside = false;
 			state.visibility = 0;
 			cancelAnimationFrame(state.frame);
@@ -111,9 +124,43 @@ export const LiquidLens = ({
 			if (!state.inViewport) pause();
 		});
 		intersection.observe(area);
-		window.addEventListener("scroll", pause, { passive: true, capture: true });
-		area.addEventListener("pointermove", move);
-		area.addEventListener("pointerleave", leave);
+		const touchStart = (event: TouchEvent): void => {
+			if (
+				event.target instanceof Element &&
+				event.target.closest("a, button, input, select, textarea")
+			)
+				return;
+			const touch = event.touches.item(0);
+			if (!touch) return;
+			state.touching = true;
+			move(touch);
+		};
+		const touchMove = (event: TouchEvent): void => {
+			const touch = event.touches.item(0);
+			if (state.touching && touch) move(touch);
+		};
+		const touchEnd = (): void => {
+			state.touching = false;
+			leave();
+		};
+		const scroll = (): void => {
+			if (state.touching)
+				move({ clientX: state.clientX, clientY: state.clientY });
+			else leave();
+		};
+		const pointerMove = (event: PointerEvent): void => {
+			if (event.pointerType !== "touch") move(event);
+		};
+		const pointerLeave = (): void => {
+			if (!state.touching) leave();
+		};
+		window.addEventListener("scroll", scroll, { passive: true, capture: true });
+		area.addEventListener("touchstart", touchStart, { passive: true });
+		area.addEventListener("touchmove", touchMove, { passive: true });
+		area.addEventListener("touchend", touchEnd, { passive: true });
+		area.addEventListener("touchcancel", touchEnd, { passive: true });
+		area.addEventListener("pointermove", pointerMove);
+		area.addEventListener("pointerleave", pointerLeave);
 		window.addEventListener("blur", pause);
 		document.addEventListener("visibilitychange", pause);
 		motion.addEventListener("change", pause);
@@ -121,9 +168,13 @@ export const LiquidLens = ({
 			pause();
 			observer.disconnect();
 			intersection.disconnect();
-			window.removeEventListener("scroll", pause, true);
-			area.removeEventListener("pointermove", move);
-			area.removeEventListener("pointerleave", leave);
+			window.removeEventListener("scroll", scroll, true);
+			area.removeEventListener("touchstart", touchStart);
+			area.removeEventListener("touchmove", touchMove);
+			area.removeEventListener("touchend", touchEnd);
+			area.removeEventListener("touchcancel", touchEnd);
+			area.removeEventListener("pointermove", pointerMove);
+			area.removeEventListener("pointerleave", pointerLeave);
 			window.removeEventListener("blur", pause);
 			document.removeEventListener("visibilitychange", pause);
 			motion.removeEventListener("change", pause);

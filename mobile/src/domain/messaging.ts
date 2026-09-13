@@ -14,6 +14,8 @@ export const isDirectThread = (
 	first: string,
 	second: string,
 ): boolean =>
+	!thread.eventId &&
+	!thread.id.startsWith("session:") &&
 	thread.id !== "club" &&
 	thread.id !== "youth" &&
 	thread.accountIds.length === 2 &&

@@ -7,9 +7,9 @@ import {
 	EmptyState,
 	List,
 	ListItem,
+	LoadingContent,
 	Surface,
 	Tabs,
-	Text,
 } from "../design-system";
 import { fitnessUnitLabel } from "../domain/fitness";
 import { ClubShell } from "./club-shell";
@@ -70,7 +70,7 @@ export const FitnessTests = (): ReactElement => {
 					))}
 					{!tests.results.length ? (
 						tests.status === "LoadingFirstPage" ? (
-							<Text tone="secondary">Loading…</Text>
+							<LoadingContent />
 						) : (
 							<EmptyState
 								title={

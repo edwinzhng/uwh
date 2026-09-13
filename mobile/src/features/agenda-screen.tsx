@@ -1,8 +1,16 @@
 import { atom, useAtom } from "jotai";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
-import { Button, Row, SegmentedControl, Surface, Tabs } from "../design-system";
-import { clubDate, clubTimestamp } from "../domain/event-time";
+import {
+	Button,
+	Row,
+	SegmentedControl,
+	Select,
+	Surface,
+	Tabs,
+} from "../design-system";
+import { clubDate, clubTimestamp, eventDates } from "../domain/event-time";
+import { householdMembers, relevantHouseholdEvent } from "../domain/home";
 import { CalendarExportButton } from "./calendar-export-button";
 import { ClubShell } from "./club-shell";
 import { EventEditor } from "./event-editor";
@@ -11,10 +19,12 @@ import { SchedulePage } from "./schedule-page";
 
 const viewAtom = atom<"upcoming" | "past">("upcoming");
 const layoutAtom = atom<"list" | "calendar">("list");
+const audienceAtom = atom<"household" | "all">("household");
 const dateAtom = atom<string>();
 
 export const AgendaScreen = (): ReactElement => {
 	const { data, account } = useApp();
+	const [audience, setAudience] = useAtom(audienceAtom);
 	const [period, setPeriod] = useAtom(viewAtom);
 	const [layout, setLayout] = useAtom(layoutAtom);
 	const view = layout === "calendar" ? "calendar" : period;
@@ -23,10 +33,15 @@ export const AgendaScreen = (): ReactElement => {
 	const season = "all";
 	const [now] = useState(Date.now);
 	const today = clubDate(now, data.timeZone);
+	const people = householdMembers(data, account);
 	const allEvents = data.events
 		.filter(
+			(event) => audience === "all" || relevantHouseholdEvent(event, people),
+		)
+		.filter(
 			(event) =>
-				clubTimestamp(event.date, event.end, event.timeZone) <= now ===
+				clubTimestamp(event.endDate ?? event.date, event.end, event.timeZone) <=
+					now ===
 				(period === "past"),
 		)
 		.toSorted((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
@@ -35,13 +50,14 @@ export const AgendaScreen = (): ReactElement => {
 		(period === "past" ? allEvents.at(-1)?.date : allEvents.at(0)?.date) ??
 		today;
 	const events = allEvents.filter(
-		(event) => layout !== "calendar" || event.date === date,
+		(event) => layout !== "calendar" || eventDates(event).includes(date),
 	);
 	const ordered = period === "past" ? events.toReversed() : events;
 	const counts = allEvents
 		.filter((event) => !event.cancelled)
-		.reduce<Record<string, number>>((counts, event) => {
-			counts[event.date] = (counts[event.date] ?? 0) + 1;
+		.flatMap(eventDates)
+		.reduce<Record<string, number>>((counts, date) => {
+			counts[date] = (counts[date] ?? 0) + 1;
 			return counts;
 		}, {});
 	return (
@@ -77,7 +93,21 @@ export const AgendaScreen = (): ReactElement => {
 				</Row>
 			}
 		>
-			<Row justify="end" wrap>
+			<Row justify="between" wrap>
+				<Select
+					label="Show events for"
+					value={audience}
+					onValueChange={(value): void => {
+						if (value) {
+							setAudience(value);
+							setSelectedDate(undefined);
+						}
+					}}
+					options={[
+						{ value: "household", label: "My household" },
+						{ value: "all", label: "All club" },
+					]}
+				/>
 				<SegmentedControl
 					label="Schedule layout"
 					hideLabel
@@ -93,6 +123,7 @@ export const AgendaScreen = (): ReactElement => {
 			{view === "calendar" ? (
 				<Surface>
 					<ScheduleCalendar
+						audience={audience}
 						date={date}
 						period={period}
 						now={now}
@@ -104,6 +135,7 @@ export const AgendaScreen = (): ReactElement => {
 				</Surface>
 			) : undefined}
 			<SchedulePage
+				audience={audience}
 				view={view}
 				period={period}
 				date={date}

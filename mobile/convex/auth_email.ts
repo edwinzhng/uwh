@@ -55,8 +55,8 @@ export const authEmail = (
 					to: [email],
 					subject:
 						purpose === "verify"
-							? "Verify your Crocs Club email"
-							: "Reset your Crocs Club password",
+							? "Verify your UWH Club email"
+							: "Reset your UWH Club password",
 					text: `Your code is ${token}. It expires in 10 minutes. If you didn’t request this, ignore this email.`,
 				}),
 			});

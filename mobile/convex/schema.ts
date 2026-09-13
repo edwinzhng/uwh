@@ -11,6 +11,7 @@ import { inviteTables } from "./invite_schema";
 import { playerCoachingTables } from "./player_coaching_schema";
 import { seasonTables } from "./season_schema";
 import { securityTables } from "./security_schema";
+import { sessionSeriesTables } from "./session_series_schema";
 import {
 	chargesValue,
 	conversationsValue,
@@ -56,6 +57,7 @@ export default defineSchema({
 	...fitnessTables,
 	...connectionTables,
 	...securityTables,
+	...sessionSeriesTables,
 	...inviteTables,
 	...seasonTables,
 	...importTables,
@@ -151,6 +153,7 @@ export default defineSchema({
 		.index("by_club", ["clubId"])
 		.index("by_club_and_key", ["clubId", "value.id"]),
 	events: defineTable({ clubId: v.id("clubs"), value: eventsValue })
+		.index("by_club_kind_date", ["clubId", "value.kind", "value.date"])
 		.index("by_date", ["clubId", "value.date", "value.start"])
 		.index("by_public_date", [
 			"clubId",

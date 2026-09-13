@@ -1,4 +1,14 @@
 import type { ReactElement } from "react";
+import {
+	Background,
+	Disclosure,
+	Grid,
+	Heading,
+	ScheduleCard,
+	Section,
+	SectionHeading,
+	Text,
+} from "../design-system";
 import { PoolLocation } from "./pool-location";
 
 type PracticeScheduleProps = { location: string; address: string };
@@ -31,85 +41,61 @@ export const PracticeSchedule = ({
 	location,
 	address,
 }: PracticeScheduleProps): ReactElement => (
-	<div className="practice-background">
-		<section
-			id="schedule"
-			className="practice-section wrap"
-			aria-labelledby="practice-heading"
-		>
-			<h2 id="practice-heading">Practice schedule</h2>
-			<div className="practice-grid regular-season-grid">
+	<Background variant="practice">
+		<Section id="schedule" variant="practice" labelledBy="practice-heading">
+			<Heading id="practice-heading">Practice schedule</Heading>
+			<Grid variant="practice">
 				{schedules.map((schedule) => (
-					<article className="practice-card" key={schedule.name}>
-						<header>
-							<h3>{schedule.name}</h3>
-							<p className="practice-season">{schedule.season}</p>
-						</header>
-						<dl className="practice-times">
-							{schedule.times.map((slot) => (
-								<div key={slot.day}>
-									<dt>
-										{slot.day}
-										{"cadence" in slot ? (
-											<small className="practice-cadence">{slot.cadence}</small>
-										) : undefined}
-									</dt>
-									<dd>
-										{slot.times.map((time) => (
-											<span key={time}>{time}</span>
-										))}
-									</dd>
-								</div>
-							))}
-						</dl>
-						<p className="practice-note">
-							* Sunday times vary with pool events.
-						</p>
-						<p className="practice-note">
-							** Mondays are for committed players.
-						</p>
+					<ScheduleCard
+						key={schedule.name}
+						title={schedule.name}
+						season={schedule.season}
+						slots={schedule.times}
+						notes={[
+							"* Sunday times vary with pool events.",
+							"** Mondays are for committed players.",
+						]}
+					>
 						<PoolLocation
 							name={location}
 							address={address}
 							href="https://www.google.com/maps/search/?api=1&query=MNP+Community+%26+Sport+Centre+2225+Macleod+Trail+SE+Calgary"
 						/>
-						{schedule.notes.length > 0 && (
-							<details className="practice-notes">
-								<summary>About {schedule.name.toLowerCase()} practices</summary>
-								{schedule.notes.map((note) => (
-									<p key={note}>{note}</p>
-								))}
-							</details>
-						)}
-					</article>
+						<Disclosure
+							label={`About ${schedule.name.toLowerCase()} practices`}
+						>
+							{schedule.notes.map((note) => (
+								<Text key={note}>{note}</Text>
+							))}
+						</Disclosure>
+					</ScheduleCard>
 				))}
-			</div>
-			<section className="summer-schedule" aria-labelledby="summer-heading">
-				<header>
-					<h3 id="summer-heading">Summer practices</h3>
-					<p>July–August</p>
-				</header>
-				<div className="summer-sessions">
-					<article className="practice-card">
-						<h4>Tuesday</h4>
-						<p className="summer-time">7:30–9 pm</p>
+			</Grid>
+			<Section variant="summer" labelledBy="summer-heading">
+				<SectionHeading
+					id="summer-heading"
+					title="Summer practices"
+					subtitle="July–August"
+				/>
+				<Grid variant="summer">
+					<ScheduleCard title="Tuesday">
+						<Text variant="time">7:30–9 pm</Text>
 						<PoolLocation
 							name="Millican-Ogden Outdoor Pool"
 							address="2094 69 Avenue SE, Calgary"
 							href="https://www.google.com/maps/search/?api=1&query=Millican+Ogden+Outdoor+Pool+2094+69+Avenue+SE+Calgary"
 						/>
-					</article>
-					<article className="practice-card">
-						<h4>Thursday</h4>
-						<p className="summer-time">7:30–9 pm</p>
+					</ScheduleCard>
+					<ScheduleCard title="Thursday">
+						<Text variant="time">7:30–9 pm</Text>
 						<PoolLocation
 							name={location}
 							address={address}
 							href="https://www.google.com/maps/search/?api=1&query=MNP+Community+%26+Sport+Centre+2225+Macleod+Trail+SE+Calgary"
 						/>
-					</article>
-				</div>
-			</section>
-		</section>
-	</div>
+					</ScheduleCard>
+				</Grid>
+			</Section>
+		</Section>
+	</Background>
 );

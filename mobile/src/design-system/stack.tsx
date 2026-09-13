@@ -20,6 +20,7 @@ export const Stack = ({
 			padding: space[padding],
 			flex: grow ? 1 : undefined,
 			minWidth: 0,
+			minHeight: grow ? 0 : undefined,
 		}}
 	>
 		{children}

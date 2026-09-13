@@ -61,7 +61,9 @@ export const occurrenceDates = (draft: EventDraft): string[] => {
 								})
 								.toString(),
 				);
-	const result = dates.filter((date) => !until || date <= until);
+	const result = dates.filter(
+		(date) => (!until || date <= until) && !draft.excludedDates?.includes(date),
+	);
 	if (result.length > 52)
 		throw new Error("Choose an end date within 52 events.");
 	if (!result.length) throw new Error("No events fall in this date range.");
@@ -76,8 +78,12 @@ export const editedOccurrences = (
 	now: number,
 	editId?: string,
 ): ClubEvent[] => {
-	if (draft.rebuild || scope === "following")
+	if (draft.rebuild)
 		return rebuildOccurrences(events, target, draft, scope, now, editId);
+	const targetIds = new Set(
+		seriesTargets(events, target, scope, true).map((event) => event.id),
+	);
+	const followingSeriesId = `${target.id}~${editId ?? now}`;
 	const shift = Temporal.PlainDate.from(target.date).until(
 		Temporal.PlainDate.from(draft.date),
 	).days;
@@ -85,26 +91,23 @@ export const editedOccurrences = (
 		if (
 			event.cancelled ||
 			(event.exception && event.id !== target.id) ||
-			(event.id !== target.id &&
-				!(
-					scope === "series" &&
-					target.seriesId &&
-					event.seriesId === target.seriesId
-				))
+			!targetIds.has(event.id)
 		)
-			return event;
+			return scope === "following" && targetIds.has(event.id)
+				? { ...event, seriesId: followingSeriesId }
+				: event;
 		const date = Temporal.PlainDate.from(event.date)
 			.add({ days: shift })
 			.toString();
 		const previous = eventDraft(event);
+		const timeZone =
+			draft.kind === "tournament"
+				? (draft.timeZone ?? event.timeZone)
+				: event.timeZone;
 		const offset =
-			clubTimestamp(date, draft.start, event.timeZone) -
+			clubTimestamp(date, draft.start, timeZone) -
 			clubTimestamp(event.date, event.start, event.timeZone);
-		const window = signupWindow(
-			date,
-			{ ...draft, timeZone: event.timeZone },
-			now,
-		);
+		const window = signupWindow(date, { ...draft, timeZone }, now);
 		const opensAt =
 			!draft.registrationOpen &&
 			!previous.registrationOpen &&
@@ -113,6 +116,8 @@ export const editedOccurrences = (
 				? event.opensAt + (previous.signupOpens === "now" ? 0 : offset)
 				: window.opensAt;
 		const closesAt =
+			!draft.responseDeadline &&
+			!previous.responseDeadline &&
 			draft.registrationCloseHours === undefined &&
 			previous.registrationCloseHours === undefined &&
 			event.closesAt !== undefined &&
@@ -121,7 +126,8 @@ export const editedOccurrences = (
 				: window.closesAt;
 		const changed: ClubEvent = {
 			...event,
-			timeZone: event.timeZone,
+			seriesId: scope === "following" ? followingSeriesId : event.seriesId,
+			timeZone,
 			public: draft.public ?? event.public ?? false,
 			exception: scope === "single" && Boolean(event.seriesId),
 			editId,
@@ -130,6 +136,12 @@ export const editedOccurrences = (
 			date,
 			start: draft.start,
 			end: draft.end,
+			endDate: draft.kind === "tournament" ? draft.endDate : undefined,
+			responseDeadline:
+				draft.kind === "tournament" ? draft.responseDeadline : undefined,
+			tournamentRoster:
+				draft.kind === "tournament" ? draft.tournamentRoster : undefined,
+
 			parts: draft.parts?.map((part) => ({ ...part })),
 			venue: draft.venue.trim(),
 			description: draft.description.trim(),
@@ -217,6 +229,9 @@ export const eventDraft = (event: ClubEvent): EventDraft => ({
 	date: event.date,
 	start: event.start,
 	end: event.end,
+	endDate: event.endDate,
+	responseDeadline: event.responseDeadline,
+	tournamentRoster: event.tournamentRoster,
 	parts: event.parts?.map((part) => ({ ...part })),
 	venue: event.venue,
 	program: "club",
@@ -255,11 +270,12 @@ export const seriesTargets = (
 	events: ClubEvent[],
 	target: ClubEvent,
 	scope: "single" | "series" | "following",
+	includeCancelled = false,
 ): ClubEvent[] =>
 	events
 		.filter(
 			(event) =>
-				!event.cancelled &&
+				(!event.cancelled || includeCancelled) &&
 				(event.id === target.id ||
 					(scope !== "single" &&
 						target.seriesId &&
@@ -285,7 +301,7 @@ const rebuildOccurrences = (
 	now: number,
 	editId?: string,
 ): ClubEvent[] => {
-	const affected = seriesTargets(events, target, scope);
+	const affected = seriesTargets(events, target, scope, true);
 	const dates = occurrenceDates(draft);
 	const revision = editId ?? String(now);
 	const seriesId =
@@ -294,7 +310,10 @@ const rebuildOccurrences = (
 			: target.seriesId;
 	const replacements = dates.map((date, index): ClubEvent => {
 		const previous = affected.at(index);
-		if (previous?.exception && previous.id !== target.id)
+		if (
+			previous?.cancelled ||
+			(previous?.exception && previous.id !== target.id)
+		)
 			return {
 				...previous,
 				seriesId,
@@ -339,13 +358,20 @@ const rebuildOccurrences = (
 		};
 	});
 	const retired = affected.slice(dates.length).map((event): ClubEvent => {
+		if (event.cancelled) return event;
 		if (event.exception)
 			throw new Error(
 				"This series has individual edits. Cancel those events separately before shortening it.",
 			);
 		if (clubTimestamp(event.date, event.start, event.timeZone) < now)
 			throw new Error("Past events cannot be removed from a series.");
-		return { ...event, cancelled: true, signup: "closed", editId };
+		return {
+			...event,
+			seriesId: undefined,
+			cancelled: true,
+			signup: "closed",
+			editId,
+		};
 	});
 	const revised = new Map(
 		[...replacements, ...retired].map((event) => [event.id, event]),

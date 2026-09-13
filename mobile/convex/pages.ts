@@ -15,8 +15,9 @@ import type {
 	Payment,
 } from "../src/domain/app-types";
 import { visibleAppData } from "../src/domain/app-visibility";
-import { clubDate, clubTimestamp } from "../src/domain/event-time";
+import { clubDate, clubTimestamp, eventDates } from "../src/domain/event-time";
 import { groupBy } from "../src/domain/group-by";
+import { relevantHouseholdEvent } from "../src/domain/home";
 import type { Doc } from "./_generated/dataModel";
 import { type QueryCtx, query } from "./_generated/server";
 import { eventRows } from "./action_data";
@@ -36,6 +37,7 @@ const pageOptions = (options: { numItems: number; cursor: string | null }) => ({
 export type ScheduleEntry = { event: ClubEvent; responses: EventResponse[] };
 export const schedule = query({
 	args: {
+		audience: v.optional(v.union(v.literal("household"), v.literal("all"))),
 		view: v.union(
 			v.literal("upcoming"),
 			v.literal("past"),
@@ -49,12 +51,13 @@ export const schedule = query({
 	},
 	handler: async (
 		ctx,
-		{ view, date, season, now, period, paginationOpts },
+		{ view, date, season, now, period, paginationOpts, audience },
 	): Promise<PaginationResult<ScheduleEntry>> => {
 		const member = await memberFor(ctx);
 		if (!member) return empty();
+		const household = await householdPeople(ctx, member);
 		const today = Temporal.PlainDate.from(clubDate(now, "UTC"));
-		const upcomingFrom = today.subtract({ days: 2 }).toString();
+		const upcomingFrom = today.subtract({ days: 14 }).toString();
 		const pastThrough = today.add({ days: 2 }).toString();
 		const filtered =
 			season !== "all" && season !== "2026-2027"
@@ -63,7 +66,14 @@ export const schedule = query({
 							.eq("clubId", member.clubId)
 							.eq("value.seasonId", season);
 						return view === "calendar"
-							? range.eq("value.date", date)
+							? range
+									.gte(
+										"value.date",
+										Temporal.PlainDate.from(date)
+											.subtract({ days: 13 })
+											.toString(),
+									)
+									.lte("value.date", date)
 							: view === "past"
 								? range.lte("value.date", pastThrough)
 								: range.gte("value.date", upcomingFrom);
@@ -73,7 +83,14 @@ export const schedule = query({
 						.withIndex("by_date", (q) => {
 							const range = q.eq("clubId", member.clubId);
 							return view === "calendar"
-								? range.eq("value.date", date)
+								? range
+										.gte(
+											"value.date",
+											Temporal.PlainDate.from(date)
+												.subtract({ days: 13 })
+												.toString(),
+										)
+										.lte("value.date", date)
 								: view === "past"
 									? range.lte("value.date", pastThrough)
 									: range.gte("value.date", upcomingFrom);
@@ -89,9 +106,43 @@ export const schedule = query({
 									: q.eq(q.field("value.seasonId"), season),
 						);
 		const result = await filtered
+			.filter((q) =>
+				audience !== "household"
+					? q.eq(1, 1)
+					: q.or(
+							q.eq(q.field("value.program"), "all"),
+							...[
+								...new Set(household.flatMap((person) => person.programs)),
+							].map((program) => q.eq(q.field("value.program"), program)),
+						),
+			)
+			.filter((q) =>
+				view === "calendar"
+					? q.or(
+							q.eq(q.field("value.date"), date),
+							q.gte(q.field("value.endDate"), date),
+						)
+					: view === "upcoming"
+						? q.or(
+								q.gte(
+									q.field("value.date"),
+									today.subtract({ days: 2 }).toString(),
+								),
+								q.gte(
+									q.field("value.endDate"),
+									today.subtract({ days: 2 }).toString(),
+								),
+							)
+						: q.eq(1, 1),
+			)
 			.order(view === "past" ? "desc" : "asc")
 			.paginate(pageOptions(paginationOpts));
 		const events = result.page
+			.filter(
+				(row) =>
+					audience !== "household" ||
+					relevantHouseholdEvent(row.value, household),
+			)
 			.map((row) => ({
 				...row.value,
 				seasonId: row.value.seasonId ?? "2026-2027",
@@ -99,13 +150,22 @@ export const schedule = query({
 			.filter(
 				(event) =>
 					(view === "calendar" && !period) ||
-					clubTimestamp(event.date, event.end, event.timeZone) <= now ===
+					clubTimestamp(
+						event.endDate ?? event.date,
+						event.end,
+						event.timeZone,
+					) <=
+						now ===
 						((period ?? view) === "past"),
 			);
+		const calendarEvents =
+			view === "calendar"
+				? events.filter((event) => eventDates(event).includes(date))
+				: events;
 		const responses = await eventRows(
 			ctx,
 			member.clubId,
-			events.map((event) => event.id),
+			calendarEvents.map((event) => event.id),
 		);
 		const { data } = await loadData(ctx, member.clubId, {
 			select: {},
@@ -115,7 +175,7 @@ export const schedule = query({
 		const byEvent = groupBy(visible.responses, (response) => response.eventId);
 		return {
 			...result,
-			page: events.map((event) => ({
+			page: calendarEvents.map((event) => ({
 				event,
 				responses: byEvent.get(event.id) ?? [],
 			})),
@@ -124,6 +184,7 @@ export const schedule = query({
 });
 export const calendar = query({
 	args: {
+		audience: v.optional(v.union(v.literal("household"), v.literal("all"))),
 		from: v.string(),
 		to: v.string(),
 		season: v.string(),
@@ -132,10 +193,11 @@ export const calendar = query({
 	},
 	handler: async (
 		ctx,
-		{ from, to, season, now, period },
+		{ from, to, season, now, period, audience },
 	): Promise<Record<string, number>> => {
 		const member = await memberFor(ctx);
 		if (!member) return {};
+		const household = await householdPeople(ctx, member);
 		if (
 			!/^\d{4}-\d{2}-\d{2}$/.test(from) ||
 			!/^\d{4}-\d{2}-\d{2}$/.test(to) ||
@@ -150,7 +212,10 @@ export const calendar = query({
 			.withIndex("by_date", (q) =>
 				q
 					.eq("clubId", member.clubId)
-					.gte("value.date", from)
+					.gte(
+						"value.date",
+						Temporal.PlainDate.from(from).subtract({ days: 13 }).toString(),
+					)
 					.lte("value.date", to),
 			)
 			.collect();
@@ -158,15 +223,23 @@ export const calendar = query({
 			.filter(
 				(row) =>
 					!row.value.cancelled &&
+					(audience !== "household" ||
+						relevantHouseholdEvent(row.value, household)) &&
 					(!period ||
 						now === undefined ||
-						clubTimestamp(row.value.date, row.value.end, row.value.timeZone) <=
+						clubTimestamp(
+							row.value.endDate ?? row.value.date,
+							row.value.end,
+							row.value.timeZone,
+						) <=
 							now ===
 							(period === "past")) &&
 					(season === "all" || (row.value.seasonId ?? "2026-2027") === season),
 			)
-			.reduce<Record<string, number>>((counts, row) => {
-				counts[row.value.date] = (counts[row.value.date] ?? 0) + 1;
+			.flatMap((row) => eventDates(row.value))
+			.filter((date) => date >= from && date <= to)
+			.reduce<Record<string, number>>((counts, date) => {
+				counts[date] = (counts[date] ?? 0) + 1;
 				return counts;
 			}, {});
 	},
@@ -392,3 +465,46 @@ export const notices = query({
 		};
 	},
 });
+
+export const activeNotices = query({
+	args: { today: v.string() },
+	handler: async (ctx): Promise<Notice[]> => {
+		const member = await memberFor(ctx);
+		if (!member) return [];
+		const club = await ctx.db.get(member.clubId);
+		const today = clubDate(undefined, club?.timeZone);
+		const rows = await ctx.db
+			.query("notices")
+			.withIndex("by_date", (q) => q.eq("clubId", member.clubId))
+			.order("desc")
+			.filter((q) =>
+				q.or(
+					q.eq(q.field("value.expiresAt"), undefined),
+					q.gt(q.field("value.expiresAt"), today),
+				),
+			)
+			.collect();
+		const { data } = await loadData(ctx, member.clubId, {
+			select: { members: [member.personId, ...member.children] },
+			rows: { notices: rows },
+		});
+		return visibleAppData(data, accountFor(member)).notices;
+	},
+});
+
+const householdPeople = async (
+	ctx: QueryCtx,
+	member: Doc<"memberships">,
+): Promise<Member[]> => {
+	const people = await Promise.all(
+		[member.personId, ...member.children].map((personId) =>
+			ctx.db
+				.query("members")
+				.withIndex("by_club_and_key", (q) =>
+					q.eq("clubId", member.clubId).eq("value.id", personId),
+				)
+				.unique(),
+		),
+	);
+	return people.flatMap((person) => (person ? [person.value] : []));
+};

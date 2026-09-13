@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import { useActivePerson, useApp } from "../demo/app-state";
 import {
 	Button,
+	EmptyState,
 	Row,
 	Stack,
 	Surface,
@@ -122,9 +123,10 @@ export const MemberScreen = (): ReactElement => {
 					</TabContent>
 				</>
 			) : (
-				<Text variant="small" tone="secondary">
-					Choose another member.
-				</Text>
+				<EmptyState
+					title="Member unavailable"
+					description="Return to People to choose another member."
+				/>
 			)}
 		</ClubShell>
 	);

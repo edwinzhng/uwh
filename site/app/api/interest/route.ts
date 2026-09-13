@@ -1,45 +1,50 @@
 import { createHmac } from "node:crypto";
 import { makeFunctionReference } from "convex/server";
 import { sameOrigin } from "../../../lib/auth";
+import { readJsonBody } from "../../../lib/request-body";
 import { backend, serverKey } from "../../../lib/store";
 import { trialDates } from "../../../lib/trial-dates";
 export const POST = async (request: Request): Promise<Response> => {
 	if (!sameOrigin(request))
 		return Response.json({ error: "Invalid request" }, { status: 403 });
-	if (Number(request.headers.get("content-length") || 0) > 12000)
-		return new Response("Too large", { status: 413 });
-	const body = await request.json().catch(() => undefined);
+	const parsed = await readJsonBody(request, 12000);
+	if (parsed.error) return parsed.error;
+	const body = parsed.value;
 	if (!body || typeof body !== "object")
 		return Response.json({ error: "Invalid request" }, { status: 400 });
-	if (body.website) return Response.json({ ok: true });
+	if ("website" in body && body.website) return Response.json({ ok: true });
 	if (
+		!("name" in body) ||
 		typeof body.name !== "string" ||
 		!body.name.trim() ||
 		body.name.length > 100 ||
+		!("email" in body) ||
 		typeof body.email !== "string" ||
 		!/^\S+@\S+\.\S+$/.test(body.email) ||
 		body.email.length > 200 ||
+		!("message" in body) ||
 		typeof body.message !== "string" ||
 		body.message.length > 2000 ||
+		!("interest" in body) ||
+		typeof body.interest !== "string" ||
 		!["Adult trial", "Youth trial", "Season registration"].includes(
 			body.interest,
-		)
-	)
-		return Response.json(
-			{ error: "Please check your details." },
-			{ status: 400 },
-		);
-	const extraFields = [
-		"phone",
-		"gender",
-		"firstSessionDate",
-		"referral",
-		"referralOther",
-	];
-	if (
-		extraFields.some(
-			(field) => typeof body[field] !== "string" || body[field].length > 200,
 		) ||
+		!("phone" in body) ||
+		typeof body.phone !== "string" ||
+		body.phone.length > 200 ||
+		!("gender" in body) ||
+		typeof body.gender !== "string" ||
+		body.gender.length > 200 ||
+		!("firstSessionDate" in body) ||
+		typeof body.firstSessionDate !== "string" ||
+		body.firstSessionDate.length > 200 ||
+		!("referral" in body) ||
+		typeof body.referral !== "string" ||
+		body.referral.length > 200 ||
+		!("referralOther" in body) ||
+		typeof body.referralOther !== "string" ||
+		body.referralOther.length > 200 ||
 		(body.referral === "Other" && !body.referralOther.trim()) ||
 		(body.firstSessionDate && !trialDates().includes(body.firstSessionDate))
 	)
@@ -53,9 +58,11 @@ export const POST = async (request: Request): Promise<Response> => {
 			"https://challenges.cloudflare.com/turnstile/v0/siteverify",
 			{
 				method: "POST",
+				signal: AbortSignal.timeout(10000),
 				body: new URLSearchParams({
 					secret,
-					response: typeof body.token === "string" ? body.token : "",
+					response:
+						"token" in body && typeof body.token === "string" ? body.token : "",
 				}),
 			},
 		);

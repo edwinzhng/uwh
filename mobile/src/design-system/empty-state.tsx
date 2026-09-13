@@ -13,10 +13,10 @@ export const EmptyState = ({
 	action?: ReactNode;
 }): ReactElement => (
 	<Stack gap="xs" padding="lg">
-		<Text variant="body" align="center">
+		<Text variant="label" align="center">
 			{title}
 		</Text>
-		<Text variant="small" tone="secondary" align="center">
+		<Text variant="body" tone="secondary" align="center">
 			{description}
 		</Text>
 		{action ? <Row justify="center">{action}</Row> : undefined}

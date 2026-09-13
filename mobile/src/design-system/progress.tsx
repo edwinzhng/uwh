@@ -32,7 +32,7 @@ export const Progress = ({ label, value, max }: Props): ReactElement => {
 					transitionDuration: canAnimate
 						? motion.duration.slow
 						: motion.duration.instant,
-					transitionTimingFunction: cubicBezier(...motion.easing.control),
+					transitionTimingFunction: cubicBezier(...motion.easing.standard),
 				}}
 			/>
 		</View>

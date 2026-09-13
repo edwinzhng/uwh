@@ -57,6 +57,10 @@ export const personalCalendarEvents = (
 			)
 				return [];
 			const waitlisted = response?.response === "waiting";
+			const tournamentTeam = event.tournamentRoster?.find(
+				(entry) => entry.personId === personId,
+			)?.team;
+			const provisional = event.kind === "tournament" && !tournamentTeam;
 			const start = parts.length
 				? parts.reduce(
 						(time, part) => (part.start < time ? part.start : time),
@@ -74,7 +78,11 @@ export const personalCalendarEvents = (
 					eventId: event.id,
 					title: waitlisted ? `Waitlisted · ${event.title}` : event.title,
 					description: [
-						waitlisted ? "RSVP: Waitlisted" : "RSVP: Going",
+						event.kind === "tournament"
+							? `Availability: Available. Team: ${tournamentTeam ?? "Not assigned"}`
+							: waitlisted
+								? "RSVP: Waitlisted"
+								: "RSVP: Going",
 						calendarPartDescription(event, response),
 						event.description,
 					]
@@ -82,8 +90,8 @@ export const personalCalendarEvents = (
 						.join("\n\n"),
 					location: event.venue,
 					start: clubTimestamp(event.date, start, event.timeZone),
-					end: clubTimestamp(event.date, end, event.timeZone),
-					status: waitlisted ? "TENTATIVE" : "CONFIRMED",
+					end: clubTimestamp(event.endDate ?? event.date, end, event.timeZone),
+					status: waitlisted || provisional ? "TENTATIVE" : "CONFIRMED",
 				},
 			];
 		})
@@ -184,7 +192,7 @@ export const renderCalendar = (
 	[
 		"BEGIN:VCALENDAR",
 		"VERSION:2.0",
-		"PRODID:-//Crocs Club//Personal Calendar//EN",
+		"PRODID:-//UWH Club//Personal Calendar//EN",
 		"CALSCALE:GREGORIAN",
 		`X-WR-CALNAME:${escapeText(name)}`,
 		...entries.flatMap((entry) => [

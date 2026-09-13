@@ -2,11 +2,14 @@ import { makeFunctionReference } from "convex/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { authorized, sameOrigin } from "../../../lib/auth";
 import { isContent } from "../../../lib/content";
+import { readJsonBody } from "../../../lib/request-body";
 import { backend, serverKey } from "../../../lib/store";
 export const POST = async (request: Request): Promise<Response> => {
 	if (!sameOrigin(request) || !(await authorized()))
 		return Response.json({ error: "Sign in first" }, { status: 401 });
-	const value: unknown = await request.json().catch(() => undefined);
+	const parsed = await readJsonBody(request, 100000);
+	if (parsed.error) return parsed.error;
+	const value = parsed.value;
 	if (!isContent(value))
 		return Response.json(
 			{ error: "Check fields and use HTTPS document links." },

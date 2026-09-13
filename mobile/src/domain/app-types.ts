@@ -41,11 +41,14 @@ export type ClubEvent = {
 	id: string;
 	title: string;
 	date: string;
+	endDate?: string;
+	responseDeadline?: string;
+	tournamentRoster?: { personId: string; team: string }[];
 	start: string;
 	end: string;
 	venue: string;
 	program: string;
-	kind: "training" | "hockey" | "social";
+	kind: "training" | "hockey" | "social" | "tournament";
 	signup: "open" | "scheduled" | "closed";
 	repeatInterval?: number;
 	repeatUntil?: string;
@@ -63,6 +66,7 @@ export type ClubEvent = {
 	signupCloses?: EventDraft["signupCloses"];
 };
 export type EventResponse = {
+	seriesExpected?: boolean;
 	partIds?: string[];
 	partAttendance?: { partId: string; attendance: Attendance }[];
 	eventId: string;
@@ -91,6 +95,7 @@ export type CoachingFeedback = {
 	date: string;
 };
 export type Conversation = {
+	eventId?: string;
 	id: string;
 	title: string;
 	subtitle: string;
@@ -116,6 +121,8 @@ export type Notice = {
 	program: string;
 	date: string;
 	acknowledgedBy: string[];
+	dismissedBy?: string[];
+	expiresAt?: string;
 };
 export type Equipment = {
 	id: string;
@@ -169,6 +176,9 @@ export type AppData = {
 	reminders: boolean;
 };
 export type EventDraft = {
+	committedRoster?: boolean;
+	seriesWaitlist?: boolean;
+	excludedDates?: string[];
 	timeZone?: string;
 	parts?: EventPart[];
 	public?: boolean;
@@ -176,6 +186,9 @@ export type EventDraft = {
 	seasonId?: string;
 	title: string;
 	date: string;
+	endDate?: string;
+	responseDeadline?: string;
+	tournamentRoster?: { personId: string; team: string }[];
 	start: string;
 	end: string;
 	venue: string;
@@ -256,6 +269,8 @@ export type AppAction =
 	| { type: "delete-message"; messageId: string }
 	| { type: "set-reaction"; messageId: string; emoji: string; active: boolean }
 	| { type: "create-thread"; id: string; title: string; recipientId: string }
+	| { type: "dismiss-notice"; noticeId: string }
+	| { type: "expire-notice"; noticeId: string }
 	| { type: "acknowledge"; noticeId: string }
 	| { type: "create-notice"; notice: Notice }
 	| { type: "registration"; personId: string; status: Member["registration"] }

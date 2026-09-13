@@ -37,7 +37,7 @@ export const SocialSignIn = ({
 					{task.error}
 				</Text>
 			) : undefined}
-			<Divider label="OR" />
+			<Divider label="OR" tone="primary" />
 		</Stack>
 	);
 };

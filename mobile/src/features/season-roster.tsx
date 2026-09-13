@@ -7,8 +7,8 @@ import {
 	EmptyState,
 	List,
 	ListItem,
+	LoadingContent,
 	Surface,
-	Text,
 } from "../design-system";
 import { money } from "../domain/app-rules";
 import type { Member } from "../domain/app-types";
@@ -30,7 +30,7 @@ export const SeasonRoster = ({
 		<Surface padding="xs">
 			<List>
 				{!records ? (
-					<Text>Loading…</Text>
+					<LoadingContent />
 				) : (
 					members.map((member) => {
 						const record = records.find(

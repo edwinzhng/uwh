@@ -42,7 +42,8 @@ export const attendanceSummary = (
 				!event.cancelled &&
 				event.kind !== "social" &&
 				canRegister(member, event) &&
-				clubTimestamp(event.date, event.end, event.timeZone) <= now,
+				clubTimestamp(event.endDate ?? event.date, event.end, event.timeZone) <=
+					now,
 		)
 		.toSorted((a, b) => a.date.localeCompare(b.date))
 		.map((event) => ({

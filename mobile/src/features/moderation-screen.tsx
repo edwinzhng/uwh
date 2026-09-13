@@ -8,6 +8,7 @@ import {
 	Badge,
 	Button,
 	Dialog,
+	EmptyState,
 	List,
 	ListItem,
 	Row,
@@ -108,9 +109,10 @@ export const ModerationScreen = (): ReactElement => {
 										/>
 									))}
 									{!items.length ? (
-										<Text variant="small" tone="secondary">
-											No reports
-										</Text>
+										<EmptyState
+											title="No reports"
+											description="Reported messages matching this view will appear here for review."
+										/>
 									) : undefined}
 								</List>
 							</Surface>

@@ -1,4 +1,4 @@
-# Crocs Club — product scope
+# UWH Club — product scope
 
 Status: full product specification, September 7, 2026. The first interactive app and authenticated local Convex backend now exist in `mobile/`. This inventory is broader than the implemented pass: see [implementation status](IMPLEMENTATION.md) for working features and outstanding launch scope.
 

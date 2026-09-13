@@ -10,6 +10,7 @@ export const LiveMessagingProvider = ({
 }): ReactElement => {
 	const threads = useQuery(api.messaging.inbox, {});
 	const open = useMutation(api.messaging.openDirect);
+	const openSession = useMutation(api.messaging.openSession);
 	const read = useMutation(api.messaging.markRead);
 	const openDirect = useCallback(
 		(recipientId: string): Promise<string> => open({ recipientId }),
@@ -27,6 +28,7 @@ export const LiveMessagingProvider = ({
 				threads: threads ?? [],
 				loading: threads === undefined,
 				openDirect,
+				openSession: (eventId): Promise<string> => openSession({ eventId }),
 				markRead,
 			}}
 		>

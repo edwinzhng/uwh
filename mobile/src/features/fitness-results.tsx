@@ -7,6 +7,7 @@ import {
 	Button,
 	Dialog,
 	Field,
+	LoadingContent,
 	Row,
 	Stack,
 	Text,
@@ -45,7 +46,7 @@ export const FitnessResults = ({
 				}
 			: "skip",
 	);
-	if (!session) return <Text>Loading…</Text>;
+	if (!session) return <LoadingContent />;
 	return (
 		<Stack>
 			<Row justify="between" wrap>
@@ -80,7 +81,7 @@ export const FitnessResults = ({
 					]}
 				/>
 			</Row>
-			<Text variant="h3">{session.date}</Text>
+			<Text variant="h4">{session.date}</Text>
 			{session.notes ? (
 				<Text tone="secondary">{session.notes}</Text>
 			) : undefined}
@@ -107,7 +108,7 @@ export const FitnessResults = ({
 					}}
 				/>
 			) : (
-				<Text>Loading…</Text>
+				<LoadingContent />
 			)}
 			<Row justify="between">
 				<Button

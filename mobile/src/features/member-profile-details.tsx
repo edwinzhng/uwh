@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { Grid, Stack, Surface, Text } from "../design-system";
+import { EmptyState, Grid, Stack, Surface, Text } from "../design-system";
 import { canReadProgress } from "../domain/app-rules";
 import type { Member } from "../domain/app-types";
 
@@ -40,7 +40,14 @@ export const MemberProfileDetails = ({
 			</Surface>
 			{canReadProgress(account, member) ? (
 				<Surface header={<Text variant="h4">Current goal</Text>}>
-					<Text>{member.goal || "No goal set yet."}</Text>
+					{member.goal ? (
+						<Text>{member.goal}</Text>
+					) : (
+						<EmptyState
+							title="No goal yet"
+							description="Set a goal with your coach to give your training a focus."
+						/>
+					)}
 				</Surface>
 			) : undefined}
 		</Stack>
