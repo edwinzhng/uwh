@@ -143,3 +143,29 @@ assert.equal(
 	schedulePage.page.filter((row) => !row.event.cancelled).length,
 );
 console.log("Household Schedule relevance and calendar counts agree.");
+const beforeGeneral = await parent.query(api.messaging.list, {
+	threadId: "club",
+	paginationOpts: { numItems: 40, cursor: null },
+});
+assert.equal(await parent.mutation(api.messaging.ensureGeneral, {}), "club");
+assert.equal(await owner.mutation(api.messaging.ensureGeneral, {}), "club");
+const general = (await parent.query(api.messaging.inbox, {})).filter(
+	(thread) => thread.id === "club",
+);
+assert.equal(general.length, 1);
+assert.equal(general.at(0)?.title, "General");
+assert(general.at(0)?.accountIds.includes(workspace.account.id));
+assert(general.at(0)?.accountIds.includes(home.account.id));
+assert.deepEqual(
+	(
+		await parent.query(api.messaging.list, {
+			threadId: "club",
+			paginationOpts: { numItems: 40, cursor: null },
+		})
+	).page,
+	beforeGeneral.page,
+);
+await assert.rejects(anonymous.mutation(api.messaging.ensureGeneral, {}));
+console.log(
+	"General chat live checks passed: shared membership, idempotent creation, preserved history and anonymous denial. No messages sent.",
+);

@@ -5,6 +5,7 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, type MutationCtx } from "./_generated/server";
 import { enqueue } from "./notifications";
+import { syncEditedSeries } from "./session_series";
 
 export const refresh = internalMutation({
 	args: { clubId: v.id("clubs"), eventId: v.string() },
@@ -15,10 +16,12 @@ export const refresh = internalMutation({
 				q.eq("clubId", clubId).eq("value.id", eventId),
 			)
 			.unique();
-		if (row)
+		if (row) {
 			await ctx.db.patch(row._id, {
 				value: { ...row.value, signup: signupState(row.value, Date.now()) },
 			});
+			await syncEditedSeries(ctx, clubId, [row.value], [row.value]);
+		}
 		return null;
 	},
 });

@@ -35,15 +35,6 @@ export const RecurrencePreview = ({
 								onChange({ ...draft, committedRoster })
 							}
 						/>
-						{draft.committedRoster ? (
-							<Toggle
-								label="Allow a series waitlist"
-								value={draft.seriesWaitlist ?? true}
-								onValueChange={(seriesWaitlist): void =>
-									onChange({ ...draft, seriesWaitlist })
-								}
-							/>
-						) : undefined}
 					</>
 				) : undefined}
 				<Text variant="small">

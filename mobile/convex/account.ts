@@ -164,3 +164,32 @@ export const remove = internalMutation({
 		await eraseAccount(ctx, userId, transferTo);
 	},
 });
+
+export const updateHouseholdInfo = mutation({
+	args: { personId: v.string(), name: v.string() },
+	handler: async (ctx, { personId, name }): Promise<void> => {
+		const membership = await requireMember(ctx);
+		if (
+			membership.personId !== personId &&
+			!membership.children.includes(personId)
+		)
+			throw new Error("You can only edit your household members.");
+		const trimmed = name.trim();
+		if (!trimmed || trimmed.length > 80)
+			throw new Error("Use a name under 80 characters.");
+		const person = await ctx.db
+			.query("members")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", membership.clubId).eq("value.id", personId),
+			)
+			.unique();
+		if (!person) throw new Error("Member unavailable.");
+		await ctx.db.patch(person._id, {
+			value: { ...person.value, name: trimmed },
+		});
+		if (membership.personId === personId) {
+			await ctx.db.patch(membership._id, { name: trimmed });
+			await ctx.db.patch(membership.userId, { name: trimmed });
+		}
+	},
+});

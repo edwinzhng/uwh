@@ -8,7 +8,7 @@
 		"ios": "expo run:ios",
 		"android": "expo run:android",
 		"web": "expo start --web",
-		"build:web": "bun run check:design && expo export --platform web --max-workers 2",
+		"build:web": "bun run check:design && bun scripts/build-web.ts",
 		"preview": "bun scripts/preview.ts",
 		"typecheck": "tsc --noEmit",
 		"lint": "biome check . && bun run check:toast && bun run check:design",

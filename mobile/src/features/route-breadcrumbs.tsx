@@ -25,7 +25,7 @@ const routes: Record<
 		parentLabel: "Account",
 		label: "Progress",
 	},
-	"/members": { parent: "/club", parentLabel: "Club", label: "People" },
+	"/members": { parent: "/club", parentLabel: "Club", label: "Members" },
 	"/club-information": {
 		parent: "/club",
 		parentLabel: "Club",

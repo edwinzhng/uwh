@@ -35,7 +35,7 @@ const requireEvent = async (
 			q.eq("clubId", clubId).eq("value.id", eventId),
 		)
 		.unique();
-	if (!event || event.value.kind === "social")
+	if (!event || event.value.kind === "social" || event.value.kind === "meeting")
 		throw new Error("Choose a practice.");
 	return event;
 };

@@ -1,6 +1,10 @@
 import { atom, useAtom, useSetAtom } from "jotai";
 import { type ReactElement, type ReactNode, useCallback } from "react";
 import { MessagingContext } from "../backend/messaging-context";
+import {
+	accountForRecipient,
+	recipientPersonId,
+} from "../domain/message-recipients";
 import { directThreadId, isDirectThread } from "../domain/messaging";
 import {
 	canDiscussSession,
@@ -98,19 +102,24 @@ export const PreviewMessagingProvider = ({
 					return id;
 				},
 				openDirect: async (recipientId): Promise<string> => {
+					const personId = recipientPersonId(recipientId);
+					const person = data.members.find((entry) => entry.id === personId);
+					const target = personId
+						? accountForRecipient(accounts, personId, account.id)
+						: accounts.find((entry) => entry.id === recipientId);
+					const resolvedId = target?.id ?? recipientId;
 					const existing = data.conversations.find((thread) =>
-						isDirectThread(thread, account.id, recipientId),
+						isDirectThread(thread, account.id, resolvedId),
 					);
 					if (existing) return existing.id;
-					const id = directThreadId(account.id, recipientId);
-					const target = accounts.find((entry) => entry.id === recipientId);
+					const id = directThreadId(account.id, resolvedId);
 					if (
-						!target ||
+						(!target && !person) ||
 						!(await dispatch({
 							type: "create-thread",
 							id,
-							recipientId,
-							title: target.name,
+							recipientId: resolvedId,
+							title: person?.name ?? target?.name ?? "Member",
 						}))
 					)
 						throw new Error("Could not open conversation.");

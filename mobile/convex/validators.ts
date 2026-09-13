@@ -52,6 +52,7 @@ export const eventsValue = v.object({
 		v.literal("training"),
 		v.literal("hockey"),
 		v.literal("social"),
+		v.literal("meeting"),
 		v.literal("tournament"),
 	),
 	signup: v.union(
@@ -78,6 +79,8 @@ export const eventsValue = v.object({
 });
 export const responsesValue = v.object({
 	seriesExpected: v.optional(v.boolean()),
+	seriesInvitedAt: v.optional(v.number()),
+	absenceReason: v.optional(v.string()),
 	partIds: v.optional(v.array(v.string())),
 	partAttendance: v.optional(
 		v.array(
@@ -143,6 +146,8 @@ export const feedbackValue = v.object({
 	date: v.string(),
 });
 export const conversationsValue = v.object({
+	participantPersonIds: v.optional(v.array(v.string())),
+	kind: v.optional(v.union(v.literal("direct"), v.literal("group"))),
 	eventId: v.optional(v.string()),
 	id: v.string(),
 	title: v.string(),

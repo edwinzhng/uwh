@@ -15,6 +15,7 @@ import { canReadProgress } from "../domain/app-rules";
 import { ClubShell } from "./club-shell";
 import { InviteMemberAction } from "./invite-member-action";
 import { MemberAdmin } from "./member-admin";
+import { MemberAttendance } from "./member-attendance";
 import { MemberProfileDetails } from "./member-profile-details";
 import { MemberProgress } from "./member-progress";
 import { PlayerCoachingPanel } from "./player-coaching-panel";
@@ -36,7 +37,12 @@ export const MemberScreen = (): ReactElement => {
 		staffRole?: "admin" | "coach";
 	}[] = [
 		{ value: "profile", label: "Profile" },
-		...(progress ? [{ value: "progress", label: "Progress" }] : []),
+		...(progress
+			? [
+					{ value: "progress", label: "Progress" },
+					{ value: "attendance", label: "Attendance" },
+				]
+			: []),
 		...(account.admin
 			? [
 					{
@@ -88,6 +94,8 @@ export const MemberScreen = (): ReactElement => {
 					<TabContent value={selectedTab}>
 						{selectedTab === "progress" ? (
 							<MemberProgress member={member} />
+						) : selectedTab === "attendance" ? (
+							<MemberAttendance key={member.id} member={member} />
 						) : selectedTab === "coach" ? (
 							<Stack gap="xl">
 								<PlayerCoachingPanel personId={member.id} />
@@ -125,7 +133,7 @@ export const MemberScreen = (): ReactElement => {
 			) : (
 				<EmptyState
 					title="Member unavailable"
-					description="Return to People to choose another member."
+					description="Return to Members to choose another member."
 				/>
 			)}
 		</ClubShell>

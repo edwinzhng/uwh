@@ -188,6 +188,11 @@ export default defineSchema({
 		.index("by_club_and_key", ["clubId", "value.id"]),
 	conversations: defineTable({
 		clubId: v.id("clubs"),
+		pendingPersonId: v.optional(v.string()),
+		pendingPersonIds: v.optional(v.array(v.string())),
+		groupSourceThreadId: v.optional(v.string()),
+		groupCreatorId: v.optional(v.id("users")),
+		recipientPersonId: v.optional(v.string()),
 		directKey: v.optional(v.string()),
 		value: conversationsValue,
 	})

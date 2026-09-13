@@ -22,6 +22,7 @@ export type PickerProps<T extends string> = {
 };
 
 export type MenuAction = {
+	checked?: boolean;
 	id: string;
 	label: string;
 	icon?: IconName;
@@ -37,6 +38,8 @@ export type MenuGroup = {
 };
 
 export type ActionMenuProps = {
+	accessibilityLabel?: string;
+	compact?: boolean;
 	label: string;
 	icon?: IconName;
 	groups: readonly MenuGroup[];

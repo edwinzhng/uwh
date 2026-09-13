@@ -1,17 +1,19 @@
 import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Message } from "../src/domain/app-types";
-import type {
-	ConversationSummary,
-	ThreadMessage,
+import {
+	type ConversationSummary,
+	conversationKind,
+	type ThreadMessage,
 } from "../src/domain/messaging";
 import { sessionThreadId } from "../src/domain/session-discussion";
 import { mutation, query } from "./_generated/server";
+import { ensureGeneralChat, resolveClubThread } from "./general_chat";
 import { memberFor, requireMember } from "./identity";
 import { messageFor, threadFor, visibleMessage } from "./message_access";
 import { openDirectThread } from "./message_commands";
 import { blockedIds, canChat } from "./moderation";
-import { resolveSessionThread, sessionAccounts } from "./session_discussion";
+import { sessionAccounts } from "./session_discussion";
 
 export const inbox = query({
 	args: {},
@@ -34,7 +36,7 @@ export const inbox = query({
 				.collect(),
 		]);
 		const resolvedThreads = await Promise.all(
-			threads.map((thread) => resolveSessionThread(ctx, thread)),
+			threads.map((thread) => resolveClubThread(ctx, thread)),
 		);
 		const results = await Promise.all(
 			resolvedThreads
@@ -76,11 +78,10 @@ export const inbox = query({
 							.take(100),
 					]);
 					const direct =
-						!thread.value.eventId &&
-						!thread.value.id.startsWith("session:") &&
-						thread.value.id !== "club" &&
-						thread.value.id !== "youth" &&
-						thread.value.accountIds.length === 2;
+						conversationKind({
+							...thread.value,
+							kind: thread.directKey ? "direct" : thread.value.kind,
+						}) === "direct";
 					const other = direct
 						? members.find(
 								(entry) =>
@@ -90,7 +91,12 @@ export const inbox = query({
 						: undefined;
 					return {
 						...thread.value,
-						title: other?.name ?? thread.value.title,
+						kind: thread.directKey ? "direct" : thread.value.kind,
+						title:
+							thread.recipientPersonId &&
+							thread.value.accountIds.at(0) === member.userId
+								? thread.value.title
+								: (other?.name ?? thread.value.title),
 						latest: latest ? visibleMessage(latest.value, blocked) : undefined,
 						updatedAt: latest?._creationTime ?? thread._creationTime,
 						unread: unread.length,
@@ -240,5 +246,13 @@ export const openSession = mutation({
 		} else
 			await ctx.db.insert("conversations", { clubId: member.clubId, value });
 		return id;
+	},
+});
+
+export const ensureGeneral = mutation({
+	args: {},
+	handler: async (ctx): Promise<string> => {
+		const member = await requireMember(ctx);
+		return ensureGeneralChat(ctx, member.clubId);
 	},
 });

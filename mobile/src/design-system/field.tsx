@@ -1,6 +1,7 @@
 import { type ReactElement, useEffect, useId, useRef, useState } from "react";
-import { TextInput } from "react-native";
+import { Platform, TextInput } from "react-native";
 import { Stack } from "./stack";
+import { isSubmitKey } from "./submit-key";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { control, corners, font, geometry } from "./tokens";
@@ -16,6 +17,8 @@ type Props = {
 	error?: string;
 	isDisabled?: boolean;
 	multiline?: boolean;
+	rows?: number;
+	onSubmit?: () => void;
 	testID?: string;
 	secure?: boolean;
 	maxLength?: number;
@@ -33,6 +36,8 @@ export const Field = ({
 	error,
 	isDisabled,
 	multiline = false,
+	rows,
+	onSubmit,
 	testID,
 	secure = false,
 	maxLength,
@@ -67,6 +72,18 @@ export const Field = ({
 				placeholder={placeholder}
 				editable={!isDisabled}
 				multiline={multiline}
+				numberOfLines={rows}
+				submitBehavior={onSubmit ? "submit" : undefined}
+				onSubmitEditing={onSubmit}
+				onKeyPress={
+					onSubmit && Platform.OS === "web"
+						? (event): void => {
+								if (!isSubmitKey(event.nativeEvent)) return;
+								event.preventDefault();
+								onSubmit();
+							}
+						: undefined
+				}
 				secureTextEntry={secure}
 				inputMode={inputMode}
 				autoComplete={autoComplete}
@@ -76,8 +93,16 @@ export const Field = ({
 				onFocus={(): void => setFocused(true)}
 				onBlur={(): void => setFocused(false)}
 				style={{
-					minHeight: multiline ? geometry.control * 2 : controlSize,
-					maxHeight: multiline ? geometry.control * 3 : undefined,
+					minHeight: multiline
+						? rows
+							? control.typography.lineHeight * rows + control.paddingY * 2
+							: geometry.control * 2
+						: controlSize,
+					maxHeight: multiline
+						? rows
+							? control.typography.lineHeight * rows + control.paddingY * 2
+							: geometry.control * 3
+						: undefined,
 					borderWidth: geometry.border,
 					borderColor: focused
 						? theme.focus

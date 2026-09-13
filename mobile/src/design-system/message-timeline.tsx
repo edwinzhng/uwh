@@ -1,8 +1,9 @@
 import { type ReactElement, useRef, useState } from "react";
 import { FlatList, View, type ViewToken } from "react-native";
 import { Button } from "./button";
+import { EmptyState } from "./empty-state";
+import { LoadingContent } from "./loading-content";
 import { Stack } from "./stack";
-import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, geometry, space } from "./tokens";
 
@@ -58,11 +59,9 @@ export const MessageTimeline = <T extends { id: string }>({
 			<FlatList
 				ref={list}
 				data={items}
-				inverted
+				inverted={items.length > 0}
 				keyExtractor={(item): string => item.id}
-				renderItem={({ item }): ReactElement => (
-					<Stack padding="md">{renderItem(item)}</Stack>
-				)}
+				renderItem={({ item }): ReactElement => renderItem(item)}
 				style={{ flex: 1 }}
 				keyboardShouldPersistTaps="handled"
 				keyboardDismissMode="on-drag"
@@ -87,11 +86,14 @@ export const MessageTimeline = <T extends { id: string }>({
 				}}
 				onEndReachedThreshold={0.2}
 				ListEmptyComponent={
-					<Stack padding="md">
-						<Text variant="small" tone="secondary">
-							{loading ? "Loading messages…" : "No messages yet"}
-						</Text>
-					</Stack>
+					loading ? (
+						<LoadingContent />
+					) : (
+						<EmptyState
+							title="No messages yet"
+							description="Start the conversation below."
+						/>
+					)
 				}
 				ListFooterComponent={
 					canLoadMore || loadingMore ? (

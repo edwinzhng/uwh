@@ -39,8 +39,8 @@ export const TournamentSummary = ({
 					kind={assignment ? "success" : "neutral"}
 				/>
 				<Text variant="small" tone="secondary">
-					Marking yourself available does not confirm a roster place. The
-					organizer assigns teams separately.
+					Expressing interest does not confirm a roster place. The organizer
+					assigns teams separately.
 				</Text>
 				{event.tournamentRoster?.length ? (
 					<List>

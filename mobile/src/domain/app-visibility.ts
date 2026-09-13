@@ -37,10 +37,23 @@ export const visibleAppData = (data: AppData, account: Account): AppData => {
 		})),
 		responses: data.responses.map((entry) => {
 			const event = events.get(entry.eventId);
+			const visible = {
+				...entry,
+				absenceReason:
+					canManagePerson(account, entry.personId) ||
+					(event && canCoach(account, event.program))
+						? entry.absenceReason
+						: undefined,
+			};
 			return privatePerson(entry.personId) ||
 				(event && canCoach(account, event.program))
-				? entry
-				: { ...entry, attendance: "unmarked", partAttendance: undefined };
+				? visible
+				: {
+						...entry,
+						attendance: "unmarked",
+						partAttendance: undefined,
+						absenceReason: undefined,
+					};
 		}),
 		teams: data.teams.filter((entry) => {
 			const event = events.get(entry.eventId);

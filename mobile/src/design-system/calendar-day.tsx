@@ -56,7 +56,11 @@ export const CalendarDay = ({
 					height: space.xxs,
 					width: space.xxs,
 					borderRadius: corners.pill,
-					backgroundColor: count ? foreground : "transparent",
+					backgroundColor: count
+						? selected
+							? theme.accent.foreground
+							: theme.accent.background
+						: "transparent",
 				}}
 			/>
 		</Pressable>

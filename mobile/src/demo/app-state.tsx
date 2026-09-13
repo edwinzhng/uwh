@@ -4,6 +4,7 @@ import {
 	type ReactElement,
 	type ReactNode,
 	useContext,
+	useEffect,
 	useState,
 } from "react";
 import { reduceApp } from "../domain/app-reducer";
@@ -11,12 +12,18 @@ import { canManagePerson } from "../domain/app-rules";
 import type { Account, AppAction, AppData, Member } from "../domain/app-types";
 import { visibleAppData } from "../domain/app-visibility";
 import { clubDate } from "../domain/event-time";
+import { withGeneralChat } from "../domain/general-chat";
 import { canDiscussSession } from "../domain/session-discussion";
 import { syncSeriesResponses } from "../domain/session-series";
 import { initialAppData, previewAccounts, primaryAccount } from "./app-data";
 import { previewSessionSeries } from "./session-series-state";
 
-export const previewDataAtom = atom<AppData>(initialAppData);
+export const previewDataAtom = atom<AppData>(
+	withGeneralChat(
+		initialAppData,
+		previewAccounts.map((account) => account.id),
+	),
+);
 export const previewAccountIdAtom = atom("alex");
 export const selectedPersonAtom = atom("alex");
 export const previewAccountAtom = atom(
@@ -38,7 +45,10 @@ export const previewActionAtom = atom(
 	undefined,
 	(get, set, action: AppAction): void => {
 		if (action.type === "edit-event") {
-			const previous = get(previewDataAtom);
+			const previous = withGeneralChat(
+				get(previewDataAtom),
+				previewAccounts.map((account) => account.id),
+			);
 			const next = reduceApp(previous, get(previewAccountAtom), action);
 			const series = get(previewSessionSeries).map((entry) => ({
 				...entry,
@@ -77,7 +87,14 @@ export const previewActionAtom = atom(
 		}
 		set(
 			previewDataAtom,
-			reduceApp(get(previewDataAtom), get(previewAccountAtom), action),
+			reduceApp(
+				withGeneralChat(
+					get(previewDataAtom),
+					previewAccounts.map((account) => account.id),
+				),
+				get(previewAccountAtom),
+				action,
+			),
 		);
 	},
 );
@@ -100,7 +117,35 @@ export const PreviewProvider = ({
 }: {
 	children: ReactNode;
 }): ReactElement => {
-	const storedData = useAtomValue(previewDataAtom);
+	const rawData = useAtomValue(previewDataAtom);
+	const committedSeries = useAtomValue(previewSessionSeries);
+	const setPreviewData = useSetAtom(previewDataAtom);
+	useEffect(() => {
+		const sync = (): void =>
+			setPreviewData((current) => {
+				const responses = committedSeries.reduce(
+					(responses, series) =>
+						syncSeriesResponses(
+							series,
+							current.events,
+							responses,
+							clubDate(undefined, current.timeZone),
+							Date.now(),
+						),
+					current.responses,
+				);
+				return JSON.stringify(responses) === JSON.stringify(current.responses)
+					? current
+					: { ...current, responses };
+			});
+		sync();
+		const timer = setInterval(sync, 1000);
+		return (): void => clearInterval(timer);
+	}, [committedSeries, setPreviewData]);
+	const storedData = withGeneralChat(
+		rawData,
+		previewAccounts.map((account) => account.id),
+	);
 	const allData: AppData = {
 		...storedData,
 		conversations: storedData.conversations.map((thread) => {

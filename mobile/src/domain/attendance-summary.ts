@@ -41,6 +41,7 @@ export const attendanceSummary = (
 				(event.seasonId ?? defaultSeasonId) === seasonId &&
 				!event.cancelled &&
 				event.kind !== "social" &&
+				event.kind !== "meeting" &&
 				canRegister(member, event) &&
 				clubTimestamp(event.endDate ?? event.date, event.end, event.timeZone) <=
 					now,

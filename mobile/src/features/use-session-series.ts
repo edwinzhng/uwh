@@ -21,7 +21,7 @@ export type SeriesControls = {
 		seriesId: string;
 		title: string;
 		capacity?: number;
-		waitlist: boolean;
+		waitlist?: boolean;
 	}) => Promise<void>;
 	enroll: (args: {
 		seriesId: string;
@@ -114,7 +114,7 @@ export const usePreviewSeries = (): SeriesControls => {
 				args.end,
 				args.personId,
 			);
-			if (!args.invite && !space && (!current.waitlist || args.promote))
+			if (!args.invite && !space)
 				throw new Error("The committed roster is full.");
 			save({
 				...current,
@@ -128,7 +128,7 @@ export const usePreviewSeries = (): SeriesControls => {
 						personId: args.personId,
 						start: args.start,
 						end: args.end,
-						state: args.invite ? "invited" : space ? "committed" : "waiting",
+						state: args.invite ? "invited" : "committed",
 					},
 				],
 			});

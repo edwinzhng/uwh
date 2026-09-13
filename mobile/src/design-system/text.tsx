@@ -16,6 +16,7 @@ type Props = {
 	staffRole?: "coach" | "admin";
 	align?: "left" | "center";
 	selectable?: boolean;
+	italic?: boolean;
 	lines?: 1 | 2 | 3;
 };
 
@@ -25,6 +26,7 @@ export const Text = ({
 	tone = "primary",
 	align = "left",
 	selectable,
+	italic = false,
 	staffRole,
 	lines,
 }: Props): ReactElement => {
@@ -41,6 +43,7 @@ export const Text = ({
 			style={{
 				...style,
 				fontFamily: font[family],
+				fontStyle: italic ? "italic" : "normal",
 				color: staffRole
 					? theme[staffRole].foreground
 					: tone === "success" || tone === "warning" || tone === "danger"

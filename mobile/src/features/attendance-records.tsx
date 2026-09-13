@@ -38,7 +38,7 @@ export const AttendanceRecords = ({
 												? "Late"
 												: record.attendance === "absent"
 													? "No-show"
-													: "Unmarked"
+													: "Not marked"
 									}
 								/>
 							}

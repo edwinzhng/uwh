@@ -20,6 +20,7 @@ import Layers from "lucide-react-native/icons/layers";
 import List from "lucide-react-native/icons/list";
 import LockKeyhole from "lucide-react-native/icons/lock-keyhole";
 import LogOut from "lucide-react-native/icons/log-out";
+import MapPin from "lucide-react-native/icons/map-pin";
 import Menu from "lucide-react-native/icons/menu";
 import MessageSquare from "lucide-react-native/icons/message-square";
 import Mic from "lucide-react-native/icons/mic";
@@ -37,6 +38,7 @@ import SquareCheck from "lucide-react-native/icons/square-check";
 import Sun from "lucide-react-native/icons/sun";
 import Target from "lucide-react-native/icons/target";
 import Trash from "lucide-react-native/icons/trash";
+import Trophy from "lucide-react-native/icons/trophy";
 import Users from "lucide-react-native/icons/users";
 import Waves from "lucide-react-native/icons/waves-horizontal";
 import X from "lucide-react-native/icons/x";
@@ -45,6 +47,8 @@ import { useTheme } from "./theme";
 import { geometry } from "./tokens";
 
 const icons = {
+	mapPin: MapPin,
+	trophy: Trophy,
 	list: List,
 	microphone: Mic,
 	stop: Square,

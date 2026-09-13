@@ -20,13 +20,11 @@ import {
 	Toggle,
 	themePreferenceAtom,
 } from "../design-system";
-import { AccountHousehold } from "./account-household";
 import { AccountSecurity } from "./account-security";
 import { BlockedAccounts } from "./blocked-accounts";
-import { ClubShell } from "./club-shell";
 import { NotificationSettings } from "./notification-settings";
 import { useTask } from "./use-task";
-export const AccountSettingsScreen = (): ReactElement => {
+export const AccountSettingsContent = (): ReactElement => {
 	const { account, source, data } = useApp();
 	const backend = useBackend();
 	const task = useTask();
@@ -35,8 +33,7 @@ export const AccountSettingsScreen = (): ReactElement => {
 	const [previewAccount] = useAtom(previewAccountIdAtom);
 	const selectAccount = useSetAtom(selectPreviewAccountAtom);
 	return (
-		<ClubShell title="Account settings">
-			<AccountHousehold />
+		<Stack>
 			<Surface>
 				<Stack>
 					<Text variant="h4">
@@ -113,6 +110,6 @@ export const AccountSettingsScreen = (): ReactElement => {
 					{task.error}
 				</Text>
 			) : undefined}
-		</ClubShell>
+		</Stack>
 	);
 };

@@ -1,16 +1,13 @@
 import { atom, useAtom } from "jotai";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
-import {
-	Button,
-	Row,
-	SegmentedControl,
-	Select,
-	Surface,
-	Tabs,
-} from "../design-system";
+import { Button, Row, SegmentedControl, Surface, Tabs } from "../design-system";
 import { clubDate, clubTimestamp, eventDates } from "../domain/event-time";
-import { householdMembers, relevantHouseholdEvent } from "../domain/home";
+import {
+	type EventTypeFilter,
+	eventTypeFilters,
+	matchesEventType,
+} from "../domain/event-types";
 import { CalendarExportButton } from "./calendar-export-button";
 import { ClubShell } from "./club-shell";
 import { EventEditor } from "./event-editor";
@@ -19,13 +16,13 @@ import { SchedulePage } from "./schedule-page";
 
 const viewAtom = atom<"upcoming" | "past">("upcoming");
 const layoutAtom = atom<"list" | "calendar">("list");
-const audienceAtom = atom<"household" | "all">("household");
 const dateAtom = atom<string>();
+const eventTypeAtom = atom<EventTypeFilter>("all");
 
 export const AgendaScreen = (): ReactElement => {
 	const { data, account } = useApp();
-	const [audience, setAudience] = useAtom(audienceAtom);
 	const [period, setPeriod] = useAtom(viewAtom);
+	const [eventType, setEventType] = useAtom(eventTypeAtom);
 	const [layout, setLayout] = useAtom(layoutAtom);
 	const view = layout === "calendar" ? "calendar" : period;
 	const [selectedDate, setSelectedDate] = useAtom(dateAtom);
@@ -33,11 +30,8 @@ export const AgendaScreen = (): ReactElement => {
 	const season = "all";
 	const [now] = useState(Date.now);
 	const today = clubDate(now, data.timeZone);
-	const people = householdMembers(data, account);
 	const allEvents = data.events
-		.filter(
-			(event) => audience === "all" || relevantHouseholdEvent(event, people),
-		)
+		.filter((event) => matchesEventType(event, eventType))
 		.filter(
 			(event) =>
 				clubTimestamp(event.endDate ?? event.date, event.end, event.timeZone) <=
@@ -94,19 +88,15 @@ export const AgendaScreen = (): ReactElement => {
 			}
 		>
 			<Row justify="between" wrap>
-				<Select
-					label="Show events for"
-					value={audience}
+				<SegmentedControl
+					label="Event type"
+					hideLabel
+					value={eventType}
+					options={eventTypeFilters}
 					onValueChange={(value): void => {
-						if (value) {
-							setAudience(value);
-							setSelectedDate(undefined);
-						}
+						setEventType(value);
+						setSelectedDate(undefined);
 					}}
-					options={[
-						{ value: "household", label: "My household" },
-						{ value: "all", label: "All club" },
-					]}
 				/>
 				<SegmentedControl
 					label="Schedule layout"
@@ -123,7 +113,8 @@ export const AgendaScreen = (): ReactElement => {
 			{view === "calendar" ? (
 				<Surface>
 					<ScheduleCalendar
-						audience={audience}
+						eventType={eventType}
+						audience="all"
 						date={date}
 						period={period}
 						now={now}
@@ -135,7 +126,8 @@ export const AgendaScreen = (): ReactElement => {
 				</Surface>
 			) : undefined}
 			<SchedulePage
-				audience={audience}
+				eventType={eventType}
+				audience="all"
 				view={view}
 				period={period}
 				date={date}

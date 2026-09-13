@@ -84,7 +84,9 @@ export const SessionPeople = ({
 														}
 														description={
 															staff && response.response !== "going"
-																? label
+																? [label, response.absenceReason]
+																		.filter(Boolean)
+																		.join(" · ")
 																: !partId &&
 																		event.parts?.length &&
 																		response.partIds?.length

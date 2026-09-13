@@ -239,8 +239,6 @@ export const AppLayout = ({
 									keyboard || wide
 										? space.xs
 										: geometry.tab + space.lg + insets.bottom,
-								borderTopWidth: geometry.border,
-								borderTopColor: theme.border,
 								backgroundColor: "transparent",
 							}}
 						>

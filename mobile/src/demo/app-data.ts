@@ -350,9 +350,9 @@ export const initialAppData: AppData = {
 	conversations: [
 		{
 			id: "club",
-			title: "Club room",
-			subtitle: "Club players & coaches",
-			accountIds: ["alex", "taylor", "casey", "morgan"],
+			title: "General",
+			subtitle: "All club members",
+			accountIds: previewAccounts.map((account) => account.id),
 		},
 		{
 			id: "youth",

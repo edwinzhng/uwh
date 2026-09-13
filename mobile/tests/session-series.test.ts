@@ -203,3 +203,62 @@ test("narrowed eligibility removes expectation and cannot resurrect an excluded 
 	).toBeUndefined();
 	expect(syncSeriesResponses(series, [session], [], "2026-09-13")).toEqual([]);
 });
+
+test("committed players are invited and marked Going only when registration opens", () => {
+	const session = {
+		...event("opening", "2026-09-14"),
+		opensAt: clubTimestamp("2026-09-13", "12:00"),
+		signup: "scheduled" as const,
+	};
+	const series = {
+		id: "series",
+		seriesIds: [session.seriesId ?? "series"],
+		title: "Monday",
+		enrollments: [
+			{ personId: "alex", start: "2026-09-01", state: "committed" as const },
+		],
+	};
+	const before = syncSeriesResponses(
+		series,
+		[session],
+		[],
+		"2026-09-13",
+		clubTimestamp("2026-09-13", "11:00"),
+	);
+	expect(before.at(0)?.response).toBe("unanswered");
+	expect(before.at(0)?.seriesInvitedAt).toBeUndefined();
+	const opened = syncSeriesResponses(
+		series,
+		[session],
+		before,
+		"2026-09-13",
+		clubTimestamp("2026-09-13", "12:00"),
+	);
+	expect(opened.at(0)?.response).toBe("going");
+	expect(opened.at(0)?.seriesInvitedAt).toBe(
+		clubTimestamp("2026-09-13", "12:00"),
+	);
+	const absent = opened.map((response) => ({
+		...response,
+		response: "unavailable" as const,
+		absenceReason: "Family commitment",
+	}));
+	expect(
+		syncSeriesResponses(
+			series,
+			[session],
+			absent,
+			"2026-09-13",
+			clubTimestamp("2026-09-13", "13:00"),
+		).at(0)?.absenceReason,
+	).toBe("Family commitment");
+	expect(
+		syncSeriesResponses(
+			series,
+			[session],
+			absent,
+			"2026-09-13",
+			clubTimestamp("2026-09-13", "13:00"),
+		).at(0)?.response,
+	).toBe("unavailable");
+});

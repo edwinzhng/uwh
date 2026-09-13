@@ -6,15 +6,19 @@ import { clubDate, clubTimestamp } from "./event-time";
 export const householdMembers = (data: AppData, account: Account): Member[] =>
 	data.members.filter((member) => canManagePerson(account, member.id));
 
+export const householdAttendanceReason = (
+	person: Member,
+	event: ClubEvent,
+): string | undefined => {
+	if (!person.programs.length) return "Not registered as a player";
+	if (!canRegister(person, event)) return "Not invited to this session";
+	return undefined;
+};
+
 export const relevantHouseholdEvent = (
 	event: ClubEvent,
 	people: Member[],
-): boolean =>
-	people.some(
-		(person) =>
-			canRegister(person, event) &&
-			(event.program === "all" || person.programs.includes(event.program)),
-	);
+): boolean => people.some((person) => canRegister(person, event));
 
 export const homeSchedule = (
 	events: ClubEvent[],

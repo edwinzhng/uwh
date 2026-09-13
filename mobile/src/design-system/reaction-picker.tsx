@@ -1,10 +1,13 @@
 import { lazy, type ReactElement, Suspense, useState } from "react";
+import { View } from "react-native";
 import { reactionChoices } from "../domain/messaging";
 import { Button } from "./button";
 import { Dialog } from "./dialog";
 import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
+import { typography } from "./tokens";
+import { useControlSize } from "./use-control-size";
 
 const EmojiPicker = lazy(async () => ({
 	default: (await import("./emoji-picker")).EmojiPicker,
@@ -18,18 +21,28 @@ export const ReactionPicker = ({
 	isDisabled?: boolean;
 }): ReactElement => {
 	const [open, setOpen] = useState(false);
+	const size = useControlSize();
 	return (
 		<>
-			<Button
-				label="Add reaction"
-				icon="reaction"
-				variant="ghost"
-				isDisabled={isDisabled}
-				onPress={(): void => setOpen(true)}
-			/>
+			<View style={{ height: typography.caption.lineHeight, width: size }}>
+				<View
+					style={{
+						position: "absolute",
+						top: (typography.caption.lineHeight - size) / 2,
+					}}
+				>
+					<Button
+						label="Add reaction"
+						icon="reaction"
+						variant="ghost"
+						isDisabled={isDisabled}
+						onPress={(): void => setOpen(true)}
+					/>
+				</View>
+			</View>
 			<Dialog isOpen={open} onOpenChange={setOpen} title="React" footer={false}>
 				<Stack gap="sm">
-					<Row gap="xxs">
+					<Row gap="xs" justify="center">
 						{reactionChoices.map((choice) => (
 							<Button
 								key={choice.emoji}

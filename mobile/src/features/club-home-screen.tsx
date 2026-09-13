@@ -12,16 +12,10 @@ export const ClubHomeScreen = (): ReactElement => {
 			<Surface padding="xs">
 				<Stack gap="none">
 					<ListItem
-						title="People"
+						title="Members"
 						description="Players, parents and coaches"
 						icon="users"
 						onPress={(): void => router.push("/members")}
-					/>
-					<ListItem
-						title="Programs & club information"
-						description="Programs, pools and club timezone"
-						icon="waves"
-						onPress={(): void => router.push("/club-information")}
 					/>
 				</Stack>
 			</Surface>

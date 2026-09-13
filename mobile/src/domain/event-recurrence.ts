@@ -235,7 +235,7 @@ export const eventDraft = (event: ClubEvent): EventDraft => ({
 	parts: event.parts?.map((part) => ({ ...part })),
 	venue: event.venue,
 	program: "club",
-	kind: event.kind,
+	kind: event.kind === "hockey" ? "training" : event.kind,
 	repeatInterval: event.repeatInterval,
 	repeatUntil: event.repeatUntil,
 	registrationOpen: event.registrationOpen,

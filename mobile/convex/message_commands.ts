@@ -1,4 +1,8 @@
 import {
+	accountForRecipient,
+	recipientPersonId,
+} from "../src/domain/message-recipients";
+import {
 	type MessageAction,
 	reduceMessages,
 } from "../src/domain/message-reducer";
@@ -23,7 +27,26 @@ export const openDirectThread = async (
 ): Promise<string> => {
 	if (!(await canChat(ctx, member.userId)))
 		throw new Error("Your chat access is paused. Contact a club admin.");
-	const recipient = ctx.db.normalizeId("users", recipientId);
+	const personId = recipientPersonId(recipientId);
+	const person = personId
+		? await ctx.db
+				.query("members")
+				.withIndex("by_club_and_key", (q) =>
+					q.eq("clubId", member.clubId).eq("value.id", personId),
+				)
+				.unique()
+		: undefined;
+	if (personId && !person) throw new Error("Choose a club member.");
+	const memberships = personId
+		? await ctx.db
+				.query("memberships")
+				.withIndex("by_club", (q) => q.eq("clubId", member.clubId))
+				.collect()
+		: [];
+	const linked = personId
+		? accountForRecipient(memberships.map(accountFor), personId, member.userId)
+		: undefined;
+	const recipient = ctx.db.normalizeId("users", linked?.id ?? recipientId);
 	const target = recipient
 		? await ctx.db
 				.query("memberships")
@@ -31,12 +54,16 @@ export const openDirectThread = async (
 				.first()
 		: undefined;
 	if (
-		!target ||
-		target.clubId !== member.clubId ||
-		target.userId === member.userId
+		(!person && !target) ||
+		(target &&
+			(target.clubId !== member.clubId || target.userId === member.userId))
 	)
-		throw new Error("Choose another club account.");
-	if ((await blockedIds(ctx, member.userId)).includes(recipientId))
+		throw new Error("Choose another club member.");
+	if (
+		target &&
+		(!(await canChat(ctx, target.userId)) ||
+			(await blockedIds(ctx, member.userId)).includes(target.userId))
+	)
 		throw new Error("Messaging is unavailable between these accounts.");
 	const key = directThreadKey(member.userId, recipientId);
 	const existing = await ctx.db
@@ -45,15 +72,22 @@ export const openDirectThread = async (
 			q.eq("clubId", member.clubId).eq("directKey", key),
 		)
 		.unique();
-	if (existing) return existing.value.id;
+	if (existing) {
+		if (!existing.value.accountIds.includes(member.userId))
+			throw new Error("Conversation unavailable.");
+		return existing.value.id;
+	}
+
 	const legacy = (
 		await ctx.db
 			.query("conversations")
 			.withIndex("by_club", (q) => q.eq("clubId", member.clubId))
 			.collect()
-	).find((row) => isDirectThread(row.value, member.userId, recipientId));
+	).find((row) =>
+		isDirectThread(row.value, member.userId, target?.userId ?? recipientId),
+	);
 	if (legacy) {
-		await ctx.db.patch(legacy._id, { directKey: key });
+		if (!legacy.directKey) await ctx.db.patch(legacy._id, { directKey: key });
 		return legacy.value.id;
 	}
 	const id = proposedId ?? directThreadId(member.userId, recipientId);
@@ -62,11 +96,14 @@ export const openDirectThread = async (
 	await ctx.db.insert("conversations", {
 		clubId: member.clubId,
 		directKey: key,
+		pendingPersonId: target ? undefined : personId,
+		recipientPersonId: personId,
 		value: {
 			id,
-			title: target.name,
+			title: person?.value.name ?? target?.name ?? "Member",
 			subtitle: "Direct message",
-			accountIds: [member.userId, recipientId],
+			kind: "direct",
+			accountIds: target ? [member.userId, target.userId] : [member.userId],
 		},
 	});
 	return id;

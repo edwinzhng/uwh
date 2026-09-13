@@ -35,6 +35,7 @@ export { ListItem } from "./list-item";
 export { LoadingContent } from "./loading-content";
 export { LoadingScreen } from "./loading-screen";
 export { MessagePhotoView } from "./message-photo-view";
+export { MessageRow } from "./message-row";
 export { MessageTimeline } from "./message-timeline";
 export type { NavigationItem } from "./navigation-control";
 export { NavigationFrame } from "./navigation-frame";

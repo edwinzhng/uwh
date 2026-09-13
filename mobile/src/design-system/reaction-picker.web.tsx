@@ -28,7 +28,7 @@ export const ReactionPicker = ({
 	return (
 		<Popover.Root open={open} onOpenChange={setOpen}>
 			<Popover.Trigger
-				className="club-combo-action"
+				className="club-combo-action club-reaction-trigger"
 				aria-label="Add reaction"
 				disabled={isDisabled}
 			>
@@ -52,7 +52,7 @@ export const ReactionPicker = ({
 							overflowY: "auto",
 						}}
 					>
-						<Row gap="xxs" justify="between">
+						<Row gap="xs" justify="center">
 							{reactionChoices.map((choice) => (
 								<Button
 									key={choice.emoji}

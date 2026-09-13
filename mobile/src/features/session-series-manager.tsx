@@ -12,7 +12,6 @@ import {
 	Stack,
 	Surface,
 	Text,
-	Toggle,
 } from "../design-system";
 import { canRegister, formatDate } from "../domain/app-rules";
 import { clubDate } from "../domain/event-time";
@@ -46,7 +45,6 @@ export const SessionSeriesManager = ({
 	const [capacity, setCapacity] = useState(
 		series?.capacity?.toString() ?? first?.capacity?.toString() ?? "",
 	);
-	const [waitlist, setWaitlist] = useState(series?.waitlist ?? true);
 	const [personId, setPersonId] = useState(active.id);
 	const [start, setStart] = useState(
 		first && first.date > today ? first.date : today,
@@ -78,9 +76,9 @@ export const SessionSeriesManager = ({
 				</Text>
 			) : (
 				<Text>
-					Committed players are expected at each session. Actual attendance is
-					recorded separately. Missing one session does not release their term
-					place.
+					When registration opens, committed players are automatically invited
+					and marked Going. Choose Not going with a reason if you cannot attend;
+					coaches can see the reason.
 				</Text>
 			)}
 			{account.admin ? (
@@ -103,11 +101,6 @@ export const SessionSeriesManager = ({
 							value={capacity}
 							onValueChange={setCapacity}
 						/>
-						<Toggle
-							label="Allow a series waitlist"
-							value={waitlist}
-							onValueChange={setWaitlist}
-						/>
 						<Button
 							label={
 								series ? "Save series settings" : "Enable committed roster"
@@ -128,7 +121,6 @@ export const SessionSeriesManager = ({
 											seriesId: series?.id ?? seriesId,
 											title,
 											capacity: capacity ? Number(capacity) : undefined,
-											waitlist,
 										}),
 								);
 							}}
@@ -156,9 +148,7 @@ export const SessionSeriesManager = ({
 								<Text>
 									{current.state === "committed"
 										? "Committed"
-										: current.state === "invited"
-											? "Invited"
-											: "On the series waitlist"}{" "}
+										: "Invitation pending"}{" "}
 									from {formatDate(current.start)}
 									{current.end
 										? ` until ${formatDate(current.end)} (exclusive)`
@@ -186,11 +176,9 @@ export const SessionSeriesManager = ({
 								/>
 								<Button
 									label={
-										current.state === "waiting"
-											? "Leave waitlist"
-											: current.state === "invited"
-												? "Decline invitation"
-												: "End commitment"
+										current.state === "invited"
+											? "Decline invitation"
+											: "End commitment"
 									}
 									variant="secondary"
 									isLoading={task.busy}
@@ -209,22 +197,6 @@ export const SessionSeriesManager = ({
 										);
 									}}
 								/>
-								{account.admin && current.state === "waiting" ? (
-									<Button
-										label="Assign permanent place"
-										isLoading={task.busy}
-										onPress={(): void => {
-											void task.run(async () =>
-												controls.enroll({
-													seriesId: series.id,
-													personId,
-													start: current.start < today ? today : current.start,
-													promote: true,
-												}),
-											);
-										}}
-									/>
-								) : undefined}
 							</>
 						) : (
 							<>
@@ -278,8 +250,8 @@ export const SessionSeriesManager = ({
 									/>
 								) : undefined}
 								<Text variant="caption" tone="secondary">
-									If the roster is full, you will join the series waitlist when
-									enabled.
+									The organizer manages the committed roster. Full series do not
+									accept additional commitments.
 								</Text>
 							</>
 						)}
@@ -301,9 +273,7 @@ export const SessionSeriesManager = ({
 									<Text tone="secondary">
 										{entry.state === "committed"
 											? "Committed"
-											: entry.state === "invited"
-												? "Invited"
-												: "Waitlisted"}
+											: "Invitation pending"}
 									</Text>
 								</Row>
 							))}

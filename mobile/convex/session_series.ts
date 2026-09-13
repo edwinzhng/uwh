@@ -162,7 +162,7 @@ export const configure = mutation({
 		seriesId: v.string(),
 		title: v.string(),
 		capacity: v.optional(v.number()),
-		waitlist: v.boolean(),
+		waitlist: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args): Promise<void> => {
 		const actor = await requireMember(ctx);
@@ -208,7 +208,7 @@ export const configure = mutation({
 			title: args.title.trim(),
 			seriesIds: series.seriesIds,
 			capacity: args.capacity,
-			waitlist: args.waitlist,
+			waitlist: false,
 			enrollments: series.enrollments,
 		};
 		if (existing) await ctx.db.patch(existing._id, value);
@@ -276,20 +276,15 @@ export const enroll = mutation({
 			throw new Error(
 				"This player is already committed. End the existing commitment first.",
 			);
-		if (current?.state === "waiting" && !(actor.admin && args.promote))
-			throw new Error("This player is already on the series waitlist.");
+
 		const space = seriesHasSpace(series, args.start, args.end, args.personId);
-		if (!args.invite && !space && (!series.waitlist || args.promote))
+		if (!args.invite && !space)
 			throw new Error("The committed roster is full.");
 		const enrollment = {
 			personId: args.personId,
 			start: args.start,
 			end: args.end,
-			state: args.invite
-				? ("invited" as const)
-				: space
-					? ("committed" as const)
-					: ("waiting" as const),
+			state: args.invite ? ("invited" as const) : ("committed" as const),
 		};
 		const enrollments = [
 			...series.enrollments.filter((entry) => entry !== current),
@@ -352,7 +347,12 @@ export const end = mutation({
 	},
 });
 export const absence = mutation({
-	args: { eventId: v.string(), personId: v.string(), unavailable: v.boolean() },
+	args: {
+		eventId: v.string(),
+		personId: v.string(),
+		unavailable: v.boolean(),
+		reason: v.optional(v.string()),
+	},
 	handler: async (ctx, args): Promise<void> => {
 		const actor = await requireMember(ctx);
 		if (
@@ -388,6 +388,11 @@ export const absence = mutation({
 			!row?.value.seriesExpected
 		)
 			throw new Error("No current series commitment for this session.");
+		if (
+			args.unavailable &&
+			(!args.reason?.trim() || args.reason.trim().length > 500)
+		)
+			throw new Error("Add a reason for not going (up to 500 characters).");
 		const person = await ctx.db
 			.query("members")
 			.withIndex("by_club_and_key", (q) =>
@@ -400,6 +405,7 @@ export const absence = mutation({
 			value: {
 				...row.value,
 				response: args.unavailable ? "unavailable" : "going",
+				absenceReason: args.unavailable ? args.reason?.trim() : undefined,
 				partIds: undefined,
 			},
 		});

@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
-import { Badge, Divider, EmptyState, Row, Stack, Text } from "../design-system";
+import { Divider, EmptyState, Row, Stack, Text } from "../design-system";
 import { DataPage } from "./data-page";
 import { FeedbackCard } from "./feedback-card";
 export const FeedbackList = ({
@@ -42,7 +42,6 @@ export const FeedbackList = ({
 								<Divider />
 								<Row>
 									<Text variant="label">Drafts & private notes</Text>
-									<Badge label="Coach" kind="coach" compact />
 								</Row>
 							</>
 						) : undefined}

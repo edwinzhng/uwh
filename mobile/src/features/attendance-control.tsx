@@ -46,7 +46,7 @@ export const AttendanceControl = ({
 				{ value: "present", label: "Here", tone: "success" },
 				{ value: "late", label: "Late", tone: "warning" },
 				{ value: "absent", label: "No-show", tone: "danger" },
-				...(!defaultHere
+				...(!defaultHere || value === "unmarked"
 					? [{ value: "unmarked" as const, label: "Not marked" }]
 					: []),
 			]}

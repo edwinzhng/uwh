@@ -9,13 +9,38 @@ export type ConversationSummary = Conversation & {
 	readThrough: number;
 };
 export const messagePageSize = 40;
+export const conversationKind = (
+	thread: Conversation,
+): "general" | "event" | "direct" | "group" => {
+	if (thread.id === "club") return "general";
+	if (
+		thread.eventId ||
+		thread.id.startsWith("session:") ||
+		thread.id === "session"
+	)
+		return "event";
+	if (thread.kind) return thread.kind;
+	if (
+		thread.id.startsWith("dm-") ||
+		thread.subtitle === "Direct message" ||
+		thread.id === "casey"
+	)
+		return "direct";
+	return "group";
+};
+export const conversationKindLabel = (thread: Conversation): string =>
+	({
+		general: "Everyone",
+		event: "Event",
+		direct: "Direct message",
+		group: "Group",
+	})[conversationKind(thread)];
 export const isDirectThread = (
 	thread: Conversation,
 	first: string,
 	second: string,
 ): boolean =>
-	!thread.eventId &&
-	!thread.id.startsWith("session:") &&
+	conversationKind(thread) === "direct" &&
 	thread.id !== "club" &&
 	thread.id !== "youth" &&
 	thread.accountIds.length === 2 &&

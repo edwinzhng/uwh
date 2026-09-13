@@ -261,3 +261,18 @@ describe("message reactions and photos", () => {
 		expect(imageMime(new Uint8Array())).toBeUndefined();
 	});
 });
+
+test("named two-person groups stay distinct from DMs and event chats", async (): Promise<void> => {
+	const { conversationKind } = await import("../src/domain/messaging");
+	const group = {
+		id: "named-group",
+		title: "Tournament planning",
+		subtitle: "Planning",
+		accountIds: ["a", "b"],
+	};
+	expect(conversationKind(group)).toBe("group");
+	expect(isDirectThread(group, "a", "b")).toBe(false);
+	expect(conversationKind({ ...group, id: "dm-a-b" })).toBe("direct");
+	expect(conversationKind({ ...group, eventId: "practice" })).toBe("event");
+	expect(conversationKind({ ...group, id: "club" })).toBe("general");
+});

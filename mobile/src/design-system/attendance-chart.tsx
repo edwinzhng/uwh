@@ -64,7 +64,7 @@ export const AttendanceChart = ({
 					{ label: "On time", color: chartColors.green },
 					{ label: "Late", color: chartColors.amber },
 					{ label: "No-show", color: chartColors.red },
-					{ label: "Unmarked", color: theme.colorScales.pending.border },
+					{ label: "Not marked", color: theme.colorScales.pending.border },
 				].map((item) => (
 					<Row key={item.label} gap="xxs">
 						<View

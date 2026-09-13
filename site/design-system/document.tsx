@@ -10,23 +10,23 @@ export const Document = ({
 		<head>
 			<link
 				rel="preload"
-				href="/degular-400.otf"
+				href="/fonts/degular-400.3ce9e3d135.woff2"
 				as="font"
-				type="font/otf"
+				type="font/woff2"
 				crossOrigin="anonymous"
 			/>
 			<link
 				rel="preload"
-				href="/degular-600.otf"
+				href="/fonts/degular-600.a34658566b.woff2"
 				as="font"
-				type="font/otf"
+				type="font/woff2"
 				crossOrigin="anonymous"
 			/>
 			<link
 				rel="preload"
-				href="/degular-display.otf"
+				href="/fonts/degular-display.6f0c8baa33.woff2"
 				as="font"
-				type="font/otf"
+				type="font/woff2"
 				crossOrigin="anonymous"
 			/>
 		</head>

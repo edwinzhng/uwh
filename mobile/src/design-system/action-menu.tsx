@@ -10,6 +10,8 @@ import { Text } from "./text";
 
 export const ActionMenu = ({
 	label,
+	accessibilityLabel,
+	compact,
 	icon,
 	groups,
 	isDisabled,
@@ -26,7 +28,8 @@ export const ActionMenu = ({
 				/>
 			) : (
 				<PickerTrigger
-					label={label}
+					label={accessibilityLabel ?? label}
+					compact={compact}
 					value={label}
 					isOpen={open}
 					isDisabled={isDisabled}

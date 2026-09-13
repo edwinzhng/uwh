@@ -3,8 +3,10 @@ import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
 import { Calendar, calendarDays } from "../design-system";
+import type { EventTypeFilter } from "../domain/event-types";
 
 type Props = {
+	eventType?: EventTypeFilter;
 	audience: "household" | "all";
 	date: string;
 	period: "upcoming" | "past";
@@ -15,6 +17,7 @@ type Props = {
 	onChange: (date: string) => void;
 };
 const LiveCalendar = ({
+	eventType = "all",
 	audience,
 	date,
 	today,
@@ -25,6 +28,7 @@ const LiveCalendar = ({
 }: Props): ReactElement => {
 	const days = calendarDays(date);
 	const counts = useQuery(api.pages.calendar, {
+		eventType,
 		audience,
 		from: days.at(0) ?? date,
 		to: days.at(-1) ?? date,
@@ -44,6 +48,7 @@ const LiveCalendar = ({
 export const ScheduleCalendar = (props: Props): ReactElement =>
 	useApp().source === "convex" ? (
 		<LiveCalendar
+			eventType={props.eventType}
 			audience={props.audience}
 			date={props.date}
 			period={props.period}

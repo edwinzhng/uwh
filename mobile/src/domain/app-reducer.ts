@@ -102,6 +102,8 @@ export const reduceApp = (
 			if (!event || signupState(event, Date.now()) !== "open")
 				throw new Error("Signup is not open.");
 			const current = eventResponse(data, event.id, action.personId);
+			if (current.seriesExpected && action.response === "unavailable")
+				throw new Error("Use the series attendance form and provide a reason.");
 			validatePartSelection(event, action.partIds);
 			const going = data.responses.filter(
 				(entry) =>
@@ -116,6 +118,8 @@ export const reduceApp = (
 			const updated: EventResponse = {
 				...current,
 				response,
+				absenceReason:
+					action.response === "going" ? undefined : current.absenceReason,
 				partIds: action.response === "going" ? action.partIds : undefined,
 			};
 			const next: EventResponse = {

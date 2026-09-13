@@ -429,25 +429,25 @@ nav a:hover {
 }
 @font-face {
 	font-family: Degular;
-	src: url("/degular-400.otf") format("opentype");
+	src: url("/fonts/degular-400.3ce9e3d135.woff2") format("woff2");
 	font-weight: 400;
 	font-display: optional;
 }
 @font-face {
 	font-family: Degular;
-	src: url("/degular-600.otf") format("opentype");
+	src: url("/fonts/degular-600.a34658566b.woff2") format("woff2");
 	font-weight: 600;
 	font-display: optional;
 }
 @font-face {
 	font-family: Degular;
-	src: url("/degular-700.otf") format("opentype");
+	src: url("/fonts/degular-700.ab4610a0f5.woff2") format("woff2");
 	font-weight: 700;
 	font-display: optional;
 }
 @font-face {
 	font-family: "Degular Display";
-	src: url("/degular-display.otf") format("opentype");
+	src: url("/fonts/degular-display.6f0c8baa33.woff2") format("woff2");
 	font-weight: 900;
 	font-display: optional;
 }

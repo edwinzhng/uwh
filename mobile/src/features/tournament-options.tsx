@@ -73,8 +73,8 @@ export const TournamentOptions = ({
 			<Surface header={<Text variant="h4">Confirmed roster</Text>}>
 				<Stack>
 					<Text variant="small" tone="secondary">
-						Availability does not confirm a place. Add selected players here
-						with their team name. These assignments are visible to club members.
+						Interest does not confirm a place. Add selected players here with
+						their team name. These assignments are visible to club members.
 					</Text>
 					{roster.map((entry) => (
 						<Stack key={entry.personId} gap="xs">

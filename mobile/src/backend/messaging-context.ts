@@ -2,6 +2,8 @@ import { createContext, useContext } from "react";
 import type { ConversationSummary } from "../domain/messaging";
 
 type Messaging = {
+	error?: string;
+	retry?: () => void;
 	threads: ConversationSummary[];
 	loading: boolean;
 	openSession: (eventId: string) => Promise<string>;

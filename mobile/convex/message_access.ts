@@ -14,7 +14,7 @@ export const messageFor = (
 		)
 		.unique();
 
-import { resolveSessionThread } from "./session_discussion";
+import { resolveClubThread } from "./general_chat";
 
 export const threadFor = async (
 	ctx: QueryCtx,
@@ -27,7 +27,7 @@ export const threadFor = async (
 			q.eq("clubId", clubId).eq("value.id", threadId),
 		)
 		.unique();
-	return thread ? resolveSessionThread(ctx, thread) : null;
+	return thread ? resolveClubThread(ctx, thread) : null;
 };
 
 export const visibleMessage = (

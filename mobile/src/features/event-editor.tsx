@@ -22,8 +22,10 @@ import {
 	seriesTargets,
 } from "../domain/event-recurrence";
 import { clubDate } from "../domain/event-time";
+import { practiceEvent } from "../domain/event-types";
 import { EventOptions } from "./event-options";
 import { EventPartsEditor } from "./event-parts-editor";
+import { EventTimeFields } from "./event-time-fields";
 import { RecurrencePreview } from "./recurrence-preview";
 import { TournamentOptions } from "./tournament-options";
 import { useFormTask } from "./use-form-task";
@@ -150,7 +152,7 @@ export const EventEditor = ({
 								seriesIds: [creationId],
 								title: draft.title,
 								capacity: draft.capacity,
-								waitlist: draft.seriesWaitlist ?? true,
+								waitlist: false,
 								enrollments: [],
 							},
 						]);
@@ -219,11 +221,11 @@ export const EventEditor = ({
 						<Stack gap="sm">
 							<Select
 								label="Event type"
-								value={draft.kind}
+								value={draft.kind === "hockey" ? "training" : draft.kind}
 								options={[
 									{ value: "training", label: "Practice" },
-									{ value: "hockey", label: "Scrimmage" },
 									{ value: "social", label: "Social" },
+									{ value: "meeting", label: "Meeting" },
 									{ value: "tournament", label: "Tournament" },
 								]}
 								onValueChange={(kind): void => {
@@ -231,6 +233,8 @@ export const EventEditor = ({
 										setDraft({
 											...draft,
 											kind,
+											committedRoster:
+												kind === "training" ? draft.committedRoster : false,
 											parts: undefined,
 											repeat: kind === "tournament" ? "once" : draft.repeat,
 											endDate: undefined,
@@ -341,24 +345,30 @@ export const EventEditor = ({
 						<RecurrencePreview
 							draft={draft}
 							onChange={setDraft}
-							creating={!event}
+							creating={!event && practiceEvent(draft)}
 						/>
 					) : undefined}
 					{draft.kind === "tournament" ? (
 						<TournamentOptions draft={draft} onChange={setDraft} />
-					) : (
+					) : practiceEvent(draft) ? (
 						<EventPartsEditor draft={draft} onChange={setDraft} />
+					) : (
+						<EventTimeFields draft={draft} onChange={setDraft} />
 					)}
 					<Surface header={<Text variant="h4">Location</Text>}>
 						<Stack gap="sm">
-							{!data.venues?.length ? (
+							{practiceEvent(draft) && !data.venues?.length ? (
 								<Text variant="caption" tone="secondary">
 									Configure venues in Club settings before creating an event.
 								</Text>
 							) : undefined}
-							{draft.kind === "tournament" ? (
+							{!practiceEvent(draft) ? (
 								<Field
-									label="Venue and city"
+									label={
+										draft.kind === "tournament"
+											? "Venue and city"
+											: "Location or meeting link"
+									}
 									value={draft.venue}
 									onValueChange={(venue): void => setDraft({ ...draft, venue })}
 								/>

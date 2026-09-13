@@ -174,6 +174,7 @@ export const reduceMessages = (
 						id: action.id,
 						title: action.title.trim(),
 						subtitle: "Direct message",
+						kind: "direct",
 						accountIds: [account.id, action.recipientId],
 					},
 				],

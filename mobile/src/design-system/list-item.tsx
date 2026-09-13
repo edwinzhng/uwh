@@ -10,7 +10,9 @@ import { corners, geometry, space } from "./tokens";
 
 type Props = {
 	title: string;
+	titleAccessory?: ReactNode;
 	description?: string;
+	descriptionItalic?: boolean;
 	descriptionLines?: 1 | 2 | 3;
 	accessibilityLabel?: string;
 	icon?: IconName;
@@ -23,7 +25,9 @@ type Props = {
 };
 export const ListItem = ({
 	title,
+	titleAccessory,
 	description,
+	descriptionItalic,
 	descriptionLines,
 	accessibilityLabel,
 	icon,
@@ -45,9 +49,21 @@ export const ListItem = ({
 				<Icon name={icon} tone="secondary" />
 			) : undefined}
 			<Stack gap="none" grow>
-				<Text variant="label">{title}</Text>
+				{titleAccessory ? (
+					<Row gap="xs" wrap>
+						<Text variant="label">{title}</Text>
+						{titleAccessory}
+					</Row>
+				) : (
+					<Text variant="label">{title}</Text>
+				)}
 				{description ? (
-					<Text variant="small" tone="secondary" lines={descriptionLines}>
+					<Text
+						variant="small"
+						tone="secondary"
+						lines={descriptionLines}
+						italic={descriptionItalic}
+					>
 						{description}
 					</Text>
 				) : undefined}

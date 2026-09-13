@@ -55,6 +55,7 @@ const rangeEvents = async (
 				q.and(
 					q.eq(q.field("value.cancelled"), false),
 					q.neq(q.field("value.kind"), "social"),
+					q.neq(q.field("value.kind"), "meeting"),
 				),
 			)
 			.take(501);
@@ -68,6 +69,7 @@ const rangeEvents = async (
 				(value.seasonId ?? defaultSeasonId) === seasonId &&
 				!value.cancelled &&
 				value.kind !== "social" &&
+				value.kind !== "meeting" &&
 				clubTimestamp(value.endDate ?? value.date, value.end, value.timeZone) <=
 					Date.now(),
 		)

@@ -1,58 +1,127 @@
 import { useMutation } from "convex/react";
 import { useSetAtom } from "jotai";
-import type { ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { previewDataAtom, useApp } from "../demo/app-state";
-import { Select, Stack, Text } from "../design-system";
+import { Button, Dialog, Field, Select, Stack, Text } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import { clubTimestamp } from "../domain/event-time";
-import { useTask } from "./use-task";
+import { useFormTask } from "./use-form-task";
 
-type Props = { event: ClubEvent; personId: string; unavailable: boolean };
+type Props = {
+	event: ClubEvent;
+	personId: string;
+	unavailable: boolean;
+	hideLabel?: boolean;
+};
+type AbsenceChange = {
+	eventId: string;
+	personId: string;
+	unavailable: boolean;
+	reason?: string;
+};
 const Control = ({
 	event,
 	personId,
 	unavailable,
+	hideLabel,
 	save,
-}: Props & {
-	save: (args: {
-		eventId: string;
-		personId: string;
-		unavailable: boolean;
-	}) => Promise<void>;
-}): ReactElement => {
+}: Props & { save: (args: AbsenceChange) => Promise<void> }): ReactElement => {
 	const { data } = useApp();
-	const task = useTask();
+	const task = useFormTask();
+	const current = data.responses.find(
+		(entry) => entry.eventId === event.id && entry.personId === personId,
+	);
+	const [open, setOpen] = useState(false);
+	const [reason, setReason] = useState(current?.absenceReason ?? "");
+	const scheduled =
+		event.opensAt !== undefined &&
+		event.opensAt > Date.now() &&
+		current?.response !== "going" &&
+		!unavailable;
+	const locked =
+		event.cancelled ||
+		clubTimestamp(event.date, event.end, event.timeZone ?? data.timeZone) <=
+			Date.now();
 	return (
 		<Stack gap="xs">
 			<Select
-				label="Series attendance"
-				value={unavailable ? "unavailable" : "expected"}
-				isDisabled={
-					task.busy ||
-					event.cancelled ||
-					clubTimestamp(
-						event.date,
-						event.end,
-						event.timeZone ?? data.timeZone,
-					) <= Date.now()
+				compact={hideLabel}
+				hideLabel={hideLabel}
+				label={`${data.members.find((person) => person.id === personId)?.name ?? "Player"} · Attendance`}
+				value={
+					scheduled ? "scheduled" : unavailable ? "unavailable" : "expected"
 				}
+				isDisabled={task.busy || locked || scheduled}
 				options={[
-					{ value: "expected", label: "Expected · Series member" },
-					{ value: "unavailable", label: "Can’t attend this session" },
+					...(scheduled
+						? [
+								{
+									value: "scheduled",
+									label: "Invited when registration opens",
+									isDisabled: true,
+								},
+							]
+						: []),
+					{ value: "expected", label: "Going", tone: "success" },
+					{ value: "unavailable", label: "Not going", tone: "danger" },
 				]}
 				onValueChange={(value): void => {
-					if (value)
-						void task.run(async () =>
-							save({
-								eventId: event.id,
-								personId,
-								unavailable: value === "unavailable",
-							}),
+					if (value === "unavailable") {
+						task.clear();
+						setReason(current?.absenceReason ?? "");
+						setOpen(true);
+					} else if (value === "expected")
+						void task.run(
+							async (): Promise<void> =>
+								save({ eventId: event.id, personId, unavailable: false }),
 						);
 				}}
 			/>
-			{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
+			<Dialog
+				title="Not going"
+				isOpen={open}
+				onOpenChange={(value): void => {
+					if (!task.busy) setOpen(value);
+				}}
+				footer={
+					<Button
+						label="Save response"
+						isLoading={task.busy}
+						onPress={(): void => {
+							void task.submit(
+								() =>
+									!reason.trim() || reason.trim().length > 500
+										? "Add a reason (up to 500 characters)."
+										: undefined,
+								async (): Promise<void> => {
+									await save({
+										eventId: event.id,
+										personId,
+										unavailable: true,
+										reason: reason.trim(),
+									});
+									setOpen(false);
+								},
+							);
+						}}
+					/>
+				}
+			>
+				<Stack>
+					<Text>Your coach can see this reason.</Text>
+					<Field
+						label="Reason for not going"
+						value={reason}
+						onValueChange={setReason}
+						multiline
+					/>
+					{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
+				</Stack>
+			</Dialog>
+			{!open && task.error ? (
+				<Text tone="danger">{task.error}</Text>
+			) : undefined}
 		</Stack>
 	);
 };
@@ -63,7 +132,8 @@ const LiveControl = (props: Props): ReactElement => {
 			event={props.event}
 			personId={props.personId}
 			unavailable={props.unavailable}
-			save={async (args) => {
+			hideLabel={props.hideLabel}
+			save={async (args): Promise<void> => {
 				await save(args);
 			}}
 		/>
@@ -76,7 +146,8 @@ const PreviewControl = (props: Props): ReactElement => {
 			event={props.event}
 			personId={props.personId}
 			unavailable={props.unavailable}
-			save={async (args) => {
+			hideLabel={props.hideLabel}
+			save={async (args): Promise<void> => {
 				setData((data) => ({
 					...data,
 					responses: data.responses.map((response) =>
@@ -85,6 +156,7 @@ const PreviewControl = (props: Props): ReactElement => {
 							? {
 									...response,
 									response: args.unavailable ? "unavailable" : "going",
+									absenceReason: args.unavailable ? args.reason : undefined,
 								}
 							: response,
 					),
@@ -99,11 +171,13 @@ export const SeriesResponseControl = (props: Props): ReactElement =>
 			event={props.event}
 			personId={props.personId}
 			unavailable={props.unavailable}
+			hideLabel={props.hideLabel}
 		/>
 	) : (
 		<PreviewControl
 			event={props.event}
 			personId={props.personId}
 			unavailable={props.unavailable}
+			hideLabel={props.hideLabel}
 		/>
 	);

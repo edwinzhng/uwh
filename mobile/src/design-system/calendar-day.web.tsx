@@ -79,7 +79,11 @@ export const CalendarDay = ({
 					height: space.xxs,
 					width: space.xxs,
 					borderRadius: corners.pill,
-					background: count ? foreground : "transparent",
+					background: count
+						? selected
+							? theme.accent.foreground
+							: theme.accent.background
+						: "transparent",
 				}}
 			/>
 		</button>

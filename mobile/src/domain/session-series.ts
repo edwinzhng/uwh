@@ -12,7 +12,7 @@ export type SessionSeries = {
 	seriesIds: string[];
 	title: string;
 	capacity?: number;
-	waitlist: boolean;
+	waitlist?: boolean;
 	enrollments: SeriesEnrollment[];
 };
 export const enrollmentApplies = (
@@ -63,8 +63,10 @@ export const syncSeriesResponses = (
 	today: string,
 	now?: number,
 ): EventResponse[] => {
+	const activationTime = now ?? Date.now();
 	const sessions = seriesEvents(series, events).filter(
 		(event) =>
+			!event.cancelled &&
 			event.date >= today &&
 			(now === undefined ||
 				clubTimestamp(event.date, event.end, event.timeZone) > now),
@@ -94,15 +96,27 @@ export const syncSeriesResponses = (
 						event.eligiblePersonIds.includes(personId)),
 			);
 			if (!expected && !existing?.seriesExpected) return result;
+			const opened =
+				event.opensAt === undefined
+					? event.signup !== "scheduled"
+					: event.opensAt <= activationTime;
+			const activated = expected && opened;
 			const response: EventResponse = {
 				...existing,
 				eventId: event.id,
 				personId,
 				seriesExpected: expected || undefined,
+				seriesInvitedAt: activated
+					? (existing?.seriesInvitedAt ?? activationTime)
+					: existing?.seriesInvitedAt,
 				response: expected
-					? existing?.seriesExpected
-						? existing.response
-						: "going"
+					? existing?.response === "unavailable" && existing.seriesExpected
+						? "unavailable"
+						: activated
+							? "going"
+							: existing?.seriesExpected && existing.response === "going"
+								? "going"
+								: "unanswered"
 					: existing?.response === "going"
 						? "unanswered"
 						: (existing?.response ?? "unanswered"),

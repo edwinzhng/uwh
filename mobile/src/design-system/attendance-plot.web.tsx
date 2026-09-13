@@ -91,7 +91,7 @@ export const AttendanceChart = ({
 					/>
 					<Bar
 						dataKey="unmarked"
-						name="Unmarked"
+						name="Not marked"
 						stackId="attendance"
 						fill={theme.colorScales.pending.border}
 						radius={[corners.item, corners.item, 0, 0]}

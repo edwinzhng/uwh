@@ -92,7 +92,7 @@ const AttendanceContent = ({
 					)}
 					<Text variant="caption" tone="secondary">
 						{summary.recorded} of {summary.total} practices recorded ·{" "}
-						{summary.total - summary.recorded} unmarked
+						{summary.total - summary.recorded} not marked
 					</Text>
 					<AttendanceRecords
 						key={member.id + seasonId}

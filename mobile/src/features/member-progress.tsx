@@ -13,7 +13,6 @@ import { FeedbackEditor } from "./feedback-editor";
 import { FeedbackList } from "./feedback-list";
 import { GoalEditor } from "./goal-editor";
 import { GoalRequest } from "./goal-request";
-import { MemberAttendance } from "./member-attendance";
 
 export const MemberProgress = ({
 	member,
@@ -79,8 +78,6 @@ export const MemberProgress = ({
 					</Stack>
 				</Surface>
 			</Stack>
-
-			<MemberAttendance key={member.id} member={member} />
 		</Stack>
 	);
 };

@@ -6,9 +6,11 @@ import { reactionChoices } from "../domain/messaging";
 
 export const MessageReactions = ({
 	message,
+	picker = false,
 }: {
 	message: Message;
-}): ReactElement => {
+	picker?: boolean;
+}): ReactElement | undefined => {
 	const { account, dispatch } = useApp();
 	const [pending, setPending] = useState(false);
 	const react = async (emoji: string): Promise<void> => {
@@ -24,6 +26,16 @@ export const MessageReactions = ({
 		});
 		setPending(false);
 	};
+	if (picker)
+		return (
+			<ReactionPicker
+				isDisabled={pending}
+				onSelect={(emoji): void => {
+					void react(emoji);
+				}}
+			/>
+		);
+	if (!message.reactions?.length) return undefined;
 	return (
 		<Row gap="xxs" wrap>
 			{message.reactions?.map((reaction) => {
@@ -42,12 +54,6 @@ export const MessageReactions = ({
 					/>
 				);
 			})}
-			<ReactionPicker
-				isDisabled={pending}
-				onSelect={(emoji): void => {
-					void react(emoji);
-				}}
-			/>
 		</Row>
 	);
 };

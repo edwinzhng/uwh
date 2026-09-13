@@ -50,6 +50,7 @@ export const eventDraftValue = v.object({
 		v.literal("training"),
 		v.literal("hockey"),
 		v.literal("social"),
+		v.literal("meeting"),
 		v.literal("tournament"),
 	),
 	repeatInterval: v.optional(v.number()),

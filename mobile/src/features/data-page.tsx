@@ -1,15 +1,17 @@
-import type {
-	PaginatedQueryArgs,
-	PaginatedQueryItem,
-	PaginatedQueryReference,
+import {
+	type PaginatedQueryArgs,
+	type PaginatedQueryItem,
+	type PaginatedQueryReference,
+	useQueries,
 } from "convex/react";
-import type {
-	FunctionReference,
-	PaginationOptions,
-	PaginationResult,
+import {
+	type FunctionReference,
+	getFunctionName,
+	type PaginationOptions,
+	type PaginationResult,
 } from "convex/server";
 import { type ReactElement, type ReactNode, useState } from "react";
-import { useRetainedQuery } from "../backend/use-retained-query";
+import { shouldRestartPagination } from "../backend/pagination-recovery";
 import { useApp } from "../demo/app-state";
 import { Button, LoadingContent, Row, Text } from "../design-system";
 
@@ -63,13 +65,28 @@ const LiveDataPage = <Query extends PaginatedQueryReference>({
 		{ paginationOpts: PaginationOptions },
 		PaginationResult<PaginatedQueryItem<Query>>
 	> = config.query;
-	const result = useRetainedQuery(reference, {
-		...config.args,
-		paginationOpts: {
-			numItems: config.size ?? 30,
-			cursor: cursors.at(-1) ?? null,
+	const cursor = cursors.at(-1) ?? null;
+	const response:
+		| PaginationResult<PaginatedQueryItem<Query>>
+		| Error
+		| undefined = useQueries({
+		page: {
+			query: reference,
+			args: {
+				...config.args,
+				paginationOpts: {
+					numItems: config.size ?? 30,
+					cursor,
+				},
+			},
 		},
-	});
+	}).page;
+	if (shouldRestartPagination(response, cursor)) {
+		setCursors([null]);
+		return <LoadingContent />;
+	}
+	if (response instanceof Error) throw response;
+	const result = response;
 	return (
 		<>
 			{result ? children(result.page) : <LoadingContent />}
@@ -120,8 +137,13 @@ export const DataPage = <Query extends PaginatedQueryReference>({
 	config,
 	children,
 }: Props<Query>): ReactElement => {
-	const { source } = useApp();
-	const key = JSON.stringify(config.args);
+	const { source, account } = useApp();
+	const key = JSON.stringify([
+		getFunctionName(config.query),
+		config.args,
+		config.size ?? 30,
+		account.id,
+	]);
 	return source === "convex" ? (
 		<LiveDataPage key={key} config={config}>
 			{children}

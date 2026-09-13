@@ -21,6 +21,7 @@ import {
 	reserveInvite,
 	unlinkedPerson,
 } from "./invite_helpers";
+import { claimPendingMessages } from "./pending_messages";
 
 type InviteSummary = {
 	id: Id<"clubInvites">;
@@ -294,7 +295,7 @@ export const accept = mutation({
 				"This account already belongs to a club. Sign in with a different account.",
 			);
 		const person = await unlinkedPerson(ctx, invite.clubId, invite.personId);
-		await ctx.db.insert("memberships", {
+		const membershipId = await ctx.db.insert("memberships", {
 			clubId: invite.clubId,
 			userId,
 			name: user?.name ?? person.value.name,
@@ -303,6 +304,7 @@ export const accept = mutation({
 			coachPrograms: [],
 			admin: false,
 		});
+		await claimPendingMessages(ctx, membershipId);
 		const channels = await ctx.db
 			.query("conversations")
 			.withIndex("by_club", (q) => q.eq("clubId", invite.clubId))

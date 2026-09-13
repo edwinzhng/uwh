@@ -16,6 +16,10 @@ import type {
 } from "../src/domain/app-types";
 import { visibleAppData } from "../src/domain/app-visibility";
 import { clubDate, clubTimestamp, eventDates } from "../src/domain/event-time";
+import {
+	eventKindsForFilter,
+	matchesEventType,
+} from "../src/domain/event-types";
 import { groupBy } from "../src/domain/group-by";
 import { relevantHouseholdEvent } from "../src/domain/home";
 import type { Doc } from "./_generated/dataModel";
@@ -23,6 +27,16 @@ import { type QueryCtx, query } from "./_generated/server";
 import { eventRows } from "./action_data";
 import { loadData } from "./data";
 import { accountFor, memberFor } from "./identity";
+
+const eventTypeValue = v.optional(
+	v.union(
+		v.literal("all"),
+		v.literal("practice"),
+		v.literal("tournament"),
+		v.literal("social"),
+		v.literal("meeting"),
+	),
+);
 
 const empty = <T>(): PaginationResult<T> => ({
 	page: [],
@@ -38,6 +52,7 @@ export type ScheduleEntry = { event: ClubEvent; responses: EventResponse[] };
 export const schedule = query({
 	args: {
 		audience: v.optional(v.union(v.literal("household"), v.literal("all"))),
+		eventType: eventTypeValue,
 		view: v.union(
 			v.literal("upcoming"),
 			v.literal("past"),
@@ -51,7 +66,16 @@ export const schedule = query({
 	},
 	handler: async (
 		ctx,
-		{ view, date, season, now, period, paginationOpts, audience },
+		{
+			view,
+			date,
+			season,
+			now,
+			period,
+			paginationOpts,
+			audience,
+			eventType = "all",
+		},
 	): Promise<PaginationResult<ScheduleEntry>> => {
 		const member = await memberFor(ctx);
 		if (!member) return empty();
@@ -60,11 +84,11 @@ export const schedule = query({
 		const upcomingFrom = today.subtract({ days: 14 }).toString();
 		const pastThrough = today.add({ days: 2 }).toString();
 		const filtered =
-			season !== "all" && season !== "2026-2027"
-				? ctx.db.query("events").withIndex("by_season_date", (q) => {
+			eventType !== "all" && eventType !== "practice"
+				? ctx.db.query("events").withIndex("by_club_kind_date", (q) => {
 						const range = q
 							.eq("clubId", member.clubId)
-							.eq("value.seasonId", season);
+							.eq("value.kind", eventType);
 						return view === "calendar"
 							? range
 									.gte(
@@ -78,10 +102,11 @@ export const schedule = query({
 								? range.lte("value.date", pastThrough)
 								: range.gte("value.date", upcomingFrom);
 					})
-				: ctx.db
-						.query("events")
-						.withIndex("by_date", (q) => {
-							const range = q.eq("clubId", member.clubId);
+				: season !== "all" && season !== "2026-2027"
+					? ctx.db.query("events").withIndex("by_season_date", (q) => {
+							const range = q
+								.eq("clubId", member.clubId)
+								.eq("value.seasonId", season);
 							return view === "calendar"
 								? range
 										.gte(
@@ -95,17 +120,57 @@ export const schedule = query({
 									? range.lte("value.date", pastThrough)
 									: range.gte("value.date", upcomingFrom);
 						})
-						.filter((q) =>
-							season === "all"
-								? q.eq(1, 1)
-								: season === "2026-2027"
-									? q.or(
-											q.eq(q.field("value.seasonId"), season),
-											q.eq(q.field("value.seasonId"), undefined),
-										)
-									: q.eq(q.field("value.seasonId"), season),
-						);
-		const result = await filtered
+					: ctx.db
+							.query("events")
+							.withIndex("by_date", (q) => {
+								const range = q.eq("clubId", member.clubId);
+								return view === "calendar"
+									? range
+											.gte(
+												"value.date",
+												Temporal.PlainDate.from(date)
+													.subtract({ days: 13 })
+													.toString(),
+											)
+											.lte("value.date", date)
+									: view === "past"
+										? range.lte("value.date", pastThrough)
+										: range.gte("value.date", upcomingFrom);
+							})
+							.filter((q) =>
+								season === "all"
+									? q.eq(1, 1)
+									: season === "2026-2027"
+										? q.or(
+												q.eq(q.field("value.seasonId"), season),
+												q.eq(q.field("value.seasonId"), undefined),
+											)
+										: q.eq(q.field("value.seasonId"), season),
+							);
+		const seasonFiltered =
+			eventType !== "all" && eventType !== "practice"
+				? filtered.filter((q) =>
+						season === "all"
+							? q.eq(1, 1)
+							: season === "2026-2027"
+								? q.or(
+										q.eq(q.field("value.seasonId"), season),
+										q.eq(q.field("value.seasonId"), undefined),
+									)
+								: q.eq(q.field("value.seasonId"), season),
+					)
+				: filtered;
+		const kindFiltered =
+			eventType === "practice"
+				? seasonFiltered.filter((q) =>
+						q.or(
+							...eventKindsForFilter(eventType).map((kind) =>
+								q.eq(q.field("value.kind"), kind),
+							),
+						),
+					)
+				: seasonFiltered;
+		const result = await kindFiltered
 			.filter((q) =>
 				audience !== "household"
 					? q.eq(1, 1)
@@ -185,6 +250,7 @@ export const schedule = query({
 export const calendar = query({
 	args: {
 		audience: v.optional(v.union(v.literal("household"), v.literal("all"))),
+		eventType: eventTypeValue,
 		from: v.string(),
 		to: v.string(),
 		season: v.string(),
@@ -193,7 +259,7 @@ export const calendar = query({
 	},
 	handler: async (
 		ctx,
-		{ from, to, season, now, period, audience },
+		{ from, to, season, now, period, audience, eventType = "all" },
 	): Promise<Record<string, number>> => {
 		const member = await memberFor(ctx);
 		if (!member) return {};
@@ -223,6 +289,7 @@ export const calendar = query({
 			.filter(
 				(row) =>
 					!row.value.cancelled &&
+					matchesEventType(row.value, eventType) &&
 					(audience !== "household" ||
 						relevantHouseholdEvent(row.value, household)) &&
 					(!period ||

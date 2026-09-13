@@ -60,7 +60,7 @@ test("Home falls back to next session and keeps tournaments separate including o
 	expect(home.nextTournament?.id).toBe("tournament");
 });
 
-test("Home relevance uses the household and program and respects restricted eligibility", (): void => {
+test("Home relevance includes all household players and respects explicit invitations", (): void => {
 	const people = householdMembers(initialAppData, primaryAccount);
 	expect(
 		people.every(
@@ -80,5 +80,31 @@ test("Home relevance uses the household and program and respects restricted elig
 			event("other-program", "2026-09-21", { program: "unrelated" }),
 			people,
 		),
-	).toBe(false);
+	).toBe(true);
+});
+
+test("household attendance explains hidden eligibility without dropping children", async (): Promise<void> => {
+	const { householdAttendanceReason } = await import("../src/domain/home");
+	const people = householdMembers(initialAppData, primaryAccount);
+	const sam = people.find((person) => person.id === "sam");
+	const mila = people.find((person) => person.id === "mila");
+	if (!sam || !mila) throw new Error("Both children must be present");
+	expect(
+		householdAttendanceReason(sam, event("club", "2026-09-21")),
+	).toBeUndefined();
+	expect(
+		householdAttendanceReason(mila, event("club", "2026-09-21")),
+	).toBeUndefined();
+	expect(
+		householdAttendanceReason(
+			mila,
+			event("youth", "2026-09-21", { program: "youth" }),
+		),
+	).toBeUndefined();
+	expect(
+		householdAttendanceReason(
+			sam,
+			event("private", "2026-09-21", { eligiblePersonIds: ["alex"] }),
+		),
+	).toBe("Not invited to this session");
 });

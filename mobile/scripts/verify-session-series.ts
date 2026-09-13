@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { Temporal } from "@js-temporal/polyfill";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import type { EventDraft } from "../src/domain/app-types";
@@ -37,13 +38,12 @@ try {
 		occurrences: 4,
 		capacity: 1,
 		committedRoster: true,
-		seriesWaitlist: true,
 	};
 	await client.mutation(api.club.apply, {
 		action: { type: "create-event", id: "mondays", draft },
 	});
 	assert.equal((await client.query(api.session_series.list, {})).length, 1);
-	await Promise.all(
+	const enrollmentResults = await Promise.allSettled(
 		["alex", "sam"].map((personId) =>
 			client.mutation(api.session_series.enroll, {
 				seriesId: "mondays",
@@ -58,11 +58,15 @@ try {
 	const committed = initial.series.enrollments.find(
 		(entry) => entry.state === "committed",
 	);
-	const waiting = initial.series.enrollments.find(
-		(entry) => entry.state === "waiting",
-	);
 	assert(committed);
-	assert(waiting);
+	assert.equal(
+		enrollmentResults.filter((result) => result.status === "rejected").length,
+		1,
+	);
+	assert.equal(initial.series.enrollments.length, 1);
+	const replacement = {
+		personId: committed.personId === "alex" ? "sam" : "alex",
+	};
 	assert.equal(
 		initial.series.enrollments.filter((entry) => entry.state === "committed")
 			.length,
@@ -72,15 +76,33 @@ try {
 	const second = initial.events.at(1);
 	assert(first);
 	assert(second);
+	await assert.rejects(
+		client.mutation(api.session_series.absence, {
+			eventId: first.id,
+			personId: committed.personId,
+			unavailable: true,
+		}),
+	);
+	await assert.rejects(
+		client.mutation(api.club.apply, {
+			action: {
+				type: "respond",
+				eventId: first.id,
+				personId: committed.personId,
+				response: "unavailable",
+			},
+		}),
+	);
 	await client.mutation(api.session_series.absence, {
 		eventId: first.id,
 		personId: committed.personId,
 		unavailable: true,
+		reason: "Family commitment",
 	});
 	await assert.rejects(
 		client.mutation(api.session_series.enroll, {
 			seriesId: "mondays",
-			personId: waiting.personId,
+			personId: replacement.personId,
 			start: draft.date,
 			promote: true,
 		}),
@@ -142,7 +164,7 @@ try {
 	);
 	await client.mutation(api.session_series.enroll, {
 		seriesId: "mondays",
-		personId: waiting.personId,
+		personId: replacement.personId,
 		start: second.date,
 		promote: true,
 	});
@@ -165,7 +187,7 @@ try {
 	assert.equal(
 		final?.data.responses.find(
 			(entry) =>
-				entry.eventId === latest.id && entry.personId === waiting.personId,
+				entry.eventId === latest.id && entry.personId === replacement.personId,
 		)?.seriesExpected,
 		true,
 	);
@@ -176,7 +198,7 @@ try {
 		),
 	);
 	console.log(
-		"Session series passed: atomic roster creation, concurrent capacity/waitlist, absence preserves term place, restoration, effective end/join, following recurrence expansion and unauthenticated access.",
+		"Session series passed: atomic roster creation, concurrent full-roster rejection, absence preserves term place, restoration, effective end/join, following recurrence expansion and unauthenticated access.",
 	);
 
 	await client.mutation(api.club.apply, {
@@ -290,6 +312,44 @@ try {
 			coachPrograms: [],
 			admin: false,
 		});
+		await client.mutation(api.session_series.absence, {
+			eventId: first.id,
+			personId: committed.personId,
+			unavailable: true,
+			reason: "Private family appointment",
+		});
+		const coachView = await client.query(api.club.current, {
+			screen: "session",
+			id: first.id,
+		});
+		assert.equal(
+			coachView?.data.responses.find(
+				(entry) => entry.personId === committed.personId,
+			)?.absenceReason,
+			"Private family appointment",
+		);
+		const otherView = await memberClient.query(api.club.current, {
+			screen: "session",
+			id: first.id,
+		});
+		assert.equal(
+			otherView?.data.responses.find(
+				(entry) => entry.personId === committed.personId,
+			)?.absenceReason,
+			undefined,
+		);
+		const otherSchedule = await memberClient.query(api.pages.schedule, {
+			view: "calendar",
+			date: first.date,
+			season: "all",
+			now: Date.now(),
+			paginationOpts: { cursor: null, numItems: 40 },
+		});
+		assert(
+			otherSchedule.page
+				.flatMap((entry) => entry.responses)
+				.every((entry) => entry.absenceReason === undefined),
+		);
 		await assert.rejects(
 			memberClient.mutation(api.session_series.guest, {
 				eventId: first.id,
@@ -302,6 +362,61 @@ try {
 			password: memberPassword,
 		});
 	}
+	const openingAt = (Math.floor(Date.now() / 60000) + 1) * 60000;
+	const localOpening =
+		Temporal.Instant.fromEpochMilliseconds(openingAt).toZonedDateTimeISO(
+			"Etc/GMT+6",
+		);
+	const scheduledDate = localOpening.toPlainDate().add({ weeks: 1 }).toString();
+	await client.mutation(api.club.apply, {
+		action: {
+			type: "create-event",
+			id: "opening-test",
+			draft: {
+				...draft,
+				date: scheduledDate,
+				capacity: 2,
+				occurrences: 2,
+				registrationOpen: {
+					weeksBefore: 1,
+					weekday: localOpening.dayOfWeek,
+					time: localOpening.toPlainTime().toString().slice(0, 5),
+				},
+			},
+		},
+	});
+	await client.mutation(api.session_series.enroll, {
+		seriesId: "opening-test",
+		personId: "sam",
+		start: scheduledDate,
+	});
+	const beforeOpening = await client.query(api.club.current, {
+		screen: "session",
+		id: "opening-test-0",
+	});
+	assert.equal(
+		beforeOpening?.data.responses.find((entry) => entry.personId === "sam")
+			?.response,
+		"unanswered",
+	);
+	console.log("Checking automatic registration opening at next minute.");
+	await Bun.sleep(Math.max(0, openingAt - Date.now()) + 1500);
+	const afterOpening = await client.query(api.club.current, {
+		screen: "session",
+		id: "opening-test-0",
+	});
+	assert.equal(
+		afterOpening?.data.responses.find((entry) => entry.personId === "sam")
+			?.response,
+		"going",
+	);
+	assert(
+		afterOpening?.data.responses.find((entry) => entry.personId === "sam")
+			?.seriesInvitedAt,
+	);
+	console.log(
+		"Scheduled Going activation, required reasons, bypass prevention and coach-only reason visibility passed.",
+	);
 	console.log(
 		"Admin guest checks passed: add/remove, capacity enforcement, no series enrollment changes, non-admin rejection.",
 	);

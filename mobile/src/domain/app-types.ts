@@ -48,7 +48,7 @@ export type ClubEvent = {
 	end: string;
 	venue: string;
 	program: string;
-	kind: "training" | "hockey" | "social" | "tournament";
+	kind: "training" | "hockey" | "social" | "tournament" | "meeting";
 	signup: "open" | "scheduled" | "closed";
 	repeatInterval?: number;
 	repeatUntil?: string;
@@ -67,6 +67,8 @@ export type ClubEvent = {
 };
 export type EventResponse = {
 	seriesExpected?: boolean;
+	seriesInvitedAt?: number;
+	absenceReason?: string;
 	partIds?: string[];
 	partAttendance?: { partId: string; attendance: Attendance }[];
 	eventId: string;
@@ -95,6 +97,8 @@ export type CoachingFeedback = {
 	date: string;
 };
 export type Conversation = {
+	participantPersonIds?: string[];
+	kind?: "direct" | "group";
 	eventId?: string;
 	id: string;
 	title: string;

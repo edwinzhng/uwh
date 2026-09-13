@@ -1,6 +1,5 @@
-import { useSetAtom } from "jotai";
 import type { ReactElement } from "react";
-import { selectedPersonAtom, useActivePerson, useApp } from "../demo/app-state";
+import { useApp } from "../demo/app-state";
 import {
 	List,
 	ListItem,
@@ -10,11 +9,10 @@ import {
 	Text,
 } from "../design-system";
 import { householdMembers } from "../domain/home";
+import { HouseholdInfoAction } from "./household-info-action";
 
 export const AccountHousehold = (): ReactElement => {
 	const { data, account } = useApp();
-	const active = useActivePerson();
-	const select = useSetAtom(selectedPersonAtom);
 	return (
 		<Stack gap="sm">
 			<SectionHeading size="small">Household access</SectionHeading>
@@ -24,9 +22,11 @@ export const AccountHousehold = (): ReactElement => {
 						<ListItem
 							key={person.id}
 							title={person.name}
-							description={`${person.id === account.personId ? "You" : "Linked child"}${person.id === active.id ? " · Selected" : ""}`}
+							description={
+								person.id === account.personId ? "You" : "Linked child"
+							}
 							avatar={person.name}
-							onPress={(): void => select(person.id)}
+							trailing={<HouseholdInfoAction person={person} />}
 						/>
 					))}
 				</List>

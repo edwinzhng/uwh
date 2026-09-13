@@ -135,6 +135,8 @@ export const importRecord = (
 				"training",
 				"hockey",
 				"social",
+				"meeting",
+				"tournament",
 			]),
 			description: "",
 			program: "club",

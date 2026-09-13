@@ -1,14 +1,6 @@
 import { type ReactElement, useRef, useState } from "react";
 import { newId, useApp } from "../demo/app-state";
-import {
-	Button,
-	Field,
-	IconButton,
-	Row,
-	Stack,
-	Surface,
-	Text,
-} from "../design-system";
+import { Button, Field, IconButton, Row, Stack, Text } from "../design-system";
 import type { Message } from "../domain/app-types";
 import { imageLimits } from "../domain/messaging";
 import { MessagePhoto } from "./message-photo";
@@ -78,112 +70,111 @@ export const MessageComposer = ({
 		working.current = false;
 	};
 	return (
-		<Surface>
-			<Stack gap="sm">
-				{replyToId ? (
-					<Stack gap="xxs">
-						<Row justify="between">
-							<Text variant="caption" tone="secondary">
-								Replying to {reply?.author ?? "message"}
-							</Text>
-							<IconButton
-								label="Cancel reply"
-								icon="close"
-								onPress={onClearReply}
-								isDisabled={sending}
-							/>
-						</Row>
-						<MessageQuote message={reply} />
-					</Stack>
-				) : undefined}
-				<Field
-					label={`Message as ${account.name}`}
-					value={draft}
-					onValueChange={setDraft}
-					placeholder="Write a message…"
-					multiline
-					isDisabled={sending || dictating}
-					maxLength={5000}
-					focusKey={replyToId}
-					error={
-						draft.length > 5000
-							? "Keep messages under 5,000 characters."
-							: undefined
-					}
-				/>
-				{dictating || dictation.error ? (
-					<Text
-						variant="caption"
-						tone={dictation.error ? "danger" : "secondary"}
-					>
-						{dictation.error ??
-							(dictation.phase === "starting"
-								? "Connecting microphone…"
-								: dictation.phase === "stopping"
-									? "Finishing…"
-									: "Listening… Tap stop when done.")}
-					</Text>
-				) : undefined}
-				{photos.photos.length ? (
-					<Row wrap align="start">
-						{photos.photos.map((image) => (
-							<MessagePhoto
-								key={image.id}
-								image={image}
-								disabled={sending || photos.pending}
-								onRemove={(): void => {
-									void photos.remove(image.id);
-								}}
-							/>
-						))}
+		<Stack gap="sm">
+			{replyToId ? (
+				<Stack gap="xxs">
+					<Row justify="between">
+						<Text variant="caption" tone="secondary">
+							Replying to {reply?.author ?? "message"}
+						</Text>
+						<IconButton
+							label="Cancel reply"
+							icon="close"
+							onPress={onClearReply}
+							isDisabled={sending}
+						/>
 					</Row>
-				) : undefined}
-				{photos.error ? (
-					<Text variant="caption" tone="danger">
-						{photos.error}
-					</Text>
-				) : undefined}
-				<Row justify="between" gap="xs" wrap>
-					<Row gap="xxs">
-						<Button
-							label="Photo"
-							prefix="image"
-							variant="ghost"
-							isLoading={photos.pending}
-							isDisabled={
-								sending || photos.photos.length >= imageLimits.perMessage
-							}
-							onPress={(): void => {
-								void photos.pick();
+					<MessageQuote message={reply} />
+				</Stack>
+			) : undefined}
+			<Field
+				label={`Message as ${account.name}`}
+				value={draft}
+				onValueChange={setDraft}
+				placeholder="Write a message…"
+				multiline
+				rows={2}
+				onSubmit={(): void => {
+					void send();
+				}}
+				isDisabled={sending || dictating}
+				maxLength={5000}
+				focusKey={replyToId}
+				error={
+					draft.length > 5000
+						? "Keep messages under 5,000 characters."
+						: undefined
+				}
+			/>
+			{dictating || dictation.error ? (
+				<Text variant="caption" tone={dictation.error ? "danger" : "secondary"}>
+					{dictation.error ??
+						(dictation.phase === "starting"
+							? "Connecting microphone…"
+							: dictation.phase === "stopping"
+								? "Finishing…"
+								: "Listening… Tap stop when done.")}
+				</Text>
+			) : undefined}
+			{photos.photos.length ? (
+				<Row wrap align="start">
+					{photos.photos.map((image) => (
+						<MessagePhoto
+							key={image.id}
+							image={image}
+							disabled={sending || photos.pending}
+							onRemove={(): void => {
+								void photos.remove(image.id);
 							}}
 						/>
-						<Button
-							label={dictating ? "Stop dictation" : "Dictate message"}
-							icon={dictating ? "stop" : "microphone"}
-							variant={dictating ? "danger" : "ghost"}
-							isDisabled={sending || dictation.phase === "stopping"}
-							isSelected={dictating}
-							onPress={dictating ? dictation.stop : dictation.start}
-						/>
-					</Row>
+					))}
+				</Row>
+			) : undefined}
+			{photos.error ? (
+				<Text variant="caption" tone="danger">
+					{photos.error}
+				</Text>
+			) : undefined}
+			<Row justify="between" gap="xs" wrap>
+				<Row gap="xxs">
 					<Button
-						label="Send"
-						prefix="arrowRight"
-						isLoading={sending}
-						validationError={
-							photos.pending ||
-							dictating ||
-							draft.length > 5000 ||
-							(!draft.trim() && !photos.photos.length)
-								? "Check the required fields"
-								: undefined
+						label="Photo"
+						prefix="image"
+						variant="ghost"
+						isLoading={photos.pending}
+						isDisabled={
+							sending || photos.photos.length >= imageLimits.perMessage
 						}
 						onPress={(): void => {
-							void send();
+							void photos.pick();
 						}}
 					/>
+					<Button
+						label={dictating ? "Stop dictation" : "Dictate message"}
+						icon={dictating ? "stop" : "microphone"}
+						variant={dictating ? "danger" : "ghost"}
+						isDisabled={sending || dictation.phase === "stopping"}
+						isSelected={dictating}
+						onPress={dictating ? dictation.stop : dictation.start}
+					/>
 				</Row>
-			</Stack>
-		</Surface>
+				<Button
+					label="Send"
+					prefix="arrowRight"
+					isLoading={sending}
+					validationError={
+						photos.pending ||
+						dictating ||
+						draft.length > 5000 ||
+						(!draft.trim() && !photos.photos.length)
+							? "Check the required fields"
+							: undefined
+					}
+					onPress={(): void => {
+						void send();
+					}}
+				/>
+			</Row>
+		</Stack>
 	);
 };

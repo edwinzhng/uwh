@@ -79,9 +79,13 @@ export const PopupStyles = (): ReactElement => {
 .club-combo-input::placeholder { color:${theme.text.secondary}; }
 .club-combo-actions { display:flex; align-items:center; gap:0; margin-block:${-(control.actionSize - control.typography.lineHeight) / 2}px; margin-right:${-(control.actionSize - control.icon) / 2}px; }
 .club-combo-action { display:flex; flex-shrink:0; align-items:center; justify-content:center; width:${control.actionSize}px; height:${control.actionSize}px; padding:0; border:0; border-radius:${corners.item}px; color:${theme.text.secondary}; background:transparent; cursor:pointer; }
+@media (hover: hover) and (pointer: fine) { .club-message-row:not(:hover):not(:focus-within) button[aria-label="Add reaction"]:not([aria-expanded="true"]) { opacity:0; pointer-events:none; } }
 .club-combo-action:hover:not(:disabled) { background:${theme.background.secondary}; }
 .club-combo-action:focus-visible { outline:${geometry.focus}px solid ${theme.focus}; outline-offset:-${geometry.focus}px; }
 @media ${control.touchQuery} { .club-picker-trigger, .club-combo, .club-popup-item { min-height:${geometry.touch}px; } .club-combo-action { width:${geometry.touch}px; height:${geometry.touch}px; } .club-combo-actions { margin-block:${-(geometry.touch - control.typography.lineHeight) / 2}px; margin-right:${-(geometry.touch - control.icon) / 2}px; } }
+.club-combo-action.club-reaction-trigger { position:relative; width:${typography.caption.lineHeight}px; height:${typography.caption.lineHeight}px; line-height:${typography.caption.lineHeight}px; }
+.club-reaction-trigger::after { content:""; position:absolute; inset:${-(control.actionSize - typography.caption.lineHeight) / 2}px; }
+@media ${control.touchQuery} { .club-reaction-trigger::after { inset:${-(geometry.touch - typography.caption.lineHeight) / 2}px; } }
 .club-person-trigger { border:0; padding:${space.xxs}px; border-radius:${corners.control}px; background:transparent; cursor:pointer; color:${theme.text.primary}; }
 @media (min-width:${geometry.wide}px) { .club-person-trigger { width:100%; text-align:left; } }
 .club-person-trigger:hover, .club-person-trigger[data-popup-open] { background:${theme.background.hover}; }

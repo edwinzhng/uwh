@@ -13,6 +13,7 @@ import { loadData, saveData } from "./data";
 import { accountFor, getAuthUserId } from "./identity";
 import { applyMessage } from "./message_commands";
 import { notifyChanges } from "./notification_events";
+import { claimPendingMessages } from "./pending_messages";
 import { screenData } from "./screen_data";
 import { syncEditedSeries } from "./session_series";
 import { scheduleSignup } from "./signup";
@@ -166,7 +167,7 @@ export const apply = mutation({
 					seriesIds: [action.id],
 					title: action.draft.title.trim(),
 					capacity: action.draft.capacity,
-					waitlist: action.draft.seriesWaitlist ?? true,
+					waitlist: false,
 					enrollments: [],
 				});
 		}
@@ -238,8 +239,8 @@ export const create = mutation({
 					conversations: [
 						{
 							id: "club",
-							title: "Club room",
-							subtitle: "Club members",
+							title: "General",
+							subtitle: "All club members",
 							accountIds: [userId],
 						},
 					],
@@ -349,6 +350,7 @@ export const setAccess = mutation({
 			coachPrograms: [...new Set(args.coachPrograms)],
 			admin: args.admin,
 		});
+		await claimPendingMessages(ctx, target._id);
 		const personalPrograms = data.members
 			.filter(
 				(entry) =>
@@ -362,6 +364,7 @@ export const setAccess = mutation({
 		for (const channel of channels) {
 			if (channel.value.id !== "club" && channel.value.id !== "youth") continue;
 			const allowed =
+				channel.value.id === "club" ||
 				personalPrograms.includes(channel.value.id) ||
 				args.coachPrograms.includes(channel.value.id);
 			const others = channel.value.accountIds.filter(
@@ -425,7 +428,7 @@ export const approveRequest = mutation({
 			)
 		)
 			throw new Error("This account or profile is already linked.");
-		await ctx.db.insert("memberships", {
+		const membershipId = await ctx.db.insert("memberships", {
 			clubId: membership.clubId,
 			userId: request.userId,
 			name: request.name,
@@ -434,6 +437,7 @@ export const approveRequest = mutation({
 			coachPrograms: [...new Set(args.coachPrograms)],
 			admin: args.admin,
 		});
+		await claimPendingMessages(ctx, membershipId);
 		const channels = await ctx.db
 			.query("conversations")
 			.withIndex("by_club", (q) => q.eq("clubId", membership.clubId))
@@ -443,9 +447,7 @@ export const approveRequest = mutation({
 		);
 		for (const channel of channels) {
 			if (
-				(channel.value.id === "club" &&
-					(people.some((entry) => entry.programs.includes("club")) ||
-						args.coachPrograms.includes("club"))) ||
+				channel.value.id === "club" ||
 				(channel.value.id === "youth" &&
 					(people.some((entry) => entry.programs.includes("youth")) ||
 						args.coachPrograms.includes("youth")))

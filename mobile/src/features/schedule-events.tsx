@@ -1,19 +1,16 @@
-import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import {
 	Dialog,
 	EmptyState,
-	EventActions,
-	EventCard,
 	List,
 	ListItem,
 	Stack,
 	Text,
 } from "../design-system";
-import { formatDate, formatTime } from "../domain/app-rules";
+import { formatDate } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
-import { ResponseControl } from "./response-control";
+import { HouseholdEventCard } from "./household-event-card";
 
 export const ScheduleEvents = ({
 	events,
@@ -21,7 +18,6 @@ export const ScheduleEvents = ({
 	events: ClubEvent[];
 }): ReactElement => {
 	const { data } = useApp();
-	const router = useRouter();
 	const [attendeeEvent, setAttendeeEvent] = useState<ClubEvent>();
 	const attendeeIds = new Set(
 		data.responses
@@ -42,7 +38,7 @@ export const ScheduleEvents = ({
 				onOpenChange={(open): void => {
 					if (!open) setAttendeeEvent(undefined);
 				}}
-				title={`Attendees${attendeeEvent ? ` · ${attendeeEvent.title}` : ""}`}
+				title={`${attendeeEvent?.kind === "tournament" ? "Interested players" : "Attendees"}${attendeeEvent ? ` · ${attendeeEvent.title}` : ""}`}
 			>
 				<List>
 					{attendees.map((member) => (
@@ -54,8 +50,16 @@ export const ScheduleEvents = ({
 					))}
 					{!attendees.length ? (
 						<EmptyState
-							title="No attendees yet"
-							description="Players will appear here when they register."
+							title={
+								attendeeEvent?.kind === "tournament"
+									? "No interest yet"
+									: "No attendees yet"
+							}
+							description={
+								attendeeEvent?.kind === "tournament"
+									? "Players will appear here when they select Interested."
+									: "Players will appear here when they register."
+							}
 						/>
 					) : undefined}
 				</List>
@@ -71,37 +75,11 @@ export const ScheduleEvents = ({
 									entry.eventId === event.id && entry.response === "going",
 							).length;
 							return (
-								<EventCard
+								<HouseholdEventCard
 									key={event.id}
-									title={
-										event.kind === "tournament"
-											? `Tournament · ${event.title}`
-											: event.title
-									}
-									time={formatTime(event.start)}
-									endTime={
-										event.endDate && event.endDate !== event.date
-											? `${formatDate(event.endDate)} ${formatTime(event.end)}`
-											: formatTime(event.end)
-									}
-									venue={event.venue}
-									parts={event.parts?.map((part) => ({
-										label: part.title,
-										time: formatTime(part.start),
-									}))}
-									onOpen={(): void =>
-										router.push({
-											pathname: "/session",
-											params: { event: event.id },
-										})
-									}
-									actions={
-										<EventActions
-											status={<ResponseControl event={event} />}
-											attendanceCount={going}
-											onAttendance={(): void => setAttendeeEvent(event)}
-										/>
-									}
+									event={event}
+									attendanceCount={going}
+									onAttendance={(): void => setAttendeeEvent(event)}
 								/>
 							);
 						})}

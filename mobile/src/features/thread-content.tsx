@@ -3,10 +3,16 @@ import { type ReactElement, useState } from "react";
 import { useChatSafety } from "../backend/chat-safety";
 import { useApp } from "../demo/app-state";
 import { Button, MessageTimeline, Row, Stack, Text } from "../design-system";
-import type { ConversationSummary, ThreadMessage } from "../domain/messaging";
+import {
+	type ConversationSummary,
+	conversationKind,
+	conversationKindLabel,
+	type ThreadMessage,
+} from "../domain/messaging";
 import { ClubShell } from "./club-shell";
 import { MessageComposer } from "./message-composer";
 import { MessageItem } from "./message-item";
+import { ThreadParticipantsHeader } from "./thread-participants-header";
 import { useMessageReadState } from "./use-message-read-state";
 
 export type ThreadContentProps = {
@@ -36,13 +42,15 @@ export const ThreadContent = ({
 		latestVisible === messages.at(0)?.id,
 	);
 	const blocked =
-		!["club", "youth"].includes(thread.id) &&
+		conversationKind(thread) === "direct" &&
 		thread.accountIds.some((id) => safety.status?.unavailableIds.includes(id));
 	const readOnly = safety.status?.paused || blocked;
 	const reply = messages.find((message) => message.id === replyId);
 	return (
 		<ClubShell
+			action={<ThreadParticipantsHeader thread={thread} />}
 			title={thread.title}
+			subtitle={conversationKindLabel(thread)}
 			scrollable={false}
 			back={
 				<Button

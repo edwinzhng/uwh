@@ -175,7 +175,11 @@ export const EventCoaches = ({
 	partId?: string;
 }): ReactElement | undefined => {
 	const { source, account } = useApp();
-	if (!account.coachPrograms.length || event.kind === "social")
+	if (
+		!account.coachPrograms.length ||
+		event.kind === "social" ||
+		event.kind === "meeting"
+	)
 		return undefined;
 	return source === "convex" ? (
 		<LiveEventCoaches event={event} partId={partId} />

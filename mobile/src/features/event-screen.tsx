@@ -15,6 +15,7 @@ import {
 	Text,
 } from "../design-system";
 import { canCoach, formatDate, formatTime } from "../domain/app-rules";
+import { eventKindLabel, practiceEvent } from "../domain/event-types";
 import { ClubShell } from "./club-shell";
 import { EventEditor } from "./event-editor";
 import { ResponseControl } from "./response-control";
@@ -51,7 +52,7 @@ export const EventScreen = (): ReactElement => {
 	const [cancel, setCancel] = useState(false);
 	const [edit, setEdit] = useState(false);
 	const coach = event
-		? event.kind !== "tournament" && canCoach(account, event.program)
+		? practiceEvent(event) && canCoach(account, event.program)
 		: false;
 	const activeTab =
 		tab === "people"
@@ -158,6 +159,7 @@ export const EventScreen = (): ReactElement => {
 													)?.name ?? "2026–2027"
 												}
 											/>
+											<Badge label={eventKindLabel(event.kind)} />
 											{event.seriesId ? <Badge label="Recurring" /> : undefined}
 										</Row>
 										<Text variant="h4">{event.venue}</Text>
@@ -180,9 +182,9 @@ export const EventScreen = (): ReactElement => {
 								</Surface>
 								{event.kind === "tournament" ? (
 									<TournamentSummary event={event} />
-								) : (
+								) : practiceEvent(event) ? (
 									<TeamPanel event={event} partId={partId} readOnly />
-								)}
+								) : undefined}
 							</Stack>
 						) : activeTab === "people" ? (
 							event.kind === "tournament" ? (

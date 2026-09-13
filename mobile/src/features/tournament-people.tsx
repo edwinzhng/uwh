@@ -14,16 +14,16 @@ export const TournamentPeople = ({
 	return (
 		<Stack>
 			<Text variant="small" tone="secondary">
-				Availability and confirmed team assignments are tracked separately.
+				Interest and confirmed team assignments are tracked separately.
 			</Text>
 			<List>
 				{members.map((member) => {
 					const response = eventResponse(data, event.id, member.id).response;
 					const availability =
 						response === "going"
-							? "Available"
+							? "Interested"
 							: response === "unavailable"
-								? "Unavailable"
+								? "Not interested"
 								: "Not responded";
 					const assignment = event.tournamentRoster?.find(
 						(entry) => entry.personId === member.id,
