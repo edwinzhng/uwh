@@ -729,7 +729,7 @@ body:has(dialog[open]) {
 	inset: 0;
 	z-index: -2;
 	opacity: 0;
-	transition: opacity var(--crocs-motion-extended) var(--crocs-ease-out);
+	transition: opacity var(--crocs-motion-extended) var(--crocs-ease-standard);
 }
 .hero-photo {
 	transform: none;
@@ -856,7 +856,7 @@ body:has(dialog[open]) {
 }
 .hero-title > * {
 	animation: hero-copy-arrive var(--crocs-motion-heroCopyReveal)
-		var(--crocs-ease-out) both;
+		var(--crocs-ease-standard) both;
 }
 .hero-title > :first-child {
 	animation-delay: var(--crocs-motion-instant);
