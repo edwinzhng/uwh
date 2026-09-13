@@ -543,6 +543,30 @@ body {
 	animation: overlay-enter var(--motion-duration-modal) var(--motion-ease-out)
 		both;
 }
+.join-dialog[open][data-closing] {
+	animation-name: modal-exit;
+}
+.join-dialog[open][data-closing]::backdrop {
+	animation-name: overlay-exit;
+}
+@keyframes modal-exit {
+	from {
+		opacity: 1;
+		transform: none;
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.97);
+	}
+}
+@keyframes overlay-exit {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
 @keyframes modal-enter {
 	from {
 		opacity: 0;
@@ -1761,7 +1785,7 @@ body > footer {
 	color: #656b6f;
 }
 .join-dialog {
-	--motion-duration-modal: var(--crocs-motion-standard);
+	--motion-duration-modal: var(--crocs-motion-extended);
 	--motion-ease-out: var(--crocs-ease-out);
 }
 
