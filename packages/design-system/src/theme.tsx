@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { materials } from "./materials";
+import { motionEffects } from "./motion";
 import { brand, motion, radius, space } from "./tokens";
 
 export const DesignTokens = (): ReactElement => (
@@ -12,7 +13,7 @@ export const DesignTokens = (): ReactElement => (
  --crocs-panel-radius: ${radius.lg}px;
  --crocs-space-sm: ${space.sm}px;
  --crocs-space-lg: ${space.lg}px;
-${Object.entries(motion.duration)
+${Object.entries({ ...motion.duration, ...motionEffects })
 	.map(([name, value]) => ` --crocs-motion-${name}: ${value}ms;`)
 	.join("\n")}
 ${Object.entries(motion.easing)
@@ -25,7 +26,10 @@ ${Object.entries(motion.easing)
  --crocs-glass: ${materials.light.floating};
  --crocs-glass-blur: ${materials.blur.floating}px;
 }
-@media (prefers-reduced-motion: reduce) { :root { ${Object.keys(motion.duration)
+@media (prefers-reduced-motion: reduce) { :root { ${Object.keys({
+		...motion.duration,
+		...motionEffects,
+	})
 		.map((name) => `--crocs-motion-${name}: 0ms;`)
 		.join(" ")} } }`}</style>
 );

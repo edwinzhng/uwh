@@ -855,8 +855,8 @@ body:has(dialog[open]) {
 	margin-bottom: 18px;
 }
 .hero-title > * {
-	animation: hero-copy-arrive var(--crocs-motion-extended) var(--crocs-ease-out)
-		both;
+	animation: hero-copy-arrive var(--crocs-motion-heroCopyReveal)
+		var(--crocs-ease-out) both;
 }
 .hero-title > :first-child {
 	animation-delay: var(--crocs-motion-instant);
@@ -928,10 +928,10 @@ body > footer {
 	margin: 24px auto;
 }
 .hero-title > .hero-description {
-	animation-delay: var(--crocs-motion-standard);
+	animation-delay: var(--crocs-motion-slow);
 }
 .hero-title > button {
-	animation-delay: var(--crocs-motion-slow);
+	animation-delay: var(--crocs-motion-extended);
 }
 .hero-title > dialog {
 	animation: none;

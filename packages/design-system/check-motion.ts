@@ -1,4 +1,4 @@
-import { motionDurations, motionEasings } from "./src/motion";
+import { motionDurations, motionEasings, motionEffects } from "./src/motion";
 
 export const inspectMotionTokens = (
 	source: string,
@@ -24,7 +24,10 @@ export const inspectMotionTokens = (
 		for (const match of source.matchAll(
 			/var\(--crocs-(motion|ease)-([\w-]+)\)/g,
 		)) {
-			const tokens = match.at(1) === "motion" ? motionDurations : motionEasings;
+			const tokens =
+				match.at(1) === "motion"
+					? { ...motionDurations, ...motionEffects }
+					: motionEasings;
 			if (!Object.hasOwn(tokens, match.at(2) ?? ""))
 				failures.push(`${filename}: Unknown motion token ${match.at(0)}.`);
 		}

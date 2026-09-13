@@ -6,7 +6,10 @@ export const motionDurations = {
 	extended: 500,
 } as const;
 
-export const motionEffects = { liquidRelease: 1000 } as const;
+export const motionEffects = {
+	liquidRelease: 1000,
+	heroCopyReveal: 1900,
+} as const;
 
 export type MotionDurationToken = keyof typeof motionDurations;
 export type MotionEasingToken = keyof typeof motionEasings;
