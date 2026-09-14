@@ -8,7 +8,8 @@ export const motionDurations = {
 
 export const motionEffects = {
 	liquidRelease: 1000,
-	heroCopyReveal: 1900,
+	heroCopyReveal: 1500,
+	heroActionDelay: 700,
 } as const;
 
 export type MotionDurationToken = keyof typeof motionDurations;

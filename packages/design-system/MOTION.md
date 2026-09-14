@@ -6,7 +6,7 @@ Durations in milliseconds: `instant` 0, `fast` 150, `standard` 200, `slow` 300, 
 
 The user-requested liquid shader release uses `motionEffects.liquidRelease` (1000ms). This effect-specific token leaves the Rec duration scale unchanged. Scrolling must not interrupt that release fade.
 
-The user-requested landing hero sequence uses `motionEffects.heroCopyReveal` (1900ms) with overlapping delays of 0, 150, 300, and 500ms, finishing at 2400ms. The image fades over `extended` (500ms) once decoded.
+The user-requested landing hero sequence uses `motionEffects.heroCopyReveal` (1500ms) with overlapping delays of 0, 300, 500, and 700ms (`heroActionDelay`), finishing at 2200ms. The image fades over `extended` (500ms) once decoded.
 
 Use `motion.duration` and `motion.easing` in app components. Libraries expecting seconds should use `motionDurationSeconds`. CSS uses generated `--crocs-motion-*` and `--crocs-ease-*` variables. Never inline duration numbers, easing curves, or CSS timing keywords in component animations. Timers for notification dwell or backend work are not animation timings.
 
