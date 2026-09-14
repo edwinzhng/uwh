@@ -1,6 +1,6 @@
 # Calgary Crocs public website
 
-Run `bun run dev` from `site` (port 3001). Run `bun run check` for TypeScript, Biome, design boundaries, motion tokens, and tests. The club app remains in `mobile`.
+Run `bun run dev` from `site` (port 3001). Run `bun run check` for TypeScript, Biome, design boundaries, motion tokens, and tests. The club app remains in `app`.
 
 ## Production
 

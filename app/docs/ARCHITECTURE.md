@@ -27,7 +27,7 @@ Base UI is a [React web component library](https://base-ui.com/react/overview/qu
 ```text
 uwh/
   app/ components/ convex/        existing application, retained
-  mobile/
+  app/
     app/                         Expo routes; thin re-exports
     src/design-system/           only place for visual/native primitives and tokens
     src/features/                screens composed from the public design API
@@ -39,7 +39,7 @@ uwh/
     docs/                        scope, architecture, design and testing contract
 ```
 
-The root TypeScript project excludes `mobile/`; the new project has its own dependencies/configuration. There is no premature monorepo/workspace conversion. Extract shared domain/types and tokens into packages only when the old web app consumes them. Do not let shared packages import native modules into the existing Next.js server build.
+The root TypeScript project excludes `app/`; the new project has its own dependencies/configuration. There is no premature monorepo/workspace conversion. Extract shared domain/types and tokens into packages only when the old web app consumes them. Do not let shared packages import native modules into the existing Next.js server build.
 
 ## Domain model: concrete entities with reusable relationships
 

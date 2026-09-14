@@ -14,4 +14,4 @@ Page and tab content fades use `slow` (300ms) with `out`. Wrap the entire page, 
 
 Landing-page route exits use `standard` (200ms), as requested; incoming pages retain `slow` (300ms) with `out`. Start the incoming animation after the destination mounts and its scroll position settles.
 
-Run `bun run check:motion` in both `mobile` and `site`. These checks also run through the design boundary checks and production builds. Regression coverage lives in `mobile/tests/motion-tokens.test.ts`.
+Run `bun run check:motion` in both `app` and `site`. These checks also run through the design boundary checks and production builds. Regression coverage lives in `app/tests/motion-tokens.test.ts`.

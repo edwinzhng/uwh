@@ -1,37 +1,12 @@
-# Underwater Hockey
+# Calgary Underwater Hockey
 
-Web app for the Calgary Underwater Hockey Club, built on Convex and Next.js.
+- `site/`: public landing page (Next.js), deployed to calgaryuwh.com.
+- `app/`: shared club application (Expo for web, iOS, and Android), deployed to app.calgaryuwh.com.
+- `packages/`: shared design system and utilities.
+- `legacy/`: preserved original Next.js application and its separate Convex backend.
 
-## Tech Stack
+Run `bun run dev` for the club app or `bun run dev:site` for the landing page. Each project has its own dependencies; run `bun install --frozen-lockfile` inside the project before starting it.
 
-### Frontend & Backend
-- Next.js (App Router)
-- Convex
-- Radix UI, Tailwind CSS
-- Jotai
+Vercel projects use root directories `site` and `app`. Enable inclusion of source files outside the root directory so shared packages are available. Build settings are in each project's `vercel.json`. Connect both projects to this repository with `main` as the production branch for automatic deployments.
 
-### Tooling
-- Biome, Bun
-
-## Getting Started
-
-1. **Install dependencies:**
-   ```bash
-   bun install
-   ```
-
-2. **Start the development environment:**
-   ```bash
-   bun run dev
-   ```
-   This command starts both the Convex backend and the Next.js dev server.
-
-3. **Deployment:**
-   This project is configured for deployment on **Vercel** with the **Convex** integration.
-
-## Project Structure
-- `app/`: Next.js application routes and pages
-- `components/`: React components
-- `convex/`: Backend logic and data model
-- `lib/`: Utility functions
-- `public/`: Static assets
+The club application shares platform-independent code and uses platform-specific files where needed. Separate web and mobile projects are not necessary.

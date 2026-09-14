@@ -1,6 +1,6 @@
 # Security review — 2026-09-12
 
-Scope: the new mobile/Expo application, its separate Convex backend, and the landing page. The legacy coaches deployment was read only for the explicitly requested account migration.
+Scope: the new app/Expo application, its separate Convex backend, and the landing page. The legacy coaches deployment was read only for the explicitly requested account migration.
 
 ## Changes
 

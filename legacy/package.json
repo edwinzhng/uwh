@@ -3,12 +3,12 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "bun run --cwd app start",
-		"dev:site": "bun run --cwd site dev",
-		"dev:legacy": "bun run --cwd legacy dev",
-		"build": "bun run --cwd app build:web",
-		"lint": "biome check .",
-		"prepare": "husky"
+		"dev:frontend": "next dev",
+		"dev:backend": "convex dev",
+		"dev": "concurrently \"bun run dev:frontend\" \"bun run dev:backend\"",
+		"build": "convex codegen && next build",
+		"start": "next start",
+		"lint": "biome check --write ."
 	},
 	"dependencies": {
 		"@auth/core": "0.41.1",
@@ -50,8 +50,5 @@
 		"lint-staged": "^16.3.2",
 		"tailwindcss": "^4",
 		"typescript": "^5"
-	},
-	"lint-staged": {
-		"*.{js,ts,jsx,tsx,json}": "biome check --write --no-errors-on-unmatched"
 	}
 }

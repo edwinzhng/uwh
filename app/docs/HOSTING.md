@@ -1,6 +1,6 @@
 # Hosting and release setup
 
-The Vercel projects are `edwinzhang/uwh-club` (root `mobile`) and `edwinzhang/calgary-crocs` (root `site`). Both need access to `packages/design-system` outside their root directory. Use Bun 1.3.14-compatible lockfiles and the per-project `vercel.json` files. The repository root is the legacy coaching app; do not deploy it as either new project.
+The Vercel projects are `edwinzhang/uwh-club` (root `app`) and `edwinzhang/calgary-crocs` (root `site`). Both need access to `packages/design-system` outside their root directory. Use Bun 1.3.14-compatible lockfiles and the per-project `vercel.json` files. The repository root is the legacy coaching app; do not deploy it as either new project.
 
 ## App domain
 
@@ -32,7 +32,7 @@ A separate `uwh-club` project now exists in the `calgary-underwater-hockey-club`
 
 The production functions, schema and fresh authentication signing keys were deployed on September 12, 2026. Vercel is configured with these production endpoints and demo mode disabled. Push delivery remains disabled pending native setup. Local development configuration is unchanged.
 
-The legacy and mobile backends are incompatible: their `fitnessTests` schemas and authentication callbacks differ. Publishing `mobile/convex` to the legacy production deployment would replace its functions and may fail schema validation. Use a separate cloud deployment in the existing Convex account for testing, or complete a backed-up data migration and coordinated cutover first. Do not use the legacy deployment key to publish the new backend without that migration.
+The legacy and mobile backends are incompatible: their `fitnessTests` schemas and authentication callbacks differ. Publishing `app/convex` to the legacy production deployment would replace its functions and may fail schema validation. Use a separate cloud deployment in the existing Convex account for testing, or complete a backed-up data migration and coordinated cutover first. Do not use the legacy deployment key to publish the new backend without that migration.
 
 Set these public build variables on the app Vercel project and EAS release environment:
 
