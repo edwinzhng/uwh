@@ -20,13 +20,18 @@ export const ReactionPicker = ({
 	isDisabled?: boolean;
 }): ReactElement => {
 	const [open, setOpen] = useState(false);
+	const [showAll, setShowAll] = useState(false);
 	const container = usePopupContainer();
+	const changeOpen = (nextOpen: boolean): void => {
+		setOpen(nextOpen);
+		if (!nextOpen) setShowAll(false);
+	};
 	const choose = (emoji: string): void => {
 		onSelect(emoji);
 		setOpen(false);
 	};
 	return (
-		<Popover.Root open={open} onOpenChange={setOpen}>
+		<Popover.Root open={open} onOpenChange={changeOpen}>
 			<Popover.Trigger
 				className="club-combo-action club-reaction-trigger"
 				aria-label="Add reaction"
@@ -62,8 +67,16 @@ export const ReactionPicker = ({
 									onPress={(): void => choose(choice.emoji)}
 								/>
 							))}
+							<Button
+								label="More reactions"
+								accessibilityLabel="Choose another reaction"
+								icon="plus"
+								variant="secondary"
+								round
+								onPress={(): void => setShowAll(true)}
+							/>
 						</Row>
-						{open ? (
+						{open && showAll ? (
 							<Suspense
 								fallback={<Text variant="caption">Loading emoji…</Text>}
 							>

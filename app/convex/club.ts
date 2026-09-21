@@ -6,7 +6,13 @@ import { visibleAppData } from "../src/domain/app-visibility";
 import { clubTimestamp, signupState } from "../src/domain/event-time";
 import { defaultClubTimeZone } from "../src/domain/time-zones";
 import type { Doc, Id } from "./_generated/dataModel";
-import { mutation, type QueryCtx, query } from "./_generated/server";
+import {
+	internalMutation,
+	type MutationCtx,
+	mutation,
+	type QueryCtx,
+	query,
+} from "./_generated/server";
 import { actionData } from "./action_data";
 import { appAction } from "./action_validator";
 import { loadData, saveData } from "./data";
@@ -30,8 +36,29 @@ const membershipFor = async (
 			.first()) ?? undefined
 	);
 };
+const inviteAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const randomInviteCode = (): string =>
+	Array.from(
+		{ length: 6 },
+		() =>
+			inviteAlphabet.at(Math.floor(Math.random() * inviteAlphabet.length)) ??
+			"A",
+	).join("");
+const createInviteCode = async (
+	ctx: MutationCtx,
+	attempt = 0,
+): Promise<string> => {
+	if (attempt >= 20) throw new Error("Could not create an invite code.");
+	const code = randomInviteCode();
+	const existing = await ctx.db
+		.query("clubs")
+		.withIndex("by_invite_code", (q) => q.eq("inviteCode", code))
+		.unique();
+	return existing ? createInviteCode(ctx, attempt + 1) : code;
+};
 type Workspace = {
 	clubId: Id<"clubs">;
+	inviteCode: string;
 	data: AppData;
 	account: Account;
 	accounts: Account[];
@@ -43,7 +70,8 @@ export const current = query({
 		const membership = await membershipFor(ctx);
 		if (!membership) return null;
 		const account = accountFor(membership);
-		const [data, memberships, requests] = await Promise.all([
+		const [club, data, memberships, requests] = await Promise.all([
+			ctx.db.get(membership.clubId),
 			screen
 				? screenData(ctx, membership, screen, id)
 				: loadData(ctx, membership.clubId).then((result) => result.data),
@@ -64,6 +92,7 @@ export const current = query({
 		]);
 		return {
 			clubId: membership.clubId,
+			inviteCode: club?.inviteCode ?? membership.clubId,
 			data: visibleAppData(data, account),
 			account,
 			accounts: memberships.map((entry) =>
@@ -196,6 +225,7 @@ export const create = mutation({
 		const user = await ctx.db.get(userId);
 		const personName = user?.name ?? "Club owner";
 		const clubId = await ctx.db.insert("clubs", {
+			inviteCode: await createInviteCode(ctx),
 			name: name.trim(),
 			timeZone: defaultClubTimeZone,
 			ownerId: userId,
@@ -288,29 +318,82 @@ export const requestToJoin = mutation({
 	handler: async (ctx, { clubCode }): Promise<null> => {
 		const userId = await getAuthUserId(ctx);
 		if (!userId) throw new Error("Sign in first.");
-		const clubId = ctx.db.normalizeId("clubs", clubCode.trim());
-		if (!clubId || !(await ctx.db.get(clubId)))
-			throw new Error("Club code not found.");
+		const normalizedCode = clubCode.trim().toUpperCase();
+		if (!/^[A-Z0-9]{6}$/.test(normalizedCode))
+			throw new Error("Enter the 6-character invite code.");
+		const club = await ctx.db
+			.query("clubs")
+			.withIndex("by_invite_code", (q) => q.eq("inviteCode", normalizedCode))
+			.unique();
+		if (!club) throw new Error("Invite code not found.");
+		const clubId = club._id;
 		if (await membershipFor(ctx))
 			throw new Error("You already belong to a club.");
-		const existing = await ctx.db
-			.query("joinRequests")
-			.withIndex("by_user", (q) => q.eq("userId", userId))
-			.collect();
-		if (
-			existing.some(
-				(entry) => entry.clubId === clubId && entry.state === "pending",
-			)
-		)
-			return null;
 		const user = await ctx.db.get(userId);
-		await ctx.db.insert("joinRequests", {
+		const name = user?.name?.trim() || "Member";
+		const personId = `account-${userId}`;
+		const action: AppAction = {
+			type: "add-member",
+			member: {
+				id: personId,
+				name,
+				programs: ["club"],
+				position: "Player",
+				rating: 3,
+				registration: "missing",
+				goal: "",
+				steps: 0,
+			},
+			charge: 0,
+		};
+		const { data, rows } = await actionData(ctx, clubId, action);
+		const actor: Account = {
+			id: userId,
+			name,
+			personId,
+			children: [],
+			coachPrograms: [],
+			admin: true,
+		};
+		await saveData(ctx, clubId, rows, reduceApp(data, actor, action));
+		const membershipId = await ctx.db.insert("memberships", {
 			userId,
 			clubId,
-			name: user?.name ?? "Member",
-			state: "pending",
+			name,
+			personId,
+			children: [],
+			coachPrograms: [],
+			admin: false,
 		});
+		await claimPendingMessages(ctx, membershipId);
+		const channels = await ctx.db
+			.query("conversations")
+			.withIndex("by_club", (q) => q.eq("clubId", clubId))
+			.collect();
+		for (const channel of channels.filter(
+			(channel) => channel.value.id === "club",
+		))
+			await ctx.db.patch(channel._id, {
+				value: {
+					...channel.value,
+					accountIds: [...new Set([...channel.value.accountIds, userId])],
+				},
+			});
 		return null;
+	},
+});
+export const backfillInviteCodes = internalMutation({
+	args: {},
+	handler: async (ctx): Promise<string[]> => {
+		const clubs = await ctx.db.query("clubs").collect();
+		return Promise.all(
+			clubs.map(async (club): Promise<string> => {
+				if (club.inviteCode) return club.inviteCode;
+				const inviteCode = await createInviteCode(ctx);
+				await ctx.db.patch(club._id, { inviteCode });
+				return inviteCode;
+			}),
+		);
 	},
 });
 export const setAccess = mutation({

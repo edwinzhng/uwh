@@ -47,9 +47,9 @@ export const isDirectThread = (
 	thread.accountIds.includes(first) &&
 	thread.accountIds.includes(second);
 export const directThreadKey = (first: string, second: string): string =>
-	[first, second].toSorted().join(":");
+	[first, second].slice().sort().join(":");
 export const directThreadId = (first: string, second: string): string =>
-	`dm-${[first, second].toSorted().join("-")}`;
+	`dm-${[first, second].slice().sort().join("-")}`;
 
 export const isReactionEmoji = (value: string): boolean =>
 	value.length <= 64 && emojiRegex().exec(value)?.at(0) === value;
@@ -58,11 +58,12 @@ export const messagePreview = (message: Message): string =>
 	message.deleted ? "Message deleted" : message.body || "Photo";
 
 export const reactionChoices = [
-	{ emoji: "❤️", label: "Love" },
 	{ emoji: "👍", label: "Like" },
-	{ emoji: "🎉", label: "Celebrate" },
+	{ emoji: "❤️", label: "Love" },
 	{ emoji: "😂", label: "Laugh" },
-	{ emoji: "🐊", label: "Crocodile" },
+	{ emoji: "😮", label: "Wow" },
+	{ emoji: "😢", label: "Sad" },
+	{ emoji: "🙏", label: "Thanks" },
 ] as const;
 export const imageLimits = {
 	bytes: 5 * 1024 * 1024,

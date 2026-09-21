@@ -10,7 +10,7 @@ import {
 } from "../src/domain/invitations";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { type MutationCtx, mutation, query } from "./_generated/server";
 import { ownsVerifiedEmail } from "./account_emails";
 import { actionData } from "./action_data";
 import { saveData } from "./data";
@@ -38,6 +38,67 @@ type InvitePreview = {
 	state: ReturnType<typeof inviteState>;
 	matchesEmail: boolean;
 	acceptedByYou: boolean;
+};
+const acceptInviteForUser = async (
+	ctx: MutationCtx,
+	invite: Doc<"clubInvites">,
+	userId: Id<"users">,
+	revision: number,
+): Promise<Id<"clubs">> => {
+	const user = await ctx.db.get(userId);
+	const existing = await memberFor(ctx);
+	const state = inviteState(invite, revision, Date.now());
+	if (
+		state === "accepted" &&
+		invite.acceptedBy === userId &&
+		existing?.clubId === invite.clubId
+	)
+		return invite.clubId;
+	if (state !== "pending" || !(await ctx.db.get(invite.clubId)))
+		throw new Error(
+			"This invite is no longer available. Ask an admin for a new one.",
+		);
+	if (existing)
+		throw new Error(
+			"This account already belongs to a club. Sign in with a different account.",
+		);
+	const person = await unlinkedPerson(ctx, invite.clubId, invite.personId);
+	const membershipId = await ctx.db.insert("memberships", {
+		clubId: invite.clubId,
+		userId,
+		name: user?.name ?? person.value.name,
+		personId: invite.personId,
+		children: [],
+		coachPrograms: [],
+		admin: false,
+	});
+	await claimPendingMessages(ctx, membershipId);
+	const channels = await ctx.db
+		.query("conversations")
+		.withIndex("by_club", (q) => q.eq("clubId", invite.clubId))
+		.collect();
+	for (const channel of channels.filter(
+		(channel) =>
+			channel.value.id === "club" ||
+			(channel.value.id === "youth" && person.value.programs.includes("youth")),
+	))
+		await ctx.db.patch(channel._id, {
+			value: {
+				...channel.value,
+				accountIds: [...new Set([...channel.value.accountIds, userId])],
+			},
+		});
+	const requests = await ctx.db
+		.query("joinRequests")
+		.withIndex("by_user", (q) => q.eq("userId", userId))
+		.collect();
+	for (const request of requests.filter(
+		(request) =>
+			request.clubId === invite.clubId && request.state === "pending",
+	))
+		await ctx.db.patch(request._id, { state: "approved" });
+	await ctx.db.patch(invite._id, { state: "accepted", acceptedBy: userId });
+	return invite.clubId;
 };
 
 export const create = mutation({
@@ -273,64 +334,49 @@ export const accept = mutation({
 		if (!userId) throw new Error("Sign in and verify your email first.");
 		const id = ctx.db.normalizeId("clubInvites", reference);
 		const invite = id ? await ctx.db.get(id) : undefined;
-		const user = await ctx.db.get(userId);
 		if (!invite || !(await ownsVerifiedEmail(ctx, userId, invite.email)))
 			throw new Error(
 				"Sign in with the email address that received this invite.",
 			);
-		const existing = await memberFor(ctx);
-		const state = inviteState(invite, revision, Date.now());
-		if (
-			state === "accepted" &&
-			invite.acceptedBy === userId &&
-			existing?.clubId === invite.clubId
+		return acceptInviteForUser(ctx, invite, userId, revision);
+	},
+});
+
+export const acceptPendingForCurrentUser = mutation({
+	args: {},
+	handler: async (ctx): Promise<Id<"clubs"> | null> => {
+		const userId = await getAuthUserId(ctx);
+		if (!userId || (await memberFor(ctx))) return null;
+		const user = await ctx.db.get(userId);
+		const accounts = await ctx.db
+			.query("authAccounts")
+			.withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
+			.collect();
+		const emails = [
+			...(user?.emailVerificationTime && user.email ? [user.email] : []),
+			...accounts.flatMap((account) =>
+				account.emailVerified ? [account.emailVerified] : [],
+			),
+		].map((email) => email.trim().toLowerCase());
+		const invites = (
+			await Promise.all(
+				[...new Set(emails)].map((email) =>
+					ctx.db
+						.query("clubInvites")
+						.withIndex("by_email", (q) => q.eq("email", email))
+						.order("desc")
+						.collect(),
+				),
+			)
 		)
-			return invite.clubId;
-		if (state !== "pending" || !(await ctx.db.get(invite.clubId)))
-			throw new Error(
-				"This invite is no longer available. Ask an admin for a new one.",
-			);
-		if (existing)
-			throw new Error(
-				"This account already belongs to a club. Sign in with a different account.",
-			);
-		const person = await unlinkedPerson(ctx, invite.clubId, invite.personId);
-		const membershipId = await ctx.db.insert("memberships", {
-			clubId: invite.clubId,
-			userId,
-			name: user?.name ?? person.value.name,
-			personId: invite.personId,
-			children: [],
-			coachPrograms: [],
-			admin: false,
-		});
-		await claimPendingMessages(ctx, membershipId);
-		const channels = await ctx.db
-			.query("conversations")
-			.withIndex("by_club", (q) => q.eq("clubId", invite.clubId))
-			.collect();
-		for (const channel of channels.filter(
-			(channel) =>
-				channel.value.id === "club" ||
-				(channel.value.id === "youth" &&
-					person.value.programs.includes("youth")),
-		))
-			await ctx.db.patch(channel._id, {
-				value: {
-					...channel.value,
-					accountIds: [...new Set([...channel.value.accountIds, userId])],
-				},
-			});
-		const requests = await ctx.db
-			.query("joinRequests")
-			.withIndex("by_user", (q) => q.eq("userId", userId))
-			.collect();
-		for (const request of requests.filter(
-			(request) =>
-				request.clubId === invite.clubId && request.state === "pending",
-		))
-			await ctx.db.patch(request._id, { state: "approved" });
-		await ctx.db.patch(invite._id, { state: "accepted", acceptedBy: userId });
-		return invite.clubId;
+			.flat()
+			.filter(
+				(invite) => invite.state === "pending" && invite.expiresAt > Date.now(),
+			)
+			.sort((a, b) => b._creationTime - a._creationTime);
+		const invite = invites.at(0);
+		return invite
+			? acceptInviteForUser(ctx, invite, userId, invite.revision)
+			: null;
 	},
 });

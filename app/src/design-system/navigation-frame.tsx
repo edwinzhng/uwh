@@ -2,18 +2,24 @@ import {
 	type ReactElement,
 	type ReactNode,
 	startTransition,
+	useCallback,
 	useEffect,
-	useRef,
 	useState,
 } from "react";
 import { useWindowDimensions, View } from "react-native";
+import {
+	Easing,
+	ReduceMotion,
+	useSharedValue,
+	withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GlassPanel } from "./glass-panel";
 import { materialColors } from "./materials";
 import { NavigationControl, type NavigationItem } from "./navigation-control";
-import { SegmentIndicator } from "./segment-indicator";
+import { NavigationIndicator } from "./navigation-indicator";
 import { useTheme } from "./theme";
-import { corners, geometry, layer, space } from "./tokens";
+import { corners, geometry, layer, motion, space } from "./tokens";
 import { useKeyboardVisible } from "./use-keyboard-visible";
 import { useMotion } from "./use-motion";
 
@@ -42,38 +48,42 @@ export const NavigationFrame = ({
 		routeKey: string;
 		label: string;
 	}>();
-	const navigationFrame = useRef<number>(undefined);
-	useEffect(() => {
-		setPendingSelection((current) =>
-			current?.routeKey === routeKey ? current : undefined,
-		);
-		return (): void => {
-			if (navigationFrame.current !== undefined)
-				cancelAnimationFrame(navigationFrame.current);
-		};
-	}, [routeKey]);
 	const selected = navigation.findIndex((item) =>
 		pendingSelection?.routeKey === routeKey
 			? item.label === pendingSelection.label
 			: item.selected,
 	);
+	const indicatorPosition = useSharedValue(Math.max(0, selected));
+	const indicatorItemWidth = useSharedValue(0);
+	const indicatorBarHeight = useSharedValue<number>(geometry.tab);
+	const moveIndicator = useCallback(
+		(index: number): void => {
+			indicatorPosition.set(
+				withTiming(index, {
+					duration: canAnimate
+						? motion.duration.standard
+						: motion.duration.instant,
+					easing: Easing.bezier(...motion.easing.out),
+					reduceMotion: ReduceMotion.System,
+				}),
+			);
+		},
+		[canAnimate, indicatorPosition],
+	);
+	useEffect((): void => {
+		setPendingSelection((current) =>
+			current?.routeKey === routeKey ? current : undefined,
+		);
+	}, [routeKey]);
+	useEffect((): void => {
+		if (selected >= 0) moveIndicator(selected);
+	}, [moveIndicator, selected]);
 	const itemWidth = barSize.width / navigation.length;
-	const selectTab = (item: NavigationItem): void => {
-		if (navigationFrame.current !== undefined)
-			cancelAnimationFrame(navigationFrame.current);
+	const selectTab = (item: NavigationItem, index: number): void => {
 		setHovered(undefined);
 		setPendingSelection({ routeKey, label: item.label });
-		const navigate = (): void => {
-			navigationFrame.current = undefined;
-			startTransition(item.onPress);
-		};
-		if (!canAnimate) {
-			navigate();
-			return;
-		}
-		navigationFrame.current = requestAnimationFrame((): void => {
-			navigationFrame.current = requestAnimationFrame(navigate);
-		});
+		moveIndicator(index);
+		startTransition(item.onPress);
 	};
 	return (
 		<View style={{ flex: 1 }}>
@@ -94,6 +104,8 @@ export const NavigationFrame = ({
 							accessibilityLabel="Main navigation"
 							onLayout={(event): void => {
 								const { width, height } = event.nativeEvent.layout;
+								indicatorItemWidth.set(width / navigation.length);
+								indicatorBarHeight.set(height);
 								setBarSize((current) =>
 									current.width === width && current.height === height
 										? current
@@ -118,14 +130,10 @@ export const NavigationFrame = ({
 								/>
 							) : undefined}
 							{barSize.width > 0 && selected >= 0 ? (
-								<SegmentIndicator
-									frame={{
-										x: selected * itemWidth + space.xxs,
-										y: space.xxs,
-										width: itemWidth - space.xxs * 2,
-										height: barSize.height - space.xxs * 2,
-									}}
-									appearance="glass"
+								<NavigationIndicator
+									position={indicatorPosition}
+									itemWidth={indicatorItemWidth}
+									barHeight={indicatorBarHeight}
 								/>
 							) : undefined}
 							{navigation.map((item, index) => (
@@ -137,7 +145,7 @@ export const NavigationFrame = ({
 										item={{
 											...item,
 											selected: index === selected,
-											onPress: (): void => selectTab(item),
+											onPress: (): void => selectTab(item, index),
 										}}
 										vertical
 										onHoverChange={(value): void =>

@@ -409,13 +409,13 @@ export const payload = internalQuery({
 			: job.kind === "events"
 				? `/session?event=${encodeURIComponent(job.entityId)}`
 				: feedback
-					? `/member?id=${encodeURIComponent(feedback.value.personId)}&tab=progress`
+					? `/member?id=${encodeURIComponent(feedback.value.personId)}&tab=shoutouts`
 					: "/messages?tab=notices";
 		const body =
 			job.kind === "messages"
 				? "You have a new message."
 				: job.kind === "feedback"
-					? "New coaching feedback is ready."
+					? "You received a new shoutout."
 					: job.kind === "announcements"
 						? "Your club posted an announcement."
 						: job.eventPhase === "open"

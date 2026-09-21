@@ -25,7 +25,9 @@ export const FamilyMenu = (): ReactElement => {
 			onValueChange={(id): void => {
 				if (id !== active.id) {
 					select(id);
-					actionToast("switchedProfile");
+					actionToast("switchedProfile", "success", {
+						subject: data.members.find((member) => member.id === id)?.name,
+					});
 				}
 			}}
 			account={{

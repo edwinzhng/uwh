@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { type ReactElement, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import { AppContext, useApp } from "../demo/app-state";
 import type { ClubEvent } from "../domain/app-types";
@@ -25,20 +25,24 @@ export const SchedulePage = ({
 	preview: ClubEvent[];
 }): ReactElement => {
 	const app = useApp();
+	const args = useMemo(
+		() => ({ view, date, season, now, period, audience, eventType }),
+		[audience, date, eventType, now, period, season, view],
+	);
+	const config = useMemo(
+		() => ({
+			query: api.pages.schedule,
+			args,
+			preview: preview.map((event) => ({
+				event,
+				responses: app.data.responses.filter((row) => row.eventId === event.id),
+			})),
+			size: 20,
+		}),
+		[app.data.responses, args, preview],
+	);
 	return (
-		<DataPage
-			config={{
-				query: api.pages.schedule,
-				args: { view, date, season, now, period, audience, eventType },
-				preview: preview.map((event) => ({
-					event,
-					responses: app.data.responses.filter(
-						(row) => row.eventId === event.id,
-					),
-				})),
-				size: 20,
-			}}
-		>
+		<DataPage config={config}>
 			{(items) => (
 				<AppContext.Provider
 					value={{

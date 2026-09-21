@@ -103,13 +103,6 @@ for (const result of [home, accountPage, membership]) {
 		result.data.loans.every((loan) => ["jamie", "sam"].includes(loan.personId)),
 	);
 }
-const seasonId = home.data.seasons.at(0)?.id;
-assert(seasonId);
-const records = await parent.query(api.home_records.household, { seasonId });
-assert.deepEqual(records.map((record) => record.personId).toSorted(), [
-	"jamie",
-	"sam",
-]);
 console.log("Home/Account/Membership live household isolation checks passed.");
 const schedulePage = await parent.query(api.pages.schedule, {
 	audience: "household",

@@ -5,6 +5,7 @@ import { AttendanceChart } from "./attendance-chart";
 import { Button } from "./button";
 import { GlassPanel } from "./glass-panel";
 import { NotificationBell } from "./notification-bell";
+import { OtpInput } from "./otp-input";
 import { PersonPicker } from "./person-picker";
 import { Row } from "./row";
 import { SidebarNavigation } from "./sidebar-navigation";
@@ -18,9 +19,20 @@ export const CurrentComponentExamples = (): ReactElement => {
 	const [tab, setTab] = useState("profile");
 	const [navigation, setNavigation] = useState("Schedule");
 	const [person, setPerson] = useState("alex");
+	const [verificationCode, setVerificationCode] = useState("");
 	const notify = (): void => actionToast("savedNotifications");
 	return (
 		<Stack gap="lg">
+			<Stack>
+				<Text variant="h4">Verification code</Text>
+				<OtpInput
+					label="6-digit code"
+					value={verificationCode}
+					onValueChange={setVerificationCode}
+					status={verificationCode === "123456" ? "success" : "idle"}
+					hint="Type or paste 123456 to preview the completed state."
+				/>
+			</Stack>
 			<Stack>
 				<Text variant="h4">Text buttons and states</Text>
 				<Row wrap>

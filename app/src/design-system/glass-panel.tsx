@@ -1,5 +1,5 @@
 import { type ReactElement, type ReactNode, useId } from "react";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import { GlassBackdrop } from "./glass-backdrop";
 import { materialColors } from "./materials";
 import { useTheme } from "./theme";
@@ -12,6 +12,7 @@ type Props = {
 	padding?: SpaceToken;
 	shape?: "panel" | "pill";
 	material?: "floating";
+	seamless?: boolean;
 };
 export const GlassPanel = ({
 	children,
@@ -20,22 +21,24 @@ export const GlassPanel = ({
 	padding = "md",
 	shape = "panel",
 	material = "floating",
+	seamless = false,
 }: Props): ReactElement => {
 	const id = useId();
 	const colors = materialColors(useTheme());
+	const seamlessEdges = seamless && Platform.OS !== "web";
 	return (
 		<View
 			nativeID={interactive ? `floating-control-${id}` : undefined}
 			style={{
 				borderRadius: corners[shape],
-				borderWidth: geometry.border,
+				borderWidth: seamlessEdges ? 0 : geometry.border,
 				borderColor: colors.border,
-				boxShadow: colors.shadow,
+				boxShadow: seamlessEdges ? "none" : colors.shadow,
 				overflow: "hidden",
 			}}
 		>
 			{background}
-			<GlassBackdrop material={material} />
+			<GlassBackdrop material={material} showRim={!seamlessEdges} />
 			<View style={{ padding: space[padding] }}>{children}</View>
 		</View>
 	);

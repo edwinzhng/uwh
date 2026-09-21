@@ -30,7 +30,8 @@ export const seriesEvents = (
 		.filter(
 			(event) => event.seriesId && series.seriesIds.includes(event.seriesId),
 		)
-		.toSorted((a, b) => a.date.localeCompare(b.date));
+		.slice()
+		.sort((a, b) => a.date.localeCompare(b.date));
 export const seriesHasSpace = (
 	series: SessionSeries,
 	start: string,

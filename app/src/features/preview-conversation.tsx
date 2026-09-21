@@ -20,7 +20,8 @@ export const PreviewConversation = ({
 			),
 		}))
 		.filter((message) => message.threadId === thread.id)
-		.toReversed();
+		.slice()
+		.reverse();
 	return (
 		<ThreadContent
 			thread={thread}

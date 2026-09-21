@@ -39,7 +39,8 @@ const preferences = (player: Player): Position[] => {
 };
 const distribute = (players: Player[]): Teams =>
 	players
-		.toSorted(
+		.slice()
+		.sort(
 			(a, b) =>
 				preferences(a).length - preferences(b).length ||
 				b.rating - a.rating ||
@@ -76,7 +77,8 @@ const distribute = (players: Player[]): Teams =>
 							};
 						}),
 					)
-					.toSorted((a, b) => a.score - b.score);
+					.slice()
+					.sort((a, b) => a.score - b.score);
 				const choice = choices.at(0);
 				if (!choice) return teams;
 				teams[choice.side].push({

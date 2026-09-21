@@ -47,7 +47,6 @@
 		"@expo-google-fonts/inter": "0.4.2",
 		"@js-temporal/polyfill": "^0.5.1",
 		"@oslojs/crypto": "^1.0.1",
-		"@paper-design/shaders-react": "^0.0.80",
 		"@react-native-community/datetimepicker": "9.1.0",
 		"convex": "^1.45.0",
 		"emoji-mart": "^5.6.0",

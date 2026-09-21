@@ -24,6 +24,7 @@ import { SessionDiscussionButton } from "./session-discussion-button";
 import { SessionGuestManager } from "./session-guest-manager";
 import { SessionPeople } from "./session-people";
 import { SessionSeriesLink } from "./session-series-link";
+import { SessionShoutouts } from "./session-shoutouts";
 import { TeamPanel } from "./team-panel";
 import { TournamentPeople } from "./tournament-people";
 import { TournamentSummary } from "./tournament-summary";
@@ -57,9 +58,11 @@ export const EventScreen = (): ReactElement => {
 	const activeTab =
 		tab === "people"
 			? "people"
-			: tab === "coaching" && coach
-				? "coaching"
-				: "overview";
+			: tab === "shoutouts"
+				? "shoutouts"
+				: tab === "coaching" && coach
+					? "coaching"
+					: "overview";
 	return (
 		<ClubShell
 			tabs={
@@ -76,6 +79,7 @@ export const EventScreen = (): ReactElement => {
 							label:
 								event?.kind === "tournament" ? "Availability" : "Attendance",
 						},
+						{ value: "shoutouts", label: "Shoutouts" },
 						...(coach
 							? [
 									{
@@ -186,6 +190,8 @@ export const EventScreen = (): ReactElement => {
 									<TeamPanel event={event} partId={partId} readOnly />
 								) : undefined}
 							</Stack>
+						) : activeTab === "shoutouts" ? (
+							<SessionShoutouts event={event} />
 						) : activeTab === "people" ? (
 							event.kind === "tournament" ? (
 								<TournamentPeople event={event} />
@@ -197,13 +203,11 @@ export const EventScreen = (): ReactElement => {
 								/>
 							)
 						) : (
-							<>
-								<SessionCoaching
-									key={`${event.id}:${partId}`}
-									event={event}
-									partId={partId}
-								/>
-							</>
+							<SessionCoaching
+								key={`${event.id}:${partId}`}
+								event={event}
+								partId={partId}
+							/>
 						)}
 					</TabContent>
 					<Dialog

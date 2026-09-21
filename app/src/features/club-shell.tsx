@@ -1,13 +1,12 @@
 import { usePathname, useRouter } from "expo-router";
 import type { ReactElement, ReactNode } from "react";
 import clubLogo from "../../assets/club-logo.png";
-import { useActivePerson, useApp } from "../demo/app-state";
+import { useApp } from "../demo/app-state";
 import {
 	AppLayout,
 	Badge,
 	Button,
 	LoadingContent,
-	PageReveal,
 	Row,
 	Stack,
 	Text,
@@ -41,60 +40,57 @@ export const ClubShell = ({
 }: Props): ReactElement => {
 	const navigation = useClubNavigation();
 	const pathname = usePathname();
-	const activePerson = useActivePerson();
 	const router = useRouter();
 	const { data, error, clearError, loading } = useApp();
 	return (
-		<PageReveal key={activePerson.id} fill gap="none">
-			<AppLayout
-				persistentNavigation
-				brand={data.clubName}
-				onBrandPress={(): void => router.navigate("/")}
-				brandLogo={data.clubName === "Calgary Crocs" ? clubLogo : undefined}
-				title={title}
-				subtitle={subtitle}
-				action={action}
-				tabs={tabs}
-				titleAccessory={
-					staffRole ? (
-						<Badge
-							label={staffRole === "admin" ? "Admin" : "Coach"}
-							kind={staffRole}
-						/>
-					) : undefined
-				}
-				back={
-					hasRouteBreadcrumbs(pathname) ? (
-						<RouteBreadcrumbs pathname={pathname} />
-					) : (
-						back
-					)
-				}
-				footer={footer}
-				scrollable={scrollable}
-				profile={<FamilyMenu />}
-				accessory={<NotificationsMenu />}
-				navigation={navigation}
-			>
-				{error ? (
-					<Row justify="between" wrap>
-						<Text variant="small" tone="danger">
-							{error}
-						</Text>
-						<Button label="Dismiss" variant="ghost" onPress={clearError} />
-					</Row>
-				) : undefined}
-				{loading ? (
-					<LoadingContent />
+		<AppLayout
+			persistentNavigation
+			brand={data.clubName}
+			onBrandPress={(): void => router.navigate("/")}
+			brandLogo={data.clubName === "Calgary Crocs" ? clubLogo : undefined}
+			title={title}
+			subtitle={subtitle}
+			action={action}
+			tabs={tabs}
+			titleAccessory={
+				staffRole ? (
+					<Badge
+						label={staffRole === "admin" ? "Admin" : "Coach"}
+						kind={staffRole}
+					/>
+				) : undefined
+			}
+			back={
+				hasRouteBreadcrumbs(pathname) ? (
+					<RouteBreadcrumbs pathname={pathname} />
 				) : (
-					<Stack
-						grow={scrollable === false}
-						gap={scrollable === false ? "md" : "xl"}
-					>
-						{children}
-					</Stack>
-				)}
-			</AppLayout>
-		</PageReveal>
+					back
+				)
+			}
+			footer={footer}
+			scrollable={scrollable}
+			profile={<FamilyMenu />}
+			accessory={<NotificationsMenu />}
+			navigation={navigation}
+		>
+			{error ? (
+				<Row justify="between" wrap>
+					<Text variant="small" tone="danger">
+						{error}
+					</Text>
+					<Button label="Dismiss" variant="ghost" onPress={clearError} />
+				</Row>
+			) : undefined}
+			{loading ? (
+				<LoadingContent />
+			) : (
+				<Stack
+					grow={scrollable === false}
+					gap={scrollable === false ? "md" : "xl"}
+				>
+					{children}
+				</Stack>
+			)}
+		</AppLayout>
 	);
 };

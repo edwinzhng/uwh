@@ -101,6 +101,7 @@ export default defineSchema({
 		.index("by_owner", ["ownerId"])
 		.index("by_owner_message", ["ownerId", "messageId"]),
 	clubs: defineTable({
+		inviteCode: v.optional(v.string()),
 		venues: v.optional(v.array(v.string())),
 		timeZone: v.optional(v.string()),
 		publicSlug: v.optional(v.string()),
@@ -118,7 +119,9 @@ export default defineSchema({
 		name: v.string(),
 		ownerId: v.id("users"),
 		reminders: v.boolean(),
-	}).index("by_public_slug", ["publicSlug"]),
+	})
+		.index("by_invite_code", ["inviteCode"])
+		.index("by_public_slug", ["publicSlug"]),
 	memberships: defineTable({
 		clubId: v.id("clubs"),
 		userId: v.id("users"),

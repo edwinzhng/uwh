@@ -30,7 +30,8 @@ export const HomeCoaching = ({
 				) > now &&
 				(event.kind === "training" || event.kind === "hockey"),
 		)
-		.toSorted((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
+		.slice()
+		.sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
 		.at(0);
 	if (!account.coachPrograms.length || !event) return undefined;
 	return (

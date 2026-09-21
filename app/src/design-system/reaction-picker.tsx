@@ -21,7 +21,12 @@ export const ReactionPicker = ({
 	isDisabled?: boolean;
 }): ReactElement => {
 	const [open, setOpen] = useState(false);
+	const [showAll, setShowAll] = useState(false);
 	const size = useControlSize();
+	const changeOpen = (nextOpen: boolean): void => {
+		setOpen(nextOpen);
+		if (!nextOpen) setShowAll(false);
+	};
 	return (
 		<>
 			<View style={{ height: typography.caption.lineHeight, width: size }}>
@@ -40,7 +45,12 @@ export const ReactionPicker = ({
 					/>
 				</View>
 			</View>
-			<Dialog isOpen={open} onOpenChange={setOpen} title="React" footer={false}>
+			<Dialog
+				isOpen={open}
+				onOpenChange={changeOpen}
+				title="React"
+				footer={false}
+			>
 				<Stack gap="sm">
 					<Row gap="xs" justify="center">
 						{reactionChoices.map((choice) => (
@@ -55,8 +65,16 @@ export const ReactionPicker = ({
 								}}
 							/>
 						))}
+						<Button
+							label="More reactions"
+							accessibilityLabel="Choose another reaction"
+							icon="plus"
+							variant="secondary"
+							round
+							onPress={(): void => setShowAll(true)}
+						/>
 					</Row>
-					{open ? (
+					{open && showAll ? (
 						<Suspense fallback={<Text variant="caption">Loading emoji…</Text>}>
 							<EmojiPicker
 								onSelect={(emoji): void => {

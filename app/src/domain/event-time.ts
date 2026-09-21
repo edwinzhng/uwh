@@ -5,7 +5,7 @@ import { canonicalTimeZone, defaultClubTimeZone } from "./time-zones";
 const permanentAlbertaTime = {
 	date: "2026-03-09",
 	instant: Date.parse("2026-03-09T06:00:00Z"),
-	zone: "Etc/GMT+6",
+	zone: "America/Regina",
 } as const;
 const effectiveTimeZone = (date: string, timeZone: string): string =>
 	canonicalTimeZone(timeZone) === defaultClubTimeZone &&

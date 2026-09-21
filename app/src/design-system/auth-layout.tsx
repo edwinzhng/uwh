@@ -4,8 +4,8 @@ import {
 	KeyboardAvoidingView,
 	Platform,
 	ScrollView,
-	View,
 } from "react-native";
+import Animated, { Easing, LinearTransition } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import clubLogo from "../../assets/club-logo.png";
 import { AuthBackground } from "./auth-background";
@@ -15,7 +15,8 @@ import { Stack } from "./stack";
 import { Text } from "./text";
 
 import { useTheme } from "./theme";
-import { space } from "./tokens";
+import { corners, motion, space } from "./tokens";
+import { useMotion } from "./use-motion";
 
 export const AuthLayout = ({
 	title,
@@ -25,6 +26,10 @@ export const AuthLayout = ({
 	children: ReactNode;
 }): ReactElement => {
 	const theme = useTheme();
+	const canAnimate = useMotion();
+	const panelTransition = LinearTransition.duration(
+		canAnimate ? motion.duration.slow : motion.duration.instant,
+	).easing(Easing.bezier(...motion.easing.out));
 	return (
 		<SafeAreaView
 			nativeID="auth-surface"
@@ -36,30 +41,43 @@ export const AuthLayout = ({
 				behavior={Platform.OS === "ios" ? "padding" : undefined}
 			>
 				<ScrollView
+					alwaysBounceVertical={false}
+					bounces={false}
 					keyboardShouldPersistTaps="handled"
+					overScrollMode="never"
 					contentContainerStyle={{
 						flexGrow: 1,
 						justifyContent: "center",
 						padding: space.lg,
 					}}
 				>
-					<View
+					<Animated.View
+						layout={panelTransition}
 						style={{
 							width: "100%",
 							maxWidth: 440,
 							alignSelf: "center",
 						}}
 					>
-						<GlassPanel padding="lg">
+						<GlassPanel padding="lg" seamless>
 							<Stack gap="lg">
 								<Row gap="sm">
-									<Image source={clubLogo} style={{ width: 32, height: 32 }} />
-									<Text variant="h1">{title}</Text>
+									<Image
+										source={clubLogo}
+										style={{
+											width: 32,
+											height: 32,
+											borderRadius: corners.control,
+										}}
+									/>
+									<Text variant="h1" tone="brand">
+										{title}
+									</Text>
 								</Row>
 								{children}
 							</Stack>
 						</GlassPanel>
-					</View>
+					</Animated.View>
 				</ScrollView>
 			</KeyboardAvoidingView>
 		</SafeAreaView>

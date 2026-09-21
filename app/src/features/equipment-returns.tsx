@@ -22,7 +22,8 @@ export const EquipmentReturns = ({
 				args: { search: term },
 				preview: data.loans
 					.filter((loan) => loan.returned)
-					.toReversed()
+					.slice()
+					.reverse()
 					.map((loan) => ({
 						id: loan.id,
 						item: equipment.get(loan.itemId) ?? "Equipment",

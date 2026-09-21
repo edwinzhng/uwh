@@ -36,7 +36,8 @@ export const SessionSeriesManager = ({
 		? seriesEvents(series, controls.events)
 		: controls.events
 				.filter((event) => event.seriesId === seriesId)
-				.toSorted((a, b) => a.date.localeCompare(b.date));
+				.slice()
+				.sort((a, b) => a.date.localeCompare(b.date));
 	const first = events.at(0);
 	const today = clubDate(undefined, data.timeZone);
 	const [title, setTitle] = useState(

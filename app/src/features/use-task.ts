@@ -1,10 +1,15 @@
 import { useRef, useState } from "react";
 import { friendlyError } from "../backend/errors";
 
-import { actionToast, type ToastMessage } from "../design-system";
+import {
+	actionToast,
+	type ToastContext,
+	type ToastMessage,
+} from "../design-system";
 
 export const useTask = (
 	success?: ToastMessage,
+	context?: ToastContext,
 ): {
 	busy: boolean;
 	error?: string;
@@ -25,7 +30,7 @@ export const useTask = (
 			setError(undefined);
 			try {
 				await action();
-				if (success) actionToast(success);
+				if (success) actionToast(success, "success", context);
 				return true;
 			} catch (error) {
 				setError(friendlyError(error));

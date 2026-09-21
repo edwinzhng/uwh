@@ -6,7 +6,8 @@ export const ActionToaster = (): ReactElement => {
 	return (
 		<Toaster
 			position="bottom-center"
-			duration={3000}
+			duration={5000}
+			enableStacking
 			visibleToasts={3}
 			closeButton
 			theme={theme.background.primary === "#FFFFFF" ? "light" : "dark"}

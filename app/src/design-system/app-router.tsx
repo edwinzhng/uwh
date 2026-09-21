@@ -19,6 +19,7 @@ export const AppRouter = (): ReactElement => {
 			screenOptions={({ route }) => ({
 				title: pageTitle(route.name),
 				headerShown: false,
+				freezeOnBlur: true,
 				animation: "none",
 				contentStyle: { backgroundColor: theme.background.primary },
 			})}

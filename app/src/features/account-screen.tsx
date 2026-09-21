@@ -4,7 +4,6 @@ import { useActivePerson } from "../demo/app-state";
 import { Stack, TabContent, Tabs, Text } from "../design-system";
 import { AccountHousehold } from "./account-household";
 import { AccountSettingsContent } from "./account-settings-screen";
-import { CalendarExportButton } from "./calendar-export-button";
 import { ClubShell } from "./club-shell";
 import { MemberAdmin } from "./member-admin";
 import { MemberAttendance } from "./member-attendance";
@@ -44,10 +43,7 @@ export const AccountScreen = (): ReactElement => {
 				{tab === "household" ? (
 					<AccountHousehold />
 				) : tab === "settings" ? (
-					<Stack>
-						<AccountSettingsContent />
-						<CalendarExportButton />
-					</Stack>
+					<AccountSettingsContent />
 				) : tab === "attendance" ? (
 					<MemberAttendance key={person.id} member={person} />
 				) : tab === "progress" ? (

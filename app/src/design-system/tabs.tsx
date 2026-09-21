@@ -1,5 +1,6 @@
 import { type ReactElement, useState } from "react";
-import { ScrollView, useWindowDimensions, View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
+import { ScrollArea } from "./scroll-area";
 import { type SegmentFrame, SegmentIndicator } from "./segment-indicator";
 import { TabOption } from "./tab-option";
 import { useTheme } from "./theme";
@@ -51,8 +52,9 @@ export const Tabs = <T extends string>({
 					backgroundColor: theme.border,
 				}}
 			/>
-			<ScrollView
+			<ScrollArea
 				horizontal
+				keyboardShouldPersistTaps="handled"
 				showsHorizontalScrollIndicator={false}
 				style={{ flexGrow: 0 }}
 			>
@@ -95,7 +97,7 @@ export const Tabs = <T extends string>({
 						/>
 					) : undefined}
 				</View>
-			</ScrollView>
+			</ScrollArea>
 		</View>
 	);
 };

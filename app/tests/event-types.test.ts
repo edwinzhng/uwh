@@ -27,7 +27,7 @@ const make = (kind: ClubEvent["kind"]): ClubEvent => {
 	if (!result) throw new Error("Missing event");
 	return result;
 };
-test("filters keep legacy hockey with Practices and distinguish meetings, social and tournaments", (): void => {
+test("filters keep legacy hockey with Practices and group meetings and socials under Other", (): void => {
 	const events = [
 		make("training"),
 		make("hockey"),
@@ -42,9 +42,9 @@ test("filters keep legacy hockey with Practices and distinguish meetings, social
 	).toEqual(["training", "hockey"]);
 	expect(
 		events
-			.filter((event) => matchesEventType(event, "meeting"))
-			.map((event) => event.title),
-	).toEqual([meeting.title]);
+			.filter((event) => matchesEventType(event, "other"))
+			.map((event) => event.kind),
+	).toEqual(["social", "meeting"]);
 	expect(events.filter((event) => matchesEventType(event, "all"))).toHaveLength(
 		5,
 	);
@@ -52,8 +52,7 @@ test("filters keep legacy hockey with Practices and distinguish meetings, social
 		"All",
 		"Practices",
 		"Tournaments",
-		"Social",
-		"Meetings",
+		"Other",
 	]);
 	expect(eventKindsForFilter("tournament")).toEqual(["tournament"]);
 	expect(eventKindLabel("hockey")).toBe("Practice");
@@ -102,9 +101,9 @@ test("filtered calendar days preserve multi-day tournaments and omit unrelated e
 	).toEqual(["2027-01-12", "2027-01-13", "2027-01-14"]);
 	expect(
 		[make("meeting"), tournament].filter((event) =>
-			matchesEventType(event, "social"),
+			matchesEventType(event, "other"),
 		),
-	).toHaveLength(0);
+	).toHaveLength(1);
 });
 test("meeting import retains distinct type", (): void => {
 	const record = importRecord(

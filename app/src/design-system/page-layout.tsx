@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "./button";
 import { Icon, type IconName } from "./icon";
 import { Row } from "./row";
+import { ScrollArea } from "./scroll-area";
 import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
@@ -90,7 +91,7 @@ export const PageLayout = ({
 					padding: space.xs,
 				}}
 			>
-				<ScrollView
+				<ScrollArea
 					horizontal
 					showsHorizontalScrollIndicator={false}
 					contentContainerStyle={{
@@ -109,7 +110,7 @@ export const PageLayout = ({
 							onPress={item.onPress}
 						/>
 					))}
-				</ScrollView>
+				</ScrollArea>
 			</View>
 		</SafeAreaView>
 	);

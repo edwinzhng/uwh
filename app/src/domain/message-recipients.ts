@@ -51,6 +51,8 @@ export const recipientDirectory = (
 						name: account.name,
 						playerNames: [],
 					})),
-			].toSorted((a, b) => a.name.localeCompare(b.name)),
+			]
+				.slice()
+				.sort((a, b) => a.name.localeCompare(b.name)),
 	paused,
 });

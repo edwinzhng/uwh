@@ -46,7 +46,8 @@ export const attendanceSummary = (
 				clubTimestamp(event.endDate ?? event.date, event.end, event.timeZone) <=
 					now,
 		)
-		.toSorted((a, b) => a.date.localeCompare(b.date))
+		.slice()
+		.sort((a, b) => a.date.localeCompare(b.date))
 		.map((event) => ({
 			id: event.id,
 			title: event.title,

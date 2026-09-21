@@ -1,11 +1,11 @@
 import { type ReactElement, useId, useState } from "react";
 import {
 	type LayoutChangeEvent,
-	ScrollView,
 	useWindowDimensions,
 	View,
 } from "react-native";
 import type { IconName } from "./icon";
+import { ScrollArea } from "./scroll-area";
 import { type SegmentFrame, SegmentIndicator } from "./segment-indicator";
 import { SegmentOption } from "./segment-option";
 import { Stack } from "./stack";
@@ -82,7 +82,7 @@ export const SegmentedControl = <T extends string>({
 					{label}
 				</Text>
 			) : undefined}
-			<ScrollView
+			<ScrollArea
 				horizontal
 				showsHorizontalScrollIndicator={false}
 				keyboardShouldPersistTaps="handled"
@@ -160,7 +160,7 @@ export const SegmentedControl = <T extends string>({
 						</View>
 					))}
 				</View>
-			</ScrollView>
+			</ScrollArea>
 		</Stack>
 	);
 };

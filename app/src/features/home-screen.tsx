@@ -1,14 +1,19 @@
 import { useRouter } from "expo-router";
 import { type ReactElement, useEffect, useState } from "react";
 import { useApp } from "../demo/app-state";
-import { Button, EmptyState, SectionHeading, Stack } from "../design-system";
+import {
+	Button,
+	EmptyState,
+	SectionHeading,
+	Stack,
+	StaggerGroup,
+} from "../design-system";
 import {
 	homeSchedule,
 	householdMembers,
 	relevantHouseholdEvent,
 } from "../domain/home";
 import { ClubShell } from "./club-shell";
-import { HomeAttention } from "./home-attention";
 import { HomeCoaching } from "./home-coaching";
 import { HouseholdEventCard } from "./household-event-card";
 import { NoticeBanner } from "./notice-banner";
@@ -30,7 +35,6 @@ export const HomeScreen = (): ReactElement => {
 	return (
 		<ClubShell title="Home" subtitle={data.clubName}>
 			<NoticeBanner />
-			<HomeAttention />
 			<HomeCoaching now={now} />
 			<Stack gap="sm">
 				<SectionHeading
@@ -46,9 +50,11 @@ export const HomeScreen = (): ReactElement => {
 					{schedule.thisWeek ? "This week" : "Next session"}
 				</SectionHeading>
 				{schedule.events.length ? (
-					schedule.events.map((event) => (
-						<HouseholdEventCard key={event.id} event={event} />
-					))
+					<StaggerGroup gap="sm">
+						{schedule.events.map((event) => (
+							<HouseholdEventCard key={event.id} event={event} />
+						))}
+					</StaggerGroup>
 				) : (
 					<EmptyState
 						title="No upcoming sessions"
@@ -59,7 +65,12 @@ export const HomeScreen = (): ReactElement => {
 			{schedule.nextTournament ? (
 				<Stack gap="sm">
 					<SectionHeading size="small">Next tournament</SectionHeading>
-					<HouseholdEventCard event={schedule.nextTournament} />
+					<StaggerGroup gap="sm">
+						<HouseholdEventCard
+							key={schedule.nextTournament.id}
+							event={schedule.nextTournament}
+						/>
+					</StaggerGroup>
 				</Stack>
 			) : undefined}
 		</ClubShell>

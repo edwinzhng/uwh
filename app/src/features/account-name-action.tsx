@@ -9,9 +9,9 @@ export const AccountNameAction = ({
 	onSaved: (status: string) => void;
 }): ReactElement => {
 	const backend = useBackend();
-	const task = useTask("savedName");
 	const [open, setOpen] = useState(false);
 	const [name, setName] = useState("");
+	const task = useTask("savedName", { subject: name });
 	const changeOpen = (value: boolean): void => {
 		if (task.busy) return;
 		setName(backend.accountInfo?.name ?? "");

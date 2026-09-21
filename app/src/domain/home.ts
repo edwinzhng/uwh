@@ -37,7 +37,8 @@ export const homeSchedule = (
 					event.timeZone ?? timeZone,
 				) > now,
 		)
-		.toSorted((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+		.slice()
+		.sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
 	const sessions = upcoming.filter((event) => event.kind !== "tournament");
 	const week = sessions.filter((event) => event.date <= endOfWeek);
 	return {

@@ -7,7 +7,7 @@ export const ActionToaster = (): ReactElement => {
 	return (
 		<Toaster
 			position="bottom-right"
-			duration={3000}
+			duration={5000}
 			visibleToasts={3}
 			closeButton
 			theme={theme.background.primary === "#FFFFFF" ? "light" : "dark"}

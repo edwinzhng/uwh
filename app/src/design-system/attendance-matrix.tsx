@@ -1,6 +1,7 @@
 import { type ReactElement, useState } from "react";
-import { Pressable, ScrollView, useWindowDimensions, View } from "react-native";
+import { Pressable, useWindowDimensions, View } from "react-native";
 import type { AttendanceReportRow } from "../domain/attendance-report";
+import { ScrollArea } from "./scroll-area";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, geometry, space } from "./tokens";
@@ -67,7 +68,7 @@ export const AttendanceMatrix = ({ rows, onMember }: Props): ReactElement => {
 		setSortDirection(key === "name" ? "asc" : "desc");
 	};
 	return (
-		<ScrollView
+		<ScrollArea
 			horizontal
 			accessibilityLabel="Attendance records"
 			style={{
@@ -142,6 +143,6 @@ export const AttendanceMatrix = ({ rows, onMember }: Props): ReactElement => {
 					</View>
 				))}
 			</View>
-		</ScrollView>
+		</ScrollArea>
 	);
 };

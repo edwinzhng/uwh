@@ -1,10 +1,10 @@
 import { type ReactElement, useState } from "react";
-import { ScrollView } from "react-native";
 import { Button } from "./button";
 import { emojiData } from "./emoji-data";
 import type { EmojiPickerProps } from "./emoji-picker-props";
 import { Field } from "./field";
 import { Row } from "./row";
+import { ScrollArea } from "./scroll-area";
 import { Select } from "./select";
 import { Stack } from "./stack";
 import { geometry } from "./tokens";
@@ -59,7 +59,7 @@ export const EmojiPicker = ({ onSelect }: EmojiPickerProps): ReactElement => {
 					}}
 				/>
 			</Row>
-			<ScrollView
+			<ScrollArea
 				style={{ maxHeight: geometry.popupMaxHeight }}
 				keyboardShouldPersistTaps="handled"
 			>
@@ -80,7 +80,7 @@ export const EmojiPicker = ({ onSelect }: EmojiPickerProps): ReactElement => {
 						);
 					})}
 				</Row>
-			</ScrollView>
+			</ScrollArea>
 		</Stack>
 	);
 };

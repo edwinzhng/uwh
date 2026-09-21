@@ -92,6 +92,7 @@ export type CoachingFeedback = {
 	id: string;
 	personId: string;
 	authorId: string;
+	eventId?: string;
 	body: string;
 	visibility: "draft" | "published" | "private";
 	date: string;
@@ -120,6 +121,7 @@ export type Message = {
 };
 export type Notice = {
 	id: string;
+	postedAt?: number;
 	title: string;
 	body: string;
 	program: string;

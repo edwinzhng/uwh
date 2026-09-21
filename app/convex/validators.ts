@@ -137,6 +137,7 @@ export const feedbackValue = v.object({
 	id: v.string(),
 	personId: v.string(),
 	authorId: v.string(),
+	eventId: v.optional(v.string()),
 	body: v.string(),
 	visibility: v.union(
 		v.literal("draft"),
@@ -171,6 +172,7 @@ export const messagesValue = v.object({
 });
 export const noticesValue = v.object({
 	id: v.string(),
+	postedAt: v.optional(v.number()),
 	title: v.string(),
 	body: v.string(),
 	program: v.string(),

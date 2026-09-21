@@ -1,4 +1,7 @@
+import { addDays } from "./app-rules";
 import type { Notice } from "./app-types";
+
+export const defaultNoticeExpiry = (date: string): string => addDays(date, 14);
 
 export const isNoticeActive = (notice: Notice, today: string): boolean =>
 	notice.date <= today && (!notice.expiresAt || notice.expiresAt > today);
@@ -14,4 +17,5 @@ export const bannerNotices = (
 				isNoticeActive(notice, today) &&
 				!notice.dismissedBy?.includes(accountId),
 		)
-		.toSorted((a, b) => b.date.localeCompare(a.date));
+		.slice()
+		.sort((a, b) => b.date.localeCompare(a.date));

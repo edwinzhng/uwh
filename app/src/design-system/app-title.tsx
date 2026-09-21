@@ -1,6 +1,7 @@
 import { usePathname } from "expo-router";
 import Head from "expo-router/head";
 import type { ReactElement } from "react";
+import { Platform } from "react-native";
 
 const pageNames: Record<string, string> = {
 	"": "Home",
@@ -8,8 +9,9 @@ const pageNames: Record<string, string> = {
 	"auth-callback": "Sign in",
 };
 
-export const AppTitle = (): ReactElement => {
+export const AppTitle = (): ReactElement | undefined => {
 	const pathname = usePathname();
+	if (Platform.OS !== "web") return undefined;
 	const route = pathname.split("/").filter(Boolean).at(0) ?? "";
 	const name =
 		pageNames[route] ??

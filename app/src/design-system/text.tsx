@@ -10,6 +10,8 @@ type Props = {
 		| "primary"
 		| "secondary"
 		| "contrast"
+		| "onBrand"
+		| "brand"
 		| "success"
 		| "warning"
 		| "danger";
@@ -46,9 +48,13 @@ export const Text = ({
 				fontStyle: italic ? "italic" : "normal",
 				color: staffRole
 					? theme[staffRole].foreground
-					: tone === "success" || tone === "warning" || tone === "danger"
-						? theme[tone].foreground
-						: theme.text[tone],
+					: tone === "onBrand"
+						? theme.brand.foreground
+						: tone === "brand"
+							? theme.brand.background
+							: tone === "success" || tone === "warning" || tone === "danger"
+								? theme[tone].foreground
+								: theme.text[tone],
 				textAlign: align,
 			}}
 		>

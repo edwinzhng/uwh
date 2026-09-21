@@ -13,12 +13,14 @@ import {
 } from "../design-system";
 import { canReadProgress } from "../domain/app-rules";
 import { ClubShell } from "./club-shell";
+import { FeedbackList } from "./feedback-list";
 import { InviteMemberAction } from "./invite-member-action";
 import { MemberAdmin } from "./member-admin";
 import { MemberAttendance } from "./member-attendance";
 import { MemberProfileDetails } from "./member-profile-details";
 import { MemberProgress } from "./member-progress";
 import { PlayerCoachingPanel } from "./player-coaching-panel";
+import { ShoutoutEditor } from "./shoutout-editor";
 
 export const MemberScreen = (): ReactElement => {
 	const params = useLocalSearchParams<{ id?: string; tab?: string }>();
@@ -37,6 +39,7 @@ export const MemberScreen = (): ReactElement => {
 		staffRole?: "admin" | "coach";
 	}[] = [
 		{ value: "profile", label: "Profile" },
+		{ value: "shoutouts", label: "Shoutouts" },
 		...(progress
 			? [
 					{ value: "progress", label: "Progress" },
@@ -90,46 +93,51 @@ export const MemberScreen = (): ReactElement => {
 			}
 		>
 			{member ? (
-				<>
-					<TabContent value={selectedTab}>
-						{selectedTab === "progress" ? (
-							<MemberProgress member={member} />
-						) : selectedTab === "attendance" ? (
-							<MemberAttendance key={member.id} member={member} />
-						) : selectedTab === "coach" ? (
-							<Stack gap="xl">
-								<PlayerCoachingPanel personId={member.id} />
-							</Stack>
-						) : selectedTab === "admin" ? (
-							<Stack gap="xl">
-								<MemberAdmin key={member.id} member={member} />
-								{!accounts.some(
-									(entry) =>
-										entry.personId === member.id ||
-										entry.children.includes(member.id),
-								) ? (
-									<Surface header={<Text variant="h4">Account access</Text>}>
-										<Stack>
-											<Text variant="small" tone="secondary">
-												This roster profile has no linked login or parent
-												account. Send an invitation to connect one.
-											</Text>
-											<Row>
-												<InviteMemberAction
-													key={member.id}
-													personId={member.id}
-													name={member.name}
-												/>
-											</Row>
-										</Stack>
-									</Surface>
-								) : undefined}
-							</Stack>
-						) : (
-							<MemberProfileDetails member={member} />
-						)}
-					</TabContent>
-				</>
+				<TabContent key={member.id} value={selectedTab}>
+					{selectedTab === "shoutouts" ? (
+						<Stack gap="sm">
+							<Row justify="end">
+								<ShoutoutEditor personId={member.id} />
+							</Row>
+							<FeedbackList personId={member.id} visibility="published" />
+						</Stack>
+					) : selectedTab === "progress" ? (
+						<MemberProgress member={member} />
+					) : selectedTab === "attendance" ? (
+						<MemberAttendance key={member.id} member={member} />
+					) : selectedTab === "coach" ? (
+						<Stack gap="xl">
+							<PlayerCoachingPanel personId={member.id} />
+						</Stack>
+					) : selectedTab === "admin" ? (
+						<Stack gap="xl">
+							<MemberAdmin key={member.id} member={member} />
+							{!accounts.some(
+								(entry) =>
+									entry.personId === member.id ||
+									entry.children.includes(member.id),
+							) ? (
+								<Surface header={<Text variant="h4">Account access</Text>}>
+									<Stack>
+										<Text variant="small" tone="secondary">
+											This roster profile has no linked login or parent account.
+											Send an invitation to connect one.
+										</Text>
+										<Row>
+											<InviteMemberAction
+												key={member.id}
+												personId={member.id}
+												name={member.name}
+											/>
+										</Row>
+									</Stack>
+								</Surface>
+							) : undefined}
+						</Stack>
+					) : (
+						<MemberProfileDetails member={member} />
+					)}
+				</TabContent>
 			) : (
 				<EmptyState
 					title="Member unavailable"

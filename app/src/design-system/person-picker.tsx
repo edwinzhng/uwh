@@ -59,8 +59,8 @@ export const PersonPicker = ({
 									}
 									isSelected={option.id === value}
 									onPress={(): void => {
-										onValueChange(option.id);
 										setOpen(false);
+										onValueChange(option.id);
 									}}
 								/>
 							))

@@ -1,10 +1,9 @@
-import { type ReactElement, useEffect, useRef, useState } from "react";
+import { type ReactElement, startTransition, useState } from "react";
 import { View } from "react-native";
 import { GlassPanel } from "./glass-panel";
 import { NavigationControl, type NavigationItem } from "./navigation-control";
 import { type SegmentFrame, SegmentIndicator } from "./segment-indicator";
-import { layer, motion, space } from "./tokens";
-import { useMotion } from "./use-motion";
+import { layer, space } from "./tokens";
 
 export const SidebarNavigation = ({
 	navigation,
@@ -16,21 +15,13 @@ export const SidebarNavigation = ({
 		from: string | undefined;
 		label: string;
 	}>();
-	const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-	const canAnimate = useMotion();
-	useEffect(() => (): void => clearTimeout(timer.current), []);
 	const activeLabel = navigation.find((item) => item.selected)?.label;
 	const selected =
 		pending && pending.from === activeLabel ? pending.label : activeLabel;
 	const frame = selected ? frames[selected] : undefined;
 	const select = (item: NavigationItem): void => {
-		clearTimeout(timer.current);
 		setPending({ from: activeLabel, label: item.label });
-		if (!canAnimate || item.selected) {
-			item.onPress();
-			return;
-		}
-		timer.current = setTimeout(item.onPress, motion.duration.standard);
+		startTransition(item.onPress);
 	};
 	return (
 		<GlassPanel padding="xs">

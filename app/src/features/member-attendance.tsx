@@ -52,28 +52,30 @@ const AttendanceContent = ({
 			</SectionHeading>
 			<Surface>
 				<Stack>
-					<Row gap="xl" wrap>
-						<Stack gap="xxs">
-							<Text variant="number">
-								{summary.attended === undefined
-									? "N/A"
-									: `${summary.attended}%`}
-							</Text>
-							<Text variant="small">Practices attended</Text>
-							<Text variant="caption" tone="secondary">
-								Of recorded practices
-							</Text>
-						</Stack>
-						<Stack gap="xxs">
-							<Text variant="number">
-								{summary.onTime === undefined ? "N/A" : `${summary.onTime}%`}
-							</Text>
-							<Text variant="small">On time</Text>
-							<Text variant="caption" tone="secondary">
-								Of practices attended
-							</Text>
-						</Stack>
-					</Row>
+					{summary.recorded > 0 ? (
+						<Row gap="xl" wrap>
+							<Stack gap="xxs">
+								<Text variant="number">
+									{summary.attended === undefined
+										? "N/A"
+										: `${summary.attended}%`}
+								</Text>
+								<Text variant="small">Practices attended</Text>
+								<Text variant="caption" tone="secondary">
+									Of recorded practices
+								</Text>
+							</Stack>
+							<Stack gap="xxs">
+								<Text variant="number">
+									{summary.onTime === undefined ? "N/A" : `${summary.onTime}%`}
+								</Text>
+								<Text variant="small">On time</Text>
+								<Text variant="caption" tone="secondary">
+									Of practices attended
+								</Text>
+							</Stack>
+						</Row>
+					) : undefined}
 					{summary.recorded > 0 && summary.points.length ? (
 						<AttendanceChart data={summary.points} />
 					) : (
@@ -90,16 +92,19 @@ const AttendanceContent = ({
 							}
 						/>
 					)}
-					<Text variant="caption" tone="secondary">
-						{summary.recorded} of {summary.total} practices recorded ·{" "}
-						{summary.total - summary.recorded} not marked
-					</Text>
-					<AttendanceRecords
-						key={member.id + seasonId}
-						records={summary.records}
-					/>
 				</Stack>
 			</Surface>
+			{summary.records.length ? (
+				<Stack gap="sm">
+					<SectionHeading>Practice history</SectionHeading>
+					<Surface>
+						<AttendanceRecords
+							key={member.id + seasonId}
+							records={summary.records}
+						/>
+					</Surface>
+				</Stack>
+			) : undefined}
 		</Stack>
 	);
 };

@@ -10,7 +10,7 @@ Google and Apple sign-in, connected-account management and identity-verified del
 
 Admins can also issue club-specific signup invitations for new or existing profiles. Verified recipients join directly through the invitation; expiry, resend, revocation and local delivery capture are covered in [Club invitations](INVITATIONS.md).
 
-Sign up → 8-digit email code → join/create club → admin approval. Password reset uses an email code and a new password. Codes expire after 10 minutes; sends have a one-minute cooldown and Convex Auth rate-limits verification/password failures. Email and code must match. Authenticated access checks the live session and verified user in addition to the JWT, so revoked sessions cannot keep reading through an unexpired token.
+Sign up → 6-digit email code → join/create club → admin approval. Password reset uses an email code and a new password. Codes expire after 10 minutes; sends have a one-minute cooldown and Convex Auth rate-limits verification/password failures. Email and code must match. Authenticated access checks the live session and verified user in addition to the JWT, so revoked sessions cannot keep reading through an unexpired token.
 
 Account includes name editing, password change, sign out, sign out other devices and deletion confirmed by a password or a fresh provider verification. Pending requests can be cancelled or declined; revoked/expired access does not become a sample admin account. Builds without a backend show an unavailable state. Sample mode requires `EXPO_PUBLIC_DEMO_MODE=true` and no backend URL; never enable it for a release. The design-system route remains independent.
 

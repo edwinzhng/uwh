@@ -17,7 +17,8 @@ export const PaymentHistory = ({
 				args: { personId },
 				preview: data.payments
 					.filter((entry) => entry.personId === personId)
-					.toReversed(),
+					.slice()
+					.reverse(),
 				size: 20,
 			}}
 		>

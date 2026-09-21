@@ -14,9 +14,9 @@ export const MemberEditor = ({
 	onInvited?: () => void;
 }): ReactElement => {
 	const backend = useBackend();
-	const task = useTask("sentInvite");
 	const [id] = useState(newId);
 	const [email, setEmail] = useState("");
+	const task = useTask("sentInvite", { subject: email });
 	const [name, setName] = useState("");
 	const valid = Boolean(
 		name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()),

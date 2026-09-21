@@ -4,6 +4,7 @@ import {
 	type ReactNode,
 	useCallback,
 	useEffect,
+	useMemo,
 	useState,
 } from "react";
 import { api } from "../../convex/_generated/api";
@@ -40,15 +41,19 @@ export const LiveMessagingProvider = ({
 	);
 	return (
 		<MessagingContext.Provider
-			value={{
-				error,
-				retry: synchronize,
-				threads: threads ?? [],
-				loading: threads === undefined,
-				openDirect,
-				openSession: (eventId): Promise<string> => openSession({ eventId }),
-				markRead,
-			}}
+			value={useMemo(
+				() => ({
+					error,
+					retry: synchronize,
+					threads: threads ?? [],
+					loading: threads === undefined,
+					openDirect,
+					openSession: (eventId: string): Promise<string> =>
+						openSession({ eventId }),
+					markRead,
+				}),
+				[error, synchronize, threads, openDirect, openSession, markRead],
+			)}
 		>
 			{children}
 		</MessagingContext.Provider>

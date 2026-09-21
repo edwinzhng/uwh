@@ -13,7 +13,13 @@ const resolveRequest: CustomResolver = (
 		context,
 		/^(react|react-dom)(\/|$)/.test(moduleName)
 			? resolve(root, "node_modules", moduleName)
-			: moduleName,
+			: moduleName.startsWith("@calgarycrocs/design-system/")
+				? resolve(
+						root,
+						"../packages/design-system/src",
+						moduleName.slice("@calgarycrocs/design-system/".length),
+					)
+				: moduleName,
 		platform,
 	);
 const config = {

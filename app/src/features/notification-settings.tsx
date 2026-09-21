@@ -38,9 +38,8 @@ export const NotificationSettings = (): ReactElement => {
 							{(
 								[
 									{ key: "messages", label: "Messages" },
-									{ key: "announcements", label: "Announcements" },
 									{ key: "events", label: "Registration reminders" },
-									{ key: "feedback", label: "Coaching feedback" },
+									{ key: "feedback", label: "Shoutouts" },
 								] as const
 							).map((item) => (
 								<Toggle
@@ -55,7 +54,10 @@ export const NotificationSettings = (): ReactElement => {
 												kind: item.key,
 												enabled: value,
 											});
-											actionToast("savedNotifications");
+											actionToast("savedNotifications", "success", {
+												subject: item.label,
+												description: `${item.label} alerts are now ${value ? "enabled" : "disabled"} for your account.`,
+											});
 										});
 									}}
 								/>

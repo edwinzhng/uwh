@@ -1,18 +1,24 @@
 import type { ReactElement } from "react";
-import { ImageBackground } from "react-native";
+import { ImageBackground, View } from "react-native";
+import authBackground from "../../assets/auth-uwh-motion.jpg";
+
 export const AuthBackground = (): ReactElement => (
 	<ImageBackground
-		source={{
-			uri: "https://images.unsplash.com/photo-1614667288602-9ac6e37318a7?auto=format&fit=crop&w=1600&q=85",
-		}}
-		blurRadius={5}
+		source={authBackground}
 		style={{
 			position: "absolute",
 			top: 0,
 			left: 0,
 			right: 0,
 			bottom: 0,
-			opacity: 0.65,
 		}}
-	/>
+		resizeMode="cover"
+	>
+		<View
+			style={{
+				flex: 1,
+				backgroundColor: "rgba(0, 38, 55, 0.28)",
+			}}
+		/>
+	</ImageBackground>
 );

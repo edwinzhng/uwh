@@ -5,11 +5,16 @@ import { Breadcrumbs } from "../design-system";
 const routes: Record<
 	string,
 	{
-		parent: "/members" | "/messages" | "/schedule" | "/club" | "/account";
+		parent: "/" | "/members" | "/messages" | "/schedule" | "/club" | "/account";
 		parentLabel: string;
 		label: string;
 	}
 > = {
+	"/announcements": {
+		parent: "/",
+		parentLabel: "Home",
+		label: "Announcements",
+	},
 	"/account-settings": {
 		parent: "/account",
 		parentLabel: "Account",

@@ -58,19 +58,10 @@ export const validTimeZone = (value: string): boolean => {
 	}
 };
 
-export const timeZoneOptions = [
-	...new Set([
-		...commonTimeZones,
-		...(typeof Intl.supportedValuesOf === "function"
-			? Intl.supportedValuesOf("timeZone")
-			: []),
-	]),
-]
-	.toSorted()
-	.map((value) => ({
-		value,
-		label:
-			value === defaultClubTimeZone
-				? "America/Edmonton (Calgary)"
-				: value.replaceAll("_", " "),
-	}));
+export const timeZoneOptions = commonTimeZones.map((value) => ({
+	value,
+	label:
+		value === defaultClubTimeZone
+			? "America/Edmonton (Calgary)"
+			: value.replace(/_/g, " "),
+}));

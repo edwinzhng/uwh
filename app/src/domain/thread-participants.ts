@@ -55,7 +55,9 @@ export const previewThreadParticipants = (
 					!data.members.some((person) => person.id === account.personId),
 			)
 			.map((account) => ({ id: account.id, name: account.name })),
-	].toSorted((a, b) => a.name.localeCompare(b.name));
+	]
+		.slice()
+		.sort((a, b) => a.name.localeCompare(b.name));
 	const canAdd =
 		accountIds.includes(actor.id) && (kind === "direct" || kind === "group");
 	const candidates = canAdd

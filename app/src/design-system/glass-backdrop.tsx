@@ -7,8 +7,10 @@ import { useTheme } from "./theme";
 
 export const GlassBackdrop = ({
 	material,
+	showRim = true,
 }: {
 	material: GlassMaterial;
+	showRim?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
 	const colors = materialColors(theme);
@@ -31,7 +33,9 @@ export const GlassBackdrop = ({
 				end={{ x: 0, y: 1 }}
 				style={StyleSheet.absoluteFill}
 			/>
-			<View style={[StyleSheet.absoluteFill, { boxShadow: colors.rim }]} />
+			{showRim ? (
+				<View style={[StyleSheet.absoluteFill, { boxShadow: colors.rim }]} />
+			) : undefined}
 		</View>
 	);
 };

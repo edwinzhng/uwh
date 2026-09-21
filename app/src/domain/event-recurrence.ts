@@ -287,7 +287,8 @@ export const seriesTargets = (
 								: `${event.date}T${event.start}` >=
 									`${target.date}T${target.start}`)))),
 		)
-		.toSorted((a, b) =>
+		.slice()
+		.sort((a, b) =>
 			a.seriesOrder !== undefined && b.seriesOrder !== undefined
 				? a.seriesOrder - b.seriesOrder
 				: `${a.date}T${a.start}`.localeCompare(`${b.date}T${b.start}`),

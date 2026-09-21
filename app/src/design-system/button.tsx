@@ -1,6 +1,12 @@
 import { type ReactElement, type ReactNode, useState } from "react";
 import { Text as NativeText, Pressable } from "react-native";
-import Animated, { cubicBezier } from "react-native-reanimated";
+import Animated, {
+	Easing,
+	ReduceMotion,
+	useAnimatedStyle,
+	useSharedValue,
+	withTiming,
+} from "react-native-reanimated";
 import { Badge } from "./badge";
 import { type ButtonVariant, buttonColors } from "./button-colors";
 import { ButtonSpinner } from "./button-spinner";
@@ -31,6 +37,7 @@ type Props = {
 	testID?: string;
 	staffRole?: "coach" | "admin";
 	compact?: boolean;
+	round?: boolean;
 } & (
 	| { prefix?: IconName; icon?: undefined }
 	| { icon: IconName; prefix?: undefined }
@@ -50,6 +57,7 @@ export const Button = ({
 	testID,
 	staffRole,
 	compact = false,
+	round = false,
 }: Props): ReactElement => {
 	const theme = useTheme();
 	const [attempted, setAttempted] = useState(false);
@@ -62,6 +70,20 @@ export const Button = ({
 	const [pressed, setPressed] = useState(false);
 	const [focused, setFocused] = useState(false);
 	const [hovered, setHovered] = useState(false);
+	const scale = useSharedValue(1);
+	const updatePressed = (value: boolean): void => {
+		scale.set(
+			withTiming(value && canAnimate ? motion.pressScale : 1, {
+				duration: canAnimate ? motion.duration.fast : motion.duration.instant,
+				easing: Easing.bezier(...motion.easing.out),
+				reduceMotion: ReduceMotion.System,
+			}),
+		);
+		setPressed(value);
+	};
+	const pressStyle = useAnimatedStyle(() => ({
+		transform: [{ scale: scale.get() }],
+	}));
 	const solid = variant === "solid";
 	const blocked = isDisabled || isLoading;
 	const interaction = isDisabled
@@ -100,43 +122,38 @@ export const Button = ({
 					setAttempted(Boolean(validationError));
 					if (!validationError) onPress();
 				}}
-				onPressIn={(): void => setPressed(true)}
-				onPressOut={(): void => setPressed(false)}
+				onPressIn={(): void => updatePressed(true)}
+				onPressOut={(): void => updatePressed(false)}
 				onFocus={(): void => setFocused(true)}
 				onBlur={(): void => setFocused(false)}
 				onHoverIn={(): void => setHovered(true)}
 				onHoverOut={(): void => setHovered(false)}
 			>
 				<Animated.View
-					style={{
-						flexDirection: "row",
-						alignItems: "center",
-						justifyContent: "center",
-						gap: control.gap,
-						minHeight: controlSize,
-						minWidth: icon ? controlSize : undefined,
-						alignSelf: icon ? "center" : "stretch",
-						paddingHorizontal:
-							icon || variant === "danger-text" || variant === "ghost"
-								? space.none
-								: control.paddingX,
-						paddingVertical: compact ? space.xxs : control.paddingY,
-						borderRadius: corners.control,
-						borderWidth: geometry.border,
-						borderColor: colors.border,
-						outlineWidth: focused ? geometry.focus : 0,
-						outlineOffset: geometry.focus,
-						outlineColor: theme.focus,
-						backgroundColor: colors.background,
-						transform: [
-							{ scale: pressed && canAnimate ? motion.pressScale : 1 },
-						],
-						transitionProperty: "transform",
-						transitionDuration: canAnimate
-							? motion.duration.fast
-							: motion.duration.instant,
-						transitionTimingFunction: cubicBezier(...motion.easing.out),
-					}}
+					style={[
+						{
+							flexDirection: "row",
+							alignItems: "center",
+							justifyContent: "center",
+							gap: control.gap,
+							minHeight: controlSize,
+							minWidth: icon ? controlSize : undefined,
+							alignSelf: icon ? "center" : "stretch",
+							paddingHorizontal:
+								icon || variant === "danger-text" || variant === "ghost"
+									? space.none
+									: control.paddingX,
+							paddingVertical: compact ? space.xxs : control.paddingY,
+							borderRadius: round ? controlSize / 2 : corners.control,
+							borderWidth: geometry.border,
+							borderColor: colors.border,
+							outlineWidth: focused ? geometry.focus : 0,
+							outlineOffset: geometry.focus,
+							outlineColor: theme.focus,
+							backgroundColor: colors.background,
+						},
+						pressStyle,
+					]}
 				>
 					{leading}
 					{isLoading ? (

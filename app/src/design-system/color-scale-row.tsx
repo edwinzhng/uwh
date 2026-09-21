@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
-import { ScrollView, useWindowDimensions, View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
+import { ScrollArea } from "./scroll-area";
 import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
@@ -16,7 +17,7 @@ export const ColorScaleRow = ({ label, steps }: Props): ReactElement => {
 	return (
 		<Stack gap="xs">
 			<Text variant="label">{label}</Text>
-			<ScrollView
+			<ScrollArea
 				horizontal
 				showsHorizontalScrollIndicator={false}
 				style={{
@@ -53,7 +54,7 @@ export const ColorScaleRow = ({ label, steps }: Props): ReactElement => {
 						</Text>
 					</View>
 				))}
-			</ScrollView>
+			</ScrollArea>
 		</Stack>
 	);
 };

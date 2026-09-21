@@ -1,19 +1,19 @@
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 import { Text as NativeText, Pressable, View } from "react-native";
-import Animated from "react-native-reanimated";
+import Animated, {
+	Easing,
+	ReduceMotion,
+	useAnimatedStyle,
+	useSharedValue,
+	withSequence,
+	withTiming,
+} from "react-native-reanimated";
 import { Icon } from "./icon";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, font, geometry, motion, space } from "./tokens";
 import { useMotion } from "./use-motion";
 
-const ring = {
-	"0%": { transform: [{ rotate: "0deg" }] },
-	"20%": { transform: [{ rotate: "12deg" }] },
-	"45%": { transform: [{ rotate: "-9deg" }] },
-	"70%": { transform: [{ rotate: "5deg" }] },
-	"100%": { transform: [{ rotate: "0deg" }] },
-};
 export const NotificationBell = ({
 	count,
 	label,
@@ -27,6 +27,51 @@ export const NotificationBell = ({
 	const [hovered, setHovered] = useState(false);
 	const animate = useMotion();
 	const total = Math.max(0, Math.floor(count));
+	const rotation = useSharedValue(0);
+	const badgeOpacity = useSharedValue(total > 0 ? 1 : 0);
+	const badgeOffset = useSharedValue(0);
+	useEffect((): void => {
+		const duration = animate ? motion.duration.fast : motion.duration.instant;
+		const timing = {
+			duration,
+			easing: Easing.bezier(...motion.easing.out),
+			reduceMotion: ReduceMotion.System,
+		};
+		if (total > 0) {
+			rotation.set(
+				withSequence(
+					withTiming(10, timing),
+					withTiming(-7, timing),
+					withTiming(0, timing),
+				),
+			);
+			badgeOpacity.set(0);
+			badgeOffset.set(4);
+			badgeOpacity.set(
+				withTiming(1, {
+					...timing,
+					duration: animate
+						? motion.duration.standard
+						: motion.duration.instant,
+				}),
+			);
+			badgeOffset.set(
+				withTiming(0, {
+					...timing,
+					duration: animate
+						? motion.duration.standard
+						: motion.duration.instant,
+				}),
+			);
+		}
+	}, [animate, badgeOffset, badgeOpacity, rotation, total]);
+	const bellStyle = useAnimatedStyle(() => ({
+		transform: [{ rotate: `${rotation.get()}deg` }],
+	}));
+	const badgeStyle = useAnimatedStyle(() => ({
+		opacity: badgeOpacity.get(),
+		transform: [{ translateY: badgeOffset.get() }],
+	}));
 	return (
 		<Pressable
 			accessibilityRole="button"
@@ -47,14 +92,7 @@ export const NotificationBell = ({
 					hovered || pressed ? theme.background.hover : "transparent",
 			})}
 		>
-			<Animated.View
-				key={total}
-				style={{
-					animationName: animate && total > 0 ? ring : undefined,
-					animationDuration: motion.duration.slow,
-					animationIterationCount: 1,
-				}}
-			>
+			<Animated.View style={bellStyle}>
 				<Icon name="bell" size="sm" />
 			</Animated.View>
 			{label ? (
@@ -78,18 +116,7 @@ export const NotificationBell = ({
 						justifyContent: "center",
 					}}
 				>
-					<Animated.View
-						key={total}
-						style={{
-							animationName: animate
-								? {
-										from: { opacity: 0, transform: [{ translateY: 4 }] },
-										to: { opacity: 1, transform: [{ translateY: 0 }] },
-									}
-								: undefined,
-							animationDuration: motion.duration.standard,
-						}}
-					>
+					<Animated.View style={badgeStyle}>
 						<NativeText
 							style={{
 								fontFamily: font.semibold,

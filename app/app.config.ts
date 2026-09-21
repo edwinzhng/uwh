@@ -1,13 +1,25 @@
 import type { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
-	name: "UWH Club",
-	slug: "uwh-club",
+	name: "Calgary UWH",
+	slug: "calgary-uwh",
+	owner: "calgary-uwh",
 	scheme: "uwh-club",
 	version: "0.1.0",
-	extra: { eas: { projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID } },
+	icon: "./assets/app-icon.png",
+	extra: {
+		eas: {
+			projectId:
+				process.env.EXPO_PUBLIC_EAS_PROJECT_ID ??
+				"8670108c-8259-43e5-8799-f1d4078577e8",
+		},
+	},
 	userInterfaceStyle: "automatic",
-	ios: { supportsTablet: true, bundleIdentifier: "club.crocs.preview" },
+	ios: {
+		supportsTablet: true,
+		bundleIdentifier: "com.base69c3f808e02b5b2113ac2191.app",
+		infoPlist: { ITSAppUsesNonExemptEncryption: false },
+	},
 	android: {
 		package: "club.crocs.preview",
 		softwareKeyboardLayoutMode: "resize",

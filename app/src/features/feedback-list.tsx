@@ -22,7 +22,8 @@ export const FeedbackList = ({
 				entry.personId === personId &&
 				(entry.visibility === "published") === (visibility === "published"),
 		)
-		.toSorted((a, b) => b.date.localeCompare(a.date));
+		.slice()
+		.sort((a, b) => b.date.localeCompare(a.date));
 	return (
 		<DataPage
 			config={{
@@ -33,9 +34,7 @@ export const FeedbackList = ({
 			}}
 		>
 			{(items) =>
-				!items.length && hideEmpty ? (
-					<></>
-				) : (
+				!items.length && hideEmpty ? undefined : (
 					<Stack gap="sm">
 						{embedded && visibility === "private" ? (
 							<>
@@ -62,7 +61,7 @@ export const FeedbackList = ({
 								}
 								description={
 									visibility === "published"
-										? "Feedback will appear here when a coach shares it."
+										? "Shoutouts from club members will appear here."
 										: "Add feedback to save a draft or a private coaching note."
 								}
 							/>

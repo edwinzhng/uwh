@@ -64,14 +64,4 @@ export const notifyChanges = async (
 			entityId: feedback.id,
 			key: `${clubId}:feedback:${feedback.id}`,
 		});
-	for (const notice of next.notices.filter(
-		(entry) => !previous.notices.some((old) => old.id === entry.id),
-	))
-		await enqueue(ctx, {
-			clubId,
-			actorId,
-			kind: "announcements",
-			entityId: notice.id,
-			key: `${clubId}:notice:${notice.id}`,
-		});
 };

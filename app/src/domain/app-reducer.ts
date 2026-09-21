@@ -1,4 +1,5 @@
 import {
+	addDays,
 	balance,
 	canCoach,
 	canCoachMember,
@@ -490,12 +491,16 @@ export const reduceApp = (
 			const target = data.members.find(
 				(entry) => entry.id === action.feedback.personId,
 			);
-			requireAccess(Boolean(target && canCoachMember(account, target)));
-			if (!action.feedback.body.trim())
-				throw new Error("Write some feedback first.");
 			const existing = data.feedback.find(
 				(entry) => entry.id === action.feedback.id,
 			);
+			const newShoutout =
+				target && !existing && action.feedback.visibility === "published";
+			requireAccess(
+				Boolean(target && (canCoachMember(account, target) || newShoutout)),
+			);
+			if (!action.feedback.body.trim())
+				throw new Error("Write some feedback first.");
 			if (
 				existing?.visibility === "published" &&
 				existing.authorId === account.id &&
@@ -695,15 +700,13 @@ export const reduceApp = (
 						: entry,
 				),
 			};
-		case "create-notice":
+		case "create-notice": {
+			const expiresAt =
+				action.notice.expiresAt ?? addDays(action.notice.date, 14);
 			requireAccess(
 				account.admin || account.coachPrograms.includes(action.notice.program),
 			);
-			if (
-				action.notice.expiresAt &&
-				(!validDate(action.notice.expiresAt) ||
-					action.notice.expiresAt <= action.notice.date)
-			)
+			if (!validDate(expiresAt) || expiresAt <= action.notice.date)
 				throw new Error("Expiry must be after the publication date.");
 			if (!action.notice.title.trim() || !action.notice.body.trim())
 				throw new Error("Add a title and message.");
@@ -712,10 +715,17 @@ export const reduceApp = (
 			return {
 				...data,
 				notices: [
-					{ ...action.notice, acknowledgedBy: [], dismissedBy: [] },
+					{
+						...action.notice,
+						postedAt: Date.now(),
+						expiresAt,
+						acknowledgedBy: [],
+						dismissedBy: [],
+					},
 					...data.notices,
 				],
 			};
+		}
 		case "registration":
 			requireAccess(account.admin && Boolean(member));
 			return {

@@ -4,11 +4,16 @@ import {
 	Modal,
 	Platform,
 	Pressable,
-	ScrollView,
 	useWindowDimensions,
 	View,
 } from "react-native";
-import Animated, { cubicBezier } from "react-native-reanimated";
+import Animated, {
+	Easing,
+	ReduceMotion,
+	useAnimatedStyle,
+	useSharedValue,
+	withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Badge } from "./badge";
 import { Button } from "./button";
@@ -16,6 +21,7 @@ import { IconButton } from "./icon-button";
 import { materialColors } from "./materials";
 import { PopupPortalProvider } from "./popup-portal-provider";
 import { Row } from "./row";
+import { ScrollArea } from "./scroll-area";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, geometry, layer, motion, opacity, space } from "./tokens";
@@ -36,24 +42,41 @@ export const Dialog = ({
 	children,
 	footer,
 	staffRole,
-}: Props): ReactElement => {
+}: Props): ReactElement | undefined => {
 	const theme = useTheme();
 	const { height } = useWindowDimensions();
 	const animate = useMotion();
 	const [retained, setRetained] = useState(isOpen);
+	const progress = useSharedValue(isOpen ? 1 : 0);
 	useEffect(() => {
+		if (!isOpen && !retained) return;
 		if (isOpen) {
 			setRetained(true);
-			return;
 		}
+		progress.set(
+			withTiming(isOpen ? 1 : 0, {
+				duration: animate ? motion.duration.standard : motion.duration.instant,
+				easing: Easing.bezier(...motion.easing.out),
+				reduceMotion: ReduceMotion.System,
+			}),
+		);
+		if (isOpen) return;
 		const timeout = setTimeout(
 			() => setRetained(false),
 			animate ? motion.duration.standard : 0,
 		);
 		return (): void => clearTimeout(timeout);
-	}, [isOpen, animate]);
+	}, [isOpen, animate, progress, retained]);
+	const backdropStyle = useAnimatedStyle(() => ({
+		opacity: progress.get(),
+	}));
+	const panelStyle = useAnimatedStyle(() => ({
+		opacity: progress.get(),
+		transform: [{ scale: 0.97 + progress.get() * 0.03 }],
+	}));
 	const colors = materialColors(theme);
 	const insets = useSafeAreaInsets();
+	if (!isOpen && !retained) return undefined;
 	return (
 		<Modal
 			visible={isOpen || retained}
@@ -62,15 +85,7 @@ export const Dialog = ({
 			onRequestClose={(): void => onOpenChange(false)}
 		>
 			<PopupPortalProvider>
-				<Animated.View
-					style={{
-						flex: 1,
-						opacity: isOpen ? 1 : 0,
-						transitionProperty: "opacity",
-						transitionDuration: animate ? motion.duration.standard : 0,
-						transitionTimingFunction: cubicBezier(...motion.easing.out),
-					}}
-				>
+				<Animated.View style={[{ flex: 1 }, backdropStyle]}>
 					<KeyboardAvoidingView
 						behavior={Platform.OS === "ios" ? "padding" : "height"}
 						enabled={Platform.OS !== "web"}
@@ -100,39 +115,26 @@ export const Dialog = ({
 							}}
 						/>
 						<Animated.View
-							key={String(isOpen)}
-							style={{
-								animationName: animate
-									? {
-											from: {
-												opacity: isOpen ? 0 : 1,
-												transform: [{ scale: isOpen ? 0.97 : 1 }],
-											},
-											to: {
-												opacity: isOpen ? 1 : 0,
-												transform: [{ scale: isOpen ? 1 : 0.97 }],
-											},
-										}
-									: undefined,
-								animationDuration: motion.duration.standard,
-								animationFillMode: "forwards",
-								animationTimingFunction: cubicBezier(...motion.easing.out),
-								maxHeight:
-									height -
-									Math.max(space.lg, insets.top) -
-									Math.max(space.lg, insets.bottom),
-								minHeight: 0,
-								overflow: "hidden",
-								width: "100%",
-								maxWidth: geometry.reading,
-								alignSelf: "center",
-								zIndex: layer.modal,
-								borderColor: theme.border,
-								backgroundColor: theme.background.primary,
-								borderWidth: geometry.border,
-								borderRadius: corners.overlay,
-								boxShadow: colors.overlayShadow,
-							}}
+							style={[
+								{
+									maxHeight:
+										height -
+										Math.max(space.lg, insets.top) -
+										Math.max(space.lg, insets.bottom),
+									minHeight: 0,
+									overflow: "hidden",
+									width: "100%",
+									maxWidth: geometry.reading,
+									alignSelf: "center",
+									zIndex: layer.modal,
+									borderColor: theme.border,
+									backgroundColor: theme.background.primary,
+									borderWidth: geometry.border,
+									borderRadius: corners.overlay,
+									boxShadow: colors.overlayShadow,
+								},
+								panelStyle,
+							]}
 						>
 							<View
 								style={{
@@ -159,13 +161,13 @@ export const Dialog = ({
 									/>
 								</Row>
 							</View>
-							<ScrollView
+							<ScrollArea
 								keyboardShouldPersistTaps="handled"
 								style={{ flexGrow: 0, flexShrink: 1, minHeight: 0 }}
 								contentContainerStyle={{ padding: space.md }}
 							>
 								{children}
-							</ScrollView>
+							</ScrollArea>
 							{footer !== false ? (
 								<View
 									style={{

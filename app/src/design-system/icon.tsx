@@ -21,6 +21,7 @@ import List from "lucide-react-native/icons/list";
 import LockKeyhole from "lucide-react-native/icons/lock-keyhole";
 import LogOut from "lucide-react-native/icons/log-out";
 import MapPin from "lucide-react-native/icons/map-pin";
+import Megaphone from "lucide-react-native/icons/megaphone";
 import Menu from "lucide-react-native/icons/menu";
 import MessageSquare from "lucide-react-native/icons/message-square";
 import Mic from "lucide-react-native/icons/mic";
@@ -67,6 +68,7 @@ const icons = {
 	arrowLeft: ArrowLeft,
 	arrowRight: ArrowRight,
 	bell: Bell,
+	megaphone: Megaphone,
 	signOut: LogOut,
 	calendar: CalendarDays,
 	check: Check,
@@ -99,6 +101,7 @@ type Props = {
 		| "primary"
 		| "secondary"
 		| "contrast"
+		| "onBrand"
 		| "onAccent"
 		| "onDanger"
 		| "success"
@@ -123,14 +126,16 @@ export const Icon = ({
 				tone === "danger" ||
 				tone === "pending"
 					? theme[tone].foreground
-					: tone === "onAccent"
-						? theme.accent.foreground
-						: tone === "onDanger"
-							? theme.dangerAction.foreground
-							: theme.text[tone]
+					: tone === "onBrand"
+						? theme.brand.foreground
+						: tone === "onAccent"
+							? theme.accent.foreground
+							: tone === "onDanger"
+								? theme.dangerAction.foreground
+								: theme.text[tone]
 			}
 			strokeWidth={geometry.iconStroke}
-			accessible={false}
+			aria-hidden
 		/>
 	);
 };

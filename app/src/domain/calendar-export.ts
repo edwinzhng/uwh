@@ -95,9 +95,8 @@ export const personalCalendarEvents = (
 				},
 			];
 		})
-		.toSorted(
-			(a, b) => a.start - b.start || a.eventId.localeCompare(b.eventId),
-		);
+		.slice()
+		.sort((a, b) => a.start - b.start || a.eventId.localeCompare(b.eventId));
 };
 
 export const calendarUid = (
@@ -151,9 +150,9 @@ export const reconcileCalendar = (
 							updatedAt: now,
 						},
 		);
-	return [...active, ...cancelled].toSorted(
-		(a, b) => a.start - b.start || a.eventId.localeCompare(b.eventId),
-	);
+	return [...active, ...cancelled]
+		.slice()
+		.sort((a, b) => a.start - b.start || a.eventId.localeCompare(b.eventId));
 };
 
 const escapeText = (value: string): string =>

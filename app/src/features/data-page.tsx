@@ -2,16 +2,10 @@ import {
 	type PaginatedQueryArgs,
 	type PaginatedQueryItem,
 	type PaginatedQueryReference,
-	useQueries,
+	usePaginatedQuery,
 } from "convex/react";
-import {
-	type FunctionReference,
-	getFunctionName,
-	type PaginationOptions,
-	type PaginationResult,
-} from "convex/server";
+import { getFunctionName } from "convex/server";
 import { type ReactElement, type ReactNode, useState } from "react";
-import { shouldRestartPagination } from "../backend/pagination-recovery";
 import { useApp } from "../demo/app-state";
 import { Button, LoadingContent, Row, Text } from "../design-system";
 
@@ -29,18 +23,16 @@ const PageButtons = ({
 	page,
 	next,
 	previous,
-	loading,
 }: {
 	page: number;
 	next?: () => void;
 	previous?: () => void;
-	loading?: boolean;
 }): ReactElement => (
 	<Row justify="between">
 		<Button
 			label="Previous"
 			variant="ghost"
-			isDisabled={!previous || loading}
+			isDisabled={!previous}
 			onPress={previous ?? (() => {})}
 		/>
 		<Text variant="caption" tone="secondary">
@@ -49,7 +41,7 @@ const PageButtons = ({
 		<Button
 			label="Next"
 			variant="ghost"
-			isDisabled={!next || loading}
+			isDisabled={!next}
 			onPress={next ?? (() => {})}
 		/>
 	</Row>
@@ -58,54 +50,23 @@ const LiveDataPage = <Query extends PaginatedQueryReference>({
 	config,
 	children,
 }: Props<Query>): ReactElement => {
-	const [cursors, setCursors] = useState<Array<string | null>>([null]);
-	const reference: FunctionReference<
-		"query",
-		"public",
-		{ paginationOpts: PaginationOptions },
-		PaginationResult<PaginatedQueryItem<Query>>
-	> = config.query;
-	const cursor = cursors.at(-1) ?? null;
-	const response:
-		| PaginationResult<PaginatedQueryItem<Query>>
-		| Error
-		| undefined = useQueries({
-		page: {
-			query: reference,
-			args: {
-				...config.args,
-				paginationOpts: {
-					numItems: config.size ?? 30,
-					cursor,
-				},
-			},
-		},
-	}).page;
-	if (shouldRestartPagination(response, cursor)) {
-		setCursors([null]);
-		return <LoadingContent />;
-	}
-	if (response instanceof Error) throw response;
-	const result = response;
+	const { results, status, loadMore } = usePaginatedQuery(
+		config.query,
+		config.args,
+		{ initialNumItems: config.size ?? 30 },
+	);
 	return (
 		<>
-			{result ? children(result.page) : <LoadingContent />}
-			{cursors.length > 1 || (result && !result.isDone) ? (
-				<PageButtons
-					page={cursors.length}
-					loading={!result}
-					previous={
-						cursors.length > 1
-							? () => setCursors((current) => current.slice(0, -1))
-							: undefined
-					}
-					next={
-						result && !result.isDone
-							? () =>
-									setCursors((current) => [...current, result.continueCursor])
-							: undefined
-					}
-				/>
+			{status === "LoadingFirstPage" ? <LoadingContent /> : children(results)}
+			{status === "CanLoadMore" || status === "LoadingMore" ? (
+				<Row justify="end">
+					<Button
+						label="Load more"
+						variant="ghost"
+						isLoading={status === "LoadingMore"}
+						onPress={(): void => loadMore(config.size ?? 30)}
+					/>
+				</Row>
 			) : undefined}
 		</>
 	);

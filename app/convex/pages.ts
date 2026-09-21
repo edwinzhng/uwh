@@ -1,11 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import {
-	canCoachMember,
-	canReadProgress,
-	memberRoles,
-} from "../src/domain/app-rules";
+import { canCoachMember, memberRoles } from "../src/domain/app-rules";
 import type {
 	ClubEvent,
 	CoachingFeedback,
@@ -33,8 +29,7 @@ const eventTypeValue = v.optional(
 		v.literal("all"),
 		v.literal("practice"),
 		v.literal("tournament"),
-		v.literal("social"),
-		v.literal("meeting"),
+		v.literal("other"),
 	),
 );
 
@@ -84,7 +79,7 @@ export const schedule = query({
 		const upcomingFrom = today.subtract({ days: 14 }).toString();
 		const pastThrough = today.add({ days: 2 }).toString();
 		const filtered =
-			eventType !== "all" && eventType !== "practice"
+			eventType !== "all" && eventType !== "practice" && eventType !== "other"
 				? ctx.db.query("events").withIndex("by_club_kind_date", (q) => {
 						const range = q
 							.eq("clubId", member.clubId)
@@ -358,22 +353,6 @@ export const members = query({
 		};
 	},
 });
-const progressMember = async (
-	ctx: QueryCtx,
-	personId: string,
-): Promise<{ actor: Doc<"memberships">; member: Member } | undefined> => {
-	const actor = await memberFor(ctx);
-	if (!actor) return;
-	const member = await ctx.db
-		.query("members")
-		.withIndex("by_club_and_key", (q) =>
-			q.eq("clubId", actor.clubId).eq("value.id", personId),
-		)
-		.unique();
-	return member && canReadProgress(accountFor(actor), member.value)
-		? { actor, member: member.value }
-		: undefined;
-};
 export const feedback = query({
 	args: {
 		personId: v.string(),
@@ -384,17 +363,24 @@ export const feedback = query({
 		ctx,
 		{ personId, visibility, paginationOpts },
 	): Promise<PaginationResult<CoachingFeedback>> => {
-		const access = await progressMember(ctx, personId);
-		if (!access) return empty();
+		const actor = await memberFor(ctx);
+		if (!actor) return empty();
+		const member = await ctx.db
+			.query("members")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", actor.clubId).eq("value.id", personId),
+			)
+			.unique();
+		if (!member) return empty();
 		if (
 			visibility === "private" &&
-			!canCoachMember(accountFor(access.actor), access.member)
+			!canCoachMember(accountFor(actor), member.value)
 		)
 			return empty();
 		const result = await ctx.db
 			.query("feedback")
 			.withIndex("by_person_date", (q) =>
-				q.eq("clubId", access.actor.clubId).eq("value.personId", personId),
+				q.eq("clubId", actor.clubId).eq("value.personId", personId),
 			)
 			.filter((q) =>
 				visibility === "published"

@@ -27,7 +27,7 @@ export const localCode = async (email: string): Promise<string> => {
 	);
 	const code: unknown = JSON.parse(output);
 	assert(
-		typeof code === "string" && /^\d{8}$/.test(code),
+		typeof code === "string" && /^\d{6}$/.test(code),
 		"Verification email missing.",
 	);
 	return code;

@@ -37,6 +37,22 @@ test("feedback can publish directly and retries do not duplicate it", (): void =
 	).toThrow();
 });
 
+test("club members can publish shoutouts but cannot create coaching notes", (): void => {
+	const published = reduceApp(initialAppData, parent, {
+		type: "save-feedback",
+		feedback,
+	});
+	expect(
+		published.feedback.find((entry) => entry.id === feedback.id)?.authorId,
+	).toBe(parent.id);
+	expect(() =>
+		reduceApp(initialAppData, parent, {
+			type: "save-feedback",
+			feedback: { ...feedback, visibility: "private" },
+		}),
+	).toThrow();
+});
+
 test("drafts can be edited, published or deleted only by their coach", (): void => {
 	const saved = reduceApp(initialAppData, primaryAccount, {
 		type: "save-feedback",

@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { Fragment, type ReactElement } from "react";
-import { useApp } from "../demo/app-state";
+import { useActivePerson, useApp } from "../demo/app-state";
 import {
 	Badge,
 	Button,
@@ -31,8 +31,17 @@ export const HouseholdEventCard = ({
 	const { data, account } = useApp();
 	const router = useRouter();
 	const people = householdMembers(data, account);
+	const active = useActivePerson();
+	const response = eventResponse(data, event.id, active.id).response;
+	const borderTone = event.cancelled
+		? "neutral"
+		: response === "going"
+			? "success"
+			: response === "waiting" || response === "unavailable"
+				? "warning"
+				: "neutral";
 	return (
-		<Surface>
+		<Surface elevation="raised" borderTone={borderTone}>
 			<Stack>
 				<Row justify="between" wrap>
 					<Row gap="xs" wrap>

@@ -37,11 +37,11 @@ const LiveFlags = ({ eventId, children }: Props): ReactElement => {
 export const AttendanceFlagProvider = ({
 	eventId,
 	children,
-}: Props): ReactElement => {
+}: Props): ReactNode => {
 	const { source, account } = useApp();
 	return source === "convex" && account.coachPrograms.length ? (
 		<LiveFlags eventId={eventId}>{children}</LiveFlags>
 	) : (
-		<>{children}</>
+		children
 	);
 };

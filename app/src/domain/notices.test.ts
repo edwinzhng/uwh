@@ -3,7 +3,7 @@ import { initialAppData, primaryAccount } from "../demo/app-data";
 import { reduceApp } from "./app-reducer";
 import { visibleNotices } from "./app-rules";
 import type { AppData, Notice } from "./app-types";
-import { bannerNotices } from "./notices";
+import { bannerNotices, defaultNoticeExpiry } from "./notices";
 
 const notice: Notice = {
 	id: "notice-test",
@@ -14,6 +14,14 @@ const notice: Notice = {
 	acknowledgedBy: [],
 };
 describe("persistent notices", () => {
+	test("new announcements default to two weeks", () => {
+		const next = reduceApp(initialAppData, primaryAccount, {
+			type: "create-notice",
+			notice: { ...notice, id: "two-week-notice" },
+		});
+		expect(next.notices.at(0)?.expiresAt).toBe("2026-09-15");
+		expect(defaultNoticeExpiry("2026-09-01")).toBe("2026-09-15");
+	});
 	test("dismissal hides the banner without acknowledgment or removing archive content", () => {
 		const data: AppData = { ...initialAppData, notices: [notice] };
 		const next = reduceApp(data, primaryAccount, {

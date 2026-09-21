@@ -16,14 +16,11 @@ export const AppNavigation = ({
 	const router = useRouter();
 	const { data } = useApp();
 	const navigation = useClubNavigation();
+	const hidden = path === "/design-system" || path === "/otp-test";
 	return (
-		<NavigationFrame
-			routeKey={path}
-			navigation={navigation}
-			hidden={path === "/design-system"}
-		>
+		<NavigationFrame routeKey={path} navigation={navigation} hidden={hidden}>
 			{children}
-			{path !== "/design-system" ? (
+			{!hidden ? (
 				<DesktopNavigation
 					brand={data.clubName}
 					logo={data.clubName === "Calgary Crocs" ? clubLogo : undefined}

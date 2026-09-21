@@ -2,14 +2,14 @@ import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import {
-	Badge,
-	Button,
 	Dialog,
 	EmptyState,
 	List,
 	ListItem,
 	NotificationBell,
 } from "../design-system";
+import { memberName } from "../domain/app-rules";
+
 export const NotificationsMenu = ({
 	labeled = false,
 }: {
@@ -18,55 +18,47 @@ export const NotificationsMenu = ({
 	const router = useRouter();
 	const { data, account } = useApp();
 	const [notifications, setNotifications] = useState(false);
-	const unread = data.notices.filter(
-		(entry) => !entry.acknowledgedBy.includes(account.id),
-	);
+	const personIds = [account.personId, ...account.children];
+	const recent = data.feedback
+		.filter(
+			(entry) =>
+				entry.visibility === "published" && personIds.includes(entry.personId),
+		)
+		.slice()
+		.sort((a, b) => b.date.localeCompare(a.date))
+		.slice(0, 5);
 	return (
 		<>
 			<NotificationBell
 				label={labeled ? "Notifications" : undefined}
-				count={unread.length}
+				count={0}
 				onPress={(): void => setNotifications(true)}
 			/>
 			<Dialog
-				title="Recent announcements"
+				title="Notifications"
 				isOpen={notifications}
 				onOpenChange={setNotifications}
-				footer={
-					<Button
-						label="All announcements"
-						variant="secondary"
-						onPress={(): void => {
-							setNotifications(false);
-							router.navigate({
-								pathname: "/messages",
-								params: { tab: "notices" },
-							});
-						}}
-					/>
-				}
 			>
 				<List>
-					{unread.length ? (
-						unread.map((entry) => (
+					{recent.length ? (
+						recent.map((entry) => (
 							<ListItem
 								key={entry.id}
-								title={entry.title}
-								description={entry.date}
-								trailing={<Badge label="New" />}
+								title={memberName(data, entry.personId)}
+								description={entry.body}
 								onPress={(): void => {
 									setNotifications(false);
-									router.navigate({
-										pathname: "/messages",
-										params: { tab: "notices" },
+									router.push({
+										pathname: "/member",
+										params: { id: entry.personId, tab: "shoutouts" },
 									});
 								}}
 							/>
 						))
 					) : (
 						<EmptyState
-							title="You’re all caught up"
-							description="New announcements will appear here."
+							title="No notifications"
+							description="You’re all caught up."
 						/>
 					)}
 				</List>

@@ -11,9 +11,9 @@ export const InviteMemberAction = ({
 	name: string;
 }): ReactElement => {
 	const backend = useBackend();
-	const task = useTask("sentInvite");
 	const [open, setOpen] = useState(false);
 	const [email, setEmail] = useState("");
+	const task = useTask("sentInvite", { subject: email });
 	const [sent, setSent] = useState(false);
 	return (
 		<>

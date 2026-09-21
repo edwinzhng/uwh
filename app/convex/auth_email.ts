@@ -24,7 +24,7 @@ export const authEmail = (
 					},
 				},
 				"0123456789",
-				8,
+				6,
 			),
 		sendVerificationRequest: async (
 			{ identifier, token },

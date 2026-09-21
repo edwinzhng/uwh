@@ -5,6 +5,7 @@ import {
 	Button,
 	Dialog,
 	Field,
+	OtpInput,
 	Stack,
 	Text,
 } from "../design-system";
@@ -68,7 +69,7 @@ export const AccountPasswordAction = ({
 						label={sent ? "Save" : "Send code"}
 						isLoading={task.busy}
 						validationError={
-							sent && (password.length < 12 || !/^\d{8}$/.test(code))
+							sent && (password.length < 12 || !/^\d{6}$/.test(code))
 								? "Check the required fields"
 								: undefined
 						}
@@ -86,13 +87,16 @@ export const AccountPasswordAction = ({
 					</Text>
 					{sent ? (
 						<>
-							<Field
-								label="8-digit code"
-								inputMode="numeric"
+							<OtpInput
+								label="6-digit code"
 								value={code}
-								onValueChange={setCode}
-								maxLength={8}
+								onValueChange={(value): void => {
+									setCode(value);
+									task.clear();
+								}}
+								status={task.error ? "error" : "idle"}
 								isDisabled={task.busy}
+								autoFocus
 							/>
 							<Field
 								label="New password"

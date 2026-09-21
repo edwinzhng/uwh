@@ -83,8 +83,9 @@ export const lineupNeedsReview = (data: AppData, plan: TeamPlan): boolean =>
 	Boolean(plan.coachingStale) ||
 	eventAttendees(data, plan.eventId, plan.partId)
 		.map((member) => member.id)
-		.toSorted()
-		.join(",") !== plan.attendees.toSorted().join(",");
+		.slice()
+		.sort()
+		.join(",") !== plan.attendees.slice().sort().join(",");
 export const balance = (data: AppData, personId: string): number =>
 	data.charges
 		.filter((entry) => entry.personId === personId)

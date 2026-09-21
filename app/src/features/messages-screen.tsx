@@ -16,8 +16,6 @@ import {
 import type { RecipientDirectory } from "../domain/message-recipients";
 import { ClubShell } from "./club-shell";
 import { ConversationList } from "./conversation-list";
-import { NoticeBanner } from "./notice-banner";
-import { NoticeComposer } from "./notice-composer";
 import { useFormTask } from "./use-form-task";
 import {
 	useLiveMessageRecipients,
@@ -30,9 +28,6 @@ const MessagesContent = ({
 	directory?: RecipientDirectory;
 }): ReactElement => {
 	const router = useRouter();
-	const { account } = useApp();
-	const [noticeOpen, setNoticeOpen] = useState(false);
-
 	const messaging = useMessaging();
 	const safety = useChatSafety();
 	const task = useFormTask();
@@ -57,15 +52,7 @@ const MessagesContent = ({
 		<ClubShell
 			title="Messages"
 			action={
-				<Row gap="xs" wrap>
-					{account.admin || account.coachPrograms.length > 0 ? (
-						<Button
-							label="New notice"
-							variant="secondary"
-							prefix="plus"
-							onPress={(): void => setNoticeOpen(true)}
-						/>
-					) : undefined}
+				<Row gap="xs">
 					<Button
 						label="Message"
 						isDisabled={Boolean(safety.status?.paused)}
@@ -79,8 +66,6 @@ const MessagesContent = ({
 				</Row>
 			}
 		>
-			<NoticeBanner showCreate={false} />
-			<NoticeComposer isOpen={noticeOpen} onOpenChange={setNoticeOpen} />
 			<ConversationList />
 			<Dialog
 				title="New message"

@@ -71,7 +71,8 @@ export const PreviewMessagingProvider = ({
 							).length,
 						};
 					})
-					.toSorted((a, b) => b.updatedAt - a.updatedAt),
+					.slice()
+					.sort((a, b) => b.updatedAt - a.updatedAt),
 				markRead,
 				openSession: async (eventId): Promise<string> => {
 					const event = data.events.find((entry) => entry.id === eventId);

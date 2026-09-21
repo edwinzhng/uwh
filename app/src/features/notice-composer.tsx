@@ -1,120 +1,97 @@
 import { type ReactElement, useState } from "react";
 import { newId, useApp } from "../demo/app-state";
-import { Button, Combobox, Dialog, Field, Stack, Text } from "../design-system";
-import { programs as clubPrograms, validDate } from "../domain/app-rules";
+import {
+	Button,
+	DatePicker,
+	Field,
+	Row,
+	Stack,
+	Surface,
+	Text,
+} from "../design-system";
+import { addDays, validDate } from "../domain/app-rules";
+import { defaultNoticeExpiry } from "../domain/notices";
 import { useClubToday } from "./use-club-today";
 import { useFormTask } from "./use-form-task";
 
 export const NoticeComposer = ({
-	isOpen,
-	onOpenChange,
+	onPublished,
 }: {
-	isOpen: boolean;
-	onOpenChange: (open: boolean) => void;
-}): ReactElement => {
-	const { account, data, dispatch } = useApp();
+	onPublished?: () => void;
+}): ReactElement | undefined => {
+	const { account, dispatch } = useApp();
 	const today = useClubToday();
 	const task = useFormTask();
-	const [title, setTitle] = useState("");
 	const [body, setBody] = useState("");
-	const [expiresAt, setExpiresAt] = useState("");
-	const [program, setProgram] = useState(
-		account.admin ? "all" : account.coachPrograms.at(0),
-	);
-	const programs = account.admin
-		? [
-				"all",
-				...new Set([
-					...clubPrograms.map((entry) => entry.value),
-					...data.members.flatMap((person) => person.programs),
-				]),
-			]
-		: account.coachPrograms;
+	const [expiresAt, setExpiresAt] = useState(defaultNoticeExpiry(today));
+	const program = account.admin ? "all" : account.coachPrograms.at(0);
+	if (!program) return undefined;
 	const save = async (): Promise<void> => {
 		await task.submit(
 			() =>
-				!title.trim() || !body.trim() || !program
-					? "Add a title, message, and audience."
-					: expiresAt && (!validDate(expiresAt) || expiresAt <= today)
-						? "Enter a future expiry date as YYYY-MM-DD."
+				!body.trim()
+					? "Write an announcement."
+					: !validDate(expiresAt) || expiresAt <= today
+						? "Choose an end date after today."
 						: undefined,
 			async (): Promise<void> => {
-				if (!program) return;
 				const saved = await dispatch({
 					type: "create-notice",
 					notice: {
 						id: newId(),
-						title: title.trim(),
+						title: "Announcement",
 						body: body.trim(),
 						program,
 						date: today,
-						expiresAt: expiresAt || undefined,
+						expiresAt,
 						acknowledgedBy: [],
 					},
 				});
 				if (!saved)
-					throw new Error("Could not publish this notice. Please try again.");
-				onOpenChange(false);
-				setTitle("");
+					throw new Error("Could not publish this announcement. Try again.");
 				setBody("");
-				setExpiresAt("");
+				setExpiresAt(defaultNoticeExpiry(today));
+				onPublished?.();
 			},
 		);
 	};
 	return (
-		<Dialog
-			title="New notice"
-			staffRole={account.admin ? "admin" : "coach"}
-			isOpen={isOpen}
-			onOpenChange={(open): void => {
-				if (!task.busy) {
-					task.clear();
-					onOpenChange(open);
-				}
-			}}
-			footer={
-				<Button
-					label="Publish notice"
-					isLoading={task.busy}
-					onPress={(): void => {
-						void save();
-					}}
-				/>
-			}
-		>
+		<Surface header={<Text variant="h4">New announcement</Text>}>
 			<Stack>
 				<Field
-					label="Title"
-					value={title}
-					onValueChange={setTitle}
-					isDisabled={task.busy}
-				/>
-				<Field
 					label="Message"
+					placeholder="What does the club need to know?"
 					value={body}
 					onValueChange={setBody}
 					multiline
+					rows={4}
+					maxLength={500}
 					isDisabled={task.busy}
 				/>
-				<Combobox
-					label="Audience"
-					value={program}
-					onValueChange={setProgram}
-					options={programs.map((value) => ({
-						value,
-						label: value === "all" ? "Whole club" : value,
-					}))}
-					isDisabled={task.busy}
-				/>
-				<Field
-					label="Hide starting (optional)"
-					placeholder="YYYY-MM-DD"
+				<DatePicker
+					label="End date"
 					value={expiresAt}
-					onValueChange={setExpiresAt}
+					min={addDays(today, 1)}
 					isDisabled={task.busy}
+					onValueChange={(value): void =>
+						setExpiresAt(value ?? defaultNoticeExpiry(today))
+					}
 				/>
+				<Text variant="caption" tone="secondary">
+					Announcements stay live for two weeks by default.
+				</Text>
 				{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
+				<Row>
+					<Button
+						label="Publish announcement"
+						staffRole={account.admin ? "admin" : "coach"}
+						isLoading={task.busy}
+						onPress={(): void => {
+							void save();
+						}}
+					/>
+				</Row>
 			</Stack>
-		</Dialog>
+		</Surface>
 	);
 };

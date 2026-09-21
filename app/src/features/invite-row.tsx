@@ -42,7 +42,11 @@ export const InviteRow = ({ invite }: { invite: Invite }): ReactElement => {
 		void task.run(async (): Promise<void> => {
 			if (!invites) throw new Error("Connect to the club to manage invites.");
 			await invites[action](invite.id);
-			actionToast(action === "resend" ? "sentInvite" : "revokedInvite");
+			actionToast(
+				action === "resend" ? "sentInvite" : "revokedInvite",
+				"success",
+				{ subject: invite.email },
+			);
 		});
 	};
 	return (
@@ -57,6 +61,7 @@ export const InviteRow = ({ invite }: { invite: Invite }): ReactElement => {
 					onConfirm={async (): Promise<void> => {
 						if (!invites) throw new Error("Connect to the club first.");
 						await invites.revoke(invite.id);
+						actionToast("revokedInvite", "success", { subject: invite.email });
 					}}
 				/>
 			) : undefined}
@@ -94,7 +99,9 @@ export const InviteRow = ({ invite }: { invite: Invite }): ReactElement => {
 																void task.run(async (): Promise<void> => {
 																	await Clipboard.setStringAsync(invite.url);
 																	setCopied(true);
-																	actionToast("copiedLink");
+																	actionToast("copiedLink", "success", {
+																		subject: invite.email,
+																	});
 																});
 															},
 														},

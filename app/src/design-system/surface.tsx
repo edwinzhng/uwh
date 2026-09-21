@@ -17,6 +17,7 @@ type Props = {
 	density?: "compact" | "standard" | "spacious";
 	elevation?: ElevationToken;
 	padding?: SpaceToken;
+	borderTone?: "neutral" | "success" | "warning" | "danger";
 };
 export const Surface = ({
 	children,
@@ -25,6 +26,7 @@ export const Surface = ({
 	density = "standard",
 	elevation: level = "none",
 	padding,
+	borderTone = "neutral",
 }: Props): ReactElement => {
 	const theme = useTheme();
 	const contentPadding =
@@ -42,7 +44,10 @@ export const Surface = ({
 					variant === "subtle"
 						? theme.background.secondary
 						: theme.background.primary,
-				borderColor: theme.border,
+				borderColor:
+					borderTone === "neutral"
+						? theme.border
+						: theme.colorScales[borderTone].border,
 				borderWidth: geometry.border,
 				borderRadius: level === "overlay" ? corners.overlay : corners.panel,
 				padding: header === undefined ? contentPadding : 0,

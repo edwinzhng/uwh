@@ -14,6 +14,7 @@ import {
 import { BrandIdentity } from "./brand-identity";
 import { GlassPanel } from "./glass-panel";
 import type { NavigationItem } from "./navigation-control";
+import { PageReveal } from "./page-reveal";
 import { Row } from "./row";
 import { SidebarNavigation } from "./sidebar-navigation";
 import { Stack } from "./stack";
@@ -78,12 +79,19 @@ export const AppLayout = ({
 					</View>
 				) : undefined}
 				{title ? (
-					<Row justify="between" align="start" wrap>
+					<View
+						style={{
+							flexDirection: wide ? "row" : "column",
+							alignItems: wide ? "flex-start" : "stretch",
+							justifyContent: "space-between",
+							gap: space.sm,
+						}}
+					>
 						<View
 							style={{
 								flexGrow: 1,
-								flexShrink: 1,
-								flexBasis: geometry.popupWidth,
+								flexShrink: wide ? 1 : 0,
+								flexBasis: wide ? geometry.popupWidth : "auto",
 								minWidth: 0,
 								gap: space.xxs,
 							}}
@@ -100,8 +108,12 @@ export const AppLayout = ({
 								</Text>
 							) : undefined}
 						</View>
-						{action}
-					</Row>
+						{action ? (
+							<View style={{ alignSelf: wide ? "auto" : "flex-start" }}>
+								{action}
+							</View>
+						) : undefined}
+					</View>
 				) : undefined}
 			</View>
 		) : undefined;
@@ -180,79 +192,81 @@ export const AppLayout = ({
 							</View>
 						</>
 					) : undefined}
-					{scrollable ? (
-						<ScrollView
-							keyboardShouldPersistTaps="handled"
-							keyboardDismissMode="on-drag"
-							contentContainerStyle={{
-								paddingHorizontal: wide ? space.lg : space.md,
-								paddingTop: wide
-									? pagePadding
-									: geometry.touch + space.sm + space.lg + pagePadding,
-								paddingBottom:
-									wide || footer || keyboard
+					<PageReveal fill gap="none">
+						{scrollable ? (
+							<ScrollView
+								keyboardShouldPersistTaps="handled"
+								keyboardDismissMode="on-drag"
+								contentContainerStyle={{
+									paddingHorizontal: wide ? space.lg : space.md,
+									paddingTop: wide
 										? pagePadding
-										: geometry.tab + pagePadding + space.sm + insets.bottom,
-							}}
-						>
+										: geometry.touch + space.sm + space.lg + pagePadding,
+									paddingBottom:
+										wide || footer || keyboard
+											? pagePadding
+											: geometry.tab + pagePadding + space.sm + insets.bottom,
+								}}
+							>
+								<View
+									style={{
+										width: "100%",
+										maxWidth: geometry.content,
+										alignSelf: "center",
+										gap: space.xl,
+									}}
+								>
+									{heading}
+									{tabs}
+									{children}
+								</View>
+							</ScrollView>
+						) : (
 							<View
 								style={{
+									flex: 1,
+									minHeight: 0,
 									width: "100%",
 									maxWidth: geometry.content,
 									alignSelf: "center",
-									gap: space.xl,
+									paddingHorizontal: wide ? space.lg : space.md,
+									paddingTop: wide
+										? pagePadding
+										: geometry.touch + space.sm + space.lg + pagePadding,
+									paddingBottom: pagePadding,
+									gap: space.md,
 								}}
 							>
 								{heading}
 								{tabs}
 								{children}
 							</View>
-						</ScrollView>
-					) : (
-						<View
-							style={{
-								flex: 1,
-								minHeight: 0,
-								width: "100%",
-								maxWidth: geometry.content,
-								alignSelf: "center",
-								paddingHorizontal: wide ? space.lg : space.md,
-								paddingTop: wide
-									? pagePadding
-									: geometry.touch + space.sm + space.lg + pagePadding,
-								paddingBottom: pagePadding,
-								gap: space.md,
-							}}
-						>
-							{heading}
-							{tabs}
-							{children}
-						</View>
-					)}
+						)}
 
-					{footer ? (
-						<View
-							style={{
-								paddingHorizontal: wide ? space.lg : space.md,
-								paddingTop: space.xs,
-								paddingBottom:
-									keyboard || wide
-										? space.xs
-										: geometry.tab + space.lg + insets.bottom,
-								backgroundColor: "transparent",
-							}}
-						>
+						{footer ? (
 							<View
 								style={{
-									width: "100%",
-									maxWidth: geometry.content,
-									alignSelf: "center",
+									paddingHorizontal: wide ? space.lg : space.md,
+									paddingTop: space.xs,
+									paddingBottom:
+										keyboard || wide
+											? space.xs
+											: geometry.tab + space.lg + insets.bottom,
+									backgroundColor: "transparent",
 								}}
 							>
-								{footer}
+								<View
+									style={{
+										width: "100%",
+										maxWidth: geometry.content,
+										alignSelf: "center",
+									}}
+								>
+									{footer}
+								</View>
 							</View>
-						</View>
-					) : undefined}
+						) : undefined}
+					</PageReveal>
 				</View>
 			</KeyboardAvoidingView>
 		</SafeAreaView>

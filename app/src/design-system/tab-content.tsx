@@ -1,4 +1,4 @@
-import { type ReactElement, type ReactNode, useState } from "react";
+import { Fragment, type ReactElement, type ReactNode } from "react";
 import { PageReveal } from "./page-reveal";
 
 export const TabContent = ({
@@ -8,11 +8,9 @@ export const TabContent = ({
 	value: string;
 	children: ReactNode;
 }): ReactElement => {
-	const [selection, setSelection] = useState({ value, changed: false });
-	if (selection.value !== value) setSelection({ value, changed: true });
 	return (
-		<PageReveal key={value} enabled={selection.changed} replayOnFocus={false}>
-			{children}
+		<PageReveal replayKey={value} replayOnFocus={false} animateOnMount>
+			<Fragment key={value}>{children}</Fragment>
 		</PageReveal>
 	);
 };

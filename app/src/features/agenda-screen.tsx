@@ -38,7 +38,8 @@ export const AgendaScreen = (): ReactElement => {
 					now ===
 				(period === "past"),
 		)
-		.toSorted((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+		.slice()
+		.sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
 	const date =
 		selectedDate ??
 		(period === "past" ? allEvents.at(-1)?.date : allEvents.at(0)?.date) ??
@@ -46,7 +47,7 @@ export const AgendaScreen = (): ReactElement => {
 	const events = allEvents.filter(
 		(event) => layout !== "calendar" || eventDates(event).includes(date),
 	);
-	const ordered = period === "past" ? events.toReversed() : events;
+	const ordered = period === "past" ? events.slice().reverse() : events;
 	const counts = allEvents
 		.filter((event) => !event.cancelled)
 		.flatMap(eventDates)

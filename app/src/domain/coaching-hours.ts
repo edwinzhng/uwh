@@ -40,7 +40,8 @@ export const coachingPartMinutes = (
 			start: clubTimestamp(event.date, part.start, event.timeZone),
 			end: clubTimestamp(event.date, part.end, event.timeZone),
 		}))
-		.toSorted((left, right) => left.start - right.start);
+		.slice()
+		.sort((left, right) => left.start - right.start);
 	const merged = ranges.reduce<{ end: number; minutes: number }>(
 		(total, range) => ({
 			end: Math.max(total.end, range.end),

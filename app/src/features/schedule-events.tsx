@@ -29,7 +29,8 @@ export const ScheduleEvents = ({
 	);
 	const attendees = data.members
 		.filter((member) => attendeeIds.has(member.id))
-		.toSorted((a, b) => a.name.localeCompare(b.name));
+		.slice()
+		.sort((a, b) => a.name.localeCompare(b.name));
 	const dates = [...new Set(events.map((event) => event.date))];
 	return (
 		<Stack gap="xl">
@@ -64,31 +65,33 @@ export const ScheduleEvents = ({
 					) : undefined}
 				</List>
 			</Dialog>
-			{dates.map((date) => (
-				<Stack key={date} gap="xs">
-					<Text variant="label">{formatDate(date)}</Text>
-					{events
-						.filter((event) => event.date === date)
-						.map((event) => {
-							const going = data.responses.filter(
-								(entry) =>
-									entry.eventId === event.id && entry.response === "going",
-							).length;
-							return (
-								<HouseholdEventCard
-									key={event.id}
-									event={event}
-									attendanceCount={going}
-									onAttendance={(): void => setAttendeeEvent(event)}
-								/>
-							);
-						})}
-				</Stack>
-			))}
+			<Stack gap="xl">
+				{dates.map((date) => (
+					<Stack key={date} gap="xs">
+						<Text variant="label">{formatDate(date)}</Text>
+						{events
+							.filter((event) => event.date === date)
+							.map((event) => {
+								const going = data.responses.filter(
+									(entry) =>
+										entry.eventId === event.id && entry.response === "going",
+								).length;
+								return (
+									<HouseholdEventCard
+										key={event.id}
+										event={event}
+										attendanceCount={going}
+										onAttendance={(): void => setAttendeeEvent(event)}
+									/>
+								);
+							})}
+					</Stack>
+				))}
+			</Stack>
 			{!events.length ? (
 				<EmptyState
 					title="No events"
-					description="Try another date or add an event."
+					description="No events match this view. Check another tab or event type."
 				/>
 			) : undefined}
 		</Stack>

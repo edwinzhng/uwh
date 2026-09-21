@@ -26,16 +26,14 @@ export const RecurrencePreview = ({
 		<Surface header={<Text variant="h4">Session series</Text>}>
 			<Stack>
 				{creating ? (
-					<>
-						<Toggle
-							label="Committed roster"
-							description="Players commit once for the term and report individual absences."
-							value={draft.committedRoster ?? false}
-							onValueChange={(committedRoster): void =>
-								onChange({ ...draft, committedRoster })
-							}
-						/>
-					</>
+					<Toggle
+						label="Committed roster"
+						description="Players commit once for the term and report individual absences."
+						value={draft.committedRoster ?? false}
+						onValueChange={(committedRoster): void =>
+							onChange({ ...draft, committedRoster })
+						}
+					/>
 				) : undefined}
 				<Text variant="small">
 					Preview dates ·{" "}

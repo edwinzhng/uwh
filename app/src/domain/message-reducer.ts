@@ -141,7 +141,9 @@ export const reduceMessages = (
 			const updated = [
 				...reactions.filter((reaction) => reaction.emoji !== action.emoji),
 				...(accountIds.length ? [{ emoji: action.emoji, accountIds }] : []),
-			].toSorted((a, b) => a.emoji.localeCompare(b.emoji));
+			]
+				.slice()
+				.sort((a, b) => a.emoji.localeCompare(b.emoji));
 			return {
 				...data,
 				messages: data.messages.map((entry) =>

@@ -12,7 +12,7 @@ export const useClubNavigation = (): NavigationItem[] => {
 		{
 			label: "Home",
 			icon: "home",
-			selected: path === "/",
+			selected: ["/", "/announcements"].includes(path),
 			onPress: (): void => router.navigate("/"),
 		},
 		{

@@ -1,9 +1,25 @@
 import { expect, test } from "bun:test";
+import { motionEffects } from "@calgarycrocs/design-system/tokens";
 import { inspectMotionTokens } from "../../packages/design-system/check-motion";
 import {
 	motionDurations,
 	motionEasings,
 } from "../../packages/design-system/src/motion";
+
+test("public motion exports include finite schedule stagger timings", (): void => {
+	expect(motionEffects.scheduleStaggerStep).toBe(70);
+	expect(motionEffects.scheduleStaggerLimit).toBe(210);
+	for (const index of [0, 1, 2, 3]) {
+		expect(
+			Number.isFinite(
+				Math.min(
+					index * motionEffects.scheduleStaggerStep,
+					motionEffects.scheduleStaggerLimit,
+				),
+			),
+		).toBe(true);
+	}
+});
 
 test("motion contract matches Rec's shared durations and easing curves", (): void => {
 	expect(motionDurations).toEqual({

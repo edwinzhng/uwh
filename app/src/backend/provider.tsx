@@ -16,6 +16,8 @@ import { useAtomValue } from "jotai";
 import {
 	type ReactElement,
 	type ReactNode,
+	useCallback,
+	useEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -23,6 +25,7 @@ import {
 import { api } from "../../convex/_generated/api";
 import {
 	AppContext,
+	type AppContextValue,
 	PreviewProvider,
 	selectedPersonAtom,
 } from "../demo/app-state";
@@ -118,93 +121,153 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 	const apply = useMutation(api.club.apply);
 	const create = useMutation(api.club.create);
 	const join = useMutation(api.club.requestToJoin);
+	const acceptPendingInvite = useMutation(
+		api.invites.acceptPendingForCurrentUser,
+	);
 	const approve = useMutation(api.club.approveRequest);
 	const setAccess = useMutation(api.club.setAccess);
 	const [pending, setPending] = useState(0);
 	const [error, setError] = useState<string>();
-	const backend: Backend = {
-		social,
-		invites,
-		declineRequest: async (requestId): Promise<void> => {
-			await declineRequest({ requestId });
-		},
-		accountInfo,
-		authenticate: async (params): Promise<boolean> => {
+	const autoJoinAttempted = useRef<string>(undefined);
+	useEffect((): void => {
+		if (
+			!isAuthenticated ||
+			!accountInfo ||
+			workspace !== null ||
+			autoJoinAttempted.current === accountInfo.id
+		)
+			return;
+		autoJoinAttempted.current = accountInfo.id;
+		void acceptPendingInvite({}).catch((reason): void => {
+			setError(friendlyError(reason));
+		});
+	}, [acceptPendingInvite, accountInfo, isAuthenticated, workspace]);
+	const backend = useMemo<Backend>(
+		() => ({
+			social,
+			invites,
+			declineRequest: async (requestId): Promise<void> => {
+				await declineRequest({ requestId });
+			},
+			accountInfo,
+			authenticate: async (params): Promise<boolean> => {
+				try {
+					return (await auth.signIn("password", params)).signingIn;
+				} catch (error) {
+					if (
+						params.flow === "reset" &&
+						error instanceof Error &&
+						error.message.includes("InvalidAccountId")
+					)
+						return false;
+					throw error;
+				}
+			},
+			updateName: async (name): Promise<void> => {
+				await updateName({ name });
+			},
+			signOutOthers: async (): Promise<void> => {
+				await signOutOthers({});
+			},
+			deleteAccount: async (password, transferTo): Promise<void> => {
+				await deleteAccount({ password, transferTo });
+			},
+			cancelRequest: async (requestId): Promise<void> => {
+				await cancelRequest({ requestId });
+			},
+
+			images,
+			available: true,
+			authenticated: isAuthenticated,
+			loading: isLoading,
+			clubCode: workspace?.inviteCode,
+			requests: workspace?.requests ?? [],
+			signOut: async (): Promise<void> => {
+				setError(undefined);
+				void installationId()
+					.then((id) => unregisterPush({ installationId: id }))
+					.catch((): void => {});
+				await auth.signOut();
+			},
+			createClub: async (name, samples): Promise<void> => {
+				await create({ name, samples });
+			},
+			joinClub: async (clubCode): Promise<void> => {
+				await join({ clubCode });
+			},
+			setAccess: async (
+				accountId,
+				children,
+				coachPrograms,
+				admin,
+			): Promise<void> => {
+				await setAccess({ accountId, children, coachPrograms, admin });
+			},
+			approve: async (
+				requestId,
+				personId,
+				children,
+				coachPrograms,
+				admin,
+			): Promise<void> => {
+				await approve({ requestId, personId, children, coachPrograms, admin });
+			},
+		}),
+		[
+			social,
+			invites,
+			declineRequest,
+			accountInfo,
+			auth,
+			updateName,
+			signOutOthers,
+			deleteAccount,
+			cancelRequest,
+			images,
+			isAuthenticated,
+			isLoading,
+			workspace,
+			unregisterPush,
+			create,
+			join,
+			setAccess,
+			approve,
+		],
+	);
+	const dispatch = useCallback(
+		async (action: AppAction): Promise<boolean> => {
+			setPending((count) => count + 1);
+			setError(undefined);
 			try {
-				return (await auth.signIn("password", params)).signingIn;
+				await apply({ action });
+				return true;
 			} catch (error) {
-				if (
-					params.flow === "reset" &&
-					error instanceof Error &&
-					error.message.includes("InvalidAccountId")
-				)
-					return false;
-				throw error;
+				setError(friendlyError(error));
+				return false;
+			} finally {
+				setPending((count) => count - 1);
 			}
 		},
-		updateName: async (name): Promise<void> => {
-			await updateName({ name });
-		},
-		signOutOthers: async (): Promise<void> => {
-			await signOutOthers({});
-		},
-		deleteAccount: async (password, transferTo): Promise<void> => {
-			await deleteAccount({ password, transferTo });
-		},
-		cancelRequest: async (requestId): Promise<void> => {
-			await cancelRequest({ requestId });
-		},
-
-		images,
-		available: true,
-		authenticated: isAuthenticated,
-		loading: isLoading,
-		clubCode: workspace?.clubId,
-		requests: workspace?.requests ?? [],
-		signOut: async (): Promise<void> => {
-			setError(undefined);
-			void installationId()
-				.then((id) => unregisterPush({ installationId: id }))
-				.catch((): void => {});
-			await auth.signOut();
-		},
-		createClub: async (name, samples): Promise<void> => {
-			await create({ name, samples });
-		},
-		joinClub: async (clubCode): Promise<void> => {
-			await join({ clubCode });
-		},
-		setAccess: async (
-			accountId,
-			children,
-			coachPrograms,
-			admin,
-		): Promise<void> => {
-			await setAccess({ accountId, children, coachPrograms, admin });
-		},
-		approve: async (
-			requestId,
-			personId,
-			children,
-			coachPrograms,
-			admin,
-		): Promise<void> => {
-			await approve({ requestId, personId, children, coachPrograms, admin });
-		},
-	};
-	const dispatch = async (action: AppAction): Promise<boolean> => {
-		setPending((count) => count + 1);
-		setError(undefined);
-		try {
-			await apply({ action });
-			return true;
-		} catch (error) {
-			setError(friendlyError(error));
-			return false;
-		} finally {
-			setPending((count) => count - 1);
-		}
-	};
+		[apply],
+	);
+	const clearError = useCallback((): void => setError(undefined), []);
+	const app = useMemo<AppContextValue | undefined>(
+		() =>
+			workspace
+				? {
+						data: workspace.data,
+						account: workspace.account,
+						accounts: workspace.accounts,
+						source: "convex",
+						loading: workspaceResult === undefined,
+						busy: pending > 0,
+						error,
+						clearError,
+						dispatch,
+					}
+				: undefined,
+		[workspace, workspaceResult, pending, error, clearError, dispatch],
+	);
 	return (
 		<BackendContext.Provider value={backend}>
 			<ChatSafetyProvider
@@ -221,26 +284,14 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 					<JoinInviteScreen />
 				) : path === "/delete-account" ? (
 					<DeleteAccountScreen />
-				) : path === "/design-system" ? (
+				) : path === "/design-system" || path === "/otp-test" ? (
 					<PreviewProvider>{children}</PreviewProvider>
 				) : isLoading ||
 					(isAuthenticated &&
 						(workspace === undefined || accountInfo === undefined)) ? (
 					<LoadingScreen />
-				) : workspace ? (
-					<AppContext.Provider
-						value={{
-							data: workspace.data,
-							account: workspace.account,
-							accounts: workspace.accounts,
-							source: "convex",
-							loading: workspaceResult === undefined,
-							busy: pending > 0,
-							error,
-							clearError: (): void => setError(undefined),
-							dispatch,
-						}}
-					>
+				) : app ? (
+					<AppContext.Provider value={app}>
 						<PushBridge />
 						{children}
 					</AppContext.Provider>
@@ -266,6 +317,7 @@ export const BackendProvider = ({
 			<LiveBridge>{children}</LiveBridge>
 		</ConvexAuthProvider>
 	) : path === "/design-system" ||
+		path === "/otp-test" ||
 		process.env.EXPO_PUBLIC_DEMO_MODE === "true" ? (
 		<PreviewProvider>{children}</PreviewProvider>
 	) : (

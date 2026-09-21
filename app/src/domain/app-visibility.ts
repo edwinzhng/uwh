@@ -77,11 +77,9 @@ export const visibleAppData = (data: AppData, account: Account): AppData => {
 				),
 			),
 		),
-		feedback: data.feedback.filter((entry) =>
-			entry.visibility === "published"
-				? canManagePerson(account, entry.personId) ||
-					coachingPerson(entry.personId)
-				: coachingPerson(entry.personId),
+		feedback: data.feedback.filter(
+			(entry) =>
+				entry.visibility === "published" || coachingPerson(entry.personId),
 		),
 		conversations,
 		messages: data.messages.filter((entry) => threadIds.has(entry.threadId)),

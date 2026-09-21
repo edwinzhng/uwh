@@ -4,8 +4,7 @@ export const eventTypeFilters = [
 	{ value: "all", label: "All" },
 	{ value: "practice", label: "Practices" },
 	{ value: "tournament", label: "Tournaments" },
-	{ value: "social", label: "Social" },
-	{ value: "meeting", label: "Meetings" },
+	{ value: "other", label: "Other" },
 ] as const;
 export type EventTypeFilter = (typeof eventTypeFilters)[number]["value"];
 export const eventKindsForFilter = (
@@ -15,7 +14,9 @@ export const eventKindsForFilter = (
 		? ["training", "hockey", "tournament", "social", "meeting"]
 		: filter === "practice"
 			? ["training", "hockey"]
-			: [filter];
+			: filter === "other"
+				? ["social", "meeting"]
+				: [filter];
 export const matchesEventType = (
 	event: Pick<ClubEvent, "kind">,
 	filter: EventTypeFilter,
