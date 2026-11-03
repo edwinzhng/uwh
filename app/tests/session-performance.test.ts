@@ -168,7 +168,7 @@ test("session-note reports use current private readers, exact versions and the e
 	expect(
 		canReportSessionPerformance(guardian, member, { ...row, kind: "self" }),
 	).toBe(false);
-	store.set(previewAccountIdAtom, "taylor");
+	store.set(previewAccountIdAtom, "morgan");
 	expect(() =>
 		store.set(previewPerformanceReportCommand, {
 			id,
@@ -270,7 +270,9 @@ test("session performance is private and coach/self capabilities never depend on
 	expect(canWriteSessionPerformance(primaryAccount, member, "coach")).toBe(
 		true,
 	);
-	expect(canWriteSessionPerformance(primaryAccount, member, "self")).toBe(true);
+	expect(canWriteSessionPerformance(primaryAccount, member, "self")).toBe(
+		false,
+	);
 	expect(
 		canReadSessionPerformance(primaryAccount, {
 			...member,
@@ -376,7 +378,7 @@ test("preview writes share server retry, author identity, privacy and concurrent
 		requestId: "shared-self-session-rating",
 	} as const;
 	store.set(previewSessionPerformanceCommand, self);
-	store.set(previewAccountIdAtom, "alex");
+	store.set(previewAccountIdAtom, "taylor");
 	expect(() =>
 		store.set(previewSessionPerformanceCommand, {
 			...self,
@@ -394,7 +396,7 @@ test("preview writes share server retry, author identity, privacy and concurrent
 			.get(previewSessionPerformanceAtom)
 			.filter((entry) => entry.kind === "self"),
 	).toHaveLength(1);
-	store.set(previewAccountIdAtom, "taylor");
+	store.set(previewAccountIdAtom, "morgan");
 	expect(() =>
 		store.set(previewSessionPerformanceCommand, {
 			...self,

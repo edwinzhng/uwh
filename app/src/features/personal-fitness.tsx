@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { PersonalFitnessData } from "../backend/personal-fitness-data";
+import { useActivePerson } from "../demo/app-state";
 import {
 	Button,
 	EmptyState,
@@ -11,6 +12,7 @@ import {
 	Text,
 } from "../design-system";
 import type { Member } from "../domain/app-types";
+import { PersonalFitnessCards } from "./personal-fitness-cards";
 import { PersonalFitnessSummary } from "./personal-fitness-summary";
 import { SeasonSelect } from "./season-select";
 import { useSeason } from "./use-season";
@@ -23,6 +25,7 @@ export const PersonalFitness = ({
 	full?: boolean;
 }): ReactElement => {
 	const router = useRouter();
+	const activePerson = useActivePerson();
 	const [seasonId] = useSeason();
 	return (
 		<Stack gap="sm">
@@ -36,10 +39,14 @@ export const PersonalFitness = ({
 							variant="ghost"
 							compact
 							onPress={(): void =>
-								router.push({
-									pathname: "/fitness",
-									params: { person: member.id },
-								})
+								router.push(
+									member.id === activePerson.id
+										? { pathname: "/account", params: { tab: "fitness" } }
+										: {
+												pathname: "/member",
+												params: { id: member.id, tab: "fitness" },
+											},
+								)
 							}
 						/>
 					}
@@ -67,6 +74,8 @@ export const PersonalFitness = ({
 								title={more ? "No results in these tests" : "No swim results"}
 								description={more ? "Checking earlier results…" : undefined}
 							/>
+						) : full ? (
+							<PersonalFitnessCards rows={rows} />
 						) : (
 							<PersonalFitnessSummary
 								rows={rows}

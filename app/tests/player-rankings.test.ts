@@ -5,6 +5,7 @@ import {
 	validCoachScore,
 } from "../src/domain/player-coaching";
 import {
+	nextRankingPlayer,
 	orderRankings,
 	type PlayerRanking,
 	rankingComplete,
@@ -64,4 +65,29 @@ test("three official coaches are allowed, a fourth is rejected, and existing coa
 	expect(canAssignPracticeCoach(assignments, "d")).toBe(false);
 	expect(canAssignPracticeCoach(assignments, "b")).toBe(true);
 	expect(canAssignPracticeCoach(assignments.slice(0, 2), "d")).toBe(true);
+});
+
+test("focused rating queue advances only past successful saves and current eligible players", (): void => {
+	const pending = player("Pending", false, 0);
+	const rated = player("Rated", true, 1);
+	const queue = orderRankings([rated, pending]).map((entry) => entry.personId);
+	expect(nextRankingPlayer([pending, rated], queue, [])?.personId).toBe(
+		pending.personId,
+	);
+	expect(nextRankingPlayer([pending, rated], queue, [])?.personId).toBe(
+		pending.personId,
+	);
+	expect(
+		nextRankingPlayer([pending, rated], queue, [pending.personId])?.personId,
+	).toBe(rated.personId);
+	expect(nextRankingPlayer([rated], queue, [])?.personId).toBe(rated.personId);
+	expect(
+		nextRankingPlayer([pending, rated], queue, [
+			pending.personId,
+			rated.personId,
+		]),
+	).toBeUndefined();
+	expect(
+		nextRankingPlayer([player("New", false, 0)], queue, []),
+	).toBeUndefined();
 });

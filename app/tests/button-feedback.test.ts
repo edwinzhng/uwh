@@ -1,10 +1,6 @@
 import { expect, test } from "bun:test";
 import { buttonColors } from "../src/design-system/button-colors";
-import {
-	activateButton,
-	buttonPressGeometry,
-	raisedButton,
-} from "../src/design-system/button-feedback";
+import { activateButton } from "../src/design-system/button-feedback";
 import {
 	nativeHaptic,
 	performOptionalHaptic,
@@ -13,7 +9,7 @@ import {
 	lightNativeHaptic,
 	nativeHapticsAvailable,
 } from "../src/design-system/native-haptics.web";
-import { darkTheme, geometry, lightTheme } from "../src/design-system/tokens";
+import { darkTheme, lightTheme } from "../src/design-system/tokens";
 
 test("compact buttons reduce horizontal chrome while retaining touch-sized targets", async (): Promise<void> => {
 	const button = await Bun.file("src/design-system/button-control.tsx").text();
@@ -24,53 +20,28 @@ test("compact buttons reduce horizontal chrome while retaining touch-sized targe
 	expect(button).toContain("minHeight: controlSize");
 });
 
-test("raised button faces travel down into a fixed compact base without scaling text", (): void => {
-	expect(buttonPressGeometry(0, geometry.focus, true)).toEqual({
-		travel: 0,
-		exposedBase: 2,
-	});
-	expect(buttonPressGeometry(0.5, geometry.focus, true)).toEqual({
-		travel: 1,
-		exposedBase: 1,
-	});
-	expect(buttonPressGeometry(1, geometry.focus, true)).toEqual({
-		travel: 2,
-		exposedBase: 0,
-	});
-	expect(buttonPressGeometry(5, geometry.focus, true)).toEqual({
-		travel: 2,
-		exposedBase: 0,
-	});
-	expect(buttonPressGeometry(-5, geometry.focus, true)).toEqual({
-		travel: 0,
-		exposedBase: 2,
-	});
-	expect(buttonPressGeometry(1, 0, true)).toEqual({
-		travel: 0,
-		exposedBase: 0,
-	});
-	for (const variant of ["solid", "secondary", "danger"] as const)
-		expect(raisedButton(variant)).toBe(true);
-	for (const variant of ["ghost", "danger-text", "selection"] as const)
-		expect(raisedButton(variant)).toBe(false);
-});
-
-test("raised bases follow semantic theme colors without changing readable face colors", (): void => {
+test("utility selection is neutral and distinct from hover while primary and destructive actions retain their meanings", (): void => {
 	for (const theme of [lightTheme, darkTheme]) {
-		expect(buttonColors(theme, "solid", "rest").base).toBe(
-			theme.accent.pressed,
+		expect(buttonColors(theme, "secondary", "rest").background).toBe(
+			"transparent",
 		);
-		expect(buttonColors(theme, "danger", "rest").base).toBe(
-			theme.dangerAction.pressed,
+		expect(buttonColors(theme, "secondary", "hover").background).toBe(
+			theme.background.hover,
 		);
-		expect(buttonColors(theme, "secondary", "rest").base).toBe(
-			theme.background.pressed,
+		expect(buttonColors(theme, "selection", "rest", true).background).toBe(
+			theme.background.selected,
+		);
+		expect(buttonColors(theme, "selection", "rest", true).background).not.toBe(
+			theme.accent.background,
+		);
+		expect(buttonColors(theme, "selection", "disabled", true).background).toBe(
+			theme.background.secondary,
 		);
 		expect(buttonColors(theme, "solid", "rest").foreground).toBe(
 			theme.accent.foreground,
 		);
-		expect(buttonColors(theme, "secondary", "rest").foreground).toBe(
-			theme.text.primary,
+		expect(buttonColors(theme, "danger", "rest").background).toBe(
+			theme.dangerAction.background,
 		);
 	}
 });
@@ -155,7 +126,6 @@ test("native light feedback honors its own preference and never selects browser 
 	expect(
 		nativeHaptic({ platform: "ios", enabled: true, available: false }),
 	).toBeUndefined();
-	expect(buttonPressGeometry(1, geometry.focus, false).travel).toBe(0);
 	expect(
 		nativeHaptic({ platform: "ios", enabled: true, available: true }),
 	).toBe("light");

@@ -83,7 +83,7 @@ export const FitnessTestForm = ({
 							? [
 									{
 										value: "pass_fail" as const,
-										label: "Pass / fail (existing test)",
+										label: "Pass/fail (existing test)",
 									},
 								]
 							: []),

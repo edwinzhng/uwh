@@ -17,7 +17,6 @@ export const AttendanceRecords = ({
 			<List>
 				{items.map((record) => (
 					<ListItem
-						cardRow
 						key={record.id}
 						title={record.title}
 						description={formatDate(record.date)}

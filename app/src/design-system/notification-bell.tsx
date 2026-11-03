@@ -5,6 +5,7 @@ import { NotificationMotion } from "./notification-motion";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, geometry, space } from "./tokens";
+import { ToolbarHighlight } from "./toolbar-highlight";
 
 type NotificationBellProps = {
 	count: number;
@@ -21,6 +22,7 @@ export const NotificationBell = ({
 	const theme = useTheme();
 	const [hovered, setHovered] = useState(false);
 	const [focused, setFocused] = useState(false);
+	const [pressed, setPressed] = useState(false);
 	const total = Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;
 	return (
 		<Pressable
@@ -33,9 +35,11 @@ export const NotificationBell = ({
 			onPress={onPress}
 			onHoverIn={(): void => setHovered(true)}
 			onHoverOut={(): void => setHovered(false)}
+			onPressIn={(): void => setPressed(true)}
+			onPressOut={(): void => setPressed(false)}
 			onFocus={(): void => setFocused(true)}
 			onBlur={(): void => setFocused(false)}
-			style={({ pressed }) => ({
+			style={{
 				position: "relative",
 				height: geometry.touch,
 				width: label ? "100%" : geometry.touch,
@@ -45,13 +49,13 @@ export const NotificationBell = ({
 				alignItems: "center",
 				justifyContent: label ? "flex-start" : "center",
 				borderRadius: corners.pill,
-				backgroundColor:
-					hovered || pressed ? theme.background.hover : "transparent",
+				backgroundColor: "transparent",
 				outlineWidth: focused ? geometry.focus : 0,
 				outlineColor: theme.focus,
 				outlineOffset: -geometry.focus,
-			})}
+			}}
 		>
+			<ToolbarHighlight active={hovered || pressed} />
 			<NotificationMotion count={total} kind="bell">
 				<View style={{ position: "relative" }}>
 					<Icon name="bell" size="sm" />

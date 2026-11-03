@@ -1,21 +1,19 @@
 import type { ReactElement } from "react";
 import { StyleSheet, View } from "react-native";
-import { useReduceTransparency } from "./material-accessibility";
 import { MaterialTexture } from "./material-texture";
-import { type CategoryColor, corners } from "./tokens";
+import { type CategoryColor, corners, geometry } from "./tokens";
 
 export const CardBackground = ({
 	color,
 	category,
 	seed,
-	radius = corners.panel,
+	radius = Math.max(0, corners.panel - geometry.border),
 }: {
 	color: string;
 	category?: CategoryColor;
 	seed?: string;
 	radius?: number;
 }): ReactElement => {
-	const reduced = useReduceTransparency();
 	return (
 		<View
 			pointerEvents="none"
@@ -26,7 +24,6 @@ export const CardBackground = ({
 				StyleSheet.absoluteFill,
 				{
 					backgroundColor: color,
-					opacity: reduced ? 1 : 0.9,
 					borderRadius: radius,
 					overflow: "hidden",
 				},

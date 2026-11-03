@@ -4,6 +4,7 @@ import { useChatSafety } from "../backend/chat-safety";
 import { useApp } from "../demo/app-state";
 import {
 	Button,
+	ChatBackground,
 	ChatIdentity,
 	MessageTimeline,
 	Row,
@@ -120,33 +121,35 @@ export const ThreadContent = ({
 				)
 			}
 		>
-			<ThreadPractice threadId={thread.id} />
-			<ThreadExtras />
-			{read.error ? (
-				<Row justify="between">
-					<Text variant="caption" tone="danger">
-						Couldn’t update read status.
-					</Text>
-					<Button label="Retry" variant="ghost" onPress={read.retry} />
-				</Row>
-			) : undefined}
-			<MessageTimeline
-				items={messages}
-				loading={loading}
-				loadingMore={loadingMore}
-				canLoadMore={canLoadMore}
-				onLoadMore={onLoadMore}
-				onLatestVisible={setLatestVisible}
-				renderItem={(message): ReactElement => (
-					<MessageItem
-						message={message}
-						reply={message.reply}
-						showAuthor={presentation.get(message.id)?.showAuthor ?? false}
-						timeLabel={presentation.get(message.id)?.timeLabel}
-						onReply={setReplyId}
-					/>
-				)}
-			/>
+			<ChatBackground>
+				<ThreadPractice threadId={thread.id} />
+				<ThreadExtras />
+				{read.error ? (
+					<Row justify="between">
+						<Text variant="caption" tone="danger">
+							Couldn’t update read status.
+						</Text>
+						<Button label="Retry" variant="ghost" onPress={read.retry} />
+					</Row>
+				) : undefined}
+				<MessageTimeline
+					items={messages}
+					loading={loading}
+					loadingMore={loadingMore}
+					canLoadMore={canLoadMore}
+					onLoadMore={onLoadMore}
+					onLatestVisible={setLatestVisible}
+					renderItem={(message): ReactElement => (
+						<MessageItem
+							message={message}
+							reply={message.reply}
+							showAuthor={presentation.get(message.id)?.showAuthor ?? false}
+							timeLabel={presentation.get(message.id)?.timeLabel}
+							onReply={setReplyId}
+						/>
+					)}
+				/>
+			</ChatBackground>
 		</ClubShell>
 	);
 };

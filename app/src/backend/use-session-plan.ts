@@ -45,14 +45,14 @@ export const usePreviewSessionPlan = (
 	eventId: string,
 	partId?: string,
 ): SessionPlanService => {
-	const { data, account } = useApp();
+	const { account } = useApp();
 	const plans = useAtomValue(previewSessionPlansAtom);
 	const save = useSetAtom(previewSessionPlanCommandAtom);
 	const publish = useSetAtom(previewSessionPlanPublicationAtom);
 	const key = practicePartKey(eventId, partId);
 	return {
 		plan: account.coachPrograms.length
-			? (plans[key] ?? emptySessionPlan(data.plans[key]))
+			? (plans[key] ?? emptySessionPlan())
 			: undefined,
 		loading: false,
 		save: async (command): Promise<void> => save(command),

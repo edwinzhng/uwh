@@ -34,7 +34,7 @@ export const MemberAdmin = ({
 				<MemberTrackers member={member} editable={editable} />
 				<Stack gap="sm">
 					<SectionHeading size="small">Equipment</SectionHeading>
-					<Surface>
+					<Surface variant="plain">
 						<Stack>
 							{loans.length ? (
 								loans.map((loan) => (

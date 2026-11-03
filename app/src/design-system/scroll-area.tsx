@@ -21,6 +21,7 @@ import { useScrollReveal } from "./use-scroll-reveal";
 
 type Props = Omit<ScrollViewProps, "onScroll"> & {
 	fadeTone?: "primary" | "secondary";
+	edgeFades?: boolean;
 	revealRef?: Ref<ScrollAreaHandle>;
 };
 
@@ -36,6 +37,7 @@ export const ScrollArea = ({
 	onTouchStart,
 	revealRef,
 	fadeTone = "primary",
+	edgeFades = true,
 	horizontal = false,
 	...props
 }: Props): ReactElement => {
@@ -115,44 +117,48 @@ export const ScrollArea = ({
 				>
 					{children}
 				</Animated.ScrollView>
-				<Animated.View
-					pointerEvents="none"
-					accessible={false}
-					style={[
-						{ position: "absolute", left: 0, top: 0 },
-						horizontal
-							? { bottom: 0, width: space.md }
-							: { right: 0, height: space.md },
-						left,
-					]}
-				>
-					<LinearGradient
-						colors={[color, softColor, clearColor]}
-						locations={[0, 0.5, 1]}
-						start={{ x: 0, y: 0 }}
-						end={horizontal ? { x: 1, y: 0 } : { x: 0, y: 1 }}
-						style={{ flex: 1 }}
-					/>
-				</Animated.View>
-				<Animated.View
-					pointerEvents="none"
-					accessible={false}
-					style={[
-						{ position: "absolute", right: 0, bottom: 0 },
-						horizontal
-							? { top: 0, width: space.md }
-							: { left: 0, height: space.md },
-						right,
-					]}
-				>
-					<LinearGradient
-						colors={[clearColor, softColor, color]}
-						locations={[0, 0.5, 1]}
-						start={{ x: 0, y: 0 }}
-						end={horizontal ? { x: 1, y: 0 } : { x: 0, y: 1 }}
-						style={{ flex: 1 }}
-					/>
-				</Animated.View>
+				{edgeFades ? (
+					<>
+						<Animated.View
+							pointerEvents="none"
+							accessible={false}
+							style={[
+								{ position: "absolute", left: 0, top: 0 },
+								horizontal
+									? { bottom: 0, width: space.md }
+									: { right: 0, height: space.md },
+								left,
+							]}
+						>
+							<LinearGradient
+								colors={[color, softColor, clearColor]}
+								locations={[0, 0.5, 1]}
+								start={{ x: 0, y: 0 }}
+								end={horizontal ? { x: 1, y: 0 } : { x: 0, y: 1 }}
+								style={{ flex: 1 }}
+							/>
+						</Animated.View>
+						<Animated.View
+							pointerEvents="none"
+							accessible={false}
+							style={[
+								{ position: "absolute", right: 0, bottom: 0 },
+								horizontal
+									? { top: 0, width: space.md }
+									: { left: 0, height: space.md },
+								right,
+							]}
+						>
+							<LinearGradient
+								colors={[clearColor, softColor, color]}
+								locations={[0, 0.5, 1]}
+								start={{ x: 0, y: 0 }}
+								end={horizontal ? { x: 1, y: 0 } : { x: 0, y: 1 }}
+								style={{ flex: 1 }}
+							/>
+						</Animated.View>
+					</>
+				) : undefined}
 			</View>
 		</PaginationViewport.Provider>
 	);

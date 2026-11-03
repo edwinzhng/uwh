@@ -1,11 +1,13 @@
-import type { ReactElement, ReactNode } from "react";
+import { type ReactElement, type ReactNode, useContext } from "react";
 import { Text as NativeText } from "react-native";
+import { CardContentContext } from "./card-content-context";
 import { useTheme } from "./theme";
 import { font, type TypographyVariant, typography } from "./tokens";
 
 type Props = {
 	children: ReactNode;
 	accessibilityLabel?: string;
+	headingLevel?: 1 | 2 | 3;
 	variant?: TypographyVariant;
 	tone?:
 		| "primary"
@@ -26,6 +28,7 @@ type Props = {
 export const Text = ({
 	children,
 	accessibilityLabel,
+	headingLevel,
 	variant = "body",
 	tone = "primary",
 	align = "left",
@@ -35,19 +38,35 @@ export const Text = ({
 	lines,
 }: Props): ReactElement => {
 	const theme = useTheme();
-	const { family, ...style } = typography[variant];
+	const compact = useContext(CardContentContext);
+	const compactVariant =
+		compact && variant === "body"
+			? "small"
+			: compact && variant === "caption"
+				? "overline"
+				: variant;
+	const { family, ...style } = typography[compactVariant];
 	return (
 		<NativeText
 			accessibilityLabel={accessibilityLabel}
 			selectable={selectable}
 			numberOfLines={lines}
-			accessibilityRole={variant.startsWith("h") ? "header" : undefined}
+			accessibilityRole={
+				headingLevel || variant.startsWith("h") ? "header" : undefined
+			}
 			aria-level={
-				variant === "h1" ? 1 : variant.startsWith("h") ? 2 : undefined
+				headingLevel ??
+				(variant === "h1" ? 1 : variant.startsWith("h") ? 2 : undefined)
 			}
 			style={{
 				...style,
-				fontFamily: font[weight ?? family],
+				...(compact && variant === "caption"
+					? ({ textTransform: "none", letterSpacing: 0 } as const)
+					: {}),
+				fontFamily:
+					font[
+						compact && variant === "number" ? "heading" : (weight ?? family)
+					],
 				fontStyle: italic ? "italic" : "normal",
 				color:
 					tone === "onBrand"

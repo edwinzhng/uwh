@@ -44,11 +44,11 @@ export const FitnessTests = (): ReactElement => {
 						<Row wrap>
 							<Button
 								label="Log results"
-								variant="secondary"
 								onPress={(): void => setLogging(true)}
 							/>
 							<Button
 								label="New test"
+								variant="secondary"
 								prefix="plus"
 								onPress={(): void => setCreating(true)}
 							/>
@@ -73,7 +73,7 @@ export const FitnessTests = (): ReactElement => {
 						<FitnessOverview onSelect={setTestId} />
 					) : (
 						<>
-							<Surface padding="xs">
+							<Surface>
 								<List>
 									{tests.results.map((test) => (
 										<ListItem

@@ -7,10 +7,10 @@ test("fitness uses one icon and one accent across Home and Club", async (): Prom
 		category: "fern",
 	});
 	const home = await Bun.file("src/features/home-fitness.tsx").text();
-	const club = await Bun.file("src/features/club-home-screen.tsx").text();
+	const club = await Bun.file("src/features/club-tool-links.ts").text();
 	expect(home).toContain("icon={featureIdentity.fitness.icon}");
 	expect(home).toContain("category={featureIdentity.fitness.category}");
-	expect(club).toContain("fitness: featureIdentity.fitness.category");
+	expect(club).toContain("icon: featureIdentity.fitness.icon");
 	const icons = await Bun.file("src/design-system/icon.tsx").text();
 	expect(icons).toContain("lab: ChartColumn");
 	expect(icons).toContain("waves: ChartColumn");

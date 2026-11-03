@@ -27,7 +27,7 @@ test("native menu adapters cannot eagerly import ExpoUI before capability checks
 		expect(source).not.toMatch(
 			/import\s*\{[^}]*\bMenuView\b[^}]*\}\s*from\s*["']@expo\/ui/u,
 		);
-		expect(source).toContain("if (!NativeMenuView");
+		expect(source).toMatch(/if\s*\(\s*!NativeMenuView/);
 		for (const platform of ["ios", "android"]) {
 			const adapter = await Bun.file(
 				`src/design-system/${name}.${platform}.tsx`,

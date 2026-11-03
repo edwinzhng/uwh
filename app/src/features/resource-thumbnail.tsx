@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { useResourceMedia } from "../backend/use-resource-media";
 import type { ResourceState } from "../backend/use-resources";
-import { Button, MediaImage, Stack } from "../design-system";
+import { Button, Icon, MediaImage, Stack } from "../design-system";
 import { type Resource, youtubeThumbnail } from "../domain/resources";
 
 export const ResourceThumbnail = ({
@@ -29,13 +29,17 @@ export const ResourceThumbnail = ({
 			compact={compact}
 		/>
 	) : media.error ? (
-		<Stack gap="xs">
-			<Button
-				label="Retry thumbnail"
-				variant="ghost"
-				compact
-				onPress={media.retry}
-			/>
-		</Stack>
+		compact ? (
+			<Icon name="image" tone="secondary" />
+		) : (
+			<Stack gap="xs">
+				<Button
+					label="Retry thumbnail"
+					variant="ghost"
+					compact
+					onPress={media.retry}
+				/>
+			</Stack>
+		)
 	) : undefined;
 };

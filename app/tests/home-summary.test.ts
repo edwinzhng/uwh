@@ -15,6 +15,7 @@ import {
 	homeNextPractice,
 	homePendingResponse,
 	homeRecentConversations,
+	homeReflectionPractice,
 } from "../src/domain/home-summary";
 import type { ConversationSummary } from "../src/domain/messaging";
 import { bannerNotices } from "../src/domain/notices";
@@ -68,6 +69,26 @@ test("summary chooses one eligible household practice, not a social event, ended
 	expect(events.at(0)?.id).toBe("later");
 	expect(
 		homeNextPractice({ ...data, events: [] }, account, now),
+	).toBeUndefined();
+});
+
+test("reflection shortcuts select the latest completed permitted practice without mutating event order", (): void => {
+	const events = [
+		event("older", { date: "2026-10-20" }),
+		event("future"),
+		event("social", { date: "2026-11-01", kind: "social" }),
+		event("cancelled", { date: "2026-11-01", cancelled: true }),
+		event("other-person", { date: "2026-11-01", eligiblePersonIds: ["other"] }),
+		event("latest", { date: "2026-10-30" }),
+	];
+	const person = people.at(0);
+	if (!person) throw new Error("Missing player fixture");
+	expect(homeReflectionPractice({ ...data, events }, person, now)?.id).toBe(
+		"latest",
+	);
+	expect(events.at(0)?.id).toBe("older");
+	expect(
+		homeReflectionPractice({ ...data, events: [event("future")] }, person, now),
 	).toBeUndefined();
 });
 
@@ -326,7 +347,6 @@ test("home composition renders real summaries without the former large empty-sta
 		"HomeFitness",
 		"HomeMessages",
 		"HomeAnnouncement",
-		"HomeActions",
 	])
 		expect(composition).toContain(`<${name}`);
 	expect(composition).not.toContain("HouseholdEventCard");

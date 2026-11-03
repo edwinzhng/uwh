@@ -103,3 +103,47 @@ export const recent = query({
 		return [];
 	},
 });
+
+export const historical = query({
+	args: {
+		programId: v.optional(v.string()),
+		now: v.number(),
+		paginationOpts: paginationOptsValidator,
+	},
+	handler: async (
+		ctx,
+		{ programId, now, paginationOpts },
+	): Promise<PaginationResult<ScheduleEntry>> => {
+		const actor = await requireMember(ctx);
+		const through = addDays(clubDate(now, "UTC"), 2);
+		const rows = programId
+			? ctx.db
+					.query("events")
+					.withIndex("by_program_date", (q) =>
+						q
+							.eq("clubId", actor.clubId)
+							.eq("value.program", programId)
+							.lte("value.date", through),
+					)
+			: ctx.db
+					.query("events")
+					.withIndex("by_date", (q) =>
+						q.eq("clubId", actor.clubId).lte("value.date", through),
+					);
+		const page = await rows.order("desc").paginate({
+			...paginationOpts,
+			numItems: Math.min(20, Math.max(1, paginationOpts.numItems)),
+			maximumRowsRead: 100,
+		});
+		return {
+			...page,
+			page: await entriesFor(
+				ctx,
+				actor,
+				page.page
+					.map((row) => row.value)
+					.filter((event) => eventFinished(event, now)),
+			),
+		};
+	},
+});

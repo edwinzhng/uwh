@@ -39,7 +39,7 @@ test("previews load live session data only on demand and keep teams read only", 
 	expect(preview).toContain("useQuery(api.club.current");
 	expect(preview).toContain('screen: "session"');
 	expect(preview).toContain("workspace.clubId !== app.workspaceId");
-	expect(preview).toContain("plan.published");
+	expect(preview).toContain("publishedEventLineups(");
 	expect(preview).toContain(".includes(person.id)");
 	expect(preview).toContain(
 		"<TeamPool plan={plan} side={side} group={group} />",
@@ -86,8 +86,8 @@ test("quick responses highlight both choices and preview buttons form a right-al
 		'response === "unavailable" ? "danger" : "secondary"',
 	);
 	expect(response).toContain('prefix="close"');
-	expect(actions).toContain('label="My team"');
-	expect(actions).toContain('variant="ghost"');
+	expect(actions).toContain('label="Lineup"');
+	expect(actions).toContain('variant="secondary"');
 	expect(button).toContain("aria-pressed={isSelected}");
 });
 
@@ -99,8 +99,12 @@ test("compact cards use the active profile and keep independent section colors l
 	]);
 	expect(card).toContain("useActivePerson()");
 	expect(card).toContain("eventResponse(data, event.id, person.id)");
-	expect(card).toContain("<EventResponseRow");
-	expect(row).toContain("theme[tone].background");
+	expect(card).toContain("(!event.parts?.length || !open)");
+	expect(card).toContain("personId={person.id}");
+	expect(card).not.toContain("<EventResponseRow");
+	expect(card).not.toContain('"Your response"');
+	expect(row).toContain('backgroundColor: "transparent"');
+	expect(row).toContain('tone={tone === "neutral" ? "primary" : tone}');
 	expect(row).not.toContain("<Avatar");
 	expect(summary).toContain('variant="overline"');
 	expect(summary).toContain("borderRightWidth");

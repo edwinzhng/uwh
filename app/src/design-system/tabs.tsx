@@ -103,11 +103,7 @@ export const Tabs = <T extends string>({
 							<SelectionIndicator
 								frame={frame}
 								value={selectedValue}
-								color={
-									theme.mode === "dark"
-										? theme.background.selected
-										: theme.background.primary
-								}
+								color={theme.background.selected}
 								radius={corners.control}
 							/>
 						) : undefined}

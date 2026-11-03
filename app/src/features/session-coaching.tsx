@@ -1,65 +1,36 @@
-import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import {
-	EmptyState,
-	List,
-	ListItem,
-	SectionHeading,
-	Stack,
-	Surface,
-} from "../design-system";
-import { canRegister } from "../domain/app-rules";
+import { Row, Stack } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
+import { EventCoaches } from "./event-coaches";
+import { SessionGuestManager } from "./session-guest-manager";
 import { SessionPlanSection } from "./session-plan-section";
+import { SessionPlayerFeedback } from "./session-player-feedback";
+import { SessionSeriesLink } from "./session-series-link";
 import { TeamPanel } from "./team-panel";
 
 export const SessionCoaching = ({
 	event,
-	partId,
 }: {
 	event: ClubEvent;
-	partId?: string;
 }): ReactElement => {
-	const { data } = useApp();
-	const router = useRouter();
-	const players = data.members.filter((member) => canRegister(member, event));
+	const { account } = useApp();
 	return (
 		<Stack gap="xl">
-			<SessionPlanSection
-				key={`${event.id}:${partId ?? ""}`}
-				event={event}
-				partId={partId}
-			/>
-			<TeamPanel event={event} partId={partId} />
+			<Row justify="end" wrap>
+				{account.admin && event.seriesId ? (
+					<SessionGuestManager event={event} />
+				) : undefined}
+				{event.seriesId ? (
+					<SessionSeriesLink seriesId={event.seriesId} />
+				) : undefined}
+				<EventCoaches event={event} presentation="button" />
+			</Row>
 			<Stack gap="sm">
-				<SectionHeading>Player feedback</SectionHeading>
-				<Surface padding="sm">
-					<List>
-						{players.map((member) => (
-							<ListItem
-								key={member.id}
-								title={member.name}
-								avatar={member.name}
-								avatarId={member.id}
-								description={member.goal}
-								onPress={(): void =>
-									router.push({
-										pathname: "/member",
-										params: { id: member.id, tab: "feedback", event: event.id },
-									})
-								}
-							/>
-						))}
-						{!players.length ? (
-							<EmptyState
-								title="No eligible players"
-								description="Player feedback becomes available when players are eligible for this session."
-							/>
-						) : undefined}
-					</List>
-				</Surface>
+				<SessionPlanSection key={event.id} event={event} />
 			</Stack>
+			<TeamPanel event={event} />
+			<SessionPlayerFeedback event={event} />
 		</Stack>
 	);
 };

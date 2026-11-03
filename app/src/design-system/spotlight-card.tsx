@@ -1,14 +1,15 @@
 import type { ReactElement, ReactNode } from "react";
 import { View } from "react-native";
+import { CardAtmosphere } from "./card-atmosphere";
 import { CardBackground } from "./card-background";
-import { FeatureIcon } from "./feature-icon";
+import { CardContentContext } from "./card-content-context";
+import { Icon } from "./icon";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, geometry, space } from "./tokens";
 
 export const SpotlightCard = ({
 	title,
-	tone,
 	children,
 	action,
 	description,
@@ -21,33 +22,38 @@ export const SpotlightCard = ({
 }): ReactElement => {
 	const theme = useTheme();
 	return (
-		<View
-			style={{
-				borderColor: theme.border,
-				borderWidth: geometry.border,
-				borderRadius: corners.panel,
-				padding: space.lg,
-				gap: space.sm,
-				overflow: "hidden",
-			}}
-		>
-			<CardBackground color={theme.background.card} />
+		<CardContentContext value={true}>
 			<View
 				style={{
-					flexDirection: "row",
-					alignItems: "center",
+					borderColor: theme.border,
+					borderWidth: geometry.border,
+					borderRadius: corners.panel,
+					padding: space.md,
 					gap: space.sm,
-					flexWrap: "wrap",
+					overflow: "hidden",
 				}}
 			>
-				<FeatureIcon name="trophy" category={tone} />
-				<View style={{ flex: 1, minWidth: geometry.touch * 2 }}>
-					<Text variant="h3">{title}</Text>
+				<CardBackground color={theme.background.card} />
+				<CardAtmosphere />
+				<View
+					style={{
+						flexDirection: "row",
+						alignItems: "center",
+						gap: space.sm,
+						flexWrap: "wrap",
+					}}
+				>
+					<Icon name="trophy" size="sm" tone="secondary" />
+					<View style={{ flex: 1, minWidth: geometry.touch * 2 }}>
+						<Text variant="overline" weight="semibold">
+							{title}
+						</Text>
+					</View>
+					{action}
 				</View>
-				{action}
+				{description ? <Text tone="secondary">{description}</Text> : undefined}
+				{children}
 			</View>
-			{description ? <Text tone="secondary">{description}</Text> : undefined}
-			{children}
-		</View>
+		</CardContentContext>
 	);
 };

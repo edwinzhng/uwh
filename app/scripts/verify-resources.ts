@@ -67,9 +67,14 @@ try {
 		kind: "video" as const,
 		audience: "players" as const,
 		personIds: ["sam"],
-		url: "https://example.com/training",
+		url: "https://youtu.be/dQw4w9WgXcQ",
 	};
 	const resourceId = await owner.client.mutation(api.resources.save, draft);
+	const uploadedResource = (
+		await owner.client.query(api.resources.details, { id: resourceId })
+	).resource;
+	assert.equal(uploadedResource.createdAt, uploadedResource.updatedAt);
+	assert.equal(typeof uploadedResource.createdAt, "number");
 	assert.equal(
 		await owner.client.mutation(api.resources.save, draft),
 		resourceId,
@@ -195,6 +200,22 @@ try {
 			id: resourceId,
 			revision: 1,
 		}),
+	);
+	assert.equal(
+		(await owner.client.query(api.resources.details, { id: resourceId }))
+			.resource.createdAt,
+		uploadedResource.createdAt,
+	);
+	await owner.client.mutation(api.resources.save, {
+		...draft,
+		id: resourceId,
+		revision: 3,
+		title: "Edited practice video",
+	});
+	assert.equal(
+		(await owner.client.query(api.resources.details, { id: resourceId }))
+			.resource.createdAt,
+		uploadedResource.createdAt,
 	);
 	const coachesId = await owner.client.mutation(api.resources.save, {
 		...draft,

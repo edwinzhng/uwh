@@ -6,11 +6,9 @@ import {
 } from "../backend/use-coaching-schedule";
 import { useApp } from "../demo/app-state";
 import {
-	Button,
 	List,
 	ListItem,
 	LoadingContent,
-	SectionHeading,
 	Stack,
 	Surface,
 	Text,
@@ -40,23 +38,10 @@ const WeeklyRoster = ({
 			.join(" · ") || "No coaches assigned";
 	return (
 		<Stack gap="sm">
-			<SectionHeading
-				action={
-					<Button
-						label="Edit"
-						variant="ghost"
-						prefix="edit"
-						isDisabled={state.loading}
-						onPress={(): void => {
-							setSelectedProgram(undefined);
-							setOpen(true);
-						}}
-					/>
-				}
-			>
-				Program defaults
-			</SectionHeading>
-			<Surface padding="xs">
+			<Text variant="small" tone="secondary">
+				Choose a program to set its default coaches.
+			</Text>
+			<Surface>
 				{state.loading || !schedule ? (
 					<LoadingContent />
 				) : (
@@ -65,6 +50,11 @@ const WeeklyRoster = ({
 							<ListItem
 								key={program.id}
 								title={program.name}
+								accessibilityLabel={
+									account.admin || account.coachPrograms.includes(program.id)
+										? `Edit coaches for ${program.name}`
+										: `${program.name} coaches`
+								}
 								description={names(programCoachesFor(schedule, program.id))}
 								onPress={
 									account.admin || account.coachPrograms.includes(program.id)
@@ -79,6 +69,10 @@ const WeeklyRoster = ({
 						<ListItem
 							title="Backup coaches"
 							description={names(schedule.backupCoachIds)}
+							onPress={(): void => {
+								setSelectedProgram("backup");
+								setOpen(true);
+							}}
 						/>
 					</List>
 				)}

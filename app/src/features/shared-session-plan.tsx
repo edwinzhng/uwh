@@ -10,6 +10,7 @@ import {
 	LoadingContent,
 	SectionHeading,
 	Stack,
+	Surface,
 } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import { SessionPlanDetails } from "./session-plan-details";
@@ -25,12 +26,15 @@ const SharedPlanContent = ({
 		<LoadingContent />
 	) : service.plan ? (
 		<Stack gap="sm">
-			{!preview ? <SectionHeading>Session plan</SectionHeading> : undefined}
-			<SessionPlanDetails plan={service.plan} />
+			{!preview ? <SectionHeading>Plan</SectionHeading> : undefined}
+			<Surface>
+				<SessionPlanDetails plan={service.plan} />
+			</Surface>
 		</Stack>
 	) : preview ? (
 		<EmptyState title="Plan not published" />
 	) : undefined;
+
 const LiveSharedPlan = ({
 	eventId,
 	partId,
@@ -59,6 +63,7 @@ const PreviewSharedPlan = ({
 		preview={preview}
 	/>
 );
+
 export const SharedSessionPlan = ({
 	event,
 	partId,

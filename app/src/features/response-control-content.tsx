@@ -1,3 +1,4 @@
+import { atom, useAtomValue, useStore } from "jotai";
 import type { ReactElement } from "react";
 import { useActivePerson, useApp } from "../demo/app-state";
 import { Select, Stack, Text } from "../design-system";
@@ -5,16 +6,21 @@ import { canRegister, eventResponse } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import type { Response } from "../domain/club";
 import { signupState } from "../domain/event-time";
+import { partResponse } from "../domain/schedule-agenda";
 import { PartResponseControls } from "./part-response-controls";
 import { QuickResponseButtons } from "./quick-response-buttons";
 import { responseOptions } from "./response-options";
 import { SectionResponsePicker } from "./section-response-picker";
 import { SeriesResponseControl } from "./series-response-control";
+import { useEventNow } from "./use-event-now";
 import { useFormTask } from "./use-form-task";
+
+const pendingResponsesAtom = atom<ReadonlySet<string>>(new Set<string>());
 
 export const ResponseControlContent = ({
 	event,
 	personId,
+	partId,
 	hideLabel = false,
 	committed = false,
 	loading = false,
@@ -22,19 +28,34 @@ export const ResponseControlContent = ({
 }: {
 	event: ClubEvent;
 	personId?: string;
+	partId?: string;
 	hideLabel?: boolean;
 	committed?: boolean;
 	loading?: boolean;
 	quick?: boolean;
 }): ReactElement => {
-	const { data, dispatch } = useApp();
+	const { data, dispatch, account, workspaceId } = useApp();
+	const store = useStore();
+	const pendingResponses = useAtomValue(pendingResponsesAtom);
 	const activePerson = useActivePerson();
 	const person =
 		data.members.find((entry) => entry.id === personId) ?? activePerson;
 	const task = useFormTask();
+	const requestKey = JSON.stringify([
+		workspaceId,
+		account.id,
+		event.id,
+		person.id,
+	]);
+	const busy = task.busy || pendingResponses.has(requestKey);
+	const part =
+		partId === undefined
+			? undefined
+			: event.parts?.find((entry) => entry.id === partId);
 	const current = eventResponse(data, event.id, person.id);
 	const response = current.response;
-	const signup = signupState(event, Date.now());
+	const visibleResponse = part ? partResponse(current, part.id) : response;
+	const signup = signupState(event, useEventNow(event));
 	const locked = Boolean(
 		loading ||
 			event.cancelled ||
@@ -53,18 +74,29 @@ export const ResponseControlContent = ({
 		partIds?: string[],
 		declinedPartIds?: string[],
 	): Promise<void> => {
-		if (locked) return;
-		await task.run(async (): Promise<void> => {
-			const saved = await dispatch({
-				type: "respond",
-				eventId: event.id,
-				personId: person.id,
-				response: value,
-				partIds,
-				declinedPartIds,
+		if (locked || store.get(pendingResponsesAtom).has(requestKey)) return;
+		store.set(
+			pendingResponsesAtom,
+			(current) => new Set([...current, requestKey]),
+		);
+		try {
+			await task.run(async (): Promise<void> => {
+				const saved = await dispatch({
+					type: "respond",
+					eventId: event.id,
+					personId: person.id,
+					response: value,
+					partIds,
+					declinedPartIds,
+				});
+				if (!saved) throw new Error("Could not save your response. Try again.");
 			});
-			if (!saved) throw new Error("Could not save your response. Try again.");
-		});
+		} finally {
+			store.set(
+				pendingResponsesAtom,
+				(current) => new Set([...current].filter((key) => key !== requestKey)),
+			);
+		}
 	};
 	if (person.archived)
 		return (
@@ -73,14 +105,30 @@ export const ResponseControlContent = ({
 				signing up.
 			</Text>
 		);
-	if (quick && event.parts?.length && !locked && event.kind !== "tournament")
+	if (partId !== undefined && (!part || event.kind === "tournament"))
+		return (
+			<Text variant="caption" tone="secondary">
+				Section unavailable
+			</Text>
+		);
+	if (
+		(quick || partId !== undefined) &&
+		event.parts?.length &&
+		!locked &&
+		event.kind !== "tournament"
+	)
 		return (
 			<Stack gap="xxs">
 				<PartResponseControls
 					event={event}
 					current={current}
 					name={person.name}
-					disabled={task.busy}
+					partId={partId}
+					hideLabel={hideLabel}
+					disabled={busy}
+					isPending={(): boolean =>
+						store.get(pendingResponsesAtom).has(requestKey)
+					}
 					full={full && response !== "going" && !current.seriesExpected}
 					onRespond={respond}
 				/>
@@ -91,7 +139,7 @@ export const ResponseControlContent = ({
 				) : undefined}
 			</Stack>
 		);
-	if (current.seriesExpected)
+	if (current.seriesExpected && partId === undefined && (!quick || !locked))
 		return (
 			<SeriesResponseControl
 				quick={quick}
@@ -101,7 +149,7 @@ export const ResponseControlContent = ({
 				unavailable={current.response === "unavailable"}
 			/>
 		);
-	if (quick && event.kind !== "tournament")
+	if ((quick || partId !== undefined) && event.kind !== "tournament")
 		if (locked)
 			return (
 				<Text variant="caption" tone="secondary">
@@ -111,17 +159,19 @@ export const ResponseControlContent = ({
 							? "Cancelled"
 							: signup === "scheduled"
 								? "Not open yet"
-								: "Closed"}
+								: !canRegister(person, event)
+									? "Not eligible for this session"
+									: `${visibleResponse === "going" ? "Attending" : visibleResponse === "unavailable" ? "Not attending" : visibleResponse === "waiting" ? "Waitlisted" : "No response"} · Responses closed`}
 				</Text>
 			);
-	if (quick && event.kind !== "tournament")
+	if ((quick || partId !== undefined) && event.kind !== "tournament")
 		return (
 			<Stack gap="xxs">
 				<QuickResponseButtons
 					name={person.name}
 					response={response}
 					full={full}
-					disabled={locked || task.busy}
+					disabled={locked || busy}
 					onRespond={(going): void => {
 						if (
 							(going && response === "going") ||
@@ -148,7 +198,7 @@ export const ResponseControlContent = ({
 				hideLabel={hideLabel}
 				label={`${person.name} · ${event.kind === "tournament" ? "Interest" : "Attendance"}`}
 				value={response}
-				isDisabled={locked || task.busy}
+				isDisabled={locked || busy}
 				options={
 					event.kind === "tournament"
 						? [
@@ -179,7 +229,7 @@ export const ResponseControlContent = ({
 					name={person.name}
 					parts={event.parts}
 					selected={current.partIds}
-					disabled={locked || task.busy}
+					disabled={locked || busy}
 					onChange={(ids): void => {
 						void respond("going", ids);
 					}}

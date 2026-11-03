@@ -12,6 +12,7 @@ import { geometry } from "./tokens";
 
 type Props = {
 	title: string;
+	density?: "standard" | "compact";
 	titleLines?: 1 | 2 | 3;
 	titleAccessory?: ReactNode;
 	emphasis?: "default" | "strong" | "subtle";
@@ -24,6 +25,7 @@ type Props = {
 	avatarId?: string;
 	leading?: ReactNode;
 	trailing?: ReactNode;
+	showChevron?: boolean;
 	onPress?: () => void;
 	selected?: boolean;
 	flush?: boolean;
@@ -31,6 +33,7 @@ type Props = {
 };
 export const ListItem = ({
 	title,
+	density = "standard",
 	titleLines,
 	titleAccessory,
 	emphasis = "default",
@@ -43,6 +46,7 @@ export const ListItem = ({
 	avatarId,
 	leading,
 	trailing,
+	showChevron = true,
 	onPress,
 	selected = false,
 	flush = false,
@@ -65,28 +69,49 @@ export const ListItem = ({
 				: undefined;
 	const content = (
 		<Row>
-			{leading ??
-				(avatar ? (
-					<Avatar name={avatar} personId={avatarId} />
-				) : icon ? (
-					<FeatureIcon name={icon} />
-				) : undefined)}
+			{leading || avatar || icon ? (
+				<View
+					style={{
+						width: geometry.touch,
+						minHeight: geometry.touch,
+						flexShrink: 0,
+						alignItems: "center",
+						justifyContent: "center",
+					}}
+				>
+					{leading ??
+						(avatar ? (
+							<Avatar name={avatar} personId={avatarId} />
+						) : icon ? (
+							<FeatureIcon name={icon} />
+						) : undefined)}
+				</View>
+			) : undefined}
 			<Stack gap="none" grow>
 				{titleAccessory ? (
 					<Row gap="xs" wrap>
-						<Text variant="label" lines={titleLines} weight={titleWeight}>
+						<Text
+							variant={density === "compact" ? "small" : "label"}
+							lines={titleLines}
+							weight={titleWeight ?? "medium"}
+						>
 							{title}
 						</Text>
 						{titleAccessory}
 					</Row>
 				) : (
-					<Text variant="label" lines={titleLines} weight={titleWeight}>
+					<Text
+						variant={density === "compact" ? "small" : "label"}
+						lines={titleLines}
+						weight={titleWeight ?? "medium"}
+					>
 						{title}
 					</Text>
 				)}
 				{description ? (
 					<Text
-						variant="small"
+						variant={density === "compact" ? "navigation" : "small"}
+						weight="regular"
 						tone="secondary"
 						lines={descriptionLines}
 						italic={descriptionItalic}
@@ -95,15 +120,16 @@ export const ListItem = ({
 					</Text>
 				) : undefined}
 			</Stack>
-			{trailing ??
-				(onPress ? (
-					<Icon name="chevron" size="sm" tone="secondary" />
-				) : undefined)}
+			{trailing}
+			{onPress && showChevron ? (
+				<Icon name="chevron" size="sm" tone="secondary" />
+			) : undefined}
 		</Row>
 	);
 	return onPress ? (
 		<Pressable
 			accessibilityRole="button"
+			accessibilityState={{ selected }}
 			accessibilityLabel={accessibilityLabel ?? title}
 			onPress={onPress}
 			onHoverIn={(): void => setHovered(true)}
@@ -116,7 +142,7 @@ export const ListItem = ({
 				justifyContent: "center",
 				borderRadius: interactiveRow.borderRadius,
 				backgroundColor: selected
-					? theme.background.secondary
+					? theme.background.selected
 					: hovered || pressed
 						? theme.background.hover
 						: "transparent",

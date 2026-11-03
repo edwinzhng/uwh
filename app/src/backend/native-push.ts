@@ -5,6 +5,7 @@ import type { DevicePushToken } from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import { AppState, Linking, Platform } from "react-native";
 import { notificationPath } from "../domain/push-routing";
+import { createInstallationReader } from "./push-installation";
 
 type Registration = {
 	installationId: string;
@@ -17,13 +18,12 @@ const projectId =
 export const nativePushAvailable = available && Boolean(projectId);
 const installationKey = "crocs.push.installation";
 const enabledKey = "crocs.push.enabled";
-export const installationId = async (): Promise<string> => {
-	const existing = await SecureStore.getItemAsync(installationKey);
-	if (existing) return existing;
-	const id = randomUUID();
-	await SecureStore.setItemAsync(installationKey, id);
-	return id;
-};
+export const installationId = createInstallationReader({
+	read: async (): Promise<string | undefined> =>
+		(await SecureStore.getItemAsync(installationKey)) ?? undefined,
+	write: (id): Promise<void> => SecureStore.setItemAsync(installationKey, id),
+	create: randomUUID,
+});
 export const registerNativePush = async (
 	request: boolean,
 	devicePushToken?: DevicePushToken,

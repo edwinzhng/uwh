@@ -4,9 +4,7 @@ import { useApp } from "../demo/app-state";
 import {
 	Button,
 	Dialog,
-	IconButton,
-	List,
-	ListItem,
+	MultiSelect,
 	Select,
 	Stack,
 	Text,
@@ -16,7 +14,7 @@ import {
 	type WeeklyCoachingSchedule,
 } from "../domain/coaching-schedule";
 import { clubPrograms } from "../domain/programs";
-import { CoachAssignmentPicker } from "./coach-assignment-picker";
+
 import { useFormTask } from "./use-form-task";
 
 export const ProgramCoachingEditor = ({
@@ -46,14 +44,11 @@ export const ProgramCoachingEditor = ({
 			? draft.backupCoachIds
 			: (draft.programs?.find((entry) => entry.programId === day)?.coachIds ??
 				[]);
-	const dayLabel =
-		day === "backup"
-			? "the backup list"
-			: `${programs.find((entry) => entry.id === day)?.name ?? day}’s program defaults`;
 	const available = state.coaches.filter(
 		(coach) =>
-			!selected.includes(coach.coachId) &&
-			(day === "backup" || coach.programIds?.includes(day)),
+			selected.includes(coach.coachId) ||
+			day === "backup" ||
+			coach.programIds?.includes(day),
 	);
 	const change = (coachIds: string[]): void =>
 		setDraft((current) =>
@@ -99,8 +94,9 @@ export const ProgramCoachingEditor = ({
 		>
 			<Stack>
 				<Text variant="small" tone="secondary">
-					Defaults only. Record hours in each practice; existing practice
-					assignments won’t change. Additions and removals apply when you save.
+					Hours are counted automatically after each practice. Practice
+					overrides and completed history stay unchanged. Additions and removals
+					apply when you save.
 				</Text>
 				<Select
 					label="Program"
@@ -120,43 +116,31 @@ export const ProgramCoachingEditor = ({
 						}
 					}}
 				/>
-				<List>
-					{selected.map((id) => {
-						const name =
-							state.coaches.find((coach) => coach.coachId === id)?.name ??
-							"Former coach";
-						return (
-							<ListItem
-								key={id}
-								title={name}
-								avatar={name}
-								flush
-								trailing={
-									<IconButton
-										label={`Remove ${name} from ${dayLabel}`}
-										icon="trash"
-										isDisabled={task.busy}
-										onPress={(): void =>
-											change(selected.filter((entry) => entry !== id))
-										}
-									/>
-								}
-							/>
+				<MultiSelect
+					label="Coaches"
+					placeholder="Choose coaches"
+					values={selected}
+					options={[
+						...available.map((coach) => ({
+							value: coach.coachId,
+							label: coach.name,
+							person: { id: coach.personId },
+						})),
+						...selected
+							.filter((id) => !available.some((coach) => coach.coachId === id))
+							.map((id) => ({ value: id, label: "Former coach" })),
+					]}
+					maxSelections={day === "backup" ? 16 : 3}
+					isDisabled={task.busy}
+					onToggle={(id, assigned): void => {
+						change(
+							assigned
+								? [...selected, id]
+								: selected.filter((entry) => entry !== id),
 						);
-					})}
-				</List>
-				{available.length > 0 ? (
-					<CoachAssignmentPicker
-						key={day}
-						coaches={available}
-						isDisabled={task.busy}
-						backup={day === "backup"}
-						onAdd={async (coachId): Promise<boolean> => {
-							change([...selected, coachId]);
-							return true;
-						}}
-					/>
-				) : undefined}
+						task.clear();
+					}}
+				/>
 				{day === "backup" ? (
 					<Text variant="small" tone="secondary">
 						Backup coaches are suggested when editing a session. They are not

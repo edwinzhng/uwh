@@ -25,20 +25,25 @@ export const EventResponseRow = ({
 				borderTopWidth: geometry.border,
 				borderColor: theme.border,
 				borderRadius: 0,
-				backgroundColor:
-					tone === "neutral" ? "transparent" : theme[tone].background,
+				backgroundColor: "transparent",
 			}}
 		>
 			<Row gap="xs">
 				<Stack grow gap="none">
-					<Text variant="small" weight="medium">
-						{label}
-					</Text>
-					{description ? (
-						<Text variant="caption" tone="secondary">
-							{description}
+					<Row gap="xxs" wrap>
+						<Text
+							variant="small"
+							weight="medium"
+							tone={tone === "neutral" ? "primary" : tone}
+						>
+							{label}
 						</Text>
-					) : undefined}
+						{description ? (
+							<Text variant="caption" tone="secondary">
+								· {description}
+							</Text>
+						) : undefined}
+					</Row>
 				</Stack>
 				{children}
 			</Row>

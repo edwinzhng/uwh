@@ -4,44 +4,56 @@ type Registration = {
 	token: string;
 	platform: "ios" | "android";
 };
-type Options<Token extends DeviceToken> = {
-	read: (token?: Token) => Promise<Registration | undefined>;
-	register: (registration: Registration) => Promise<void>;
+type Options<Token extends DeviceToken, Value> = {
+	read: (token?: Token) => Promise<Value | undefined>;
+	register: (registration: Value) => Promise<void>;
 	unregister: () => Promise<void>;
 };
 type Controller<Token> = {
 	refresh: (token?: Token) => Promise<void>;
 	stop: () => void;
+	resume: () => Promise<void>;
 };
 
-export const createPushRegistrationController = <Token extends DeviceToken>({
+export const createPushRegistrationController = <
+	Token extends DeviceToken,
+	Value = Registration,
+>({
 	read,
 	register,
 	unregister,
-}: Options<Token>): Controller<Token> => {
+}: Options<Token, Value>): Controller<Token> => {
 	const state: {
 		active: boolean;
+		generation: number;
 		pending?: Promise<void>;
 		queued?: Token;
+		refreshQueued: boolean;
 		lastToken?: string;
 		lastRegistration?: string;
-	} = { active: true };
+	} = { active: true, generation: 0, refreshQueued: false };
 	const synchronize = async (token?: Token): Promise<void> => {
 		if (!state.active) return;
+		const generation = state.generation;
 		const registration = await read(token);
-		if (!state.active) return;
+		if (!state.active || state.generation !== generation) return;
 		const key = JSON.stringify(registration ?? "disabled");
 		if (state.lastRegistration !== key) {
 			if (registration) await register(registration);
 			else await unregister();
-			if (!state.active) return;
+			if (!state.active || state.generation !== generation) return;
 			state.lastRegistration = key;
 		}
-		if (token) state.lastToken = JSON.stringify(token);
+		state.lastToken = registration
+			? token
+				? JSON.stringify(token)
+				: state.lastToken
+			: undefined;
 	};
 	const refresh = (token?: Token): Promise<void> => {
 		if (!state.active) return Promise.resolve();
 		if (state.pending) {
+			state.refreshQueued = true;
 			if (token) state.queued = token;
 			return state.pending;
 		}
@@ -52,8 +64,10 @@ export const createPushRegistrationController = <Token extends DeviceToken>({
 			.finally((): Promise<void> | undefined => {
 				if (state.pending === pending) state.pending = undefined;
 				const queued = state.queued;
+				const refreshQueued = state.refreshQueued;
 				state.queued = undefined;
-				if (state.active && queued) return refresh(queued);
+				state.refreshQueued = false;
+				if (state.active && refreshQueued) return refresh(queued);
 				return undefined;
 			});
 		state.pending = pending;
@@ -61,9 +75,18 @@ export const createPushRegistrationController = <Token extends DeviceToken>({
 	};
 	return {
 		refresh,
+		resume: (): Promise<void> => {
+			state.generation += 1;
+			state.active = true;
+			state.lastToken = undefined;
+			state.lastRegistration = undefined;
+			return refresh();
+		},
 		stop: (): void => {
+			state.generation += 1;
 			state.active = false;
 			state.queued = undefined;
+			state.refreshQueued = false;
 		},
 	};
 };

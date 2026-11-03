@@ -3,7 +3,13 @@ import { useRouter } from "expo-router";
 import { type ReactElement, useEffect } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp, useAppStatus } from "../demo/app-state";
-import { Button, SummaryCard, Text } from "../design-system";
+import {
+	Button,
+	featureIdentity,
+	Row,
+	SummaryCard,
+	Text,
+} from "../design-system";
 import { formatDate } from "../domain/app-rules";
 import type { Notice } from "../domain/app-types";
 import { bannerNotices } from "../domain/notices";
@@ -21,22 +27,33 @@ const AnnouncementContent = ({
 	return notice ? (
 		<SummaryCard
 			title="Announcement"
+			icon={featureIdentity.announcements.icon}
 			category="coral"
 			metadata={formatDate(notice.date)}
 			onPress={(): void => router.push("/announcements")}
 			action={
-				<Button
-					label="Dismiss"
-					variant="ghost"
-					compact
-					isLoading={busy}
-					onPress={(): void => {
-						void dispatch({ type: "dismiss-notice", noticeId: notice.id });
-					}}
-				/>
+				<Row wrap>
+					<Button
+						label="Read announcement"
+						variant="secondary"
+						compact
+						onPress={(): void => router.push("/announcements")}
+					/>
+					<Button
+						label="Dismiss"
+						variant="ghost"
+						compact
+						isLoading={busy}
+						onPress={(): void => {
+							void dispatch({ type: "dismiss-notice", noticeId: notice.id });
+						}}
+					/>
+				</Row>
 			}
 		>
-			<Text weight="medium">{notice.body}</Text>
+			<Text weight="medium" lines={3}>
+				{notice.body}
+			</Text>
 		</SummaryCard>
 	) : undefined;
 };

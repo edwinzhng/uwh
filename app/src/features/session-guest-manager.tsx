@@ -49,6 +49,7 @@ const GuestForm = ({
 					options={candidates.map((person) => ({
 						value: person.id,
 						label: person.name,
+						person: { id: person.id, name: person.name },
 					}))}
 					isDisabled={task.busy}
 					onValueChange={(value): void => {

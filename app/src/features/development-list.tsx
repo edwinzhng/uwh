@@ -27,7 +27,7 @@ export const DevelopmentList = ({
 		<LoadingContent />
 	) : (
 		<Stack gap="sm">
-			<Surface padding="xs">
+			<Surface>
 				<List>
 					{activePlayers.map((player) => (
 						<ListItem

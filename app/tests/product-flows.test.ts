@@ -73,7 +73,7 @@ test("entry chains stay ordered, keep choice labels together and use canonical r
 		"Training / Hockey",
 	]);
 	expect(productFlows.find((flow) => flow.id === "goals")?.entry).toBe(
-		"Member → Progress",
+		"Member → Goals & reflections",
 	);
 	expect(productFlows.find((flow) => flow.id === "invites")?.entry).toBe(
 		"Members → Invites",

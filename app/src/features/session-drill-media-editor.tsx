@@ -9,8 +9,11 @@ import {
 	Stack,
 	Text,
 } from "../design-system";
-import { resourceUrl } from "../domain/resources";
-import type { SessionPlanMedia } from "../domain/session-plan";
+import {
+	maxSessionPlanMedia,
+	type SessionPlanMedia,
+	supportedSessionPlanMedia,
+} from "../domain/session-plan";
 import { SessionPlanResourcePicker } from "./session-plan-resource-picker";
 import { useFormTask } from "./use-form-task";
 
@@ -79,7 +82,7 @@ export const SessionDrillMediaEditor = ({
 						isDisabled={disabled || task.busy}
 					/>
 					<Field
-						label="Secure media link"
+						label="Video, PDF or image link"
 						value={url}
 						onValueChange={setUrl}
 						placeholder="https://"
@@ -96,8 +99,8 @@ export const SessionDrillMediaEditor = ({
 									() =>
 										!label.trim() || label.trim().length > 120
 											? "Give this media item a name."
-											: !resourceUrl(url.trim())
-												? "Use a complete HTTPS link without embedded credentials."
+											: !supportedSessionPlanMedia(url.trim())
+												? "Use a YouTube or Vimeo video, PDF, or image link."
 												: undefined,
 									async (): Promise<void> => {
 										onChange([
@@ -133,14 +136,14 @@ export const SessionDrillMediaEditor = ({
 						label="Attach club resource"
 						variant="ghost"
 						prefix="archive"
-						isDisabled={disabled || media.length >= 6}
+						isDisabled={disabled || media.length >= maxSessionPlanMedia}
 						onPress={(): void => setAdding("resource")}
 					/>
 					<Button
 						label="Attach media link"
 						variant="ghost"
 						prefix="image"
-						isDisabled={disabled || media.length >= 6}
+						isDisabled={disabled || media.length >= maxSessionPlanMedia}
 						onPress={(): void => setAdding("link")}
 					/>
 				</Row>

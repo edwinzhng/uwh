@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { Expo } from "expo-server-sdk";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
+import { pushOutcome } from "./push_outcome";
 
 const expo = new Expo({ accessToken: process.env.EXPO_ACCESS_TOKEN });
 export const send = internalAction({
@@ -44,14 +45,7 @@ export const send = internalAction({
 			const ticket = tickets.at(0);
 			await ctx.runMutation(internal.notifications.record, {
 				id,
-				ticketId: ticket?.status === "ok" ? ticket.id : undefined,
-				error:
-					ticket?.status === "error"
-						? (ticket.details?.error ?? "PushRejected")
-						: undefined,
-				retry:
-					ticket?.status === "error" &&
-					ticket.details?.error === "MessageRateExceeded",
+				...pushOutcome("ticket", ticket),
 			});
 		} catch {
 			await ctx.runMutation(internal.notifications.record, {
@@ -75,12 +69,7 @@ export const receipt = internalAction({
 			if (receipt) {
 				await ctx.runMutation(internal.notifications.record, {
 					id,
-					error:
-						receipt.status === "error"
-							? (receipt.details?.error ?? "ReceiptRejected")
-							: undefined,
-					retry: false,
-					delivered: receipt.status === "ok",
+					...pushOutcome("receipt", receipt),
 				});
 				return;
 			}

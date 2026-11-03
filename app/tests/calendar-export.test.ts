@@ -244,12 +244,16 @@ test("family feeds stay independent as a parent changes one child’s response",
 		["youth"],
 		false,
 	);
-	const updated = reduceApp(initialAppData, primaryAccount, {
-		type: "respond",
-		eventId: "youth-thu",
-		personId: "sam",
-		response: "unavailable",
-	});
+	const updated = reduceApp(
+		initialAppData,
+		{ ...primaryAccount, children: ["sam", "mila"] },
+		{
+			type: "respond",
+			eventId: "youth-thu",
+			personId: "sam",
+			response: "unavailable",
+		},
+	);
 	expect(
 		personalCalendarEvents(
 			updated.events,

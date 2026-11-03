@@ -10,12 +10,14 @@ import { ResponseControlContent } from "./response-control-content";
 type Props = {
 	event: ClubEvent;
 	personId?: string;
+	partId?: string;
 	hideLabel?: boolean;
 	quick?: boolean;
 };
 const LiveResponse = ({
 	event,
 	personId,
+	partId,
 	hideLabel,
 	quick,
 }: Props): ReactElement => {
@@ -30,6 +32,7 @@ const LiveResponse = ({
 		<ResponseControlContent
 			event={event}
 			personId={personId}
+			partId={partId}
 			hideLabel={hideLabel}
 			quick={quick}
 			committed={committed}
@@ -40,6 +43,7 @@ const LiveResponse = ({
 const PreviewResponse = ({
 	event,
 	personId,
+	partId,
 	hideLabel,
 	quick,
 }: Props): ReactElement => {
@@ -48,6 +52,7 @@ const PreviewResponse = ({
 		<ResponseControlContent
 			event={event}
 			personId={personId}
+			partId={partId}
 			hideLabel={hideLabel}
 			quick={quick}
 			committed={series.some((entry) =>
@@ -59,6 +64,7 @@ const PreviewResponse = ({
 export const ResponseControl = ({
 	event,
 	personId,
+	partId,
 	hideLabel,
 	quick,
 }: Props): ReactElement =>
@@ -66,6 +72,7 @@ export const ResponseControl = ({
 		<LiveResponse
 			event={event}
 			personId={personId}
+			partId={partId}
 			hideLabel={hideLabel}
 			quick={quick}
 		/>
@@ -73,6 +80,7 @@ export const ResponseControl = ({
 		<PreviewResponse
 			event={event}
 			personId={personId}
+			partId={partId}
 			hideLabel={hideLabel}
 			quick={quick}
 		/>

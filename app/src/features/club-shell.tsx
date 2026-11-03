@@ -1,4 +1,4 @@
-import { usePathname } from "expo-router";
+import { useGlobalSearchParams, usePathname } from "expo-router";
 import type { ReactElement, ReactNode } from "react";
 import { useApp, useAppStatus } from "../demo/app-state";
 import {
@@ -22,6 +22,7 @@ type Props = {
 	subtitle?: string;
 	action?: ReactNode;
 	toolbarLeading?: ReactNode;
+	toolbarCenter?: ReactNode;
 	actionPlacement?: "responsive" | "inline";
 	tabs?: ReactNode;
 	back?: ReactNode;
@@ -37,6 +38,7 @@ export const ClubShell = ({
 	subtitle,
 	action,
 	toolbarLeading,
+	toolbarCenter,
 	actionPlacement,
 	tabs,
 	back,
@@ -46,17 +48,27 @@ export const ClubShell = ({
 	presentation = "page",
 }: Props): ReactElement => {
 	const pathname = usePathname();
+	const { headerOption } = useGlobalSearchParams<{ headerOption?: string }>();
+	const headerLayout =
+		process.env.EXPO_PUBLIC_REVIEW_MODE === "true" &&
+		(headerOption === "compact" ||
+			headerOption === "integrated" ||
+			headerOption === "content")
+			? headerOption
+			: "content";
 	const { loading } = useApp();
 	const { error, clearError } = useAppStatus();
 	return (
 		<LoadingScope>
 			<AppLayout
+				headerLayout={headerLayout}
 				primaryDestination={isPrimaryDestination(pathname)}
 				presentation={presentation}
 				title={title}
 				workspaceTitle={workspaceTitle}
 				subtitle={subtitle}
 				toolbarLeading={toolbarLeading}
+				toolbarCenter={toolbarCenter}
 				action={action}
 				actionPlacement={actionPlacement}
 				tabs={tabs}

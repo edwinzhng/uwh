@@ -10,6 +10,7 @@ import {
 	Button,
 	Calendar,
 	EmptyState,
+	formatTimeLocation,
 	IconButton,
 	InfiniteScroll,
 	LoadingContent,
@@ -20,7 +21,8 @@ import {
 	Surface,
 	Text,
 } from "../design-system";
-import { formatDate, formatTime } from "../domain/app-rules";
+import { formatDate } from "../domain/app-rules";
+import { eventTimeRange } from "../domain/event-card-presentation";
 import { clubDate } from "../domain/event-time";
 import * as Clipboard from "../platform/clipboard";
 
@@ -132,13 +134,16 @@ const LivePublicScheduleScreen = (): ReactElement => {
 										) : undefined}
 									</Row>
 									<Text variant="small">
-										{formatDate(event.date)} · {formatTime(event.start)}–
+										{formatDate(event.date)}
 										{event.endDate && event.endDate !== event.date
-											? `${formatDate(event.endDate)} ${formatTime(event.end)}`
-											: formatTime(event.end)}
+											? `–${formatDate(event.endDate)}`
+											: ""}
 									</Text>
 									<Text variant="small" tone="secondary">
-										{event.venue}
+										{formatTimeLocation(
+											eventTimeRange(event.start, event.end),
+											event.venue,
+										)}
 									</Text>
 								</Stack>
 							</Surface>

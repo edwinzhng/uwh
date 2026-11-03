@@ -365,9 +365,9 @@ export const inboxRoute = (
 	| { pathname: "/resources"; params: { id: string } }
 	| {
 			pathname: "/member";
-			params: { id: string; tab: "progress" | "feedback" | "shoutouts" };
+			params: { id: string; tab: "goals" | "feedback" | "shoutouts" };
 	  }
-	| { pathname: "/messages"; params: { tab: "notices" } } => {
+	| { pathname: "/announcements"; params: Record<string, never> } => {
 	if (target.kind === "message")
 		return { pathname: "/conversation", params: { id: target.threadId } };
 	if (target.kind === "event")
@@ -384,7 +384,10 @@ export const inboxRoute = (
 	if (target.kind === "feedback")
 		return {
 			pathname: "/member",
-			params: { id: target.personId, tab: target.tab },
+			params: {
+				id: target.personId,
+				tab: target.tab === "progress" ? "goals" : target.tab,
+			},
 		};
-	return { pathname: "/messages", params: { tab: "notices" } };
+	return { pathname: "/announcements", params: {} };
 };

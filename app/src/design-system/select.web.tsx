@@ -1,5 +1,6 @@
 import { Select as BaseSelect } from "@base-ui/react/select";
 import type { ReactElement } from "react";
+import { Avatar } from "./avatar";
 import { HoverSurface } from "./hover-surface.web";
 import { Icon } from "./icon";
 import { NativePicker } from "./native-picker";
@@ -55,6 +56,13 @@ export const Select = <T extends string>({
 					data-compact={compact || undefined}
 					data-tone={selected?.tone}
 				>
+					{selected?.person ? (
+						<Avatar
+							name={selected.person.name ?? selected.label}
+							personId={selected.person.id}
+							compact
+						/>
+					) : undefined}
 					<BaseSelect.Value
 						className="club-picker-value"
 						placeholder={placeholder}
@@ -86,7 +94,13 @@ export const Select = <T extends string>({
 											className="club-popup-item"
 											data-tone={option.tone}
 										>
-											{option.icon ? (
+											{option.person ? (
+												<Avatar
+													name={option.person.name ?? option.label}
+													personId={option.person.id}
+													compact
+												/>
+											) : option.icon ? (
 												<Icon
 													name={option.icon}
 													tone={option.tone ?? "secondary"}
@@ -95,9 +109,11 @@ export const Select = <T extends string>({
 											<BaseSelect.ItemText className="club-popup-item-label">
 												{option.label}
 											</BaseSelect.ItemText>
-											<BaseSelect.ItemIndicator className="club-popup-indicator">
-												<Icon name="check" tone={option.tone ?? "primary"} />
-											</BaseSelect.ItemIndicator>
+											<span className="club-popup-indicator">
+												<BaseSelect.ItemIndicator>
+													<Icon name="check" tone={option.tone ?? "primary"} />
+												</BaseSelect.ItemIndicator>
+											</span>
 										</BaseSelect.Item>
 									))
 								)}

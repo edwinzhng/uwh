@@ -7,7 +7,7 @@ import { InviteRow } from "./invite-row";
 export const InviteList = (): ReactElement => (
 	<DataPage config={{ query: api.invites.list, args: {}, preview: [] }}>
 		{(items) => (
-			<Surface padding="xs">
+			<Surface>
 				<List>
 					{items.length ? (
 						items.map((invite) => <InviteRow key={invite.id} invite={invite} />)

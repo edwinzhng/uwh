@@ -51,9 +51,9 @@ test("page transitions fade in without layout motion and respect reduced motion"
 
 test("contact privacy is explained once without changing the contact visibility gate", async (): Promise<void> => {
 	const profile = await Bun.file("src/features/member-profile-card.tsx").text();
-	expect(profile).toContain("Private contact details");
+	expect(profile).toContain("Private phone:");
 	expect(profile).not.toContain("household only");
-	expect(profile).toContain("profile?.contact ?");
+	expect(profile).toContain("profile?.contact?.phone ?");
 });
 
 test("water loaders render live geometry without image loops or delayed text entrances", async (): Promise<void> => {

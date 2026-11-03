@@ -17,8 +17,6 @@ type ListRowSpacing = {
 
 export const listRowSpacing = ({
 	interactive,
-	flush = false,
-	cardRow = false,
 	hasLeading = false,
 }: {
 	interactive: boolean;
@@ -30,12 +28,10 @@ export const listRowSpacing = ({
 		? {
 				paddingHorizontal: interactiveRow.paddingHorizontal,
 				paddingVertical: interactiveRow.paddingVertical,
-				marginHorizontal: cardRow
-					? interactiveRow.gutter - space.md
-					: interactiveRow.gutter,
+				marginHorizontal: -interactiveRow.paddingHorizontal,
 			}
 		: {
-				paddingHorizontal: cardRow ? space.md : flush ? space.none : space.sm,
+				paddingHorizontal: space.none,
 				paddingVertical: hasLeading ? space.xs : space.xxs,
-				marginHorizontal: cardRow ? -space.md : 0,
+				marginHorizontal: 0,
 			};

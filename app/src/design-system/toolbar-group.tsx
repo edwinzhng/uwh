@@ -1,28 +1,38 @@
-import type { ReactElement, ReactNode } from "react";
+import { Children, type ReactElement, type ReactNode } from "react";
 import { View } from "react-native";
+import { FloatingControlContext } from "./floating-control-context";
 import { GlassPanel } from "./glass-panel";
+import { space } from "./tokens";
 
 export const ToolbarGroup = ({
 	children,
 	nativeHeader = false,
+	label = "Account and notifications",
 }: {
 	children: ReactNode;
 	nativeHeader?: boolean;
+	label?: string;
 }): ReactElement => {
 	const controls = (
 		<View
 			accessibilityRole="toolbar"
-			accessibilityLabel="Account and notifications"
-			style={{ flexDirection: "row", alignItems: "center" }}
+			accessibilityLabel={label}
+			style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}
 		>
-			{children}
+			{nativeHeader
+				? children
+				: Children.map(children, (child) =>
+						child == null ? undefined : (
+							<GlassPanel padding="none" shape="pill" interactive seamless>
+								{child}
+							</GlassPanel>
+						),
+					)}
 		</View>
 	);
 	return nativeHeader ? (
 		controls
 	) : (
-		<GlassPanel padding="none" shape="pill" interactive seamless>
-			{controls}
-		</GlassPanel>
+		<FloatingControlContext value>{controls}</FloatingControlContext>
 	);
 };

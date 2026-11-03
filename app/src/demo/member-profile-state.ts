@@ -1,10 +1,13 @@
 import { atom } from "jotai";
 import type {
+	MemberCapNumberSave,
 	MemberProfileFields,
 	MemberProfileSave,
 } from "../domain/member-profile";
 import {
+	canEditMemberCapNumber,
 	canEditMemberProfile,
+	memberCapNumberError,
 	memberProfileError,
 	memberProfileLimits,
 	normalizeMemberProfile,
@@ -147,6 +150,12 @@ export const savePreviewMemberProfile = atom(
 			throw new Error(
 				"Profile changed in another session. Close and reopen to review the latest details.",
 			);
+		if (
+			fields.capNumber !== previous?.capNumber &&
+			!canEditMemberCapNumber(account, person)
+		)
+			throw new Error("Only assigned coaches can change cap numbers.");
+
 		const photos = get(previewProfilePhotos);
 		if (fields.photoId) {
 			const photo = photos.find((entry) => entry.id === fields.photoId);
@@ -191,5 +200,55 @@ export const savePreviewMemberProfile = atom(
 					photo.id === fields.photoId ? { ...photo, attached: true } : photo,
 				),
 		);
+	},
+);
+
+export const savePreviewMemberCapNumber = atom(
+	undefined,
+	(get, set, input: MemberCapNumberSave & { actorId: string }): void => {
+		const account = get(previewAccountAtom);
+		const person = get(previewDataAtom).members.find(
+			(entry) => entry.id === input.personId,
+		);
+		if (
+			account.id !== input.actorId ||
+			!person ||
+			!canEditMemberCapNumber(account, person)
+		)
+			throw new Error("Only assigned coaches can change cap numbers.");
+		const error = memberCapNumberError(input.capNumber);
+		if (error) throw new Error(error);
+		if (input.key.length < 16 || input.key.length > 100)
+			throw new Error("Reopen the cap number editor and try again.");
+		const capNumber = input.capNumber.trim()
+			? Number(input.capNumber.trim())
+			: undefined;
+		const payload = JSON.stringify({ capNumber });
+		const previous = get(previewMemberProfiles)[person.id];
+		if (previous?.lastKey === input.key) {
+			if (
+				previous.lastActorId !== account.id ||
+				previous.lastPayload !== payload
+			)
+				throw new Error("This save key was already used for other details.");
+			return;
+		}
+		if ((previous?.revision ?? 0) !== input.revision)
+			throw new Error(
+				"Profile changed in another session. Close and reopen to review the latest details.",
+			);
+		set(previewMemberProfiles, (current) => ({
+			...current,
+			[person.id]: {
+				email: previous?.email ?? "",
+				phone: previous?.phone ?? "",
+				photoId: previous?.photoId,
+				capNumber,
+				revision: (previous?.revision ?? 0) + 1,
+				lastKey: input.key,
+				lastActorId: account.id,
+				lastPayload: payload,
+			},
+		}));
 	},
 );

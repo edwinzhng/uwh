@@ -31,6 +31,7 @@ import {
 import { initialAppData, previewAccounts, primaryAccount } from "./app-data";
 import { withInitialPoll } from "./chat-poll-fixture";
 import { previewHouseholdAccounts } from "./household-data";
+import { previewAccountId, previewPersonId } from "./preview-personas";
 import { previewResources } from "./resource-state";
 import { reviewData } from "./review-data";
 import { reviewScenarioData } from "./review-scenario";
@@ -239,12 +240,16 @@ export const PreviewProvider = ({
 	reviewScenario?: string;
 }): ReactElement => {
 	const initialAccount =
-		previewAccounts.find((account) => account.id === reviewAccount) ??
-		primaryAccount;
+		previewAccounts.find(
+			(account) => account.id === previewAccountId(reviewAccount),
+		) ?? primaryAccount;
+	const requestedPerson = previewPersonId(reviewPerson);
 	const initialPerson =
-		reviewPerson &&
-		[initialAccount.personId, ...initialAccount.children].includes(reviewPerson)
-			? reviewPerson
+		requestedPerson &&
+		[initialAccount.personId, ...initialAccount.children].includes(
+			requestedPerson,
+		)
+			? requestedPerson
 			: initialAccount.personId;
 	const initialData = useMemo(
 		() => reviewScenarioData(initialPreviewData, reviewScenario),

@@ -12,7 +12,7 @@ const routes: Record<
 > = {
 	"/terms": { parent: "/account", parentLabel: "Account", label: "Terms" },
 	"/programs": { parent: "/club", parentLabel: "Club", label: "Programs" },
-	"/resources": { parent: "/club", parentLabel: "Club", label: "Resources" },
+	"/resources": { parent: "/club", parentLabel: "Club", label: "Files" },
 	"/development": {
 		parent: "/club",
 		parentLabel: "Club",

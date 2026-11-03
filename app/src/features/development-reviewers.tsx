@@ -7,9 +7,9 @@ import {
 import { useApp } from "../demo/app-state";
 import {
 	Button,
-	Checkbox,
 	Dialog,
 	List,
+	PersonChoice,
 	Row,
 	Select,
 	Stack,
@@ -95,9 +95,9 @@ const ReviewerEditor = ({
 				{draft.mode === "selected" ? (
 					<List>
 						{service.coaches.map((coach) => (
-							<Checkbox
+							<PersonChoice
 								key={coach.id}
-								label={coach.name}
+								name={coach.name}
 								checked={draft.reviewerIds.includes(coach.id)}
 								isDisabled={task.busy}
 								onChange={(checked): void => {

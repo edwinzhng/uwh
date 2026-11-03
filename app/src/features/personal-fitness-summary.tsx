@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
+import { useActivePerson } from "../demo/app-state";
 import {
 	Dialog,
-	Icon,
 	List,
 	ListItem,
 	Row,
@@ -28,11 +28,12 @@ export const PersonalFitnessSummary = ({
 	full?: boolean;
 }): ReactElement => {
 	const router = useRouter();
+	const activePerson = useActivePerson();
 	const [selectedId, setSelectedId] = useState<string>();
 	const selected = rows.find((row) => row.test._id === selectedId);
 	return (
 		<>
-			<Surface padding="xs">
+			<Surface>
 				<List>
 					{(full ? rows : rows.slice(0, 2)).map((row) => {
 						const format = (value?: number): string =>
@@ -45,7 +46,9 @@ export const PersonalFitnessSummary = ({
 								accessibilityLabel={[
 									row.test.name,
 									`Latest ${format(row.history.at(0)?.value)}`,
-									`Personal best ${format(row.stats?.best)}`,
+									row.test.unit === "pass_fail"
+										? "Pass/fail"
+										: `Personal best ${format(row.stats?.best)}`,
 									change
 										? change.direction === "equal"
 											? "Unchanged"
@@ -57,7 +60,11 @@ export const PersonalFitnessSummary = ({
 									.join(". ")}
 								titleLines={2}
 								descriptionLines={2}
-								description={`Best ${format(row.stats?.best)}`}
+								description={
+									row.test.unit === "pass_fail"
+										? "Pass/fail"
+										: `Best ${format(row.stats?.best)}`
+								}
 								trailing={
 									<Row gap="sm">
 										<Stack gap="none">
@@ -70,7 +77,6 @@ export const PersonalFitnessSummary = ({
 												<FitnessChangeIndicator row={row} />
 											</Row>
 										</Stack>
-										<Icon name="chevron" size="sm" tone="secondary" />
 									</Row>
 								}
 								onPress={(): void => {
@@ -78,10 +84,14 @@ export const PersonalFitnessSummary = ({
 										setSelectedId(row.test._id);
 										return;
 									}
-									router.push({
-										pathname: "/fitness",
-										params: { person: personId },
-									});
+									router.push(
+										personId === activePerson.id
+											? { pathname: "/account", params: { tab: "fitness" } }
+											: {
+													pathname: "/member",
+													params: { id: personId, tab: "fitness" },
+												},
+									);
 								}}
 							/>
 						);

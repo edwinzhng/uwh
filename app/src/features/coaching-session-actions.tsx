@@ -12,7 +12,6 @@ export const CoachingSessionActions = ({
 		<Row gap="xs" wrap>
 			<Button
 				label="Attendance"
-				variant="secondary"
 				onPress={(): void =>
 					router.push({
 						pathname: "/session",
@@ -21,8 +20,8 @@ export const CoachingSessionActions = ({
 				}
 			/>
 			<Button
-				label="Session plan"
-				variant="ghost"
+				label="Plan & teams"
+				variant="secondary"
 				onPress={(): void =>
 					router.push({
 						pathname: "/session",

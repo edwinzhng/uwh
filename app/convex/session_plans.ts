@@ -18,7 +18,7 @@ import { mutation, type QueryCtx, query } from "./_generated/server";
 import { accountFor, requireMember } from "./identity";
 import { enqueue } from "./notifications";
 import { canAccessResource, readResource } from "./resources";
-import { sessionDrillValue } from "./session_plans_schema";
+import { planMediaValue } from "./session_plans_schema";
 
 const requirePlanEvent = async (
 	ctx: QueryCtx,
@@ -54,22 +54,14 @@ const currentPlan = async (
 	if (plan)
 		return {
 			body: plan.body,
-			goals: plan.goals,
-			objective: plan.objective,
 			notes: plan.notes,
-			drills: plan.drills,
+			media: plan.media,
 			revision: plan.revision,
 			updatedAt: plan.updatedAt,
 			published: plan.published,
 			publishedAt: plan.publishedAt,
 		};
-	const legacy = await ctx.db
-		.query("plans")
-		.withIndex("by_club_and_key", (q) =>
-			q.eq("clubId", actor.clubId).eq("value.id", key),
-		)
-		.unique();
-	return emptySessionPlan(legacy?.value.body);
+	return emptySessionPlan();
 };
 const requirePlanMedia = async (
 	ctx: QueryCtx,
@@ -148,11 +140,9 @@ export const save = mutation({
 		partId: v.optional(v.string()),
 		revision: v.number(),
 		requestId: v.string(),
-		body: v.optional(v.string()),
-		goals: v.optional(v.string()),
-		objective: v.string(),
+		body: v.string(),
 		notes: v.string(),
-		drills: v.array(sessionDrillValue),
+		media: v.array(planMediaValue),
 	},
 	handler: async (ctx, input): Promise<void> => {
 		const actor = await requireMember(ctx);

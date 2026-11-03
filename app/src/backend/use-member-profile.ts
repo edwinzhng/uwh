@@ -8,12 +8,14 @@ import { previewAccountAtom, previewDataAtom, useApp } from "../demo/app-state";
 import {
 	previewMemberProfiles,
 	previewProfilePhotos,
+	savePreviewMemberCapNumber,
 	savePreviewMemberProfile,
 	uploadPreviewProfilePhoto,
 } from "../demo/member-profile-state";
 import type { Member } from "../domain/app-types";
 import {
 	canEditMemberProfile,
+	type MemberCapNumberSave,
 	type MemberProfile,
 	type MemberProfileSave,
 	memberProfileProjection,
@@ -28,11 +30,13 @@ export type MemberProfileState = {
 	profile?: MemberProfile;
 	loading: boolean;
 	save: (input: MemberProfileSave) => Promise<void>;
+	saveCapNumber: (input: MemberCapNumberSave) => Promise<void>;
 	photos: ProfilePhotoService;
 };
 export const useLiveMemberProfile = (member: Member): MemberProfileState => {
 	const profile = useQuery(api.member_profiles.read, { personId: member.id });
 	const save = useMutation(api.member_profiles.save);
+	const saveCapNumber = useMutation(api.member_profiles.saveCapNumber);
 	const remove = useMutation(api.member_profile_photos.remove);
 	const token = useAuthToken() ?? undefined;
 	const photos = useMemo(
@@ -48,6 +52,9 @@ export const useLiveMemberProfile = (member: Member): MemberProfileState => {
 		save: async (input): Promise<void> => {
 			await save(input);
 		},
+		saveCapNumber: async (input): Promise<void> => {
+			await saveCapNumber(input);
+		},
 		photos,
 	};
 };
@@ -55,6 +62,7 @@ export const usePreviewMemberProfile = (member: Member): MemberProfileState => {
 	const { account } = useApp();
 	const records = useAtomValue(previewMemberProfiles);
 	const save = useSetAtom(savePreviewMemberProfile);
+	const saveCapNumber = useSetAtom(savePreviewMemberCapNumber);
 	const upload = useSetAtom(uploadPreviewProfilePhoto);
 	const store = useStore();
 	const photos = useMemo(
@@ -113,6 +121,9 @@ export const usePreviewMemberProfile = (member: Member): MemberProfileState => {
 		loading: false,
 		save: async (input): Promise<void> => {
 			save({ ...input, actorId: account.id });
+		},
+		saveCapNumber: async (input): Promise<void> => {
+			saveCapNumber({ ...input, actorId: account.id });
 		},
 		photos,
 	};

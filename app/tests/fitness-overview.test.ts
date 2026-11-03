@@ -102,7 +102,7 @@ test("all-test overview separates personal best, latest, team best and seasons",
 	expect(rows).toHaveLength(3);
 	expect(rows.at(0)?.personal).toEqual({ best: 40, count: 2, total: 82 });
 	expect(rows.at(0)?.latest).toEqual({ value: 42, date: "2026-10-01" });
-	expect(rows.at(0)?.teamBest).toEqual({ value: 39, name: "Taylor Brooks" });
+	expect(rows.at(0)?.teamBest).toEqual({ value: 39, name: "Brad Smith" });
 	expect(rows.at(1)?.personal?.best).toBe(0);
 	expect(rows.at(2)?.personal?.best).toBe(1);
 	expect(

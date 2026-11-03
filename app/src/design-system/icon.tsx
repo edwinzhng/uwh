@@ -4,6 +4,7 @@ import ArrowDown from "lucide-react-native/icons/arrow-down";
 import ArrowLeft from "lucide-react-native/icons/arrow-left";
 import ArrowRight from "lucide-react-native/icons/arrow-right";
 import ArrowUp from "lucide-react-native/icons/arrow-up";
+import Backpack from "lucide-react-native/icons/backpack";
 import Bell from "lucide-react-native/icons/bell";
 import CalendarClock from "lucide-react-native/icons/calendar-clock";
 import CalendarDays from "lucide-react-native/icons/calendar-days";
@@ -12,14 +13,17 @@ import Check from "lucide-react-native/icons/check";
 import ChevronDown from "lucide-react-native/icons/chevron-down";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
 import CircleHelp from "lucide-react-native/icons/circle-question-mark";
+import ClipboardCheck from "lucide-react-native/icons/clipboard-check";
 import Clock3 from "lucide-react-native/icons/clock-3";
 import Copy from "lucide-react-native/icons/copy";
+import CreditCard from "lucide-react-native/icons/credit-card";
 import Download from "lucide-react-native/icons/download";
 import Ellipsis from "lucide-react-native/icons/ellipsis";
 import Eye from "lucide-react-native/icons/eye";
 import EyeOff from "lucide-react-native/icons/eye-off";
 import Smile from "lucide-react-native/icons/face-slightly-smiling";
 import SmilePlus from "lucide-react-native/icons/face-slightly-smiling-plus";
+import FileText from "lucide-react-native/icons/file-text";
 import House from "lucide-react-native/icons/house";
 import ImagePlus from "lucide-react-native/icons/image-plus";
 import Layers from "lucide-react-native/icons/layers";
@@ -36,12 +40,14 @@ import Monitor from "lucide-react-native/icons/monitor";
 import Moon from "lucide-react-native/icons/moon";
 import Pencil from "lucide-react-native/icons/pencil";
 import Pin from "lucide-react-native/icons/pin";
+import Play from "lucide-react-native/icons/play";
 import Plus from "lucide-react-native/icons/plus";
 import Reply from "lucide-react-native/icons/reply";
 import Search from "lucide-react-native/icons/search";
 import Settings from "lucide-react-native/icons/settings";
 import Settings2 from "lucide-react-native/icons/settings-2";
 import Shield from "lucide-react-native/icons/shield";
+import ShieldCheck from "lucide-react-native/icons/shield-check";
 import Square from "lucide-react-native/icons/square";
 import SquareCheck from "lucide-react-native/icons/square-check";
 import Star from "lucide-react-native/icons/star";
@@ -51,12 +57,19 @@ import Trash from "lucide-react-native/icons/trash";
 import Trophy from "lucide-react-native/icons/trophy";
 import UserRound from "lucide-react-native/icons/user-round";
 import Users from "lucide-react-native/icons/users";
+import Video from "lucide-react-native/icons/video";
 import X from "lucide-react-native/icons/x";
 import type { ReactElement } from "react";
 import { useTheme } from "./theme";
 import { geometry } from "./tokens";
 
 const icons = {
+	video: Video,
+	document: FileText,
+	payments: CreditCard,
+	moderation: ShieldCheck,
+	equipment: Backpack,
+	attendance: ClipboardCheck,
 	crocodile: Shield,
 	activity: Activity,
 	star: Star,
@@ -103,6 +116,7 @@ const icons = {
 	minus: Minus,
 	moon: Moon,
 	plus: Plus,
+	play: Play,
 	search: Search,
 	settings: Settings2,
 	gear: Settings,

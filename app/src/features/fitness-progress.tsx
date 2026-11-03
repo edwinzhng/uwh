@@ -106,7 +106,7 @@ export const FitnessProgress = ({
 							setSearch(value);
 						}}
 					/>
-					<Surface padding="xs">
+					<Surface>
 						<List>
 							{page?.page.map((row) => (
 								<ListItem
@@ -114,7 +114,7 @@ export const FitnessProgress = ({
 									title={row.name}
 									description={
 										row.stats
-											? `Best ${formatFitnessValue(test.unit, row.stats.best)} · ${fitnessAverage(test.unit, row.stats)}${test.unit !== "pass_fail" ? " average" : ""} · ${row.stats.count} results`
+											? `${test.unit === "pass_fail" ? fitnessAverage(test.unit, row.stats) : `Best ${formatFitnessValue(test.unit, row.stats.best)} · ${fitnessAverage(test.unit, row.stats)} average`} · ${row.stats.count} results`
 											: "No results this season"
 									}
 									trailing={

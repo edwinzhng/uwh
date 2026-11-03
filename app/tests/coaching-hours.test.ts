@@ -3,6 +3,8 @@ import type { ClubEvent } from "../src/domain/app-types";
 import {
 	type CoachingPractice,
 	coachingAssignmentSummary,
+	coachingDurationEditError,
+	coachingHoursCorrectionError,
 	coachingPartMinutes,
 	coachingTotals,
 	completedCoachingEvent,
@@ -178,4 +180,38 @@ describe("coaching hours", () => {
 		]);
 		expect(coachingTotals([])).toEqual([]);
 	});
+});
+
+test("hours correction rejects stale assignments until reloaded without discarding the draft", (): void => {
+	expect(coachingDurationEditError(120, 90, 90, 60)).toBe(
+		"Coaching hours changed. Reload them before saving.",
+	);
+	expect(coachingDurationEditError(120, 90, 60, 60)).toBeUndefined();
+	expect(coachingDurationEditError(75, 75, 90, 90)).toBeUndefined();
+	expect(coachingDurationEditError(75, 90, 90, 90)).toBe(
+		"Choose coaching time",
+	);
+});
+
+test("atomic hours corrections cannot recreate removed coaches or overwrite newer durations", (): void => {
+	const original = [{ coachId: "coach", durationMinutes: 90 }];
+	expect(coachingHoursCorrectionError(original, "coach", 90)).toBeUndefined();
+	expect(coachingHoursCorrectionError([], "coach", 90)).toContain("changed");
+	expect(
+		coachingHoursCorrectionError(
+			[{ coachId: "coach", durationMinutes: 120 }],
+			"coach",
+			90,
+		),
+	).toContain("changed");
+	expect(coachingHoursCorrectionError(original, "other", 90)).toContain(
+		"changed",
+	);
+	expect(coachingHoursCorrectionError([], "new", undefined)).toBeUndefined();
+	expect(
+		coachingHoursCorrectionError(original, "coach", undefined),
+	).toBeUndefined();
+	expect(coachingHoursCorrectionError(original, "coach", 120)).toContain(
+		"changed",
+	);
 });

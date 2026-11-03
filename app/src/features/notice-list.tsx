@@ -16,7 +16,7 @@ export const NoticeList = ({
 }): ReactElement => {
 	const { account } = useApp();
 	return notices.length ? (
-		<Stack gap="sm">
+		<Stack gap="xl">
 			{notices.map((notice) => (
 				<NoticeCard
 					key={notice.id}

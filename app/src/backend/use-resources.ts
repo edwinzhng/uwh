@@ -1,5 +1,10 @@
 import { useAuthToken } from "@convex-dev/auth/react";
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import {
+	useMutation,
+	usePaginatedQuery,
+	useQueries,
+	useQuery,
+} from "convex/react";
 import { atom, useAtom } from "jotai";
 import { useState } from "react";
 import { Linking } from "react-native";
@@ -25,6 +30,7 @@ import {
 	resourceMatches,
 	resourceMediaMime,
 	resourceSlotFileId,
+	resourceTimestamps,
 	resourceUrl,
 	sameResourceDraft,
 	validateResource,
@@ -43,6 +49,7 @@ export type ResourceState = {
 	loadingMore: boolean;
 	loadMore?: () => void;
 	detail?: Detail;
+	detailError?: string;
 	save: (
 		draft: ResourceDraft,
 		key: string,
@@ -95,6 +102,7 @@ const openLink = async (resource: Resource): Promise<void> => {
 export const useLiveResources = (
 	filters: ResourceFilters,
 	id?: string,
+	options: { optionalDetail?: boolean } = {},
 ): ResourceState => {
 	const token = useAuthToken() ?? undefined;
 	const list = usePaginatedQuery(
@@ -110,19 +118,43 @@ export const useLiveResources = (
 	);
 	const detail = useQuery(
 		api.resources.details,
-		id ? { id: id as Id<"resources"> } : "skip",
+		id && !options.optionalDetail ? { id: id as Id<"resources"> } : "skip",
 	);
+	const optional: { resource?: Detail | Error } = useQueries(
+		id && options.optionalDetail
+			? {
+					resource: {
+						query: api.resources.details,
+						args: { id: id as Id<"resources"> },
+					},
+				}
+			: {},
+	);
+	const optionalDetail = optional.resource;
+	const detailError =
+		optionalDetail instanceof Error
+			? "This attachment is unavailable or you don’t have access."
+			: undefined;
 	const save = useMutation(api.resources.save);
 	const archive = useMutation(api.resources.archive);
 	const comment = useMutation(api.resources.comment);
 	const removeComment = useMutation(api.resources.removeComment);
 	return {
 		items: list.results,
-		loading: list.status === "LoadingFirstPage",
+		loading: id
+			? options.optionalDetail
+				? optionalDetail === undefined
+				: detail === undefined
+			: list.status === "LoadingFirstPage",
 		loadingMore: list.status === "LoadingMore",
 		loadMore:
 			list.status === "CanLoadMore" ? (): void => list.loadMore(25) : undefined,
-		detail,
+		detail: options.optionalDetail
+			? optionalDetail instanceof Error
+				? undefined
+				: optionalDetail
+			: detail,
+		detailError,
 		save: async (draft, key, previous): Promise<string> =>
 			save({
 				...draft,
@@ -206,13 +238,15 @@ const previewFile = async (
 	const existing = previewFiles.get(id);
 	if (existing) return existing;
 	const purpose =
-		id === "demo-video-file"
-			? "video"
-			: id === "demo-voice-file"
-				? "voice"
-				: id === "demo-thumbnail-file"
-					? "thumbnail"
-					: undefined;
+		id === "demo-document-file"
+			? "document"
+			: id === "demo-video-file"
+				? "video"
+				: id === "demo-voice-file"
+					? "voice"
+					: id === "demo-thumbnail-file"
+						? "thumbnail"
+						: undefined;
 	if (!purpose) return undefined;
 	const pending = pendingPreviewFiles.get(id);
 	if (pending) return pending;
@@ -370,7 +404,7 @@ export const usePreviewResources = (
 				id: previous?.id ?? key,
 				clubId: "preview",
 				revision: (current?.revision ?? 0) + 1,
-				updatedAt: Date.now(),
+				...resourceTimestamps(current, Date.now()),
 				archived: current?.archived ?? false,
 				category:
 					draft.kind === "document" ? (draft.category ?? "other") : undefined,
@@ -405,7 +439,7 @@ export const usePreviewResources = (
 								...row,
 								archived,
 								revision: row.revision + 1,
-								updatedAt: Date.now(),
+								...resourceTimestamps(row, Date.now()),
 							}
 						: row,
 				),

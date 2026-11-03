@@ -10,6 +10,7 @@ import {
 	type PersonalFitnessRow,
 	personalFitnessRows,
 } from "./personal-fitness";
+import { performanceSessionEligible } from "./session-performance";
 
 export const homeNextPractice = (
 	data: AppData,
@@ -54,6 +55,26 @@ export const homePendingResponse = (
 	);
 	return people.length ? { event, people } : undefined;
 };
+
+export const homeReflectionPractice = (
+	data: AppData,
+	person: Member,
+	now: number,
+): ClubEvent | undefined =>
+	data.events
+		.filter(
+			(event) =>
+				performanceSessionEligible(person, event) &&
+				clubTimestamp(
+					event.endDate ?? event.date,
+					event.end,
+					event.timeZone ?? data.timeZone,
+				) <= now,
+		)
+		.sort((left, right) =>
+			(right.date + right.end).localeCompare(left.date + left.end),
+		)
+		.at(0);
 
 export const homeRecentConversations = (
 	threads: readonly ConversationSummary[],

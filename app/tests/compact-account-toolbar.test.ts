@@ -50,5 +50,5 @@ test("empty notifications show one quiet message without a decorative empty-stat
 	const source = await Bun.file("src/features/notifications-menu.tsx").text();
 	expect(source).not.toContain("EmptyState");
 	expect(source).not.toContain('description="You’re all caught up."');
-	expect(source).toContain('label="Earlier notifications"');
+	expect(source).toContain('label="Past notifications"');
 });

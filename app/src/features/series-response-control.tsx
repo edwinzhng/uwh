@@ -7,6 +7,7 @@ import { Button, Dialog, Field, Select, Stack, Text } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import { clubTimestamp } from "../domain/event-time";
 import { QuickResponseButtons } from "./quick-response-buttons";
+import { useEventNow } from "./use-event-now";
 import { useFormTask } from "./use-form-task";
 
 type Props = {
@@ -36,6 +37,7 @@ const Control = ({
 }: Props & { save: (args: AbsenceChange) => Promise<void> }): ReactElement => {
 	const { data } = useApp();
 	const task = useFormTask();
+	const now = useEventNow(event);
 	const current = data.responses.find(
 		(entry) => entry.eventId === event.id && entry.personId === personId,
 	);
@@ -47,13 +49,16 @@ const Control = ({
 	const [reason, setReason] = useState(current?.absenceReason ?? "");
 	const scheduled =
 		event.opensAt !== undefined &&
-		event.opensAt > Date.now() &&
+		event.opensAt > now &&
 		current?.response !== "going" &&
 		!unavailable;
 	const locked =
 		event.cancelled ||
-		clubTimestamp(event.date, event.end, event.timeZone ?? data.timeZone) <=
-			Date.now();
+		clubTimestamp(
+			event.endDate ?? event.date,
+			event.end,
+			event.timeZone ?? data.timeZone,
+		) <= now;
 	const choose = (value?: string): void => {
 		if (task.busy || locked || scheduled) return;
 		if (value === "unavailable") {

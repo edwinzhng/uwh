@@ -63,9 +63,11 @@ test("dependent creation is explicit, private, replay-safe and grants no program
 	store.set(previewHouseholdCommand, command);
 	store.set(previewHouseholdCommand, command);
 	const actor = store.get(previewAccountAtom);
-	const id = actor.children.at(0);
+	const id = actor.children.find(
+		(personId) => !before.children.includes(personId),
+	);
 	expect(id).toBeDefined();
-	expect(actor.children).toHaveLength(1);
+	expect(actor.children).toHaveLength(before.children.length + 1);
 	expect(actor.admin).toBe(before.admin);
 	expect(actor.coachPrograms).toEqual(before.coachPrograms);
 	expect(
@@ -84,7 +86,7 @@ test("dependent creation is explicit, private, replay-safe and grants no program
 	expect(store.get(previewAccountAtom).defaultPersonId).toBe(id);
 	expect(store.get(selectedPersonAtom)).toBe(id);
 	store.set(previewHouseholdCommand, { type: "unlink", personId: id });
-	expect(store.get(previewAccountAtom).children).toEqual([]);
+	expect(store.get(previewAccountAtom).children).toEqual(before.children);
 	expect(store.get(previewDataAtom).members.some((row) => row.id === id)).toBe(
 		true,
 	);
@@ -98,7 +100,10 @@ test("dependent creation is explicit, private, replay-safe and grants no program
 	).toThrow("unavailable");
 	store.set(previewAccountIdAtom, "taylor");
 	store.set(previewHouseholdCommand, { type: "accept", id: invitation.id });
-	expect(store.get(previewAccountAtom).children).toEqual([id]);
+	expect(store.get(previewAccountAtom).children).toEqual([
+		...before.children,
+		id,
+	]);
 	expect(() =>
 		store.set(previewHouseholdCommand, {
 			type: "unlink",
@@ -109,6 +114,7 @@ test("dependent creation is explicit, private, replay-safe and grants no program
 
 test("existing profile claims require a targeted administrator proof and current recipient identity", (): void => {
 	const store = createStore();
+	store.set(previewHouseholdAccounts, { taylor: { children: [] } });
 	const invitation = {
 		type: "invite" as const,
 		personId: "sam",

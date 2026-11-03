@@ -59,7 +59,7 @@ export const elevation = {
 	},
 };
 
-export const pageMaterialOpacity = { light: 0.08, dark: 0.12 } as const;
+export const pageMaterialOpacity = { light: 0.025, dark: 0.04 } as const;
 
 export const progressColors = ["#173E2B", "#638E41", "#D8FF63"] as const;
 
@@ -96,7 +96,12 @@ export const typography = {
 	body: { ...sharedTypography.body, fontSize: 16, lineHeight: 24 },
 	small: { ...sharedTypography.small, fontSize: 14, lineHeight: 20 },
 	caption: { ...sharedTypography.caption, fontSize: 14, lineHeight: 20 },
-	overline: { ...sharedTypography.overline, fontSize: 12, lineHeight: 16 },
+	overline: {
+		...sharedTypography.overline,
+		fontSize: 12,
+		lineHeight: 16,
+		textTransform: "uppercase",
+	},
 	label: {
 		...sharedTypography.label,
 		fontSize: 16,
@@ -218,7 +223,7 @@ export const lightTheme: Theme = {
 		card: "#FFFFFF",
 		primary: "#F7F8F5",
 		secondary: "#ECEFE9",
-		selected: "#D8FF63",
+		selected: "#E2E8DF",
 		tertiary: "#E5E9E2",
 		hover: "#ECEFE9",
 		pressed: "#D8DED3",
@@ -229,7 +234,7 @@ export const lightTheme: Theme = {
 		secondary: "#465044",
 		contrast: palette.white,
 	},
-	border: "#C8D0C3",
+	border: "#D8DED3",
 	controlBorder: "#697564",
 	accent: {
 		background: "#182018",
@@ -238,7 +243,7 @@ export const lightTheme: Theme = {
 		foreground: "#D8FF63",
 	},
 	navigation: {
-		selected: "#D8FF63",
+		selected: "#E2E8DF",
 		hover: "#ECEFE9",
 		indicator: "#182018",
 		unread: "#182018",
@@ -286,7 +291,7 @@ export const darkTheme: Theme = {
 		card: "#1C251C",
 		primary: "#1C251C",
 		secondary: "#263026",
-		selected: "#313E1B",
+		selected: "#384436",
 		tertiary: "#2B3528",
 		hover: "#2A3627",
 		pressed: "#3A482E",
@@ -306,7 +311,7 @@ export const darkTheme: Theme = {
 		foreground: "#162010",
 	},
 	navigation: {
-		selected: "#313E1B",
+		selected: "#384436",
 		hover: "#2A3627",
 		indicator: "#D8FF63",
 		unread: "#D8FF63",
@@ -317,7 +322,7 @@ export const darkTheme: Theme = {
 	switchThumbOn: "#162010",
 	switchThumbOff: "#B7C7A8",
 	neutral: { background: "#2B3528", foreground: "#EEF2D9" },
-	brand: { background: "#D8FF63", foreground: "#162010" },
+	brand: { background: "#22342A", foreground: "#EEF2D9" },
 	success: {
 		background: darkColorScales.success.subtle,
 		foreground: darkColorScales.success.text,
@@ -384,3 +389,8 @@ type ActionColors = Record<
 	"background" | "foreground" | "hover" | "pressed",
 	string
 >;
+
+export const unmarkedCardColors = {
+	light: { background: "#F0F2F1", border: "#747C77" },
+	dark: { background: "#222725", border: "#828A85" },
+} as const;

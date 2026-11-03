@@ -40,7 +40,7 @@ export const Checkbox = ({
 				minHeight: interactiveRow.minHeight,
 				paddingHorizontal: compact ? 0 : interactiveRow.paddingHorizontal,
 				paddingVertical: compact ? space.xxs : interactiveRow.paddingVertical,
-				marginHorizontal: compact ? 0 : interactiveRow.gutter,
+				marginHorizontal: 0,
 				borderRadius: interactiveRow.borderRadius,
 				backgroundColor:
 					!isDisabled && (hovered || pressed)

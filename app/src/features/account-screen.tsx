@@ -13,14 +13,13 @@ import { MemberAttendance } from "./member-attendance";
 import { MemberFeedback } from "./member-feedback";
 import { MemberProfile } from "./member-profile";
 import { MemberProgress } from "./member-progress";
+import { PersonalFitness } from "./personal-fitness";
 
 export const AccountScreen = (): ReactElement => {
 	const person = useActivePerson();
 	const router = useRouter();
 	const params = useLocalSearchParams<{ tab?: string; feedback?: string }>();
-	const tab = ["progress", "feedback", "attendance"].includes(params.tab ?? "")
-		? (params.tab ?? "membership")
-		: "membership";
+	const tab = accountSection(params.tab ?? "membership", params.feedback);
 	if (params.tab === "settings" || params.tab === "household")
 		return (
 			<Redirect
@@ -42,7 +41,9 @@ export const AccountScreen = (): ReactElement => {
 					hideLabel
 					label="Account"
 					value={tab}
-					onValueChange={(value): void => router.setParams({ tab: value })}
+					onValueChange={(value): void =>
+						router.setParams({ tab: value, feedback: undefined })
+					}
 					compactNavigation={{
 						value: accountSection(tab, params.feedback),
 						options: accountSections,
@@ -51,7 +52,8 @@ export const AccountScreen = (): ReactElement => {
 					}}
 					options={[
 						{ value: "membership", label: "Membership" },
-						{ value: "progress", label: "Progress" },
+						{ value: "fitness", label: "Fitness" },
+						{ value: "goals", label: "Goals & reflections" },
 						{ value: "feedback", label: "Feedback" },
 						{ value: "attendance", label: "Attendance" },
 					]}
@@ -62,12 +64,10 @@ export const AccountScreen = (): ReactElement => {
 				{tab === "attendance" ? (
 					<MemberAttendance key={person.id} member={person} />
 				) : tab === "feedback" ? (
-					<MemberFeedback
-						key={person.id}
-						member={person}
-						navigation="desktop"
-					/>
-				) : tab === "progress" ? (
+					<MemberFeedback key={person.id} member={person} />
+				) : tab === "fitness" ? (
+					<PersonalFitness key={person.id} member={person} full />
+				) : tab === "goals" ? (
 					<MemberProgress key={person.id} member={person} />
 				) : (
 					<Stack key={person.id}>

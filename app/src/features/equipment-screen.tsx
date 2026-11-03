@@ -96,7 +96,7 @@ export const EquipmentScreen = (): ReactElement => {
 						placeholder="Find equipment or a borrower"
 					/>
 					<TabContent value={tab}>
-						<Surface padding="xs">
+						<Surface>
 							{tab === "history" ? (
 								<EquipmentReturns search={search} />
 							) : tab === "items" ? (

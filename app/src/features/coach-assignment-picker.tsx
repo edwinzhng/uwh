@@ -43,6 +43,7 @@ export const CoachAssignmentPicker = ({
 				options={coaches.map((coach) => ({
 					value: coach.coachId,
 					label: coach.name,
+					person: { id: coach.personId, name: coach.name },
 				}))}
 				onValueChange={setCoachId}
 				isDisabled={isDisabled || task.busy}

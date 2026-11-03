@@ -20,7 +20,7 @@ export const NoticeCard = ({
 	const [ending, setEnding] = useState(false);
 	return (
 		<>
-			<Surface>
+			<Surface variant="plain">
 				<Stack gap="sm">
 					<Row justify="between">
 						<Stack gap="none" grow>

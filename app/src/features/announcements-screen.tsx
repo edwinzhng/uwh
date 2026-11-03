@@ -32,6 +32,7 @@ const AnnouncementsContent = ({
 				account.admin || account.coachPrograms.length ? (
 					<Button
 						label="New"
+						accessibilityLabel="New announcement"
 						prefix="plus"
 						onPress={(): void => setEditor({})}
 					/>

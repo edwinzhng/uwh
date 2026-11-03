@@ -440,8 +440,8 @@ export const productFlows: ProductFlow[] = [
 		id: "goals",
 		name: "Set and review a goal",
 		description: "Agree a training focus and review proposed changes.",
-		entry: "Member → Progress",
-		screen: "/member?id=sam&tab=progress",
+		entry: "Member → Goals & reflections",
+		screen: "/member?id=sam&tab=goals",
 		status: "existing",
 	},
 	{
@@ -449,8 +449,8 @@ export const productFlows: ProductFlow[] = [
 		name: "Set a categorized training goal",
 		description:
 			"Pair one clear focus with its category and shared coaching remarks.",
-		entry: "Account → Progress → Set or edit goal",
-		screen: "/account?tab=progress&reviewAccount=taylor",
+		entry: "Account → Goals & reflections → Set or edit goal",
+		screen: "/account?tab=goals&reviewAccount=taylor",
 		status: "added",
 	},
 	{
@@ -458,8 +458,8 @@ export const productFlows: ProductFlow[] = [
 		name: "Check in on your goal",
 		description:
 			"Record a dated private self-rating and reflection on your current goal.",
-		entry: "Account → Progress → Check in",
-		screen: "/account?tab=progress&reviewAccount=taylor",
+		entry: "Account → Goals & reflections → Check in",
+		screen: "/account?tab=goals&reviewAccount=taylor",
 		status: "added",
 	},
 	{
@@ -555,7 +555,7 @@ export const productFlows: ProductFlow[] = [
 		id: "resources",
 		name: "Find team resources",
 		description: "Search permitted documents and video clips in one library.",
-		entry: "Club → Resources",
+		entry: "Club → Files",
 		screen: "/resources",
 		status: "added",
 	},
@@ -563,7 +563,8 @@ export const productFlows: ProductFlow[] = [
 		id: "document",
 		name: "Share a team document",
 		description: "Upload a protected file or link and choose its audience.",
-		entry: "Resources → Add resource → Document",
+		entry:
+			"Files → New → Title + Type + Description → Upload or supported document link",
 		screen: "/resources",
 		status: "added",
 	},
@@ -572,7 +573,7 @@ export const productFlows: ProductFlow[] = [
 		name: "Filter categorized documents",
 		description:
 			"Find rules, formations, drills, announcements and other documents.",
-		entry: "Club → Resources → Documents",
+		entry: "Club → Files → Documents",
 		screen: "/resources",
 		actions: [{ role: "tab", name: "Documents" }],
 		status: "added",
@@ -582,7 +583,7 @@ export const productFlows: ProductFlow[] = [
 		name: "Share resources with a program",
 		description:
 			"Limit documents and clips to selected rosters, their guardians and staff.",
-		entry: "Resource editor → Sharing → Selected programs and staff",
+		entry: "File editor → Permissions → Programs",
 		screen: "/resources",
 		status: "added",
 	},
@@ -590,9 +591,9 @@ export const productFlows: ProductFlow[] = [
 		id: "video",
 		name: "Review a video clip",
 		description:
-			"Tag players and keep clip discussion with the permitted audience.",
-		entry: "Resources → Videos → Clip",
-		screen: "/resources?id=passing-clip",
+			"Watch a clip and keep its discussion with the permitted audience.",
+		entry: "Files → Videos → Clip",
+		screen: "/resources?id=demo-uploaded-video",
 		status: "added",
 	},
 	{
@@ -600,7 +601,7 @@ export const productFlows: ProductFlow[] = [
 		name: "Upload a private video",
 		description:
 			"Upload a clip and capture a thumbnail without exposing its file URL.",
-		entry: "Resources → Add resource → Video → Upload video",
+		entry: "Files → New → Video → Upload video",
 		screen: "/resources",
 		status: "added",
 	},
@@ -609,16 +610,16 @@ export const productFlows: ProductFlow[] = [
 		name: "Watch an uploaded clip",
 		description:
 			"Play an uploaded video with its real thumbnail and permitted discussion.",
-		entry: "Resources → Videos → Clip",
+		entry: "Files → Videos → Clip",
 		screen: "/resources?id=demo-uploaded-video",
 		status: "added",
 	},
 	{
 		id: "video-annotations",
-		name: "Annotate a video",
+		name: "Edit a video",
 		description:
-			"Set a thumbnail, session number, voice note and optional transcript.",
-		entry: "Video → Edit resource",
+			"Update the title, description or media while retaining existing annotations.",
+		entry: "Video → Edit",
 		screen: "/resources?id=demo-uploaded-video",
 		actions: [{ role: "button", name: "Edit" }],
 		status: "added",
@@ -720,15 +721,15 @@ export const productFlows: ProductFlow[] = [
 		name: "Set program coach defaults",
 		description:
 			"Assign coaches to programs while preserving practice-specific assignments and hours.",
-		entry: "Coaching → Assignments → Program defaults → Edit",
-		screen: "/coaching-hours",
+		entry: "Club → Hours → Program coaches → Edit",
+		screen: "/coaching-hours?tab=program-coaches",
 		status: "added",
 	},
 	{
 		id: "attendance-report",
 		name: "Review club attendance",
 		description: "Compare attendance and lateness with explicit denominators.",
-		entry: "Club → Attendance reports",
+		entry: "Club → Attendance",
 		screen: "/attendance-report",
 		status: "existing",
 	},
@@ -808,15 +809,6 @@ export const productFlows: ProductFlow[] = [
 			"Read a published version and explicitly accept it before continuing.",
 		entry: "Sign in → Required club terms",
 		screen: "/terms?reviewAccount=taylor",
-		status: "added",
-	},
-	{
-		id: "terms-publish",
-		name: "Publish an approved policy version",
-		description:
-			"Publish immutable approved text and require fresh acceptance of that version.",
-		entry: "Club settings → Club terms → Publish new version",
-		screen: "/terms",
 		status: "added",
 	},
 ];

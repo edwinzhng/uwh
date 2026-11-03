@@ -13,7 +13,7 @@ export const withMemberMergeFixtures = (data: AppData): AppData => {
 	const source: Member = {
 		...target,
 		id: "archived-sam",
-		name: "Sam Rivera (archived)",
+		name: "Rylan Smith (archived)",
 		archived: true,
 		archivedAt: "2026-08-31",
 		goal: "Stay close to the passing lane",
@@ -22,7 +22,7 @@ export const withMemberMergeFixtures = (data: AppData): AppData => {
 	const conflicting: Member = {
 		...source,
 		id: "archived-duplicate",
-		name: "Sam Rivera (duplicate)",
+		name: "Rylan Smith (duplicate)",
 	};
 	return {
 		...data,
@@ -34,6 +34,7 @@ export const withMemberMergeFixtures = (data: AppData): AppData => {
 				id: "merge-history",
 				title: "Previous season practice",
 				date: "2026-08-15",
+				seasonId: "2025-2026",
 				endDate: undefined,
 				seriesId: undefined,
 			},

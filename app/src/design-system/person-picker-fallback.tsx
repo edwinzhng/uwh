@@ -1,9 +1,10 @@
 import { type ReactElement, useState } from "react";
+import { Button } from "./button";
 import { Dialog } from "./dialog";
 import type { PersonPickerProps } from "./person-picker-props";
-import { PopupRow } from "./popup-row";
 import { ProfileOption } from "./profile-option";
 import { ProfileTrigger } from "./profile-trigger";
+import { Row } from "./row";
 import { Stack } from "./stack";
 
 export const PersonPicker = ({
@@ -30,20 +31,13 @@ export const PersonPicker = ({
 				onOpenChange={setOpen}
 				footer={false}
 			>
-				<Stack gap="lg">
+				<Stack gap="sm">
 					<Stack gap="xs">
 						{options.map((option) => (
 							<ProfileOption
 								key={option.id}
 								name={option.name}
 								personId={option.id}
-								description={
-									option.id === value
-										? "Current profile"
-										: option.relationship === "You"
-											? "You"
-											: "Family"
-								}
 								isSelected={option.id === value}
 								onPress={(): void => {
 									setOpen(false);
@@ -53,36 +47,42 @@ export const PersonPicker = ({
 						))}
 					</Stack>
 					{account ? (
-						<>
+						<Row wrap gap="xs">
 							{account.onProfile ? (
-								<PopupRow
+								<Button
 									label="View profile"
-									icon="users"
-									onSelect={(): void => {
+									variant="secondary"
+									compact
+									prefix="user"
+									onPress={(): void => {
 										setOpen(false);
 										account.onProfile?.();
 									}}
 								/>
 							) : undefined}
-							<PopupRow
+							<Button
 								label="Settings"
-								icon="gear"
-								onSelect={(): void => {
+								variant="secondary"
+								compact
+								prefix="gear"
+								onPress={(): void => {
 									setOpen(false);
 									account.onSettings();
 								}}
 							/>
 							{account.onSignOut ? (
-								<PopupRow
+								<Button
 									label="Sign out"
-									icon="signOut"
-									onSelect={(): void => {
+									variant="ghost"
+									compact
+									prefix="signOut"
+									onPress={(): void => {
 										setOpen(false);
 										account.onSignOut?.();
 									}}
 								/>
 							) : undefined}
-						</>
+						</Row>
 					) : undefined}
 				</Stack>
 			</Dialog>

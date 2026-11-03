@@ -161,11 +161,11 @@ test("monochrome primary actions retain contrast while outlined secondary button
 		const secondary = buttonColors(theme, "secondary", "rest");
 		expect(primary.foreground).toBe(theme.accent.foreground);
 		expect(primary.background).toBe(theme.accent.background);
-		expect(secondary.background).toBe(theme.background.primary);
+		expect(secondary.background).toBe("transparent");
 		expect(secondary.background).not.toBe(primary.background);
 		expect(secondary.border).toBe(theme.controlBorder);
 		expect(
-			contrast(secondary.border, secondary.background),
+			contrast(secondary.border, theme.background.primary),
 		).toBeGreaterThanOrEqual(3);
 		for (const interaction of ["rest", "hover", "pressed"] as const) {
 			const colors = buttonColors(theme, "solid", interaction);

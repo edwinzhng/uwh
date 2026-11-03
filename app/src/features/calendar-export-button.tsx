@@ -1,6 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { useActivePerson } from "../demo/app-state";
-import { Dialog, IconButton } from "../design-system";
+import { Button, Dialog } from "../design-system";
 import {
 	type CalendarView,
 	calendarViewAfterScopeChange,
@@ -18,9 +18,10 @@ export const CalendarExportButton = (): ReactElement => {
 	const [busy, setBusy] = useState(false);
 	return (
 		<>
-			<IconButton
-				label="Add to calendar"
-				icon="calendar"
+			<Button
+				label="Export"
+				variant="ghost"
+				prefix="calendar"
 				onPress={(): void => {
 					setSelected([active.id]);
 					setView("choose");

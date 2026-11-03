@@ -5,12 +5,13 @@ import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { previewDataAtom, useApp } from "../demo/app-state";
 import {
-	EmptyState,
-	Field,
-	InfiniteScroll,
+	Badge,
+	Button,
 	LoadingContent,
-	SectionHeading,
+	Progress,
+	Row,
 	Stack,
+	Surface,
 	Text,
 } from "../design-system";
 import { lineupIncludesPerson } from "../domain/lineup";
@@ -18,12 +19,9 @@ import {
 	coachScoreAverage,
 	defaultPlayerCoaching,
 } from "../domain/player-coaching";
-import {
-	orderRankings,
-	type PlayerRanking,
-	rankingComplete,
-} from "../domain/player-rankings";
-import { PlayerRankingRow, type SaveCoachScore } from "./player-ranking-row";
+import type { PlayerRanking } from "../domain/player-rankings";
+import type { SaveCoachScore } from "./player-ranking-row";
+import { PlayerRatingFlow } from "./player-rating-flow";
 
 const RankingList = ({
 	players,
@@ -32,64 +30,61 @@ const RankingList = ({
 	players: PlayerRanking[];
 	save: SaveCoachScore;
 }): ReactElement => {
+	const [rating, setRating] = useState(false);
 	const params = useLocalSearchParams<{ player?: string }>();
-	const [search, setSearch] = useState(
-		players.find((player) => player.personId === params.player)?.name ?? "",
-	);
-	const [limit, setLimit] = useState(20);
-	const ordered = orderRankings(players).filter((player) =>
-		player.name.toLowerCase().includes(search.toLowerCase().trim()),
-	);
-	const visible = ordered.slice(0, limit);
+	const rated = players.filter((player) =>
+		player.scores.some((score) => score.coachId === player.ownCoachId),
+	).length;
+	const remaining = players.length - rated;
+
 	return (
 		<Stack>
-			<Text variant="small" tone="secondary">
-				Each coach adds a score from 0–100. The average is used to balance
-				teams. Your unscored players come first.
-			</Text>
-			<Field
-				label="Search players"
-				hideLabel
-				inputMode="search"
-				placeholder="Search players"
-				value={search}
-				onValueChange={(value): void => {
-					setSearch(value);
-					setLimit(20);
-				}}
-			/>
-			{visible.map((player, index) => {
-				const complete = rankingComplete(player);
-				const previous = visible.at(index - 1);
-				const startsGroup =
-					index === 0 || (previous && rankingComplete(previous) !== complete);
-				const count = ordered.filter(
-					(entry) => rankingComplete(entry) === complete,
-				).length;
-				return (
-					<Stack key={player.personId} gap="sm">
-						{startsGroup ? (
-							<SectionHeading key="heading">
-								{complete ? "Fully scored" : "Needs scores"} · {count}
-							</SectionHeading>
-						) : undefined}
-						<PlayerRankingRow key="score" player={player} save={save} />
-					</Stack>
-				);
-			})}
-			{!ordered.length ? (
-				<EmptyState
-					title="No players found"
-					description="Try another name or clear your search."
+			<Surface>
+				<Stack gap="sm">
+					<Text variant="small" tone="secondary">
+						Your ratings
+					</Text>
+					<Row justify="between" align="end">
+						<Row gap="xs">
+							<Text variant="number">
+								{rated}/{players.length}
+							</Text>
+							<Text variant="caption" tone="secondary">
+								players rated
+							</Text>
+						</Row>
+						<Badge
+							label={remaining ? `${remaining} left` : "Up to date"}
+							kind={remaining ? "neutral" : "success"}
+						/>
+					</Row>
+					<Progress
+						label="Your player ratings"
+						value={rated}
+						max={players.length}
+					/>
+					<Button
+						label="Rate players"
+						prefix="star"
+						roleTone="coach"
+						isDisabled={!players.length}
+						onPress={(): void => setRating(true)}
+					/>
+					<Text variant="caption" tone="secondary" lines={1}>
+						Scores from 0–100 help balance teams.
+					</Text>
+				</Stack>
+			</Surface>
+
+			{rating ? (
+				<PlayerRatingFlow
+					key={players.at(0)?.ownCoachId}
+					players={players}
+					initialPersonId={params.player}
+					save={save}
+					onClose={(): void => setRating(false)}
 				/>
 			) : undefined}
-			<InfiniteScroll
-				loadMore={
-					visible.length < ordered.length
-						? (): void => setLimit((current) => current + 20)
-						: undefined
-				}
-			/>
 		</Stack>
 	);
 };

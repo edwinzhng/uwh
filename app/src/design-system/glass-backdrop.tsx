@@ -1,20 +1,19 @@
 import { LinearGradient } from "expo-linear-gradient";
 import type { ReactElement } from "react";
 import { StyleSheet, View } from "react-native";
+import type { GlassBackdropProps } from "./glass-backdrop-props";
 import { previewGlassColors, useGlassPreview } from "./glass-preview-context";
 import { useReduceTransparency } from "./material-accessibility";
-import { type GlassMaterial, materialColors } from "./materials";
+import { materialColors } from "./materials";
 import { useTheme } from "./theme";
+import { space } from "./tokens";
 
 export const GlassBackdrop = ({
 	material,
 	showRim = true,
 	radius,
-}: {
-	material: GlassMaterial;
-	showRim?: boolean;
-	radius?: number;
-}): ReactElement => {
+	softEdge = false,
+}: GlassBackdropProps): ReactElement => {
 	const theme = useTheme();
 	const colors = materialColors(theme);
 	const treatment = useGlassPreview();
@@ -25,7 +24,7 @@ export const GlassBackdrop = ({
 			pointerEvents="none"
 			style={[
 				StyleSheet.absoluteFill,
-				{ borderRadius: radius, overflow: "hidden" },
+				{ borderRadius: radius, overflow: softEdge ? "visible" : "hidden" },
 			]}
 		>
 			<View
@@ -34,12 +33,26 @@ export const GlassBackdrop = ({
 					{
 						backgroundColor: opaque
 							? theme.background.primary
-							: material === "floating"
-								? glass.fill
-								: colors[material],
+							: softEdge
+								? colors.header
+								: material === "floating"
+									? glass.fill
+									: colors[material],
 					},
 				]}
 			/>
+			{softEdge && !opaque ? (
+				<LinearGradient
+					colors={[colors.header, "transparent"]}
+					style={{
+						position: "absolute",
+						top: "100%",
+						left: 0,
+						right: 0,
+						height: space.md,
+					}}
+				/>
+			) : undefined}
 			<LinearGradient
 				colors={[opaque ? "transparent" : glass.highlight, "transparent"]}
 				locations={[0, 1]}

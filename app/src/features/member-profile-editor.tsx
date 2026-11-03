@@ -23,6 +23,7 @@ export const MemberProfileEditor = ({
 					label={photoOnly ? "Change picture" : "Edit info"}
 					prefix={photoOnly ? "image" : undefined}
 					variant="secondary"
+					compact
 					onPress={(): void => setEditing(true)}
 				/>
 			) : undefined}

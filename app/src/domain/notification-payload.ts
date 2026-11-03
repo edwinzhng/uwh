@@ -42,5 +42,9 @@ export const notificationPayload = (
 															: source.eventPhase === "cancelled"
 																? "An event you signed up for was cancelled."
 																: "Registration closes soon.";
-	return { title: "UWH Club", body, path: `${route.pathname}?${params}` };
+	return {
+		title: "UWH Club",
+		body,
+		path: params.size ? `${route.pathname}?${params}` : route.pathname,
+	};
 };

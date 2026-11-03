@@ -54,9 +54,7 @@ export const TabOption = ({
 				border: 0,
 				background:
 					selected && !indicatorReady
-						? theme.mode === "dark"
-							? theme.background.selected
-							: theme.background.primary
+						? theme.background.selected
 						: "transparent",
 				borderRadius: corners.control,
 				opacity: disabled ? geometry.disabledOpacity : 1,

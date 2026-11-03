@@ -193,6 +193,7 @@ export const FitnessQuickLogForm = ({
 										options={people.map((entry) => ({
 											value: entry.id,
 											label: entry.name,
+											person: { id: entry.id, name: entry.name },
 										}))}
 										onValueChange={(id): void => {
 											setPersonId(id ?? "");

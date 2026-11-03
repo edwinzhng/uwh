@@ -23,21 +23,32 @@ import { MemberLifecycleAction } from "./member-lifecycle-action";
 import { MemberMergeAction } from "./member-merge-action";
 import { MemberProfileDetails } from "./member-profile-details";
 import { MemberProgress } from "./member-progress";
+import { PersonalFitness } from "./personal-fitness";
 import { PlayerCoachingPanel } from "./player-coaching-panel";
 import { RecognitionSummary } from "./recognition-summary";
 import { ShoutoutEditor } from "./shoutout-editor";
 
 export const MemberScreen = (): ReactElement => {
-	const params = useLocalSearchParams<{ id?: string; tab?: string }>();
+	const params = useLocalSearchParams<{
+		id?: string;
+		tab?: string;
+		feedback?: string;
+	}>();
 	const { data, account, accounts } = useApp();
 	const active = useActivePerson();
 	const member = params.id
 		? data.members.find((entry) => entry.id === params.id)
 		: active;
 	const router = useRouter();
-	const setTab = (tab: string): void => router.setParams({ tab });
+	const setTab = (tab: string): void =>
+		router.setParams({ tab, feedback: undefined });
 	const progress = member ? canReadProgress(account, member) : false;
-	const tab = params.tab ?? (progress ? "progress" : "profile");
+	const tab =
+		params.tab === "progress"
+			? "fitness"
+			: params.tab === "feedback" && params.feedback === "self"
+				? "goals"
+				: (params.tab ?? (progress ? "fitness" : "profile"));
 	const tabs: {
 		value: string;
 		label: string;
@@ -46,7 +57,8 @@ export const MemberScreen = (): ReactElement => {
 		{ value: "shoutouts", label: "Shoutouts" },
 		...(progress
 			? [
-					{ value: "progress", label: "Progress" },
+					{ value: "fitness", label: "Fitness" },
+					{ value: "goals", label: "Goals & reflections" },
 					{ value: "feedback", label: "Feedback" },
 					{ value: "attendance", label: "Attendance" },
 				]
@@ -131,7 +143,9 @@ export const MemberScreen = (): ReactElement => {
 								kind="shoutout"
 							/>
 						</Stack>
-					) : selectedTab === "progress" ? (
+					) : selectedTab === "fitness" ? (
+						<PersonalFitness member={member} full />
+					) : selectedTab === "goals" ? (
 						<MemberProgress member={member} />
 					) : selectedTab === "feedback" ? (
 						<MemberFeedback member={member} />

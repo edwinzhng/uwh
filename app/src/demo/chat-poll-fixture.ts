@@ -12,7 +12,7 @@ export const initialPreviewPoll: PreviewPoll = {
 	options: ["Passing under pressure", "Support positioning", "Puck control"],
 	multiple: false,
 	createdBy: "casey",
-	author: "Casey Morgan",
+	author: "Nathaniel Schoenberger",
 	messageId: pollMessageId("poolside-poll"),
 	createdAt: Date.parse("2026-10-25T15:30:00Z"),
 	votes: { casey: [1], taylor: [0] },

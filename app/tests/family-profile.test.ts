@@ -10,6 +10,7 @@ import { eventResponse } from "../src/domain/app-rules";
 
 test("family switching preserves independent responses and progress without changing the account", (): void => {
 	const store = createStore();
+	store.set(selectPreviewAccountAtom, "jamie");
 	store.set(selectedPersonAtom, "sam");
 	store.set(previewActionAtom, {
 		type: "respond",

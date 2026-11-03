@@ -7,6 +7,7 @@ import {
 	Button,
 	Dialog,
 	EmptyState,
+	formatTimeLocation,
 	Row,
 	SegmentedControl,
 	Stack,
@@ -17,19 +18,19 @@ import {
 } from "../design-system";
 import { canCoach, formatDate, formatTime } from "../domain/app-rules";
 import { availableLoanPractice } from "../domain/equipment-loans";
+import { eventTimeRange } from "../domain/event-card-presentation";
 import { eventKindLabel, practiceEvent } from "../domain/event-types";
+import { venueName } from "../domain/venue";
 import { ClubShell } from "./club-shell";
 import { EquipmentLoanDialog } from "./equipment-loan-dialog";
 import { EventEditor } from "./event-editor";
+import { PracticeOverview } from "./practice-overview";
 import { ResponseControl } from "./response-control";
 import { SessionCoaching } from "./session-coaching";
 import { SessionDiscussionButton } from "./session-discussion-button";
 import { SessionGuestManager } from "./session-guest-manager";
 import { SessionPeople } from "./session-people";
 import { SessionSeriesLink } from "./session-series-link";
-import { SessionShoutouts } from "./session-shoutouts";
-import { SharedSessionPlan } from "./shared-session-plan";
-import { TeamPanel } from "./team-panel";
 import { TournamentPeople } from "./tournament-people";
 import { TournamentSummary } from "./tournament-summary";
 
@@ -64,11 +65,9 @@ export const EventScreen = (): ReactElement => {
 	const activeTab =
 		tab === "people"
 			? "people"
-			: tab === "shoutouts"
-				? "shoutouts"
-				: tab === "coaching" && coach
-					? "coaching"
-					: "overview";
+			: tab === "coaching" && coach
+				? "coaching"
+				: "overview";
 	return (
 		<ClubShell
 			actionPlacement="inline"
@@ -86,7 +85,6 @@ export const EventScreen = (): ReactElement => {
 							label:
 								event?.kind === "tournament" ? "Availability" : "Attendance",
 						},
-						{ value: "shoutouts", label: "Shoutouts" },
 						...(coach
 							? [
 									{
@@ -101,13 +99,7 @@ export const EventScreen = (): ReactElement => {
 			title={event?.title ?? "Event not found"}
 			subtitle={
 				event
-					? formatDate(event.date) +
-						" · " +
-						formatTime(event.start) +
-						"–" +
-						(event.endDate && event.endDate !== event.date
-							? `${formatDate(event.endDate)} ${formatTime(event.end)}`
-							: formatTime(event.end))
+					? `${formatDate(event.date)} · ${formatTimeLocation(event.endDate && event.endDate !== event.date ? `${formatTime(event.start)}–${formatDate(event.endDate)} ${formatTime(event.end)}` : eventTimeRange(event.start, event.end), venueName(event.venue))}`
 					: undefined
 			}
 			back={
@@ -168,82 +160,79 @@ export const EventScreen = (): ReactElement => {
 		>
 			{event ? (
 				<>
-					{event.parts?.length ? (
-						<SegmentedControl
-							label="Practice part"
-							value={partId ?? "all"}
-							onValueChange={(part): void => router.setParams({ part })}
-							options={[
-								{ value: "all", label: "All" },
-								...event.parts.map((part) => ({
-									value: part.id,
-									label: part.title,
-								})),
-							]}
-						/>
-					) : undefined}
 					<TabContent value={activeTab}>
 						{activeTab === "overview" ? (
-							<Stack>
-								<Surface>
-									<Stack>
-										<Row gap="xs" wrap>
-											<Badge
-												label={
-													data.seasons.find(
-														(season) =>
-															season.id === (event.seasonId ?? "2026-2027"),
-													)?.name ?? "2026–2027"
-												}
-											/>
-											<Badge label={eventKindLabel(event.kind)} />
-											{event.seriesId ? <Badge label="Recurring" /> : undefined}
-										</Row>
-										<Text variant="h4">{event.venue}</Text>
-										<Text variant="small">{event.description}</Text>
-										{event.parts?.map((part) => (
-											<Text key={part.id} variant="small" tone="secondary">
-												{part.title} · {formatTime(part.start)}–
-												{formatTime(part.end)}
-											</Text>
-										))}
-										<ResponseControl event={event} />
-										<SessionDiscussionButton event={event} />
-										{account.admin && event.seriesId ? (
-											<SessionGuestManager event={event} />
-										) : undefined}
-										{event.seriesId ? (
-											<SessionSeriesLink seriesId={event.seriesId} />
-										) : undefined}
-									</Stack>
-								</Surface>
-								{event.kind === "tournament" ? (
-									<TournamentSummary event={event} />
-								) : practiceEvent(event) ? (
-									<>
-										<SharedSessionPlan event={event} partId={partId} />
-										<TeamPanel event={event} partId={partId} readOnly />
-									</>
-								) : undefined}
-							</Stack>
-						) : activeTab === "shoutouts" ? (
-							<SessionShoutouts event={event} />
+							practiceEvent(event) ? (
+								<PracticeOverview event={event} />
+							) : (
+								<Stack>
+									<Surface>
+										<Stack>
+											<Row gap="xs" wrap>
+												<Badge
+													label={
+														data.seasons.find(
+															(season) =>
+																season.id === (event.seasonId ?? "2026-2027"),
+														)?.name ?? "2026–2027"
+													}
+												/>
+												<Badge label={eventKindLabel(event.kind)} />
+												{event.seriesId ? (
+													<Badge label="Recurring" />
+												) : undefined}
+											</Row>
+											<Text variant="h4">{event.venue}</Text>
+											<Text variant="small">{event.description}</Text>
+											{event.parts?.map((part) => (
+												<Text key={part.id} variant="small" tone="secondary">
+													{part.title} · {formatTime(part.start)}–
+													{formatTime(part.end)}
+												</Text>
+											))}
+											<ResponseControl event={event} />
+											<SessionDiscussionButton event={event} />
+											{account.admin && event.seriesId ? (
+												<SessionGuestManager event={event} />
+											) : undefined}
+											{event.seriesId ? (
+												<SessionSeriesLink seriesId={event.seriesId} />
+											) : undefined}
+										</Stack>
+									</Surface>
+									{event.kind === "tournament" ? (
+										<TournamentSummary event={event} />
+									) : undefined}
+								</Stack>
+							)
 						) : activeTab === "people" ? (
 							event.kind === "tournament" ? (
 								<TournamentPeople event={event} />
 							) : (
-								<SessionPeople
-									key={`${event.id}:${partId}`}
-									event={event}
-									partId={partId}
-								/>
+								<Stack>
+									{event.parts?.length ? (
+										<SegmentedControl
+											label="Practice part"
+											value={partId ?? "all"}
+											onValueChange={(part): void => router.setParams({ part })}
+											options={[
+												{ value: "all", label: "All" },
+												...event.parts.map((part) => ({
+													value: part.id,
+													label: part.title,
+												})),
+											]}
+										/>
+									) : undefined}
+									<SessionPeople
+										key={`${event.id}:${partId}`}
+										event={event}
+										partId={partId}
+									/>
+								</Stack>
 							)
 						) : (
-							<SessionCoaching
-								key={`${event.id}:${partId}`}
-								event={event}
-								partId={partId}
-							/>
+							<SessionCoaching key={event.id} event={event} />
 						)}
 					</TabContent>
 					<Dialog

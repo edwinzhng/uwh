@@ -44,6 +44,7 @@ export const FitnessOverview = ({
 					options={people.map((person) => ({
 						value: person.id,
 						label: person.name,
+						person: { id: person.id, name: person.name },
 					}))}
 					onValueChange={setPersonId}
 				/>
@@ -58,14 +59,14 @@ export const FitnessOverview = ({
 			<FitnessOverviewData seasonId={seasonId} personId={personId}>
 				{(overview) => (
 					<Stack>
-						<Surface padding="xs">
+						<Surface>
 							<List>
 								{overview.rows.map((row) => (
 									<ListItem
 										key={row.test._id}
 										title={row.test.name}
 										description={[
-											personId
+											personId && row.test.unit !== "pass_fail"
 												? `Personal best ${formatFitnessValue(row.test.unit, row.personal?.best)}`
 												: undefined,
 											personId
@@ -74,13 +75,16 @@ export const FitnessOverview = ({
 													: "No personal result this season"
 												: undefined,
 											row.teamBest
-												? `Team best ${formatFitnessValue(row.test.unit, row.teamBest.value)} · ${row.teamBest.name}`
+												? row.test.unit === "pass_fail"
+													? "Pass/fail"
+													: `Team best ${formatFitnessValue(row.test.unit, row.teamBest.value)} · ${row.teamBest.name}`
 												: "No results this season",
 										]
 											.filter(Boolean)
 											.join("\n")}
 										onPress={(): void => onSelect(row.test._id)}
 										trailing={
+											row.test.unit !== "pass_fail" &&
 											personId &&
 											row.personal &&
 											row.personal.best === row.teamBest?.value ? (

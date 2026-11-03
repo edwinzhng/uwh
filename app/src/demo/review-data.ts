@@ -1,7 +1,7 @@
 import { reduceApp } from "../domain/app-reducer";
 import { addDays } from "../domain/app-rules";
 import type { AppData } from "../domain/app-types";
-import { clubDate } from "../domain/event-time";
+import { clubDate, clubTimestamp } from "../domain/event-time";
 import { primaryAccount } from "./app-data";
 import { withMemberMergeFixtures } from "./member-merge-fixtures";
 
@@ -24,15 +24,15 @@ export const reviewData = (data: AppData): AppData => {
 				id: "review-format-message",
 				threadId: "club",
 				accountId: "alex",
-				author: "Alex Rivera",
-				body: "**Passing focus**\n• Look before receiving\n• Move into support\nKeep the first touch *calm*.",
+				author: "Jordan Fryers",
+				body: "**Passing focus**\n• Look before receiving\n• Move into support\nKeep communicating with your teammates.",
 				time: "9:10 AM",
 			},
 			{
 				id: "review-practice-reminder",
 				threadId: "club",
 				accountId: "alex",
-				author: "Alex Rivera",
+				author: "Jordan Fryers",
 				body: "**Practice reminder**\nBring both caps and arrive ten minutes early.",
 				time: "9:12 AM",
 			},
@@ -40,20 +40,40 @@ export const reviewData = (data: AppData): AppData => {
 				id: "review-club-program",
 				threadId: "room:program:club",
 				accountId: "alex",
-				author: "Alex Rivera",
+				author: "Jordan Fryers",
 				body: "This program channel keeps players, linked guardians and staff together for weekly updates.",
 				time: "9:20 AM",
 			},
 		],
 		venues: [...new Set(data.events.map((event) => event.venue))],
-		events: data.events.map((event) => ({
-			...event,
-			date: shift(event.date),
-			endDate: event.endDate ? shift(event.endDate) : undefined,
-			opensAt: event.opensAt === undefined ? undefined : event.opensAt + offset,
-			closesAt:
-				event.closesAt === undefined ? undefined : event.closesAt + offset,
-		})),
+		events: data.events.map((event) => {
+			const date = shift(event.date);
+			return {
+				...event,
+				date,
+				endDate: event.endDate ? shift(event.endDate) : undefined,
+				opensAt:
+					event.opensAt !== undefined
+						? event.opensAt + offset
+						: event.id === "sun"
+							? clubTimestamp(
+									addDays(date, -2),
+									"18:00",
+									event.timeZone ?? data.timeZone,
+								)
+							: undefined,
+				closesAt:
+					event.closesAt !== undefined
+						? event.closesAt + offset
+						: event.id === "sun"
+							? clubTimestamp(
+									date,
+									event.start,
+									event.timeZone ?? data.timeZone,
+								)
+							: undefined,
+			};
+		}),
 		feedback: data.feedback.map((feedback) => ({
 			...feedback,
 			date: shift(feedback.date),
@@ -62,6 +82,7 @@ export const reviewData = (data: AppData): AppData => {
 	const current = reduceApp(shifted, primaryAccount, {
 		type: "generate-teams",
 		eventId: "club-thu",
+		partId: "hockey",
 		separateYouth: true,
 	});
 	const practice = current.events.find((event) => event.id === "club-thu");
@@ -77,8 +98,8 @@ export const reviewData = (data: AppData): AppData => {
 			{
 				...practice,
 				id: sourceId,
-				title: "Previous hockey practice",
-				date: addDays(practice.date, -2),
+				title: "Thursday practice",
+				date: addDays(practice.date, -14),
 			},
 		],
 		responses: [

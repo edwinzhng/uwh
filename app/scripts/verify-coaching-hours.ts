@@ -105,6 +105,59 @@ try {
 			eventId,
 			coachId,
 			assigned: true,
+			durationMinutes: 120,
+			expectedDurationMinutes: 90,
+		}),
+	);
+	assert.equal(
+		(await owner.query(api.coaching_hours.eventCoaches, { eventId })).at(0)
+			?.durationMinutes,
+		150,
+	);
+	await owner.mutation(api.coaching_hours.setCoach, {
+		eventId,
+		coachId,
+		assigned: false,
+	});
+	await assert.rejects(
+		owner.mutation(api.coaching_hours.setCoach, {
+			eventId,
+			coachId,
+			assigned: true,
+			durationMinutes: 120,
+			expectedDurationMinutes: 150,
+		}),
+	);
+	assert.equal(
+		(await owner.query(api.coaching_hours.eventCoaches, { eventId })).length,
+		0,
+	);
+	await owner.mutation(api.coaching_hours.setCoach, {
+		eventId,
+		coachId,
+		assigned: true,
+		durationMinutes: 150,
+	});
+	await owner.mutation(api.coaching_hours.setCoach, {
+		eventId,
+		coachId,
+		assigned: true,
+		durationMinutes: 120,
+		expectedDurationMinutes: 150,
+	});
+	await owner.mutation(api.coaching_hours.setCoach, {
+		eventId,
+		coachId,
+		assigned: true,
+		durationMinutes: 150,
+		expectedDurationMinutes: 120,
+	});
+
+	await assert.rejects(
+		owner.mutation(api.coaching_hours.setCoach, {
+			eventId,
+			coachId,
+			assigned: true,
 			durationMinutes: 61,
 		}),
 	);

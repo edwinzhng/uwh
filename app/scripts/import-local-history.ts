@@ -555,7 +555,7 @@ await write(
 					value: {
 						key: event.id,
 						eventId: event.id,
-						objective: row.theme || "",
+						body: row.theme || "",
 						notes: [
 							row.plan_summary && `Summary\n${row.plan_summary}`,
 							row.plan && `Plan\n${row.plan}`,
@@ -564,7 +564,7 @@ await write(
 						]
 							.filter(Boolean)
 							.join("\n\n"),
-						drills: [],
+						media: [],
 						published: false,
 						revision: 0,
 						updatedAt: Date.parse(row.updated_date || row.created_date || ""),

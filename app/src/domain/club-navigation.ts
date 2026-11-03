@@ -18,22 +18,24 @@ export type ClubTool =
 	| "moderation"
 	| "imports";
 
-export type ClubCategoryTool = "programs" | "members" | "fitness" | "videos";
-export type ClubToolGroup =
-	| { kind: "categories"; title: string; tools: ClubCategoryTool[] }
-	| { kind: "list"; title: string; tools: ClubTool[] };
+export type ClubToolGroup = { title: string; tools: ClubTool[] };
 
 export const clubToolGroups = (account: Account): ClubToolGroup[] => {
 	const coach = account.coachPrograms.length > 0;
 	const groups: ClubToolGroup[] = [
 		{
-			kind: "categories",
-			title: "Browse",
-			tools: ["programs", "members", "fitness", "videos"],
+			title: "Club",
+			tools: [
+				...(account.admin ? (["equipment"] as const) : []),
+				"programs",
+				"members",
+				"fitness",
+				"videos",
+				"documents",
+				"announcements",
+			],
 		},
-		{ kind: "list", title: "Resources", tools: ["documents", "announcements"] },
 		{
-			kind: "list",
 			title: "Coaching",
 			tools: [
 				...(coach ? (["coaching", "reviews"] as const) : []),
@@ -42,20 +44,10 @@ export const clubToolGroups = (account: Account): ClubToolGroup[] => {
 			],
 		},
 		{
-			kind: "list",
-			title: "Manage club",
-			tools: [
-				...(account.admin
-					? ([
-							"registration",
-							"payments",
-							"equipment",
-							"settings",
-							"moderation",
-							"imports",
-						] as const)
-					: []),
-			],
+			title: "Administration",
+			tools: account.admin
+				? ["registration", "payments", "settings", "moderation", "imports"]
+				: [],
 		},
 	];
 	return groups.filter((group) => group.tools.length > 0);

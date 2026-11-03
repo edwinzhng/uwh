@@ -1,4 +1,5 @@
 export const featureIdentity = {
+	announcements: { icon: "megaphone", category: "coral" },
 	fitness: { icon: "barChart", category: "fern" },
 	members: { icon: "users", category: "coral" },
 	programs: { icon: "layers", category: "sky" },

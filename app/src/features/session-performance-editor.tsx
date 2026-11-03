@@ -10,13 +10,15 @@ import {
 	Button,
 	Dialog,
 	EmptyState,
-	InfiniteScroll,
 	LoadingContent,
 	Select,
 	Stack,
 } from "../design-system";
 import { formatDate } from "../domain/app-rules";
-import type { SessionPerformanceKind } from "../domain/session-performance";
+import {
+	performanceSession,
+	type SessionPerformanceKind,
+} from "../domain/session-performance";
 import { SessionPerformanceFields } from "./session-performance-fields";
 import { useFormTask } from "./use-form-task";
 import { useSessionPerformanceForm } from "./use-session-performance-form";
@@ -50,18 +52,21 @@ const EditorDialog = ({
 		save,
 		onClose,
 	});
+	const selectedEvent = data.events.find((entry) => entry.id === eventId);
+	const selectedSession = service.current
+		? {
+				id: service.current.eventId,
+				title: service.current.eventTitle,
+				date: service.current.eventDate,
+				sessionNumber: service.current.sessionNumber,
+			}
+		: selectedEvent
+			? performanceSession(selectedEvent)
+			: undefined;
 	const sessions =
-		service.current &&
-		!service.sessions.some((entry) => entry.id === service.current?.eventId)
-			? [
-					{
-						id: service.current.eventId,
-						title: service.current.eventTitle,
-						date: service.current.eventDate,
-						sessionNumber: service.current.sessionNumber,
-					},
-					...service.sessions,
-				]
+		selectedSession &&
+		!service.sessions.some((entry) => entry.id === selectedSession.id)
+			? [selectedSession, ...service.sessions]
 			: service.sessions;
 	return (
 		<Dialog
@@ -92,14 +97,6 @@ const EditorDialog = ({
 					<LoadingContent />
 				) : sessions.length ? (
 					<Select
-						listFooter={
-							<InfiniteScroll
-								loadMore={service.canLoadMore ? service.loadMore : undefined}
-								loading={service.loadingMore}
-								revision={service.sessions.length}
-								disabled={task.busy}
-							/>
-						}
 						label="Session"
 						value={eventId || undefined}
 						onValueChange={(id): void => {
@@ -128,6 +125,15 @@ const EditorDialog = ({
 					/>
 				)}
 
+				{service.canLoadMore || service.loadingMore ? (
+					<Button
+						label="Load more sessions"
+						variant="ghost"
+						isDisabled={task.busy}
+						isLoading={service.loadingMore}
+						onPress={service.loadMore}
+					/>
+				) : undefined}
 				{service.loadingCurrent ? (
 					<LoadingContent />
 				) : eventId ? (

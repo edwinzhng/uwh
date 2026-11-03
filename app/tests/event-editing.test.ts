@@ -130,12 +130,13 @@ test("single and series edits preserve event IDs, attendance and registration po
 });
 
 test("player restrictions replace program membership and apply to guardians and attendance", (): void => {
+	const guardian = { ...primaryAccount, children: ["sam", "mila"] };
 	const restricted = reduceApp(initialAppData, primaryAccount, {
 		type: "create-event",
 		id: "restricted",
 		draft: { ...draft, eligiblePersonIds: ["sam"] },
 	});
-	const joined = reduceApp(restricted, primaryAccount, {
+	const joined = reduceApp(restricted, guardian, {
 		type: "respond",
 		eventId: "restricted-0",
 		personId: "sam",
@@ -143,7 +144,7 @@ test("player restrictions replace program membership and apply to guardians and 
 	});
 	expect(eventResponse(joined, "restricted-0", "sam").response).toBe("going");
 	expect(() =>
-		reduceApp(joined, primaryAccount, {
+		reduceApp(joined, guardian, {
 			type: "respond",
 			eventId: "restricted-0",
 			personId: "mila",
@@ -158,7 +159,7 @@ test("player restrictions replace program membership and apply to guardians and 
 			attendance: "present",
 		}),
 	).toThrow();
-	const unrestricted = reduceApp(data, primaryAccount, {
+	const unrestricted = reduceApp(data, guardian, {
 		type: "respond",
 		eventId: target.id,
 		personId: "mila",

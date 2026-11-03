@@ -8,11 +8,13 @@ export const Checkbox = ({
 	checked,
 	onChange,
 	isDisabled = false,
+	compact = false,
 }: {
 	label: string;
 	checked: boolean;
 	onChange: (value: boolean) => void;
 	isDisabled?: boolean;
+	compact?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
 	return (
@@ -26,8 +28,10 @@ export const Checkbox = ({
 				gap: space.xs,
 				minHeight: interactiveRow.minHeight,
 				minWidth: geometry.touch,
-				padding: `${interactiveRow.paddingVertical}px ${interactiveRow.paddingHorizontal}px`,
-				marginInline: interactiveRow.gutter,
+				padding: compact
+					? `${space.xxs}px 0`
+					: `${interactiveRow.paddingVertical}px ${interactiveRow.paddingHorizontal}px`,
+				marginInline: 0,
 				borderRadius: interactiveRow.borderRadius,
 				color: theme.text.primary,
 				fontFamily: font[typography.small.family],

@@ -23,7 +23,7 @@ export const HomeShoutout = ({
 		>
 			<Stack gap="xs">
 				<Text variant="label">{latest.personName}</Text>
-				<Text>{latest.body || shoutoutLabel(latest.category)}</Text>
+				<Text lines={3}>{latest.body || shoutoutLabel(latest.category)}</Text>
 				{latest.body ? (
 					<Text variant="caption" tone="secondary">
 						{shoutoutLabel(latest.category)}

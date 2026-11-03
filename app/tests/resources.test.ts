@@ -11,6 +11,7 @@ import {
 	resourceLimits,
 	resourceMatches,
 	resourceMediaMime,
+	resourceTimestamps,
 	resourceUrl,
 	sameResourceDraft,
 	validateResource,
@@ -44,7 +45,7 @@ const resource: Resource = {
 	kind: "video",
 	audience: "players",
 	personIds: ["sam"],
-	url: "https://example.com/training",
+	url: "https://youtu.be/dQw4w9WgXcQ",
 	archived: false,
 	revision: 1,
 	updatedAt: 1,
@@ -398,4 +399,72 @@ test("program audiences follow only active self or verified guardian memberships
 	expect(validateResource({ ...scoped, audience: "club" })).toContain(
 		"program selections",
 	);
+});
+
+test("resource upload date survives edits, archive and legacy updates", () => {
+	const uploaded = resourceTimestamps(undefined, 100);
+	const edited = resourceTimestamps(uploaded, 200);
+	const archived = resourceTimestamps(edited, 300);
+	const restored = resourceTimestamps(archived, 400);
+	expect(uploaded).toEqual({ createdAt: 100, updatedAt: 100 });
+	expect(restored).toEqual({ createdAt: 100, updatedAt: 400 });
+	const legacyEdited = resourceTimestamps({ updatedAt: 50 }, 200);
+	expect(resourceTimestamps(legacyEdited, 300)).toEqual({
+		createdAt: 50,
+		updatedAt: 300,
+	});
+});
+
+test("resource links require supported media rather than generic websites", () => {
+	expect(
+		validateResource({ ...resource, url: "https://example.com/" }),
+	).toContain("YouTube or Vimeo");
+	expect(
+		validateResource({
+			...resource,
+			url: "https://youtube.com.evil.test/watch?v=dQw4w9WgXcQ",
+		}),
+	).toContain("YouTube or Vimeo");
+	expect(
+		validateResource({
+			...resource,
+			kind: "document",
+			url: "https://example.com/rules.pdf?version=2",
+		}),
+	).toBeUndefined();
+	expect(
+		validateResource({
+			...resource,
+			kind: "document",
+			url: "https://example.com/rules",
+		}),
+	).toContain("direct PDF");
+	expect(
+		validateResource({ ...resource, url: "https://vimeo.com/123456789" }),
+	).toBeUndefined();
+});
+
+test("document links are previewable while Office documents require upload", () => {
+	expect(
+		validateResource({
+			...resource,
+			kind: "document",
+			url: "https://example.com/file.docx",
+		}),
+	).toContain("direct PDF");
+	expect(
+		validateResource({
+			...resource,
+			kind: "document",
+			url: "https://example.com/image.png",
+		}),
+	).toBeUndefined();
+	expect(
+		validateResource({
+			...resource,
+			kind: "document",
+			url: undefined,
+			fileId: "uploaded-office-file",
+		}),
+	).toBeUndefined();
 });

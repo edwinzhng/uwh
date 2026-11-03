@@ -4,6 +4,7 @@ import {
 	Badge,
 	Button,
 	Dialog,
+	Disclosure,
 	LoadingContent,
 	Row,
 	SectionHeading,
@@ -52,36 +53,69 @@ export const SeasonMembershipContent = ({
 						<SectionHeading size="small">Registration</SectionHeading>
 						<Surface>
 							<Stack>
-								<Select
-									label="Status"
-									value={record.registration}
-									isDisabled={!editable || busy}
-									options={[
-										{ value: "missing", label: "Missing" },
-										{ value: "submitted", label: "Awaiting review" },
-										{ value: "approved", label: "Approved" },
-									]}
-									onValueChange={(status): void => {
-										if (status)
-											void save({
-												kind: "registration",
-												status,
-												cuga: record.cuga,
-											});
-									}}
-								/>
-								<Toggle
-									label="CUGA membership"
-									value={record.cuga}
-									isDisabled={!editable || busy}
-									onValueChange={(cuga): void => {
-										void save({
-											kind: "registration",
-											status: record.registration,
-											cuga,
-										});
-									}}
-								/>
+								{editable ? (
+									<>
+										<Select
+											label="Status"
+											value={record.registration}
+											isDisabled={!editable || busy}
+											options={[
+												{ value: "missing", label: "Missing" },
+												{ value: "submitted", label: "Awaiting review" },
+												{ value: "approved", label: "Approved" },
+											]}
+											onValueChange={(status): void => {
+												if (status)
+													void save({
+														kind: "registration",
+														status,
+														cuga: record.cuga,
+													});
+											}}
+										/>
+										<Toggle
+											label="CUGA membership"
+											value={record.cuga}
+											isDisabled={!editable || busy}
+											onValueChange={(cuga): void => {
+												void save({
+													kind: "registration",
+													status: record.registration,
+													cuga,
+												});
+											}}
+										/>
+									</>
+								) : (
+									<>
+										<Row justify="between" wrap>
+											<Text>Registration</Text>
+											<Badge
+												label={
+													record.registration === "approved"
+														? "Approved"
+														: record.registration === "submitted"
+															? "Awaiting review"
+															: "Missing"
+												}
+												kind={
+													record.registration === "approved"
+														? "success"
+														: record.registration === "submitted"
+															? "pending"
+															: "warning"
+												}
+											/>
+										</Row>
+										<Row justify="between" wrap>
+											<Text>CUGA membership</Text>
+											<Badge
+												label={record.cuga ? "Confirmed" : "Not confirmed"}
+												kind={record.cuga ? "success" : "warning"}
+											/>
+										</Row>
+									</>
+								)}
 							</Stack>
 						</Surface>
 					</Stack>
@@ -98,20 +132,22 @@ export const SeasonMembershipContent = ({
 									</Stack>
 									<Badge label={balance.status} kind={balance.tone} />
 								</Row>
-								<Stack gap="xs">
-									<Row justify="between">
-										<Text variant="small" tone="secondary">
-											Season dues
-										</Text>
-										<Text variant="small">{money(record.due)}</Text>
-									</Row>
-									<Row justify="between">
-										<Text variant="small" tone="secondary">
-											Paid
-										</Text>
-										<Text variant="small">{money(record.paid)}</Text>
-									</Row>
-								</Stack>
+								<Disclosure title="Dues & payments" defaultOpen={editable}>
+									<Stack gap="xs">
+										<Row justify="between">
+											<Text variant="small" tone="secondary">
+												Season dues
+											</Text>
+											<Text variant="small">{money(record.due)}</Text>
+										</Row>
+										<Row justify="between">
+											<Text variant="small" tone="secondary">
+												Paid
+											</Text>
+											<Text variant="small">{money(record.paid)}</Text>
+										</Row>
+									</Stack>
+								</Disclosure>
 								{editable ? (
 									<Row wrap>
 										<Button

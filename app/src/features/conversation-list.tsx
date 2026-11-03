@@ -66,7 +66,7 @@ export const ConversationList = ({
 				]}
 			/>
 			{visible.length ? (
-				<List>
+				<List separators="leading">
 					{visible.map((thread) => (
 						<ConversationRow key={thread.id} thread={thread} />
 					))}

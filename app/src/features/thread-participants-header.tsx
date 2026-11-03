@@ -10,15 +10,16 @@ import {
 	List,
 	ListItem,
 	LoadingContent,
+	PersonChoice,
 	Stack,
 	Text,
-	Toggle,
 } from "../design-system";
 import type { Conversation } from "../domain/app-types";
 import {
 	canEditChatAppearance,
 	canRenameChat,
 } from "../domain/chat-appearance";
+import { recipientPersonId } from "../domain/message-recipients";
 import { ChatAppearanceEditor } from "./chat-appearance-editor";
 import { ChatNameEditor } from "./chat-name-editor";
 import { useFormTask } from "./use-form-task";
@@ -114,7 +115,7 @@ const ParticipantsContent = ({
 									key={member.id}
 									title={member.name}
 									avatar={member.name}
-									avatarId={member.id}
+									avatarId={recipientPersonId(member.id)}
 								/>
 							))}
 							{!state.members.length ? (
@@ -164,12 +165,13 @@ const ParticipantsContent = ({
 					/>
 					<List>
 						{candidates.map((candidate) => (
-							<Toggle
+							<PersonChoice
 								key={candidate.id}
-								label={candidate.name}
-								value={selected.includes(candidate.id)}
+								name={candidate.name}
+								personId={recipientPersonId(candidate.id)}
+								checked={selected.includes(candidate.id)}
 								isDisabled={task.busy}
-								onValueChange={(checked): void =>
+								onChange={(checked): void =>
 									setSelected((current) =>
 										checked
 											? [...new Set([...current, candidate.id])]

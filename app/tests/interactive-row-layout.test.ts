@@ -9,36 +9,21 @@ import { PopupStyles } from "../src/design-system/popup-styles.web";
 import { corners, geometry, space } from "../src/design-system/tokens";
 
 describe("shared clickable row spacing", () => {
-	test("clickable rows retain an eight-pixel gutter even when their read-only layout is flush", (): void => {
-		for (const flush of [false, true]) {
-			const spacing = listRowSpacing({ interactive: true, flush });
-			expect(spacing.marginHorizontal).toBe(space.xs);
-			expect(spacing.paddingHorizontal).toBe(space.sm);
-			expect(spacing.paddingVertical).toBe(space.xs);
-		}
+	test("interactive and read-only rows keep their content on the parent edge in every layout", (): void => {
+		for (const interactive of [true, false])
+			for (const flush of [true, false])
+				for (const cardRow of [true, false]) {
+					const spacing = listRowSpacing({ interactive, flush, cardRow });
+					expect(spacing.marginHorizontal + spacing.paddingHorizontal).toBe(0);
+					expect(space.md + spacing.marginHorizontal).toBeGreaterThanOrEqual(0);
+				}
 		expect(interactiveRow.minHeight).toBeGreaterThanOrEqual(44);
 	});
-
-	test("card-row hover highlights stop eight pixels before the card edge rather than bleeding across it", (): void => {
-		const spacing = listRowSpacing({ interactive: true, cardRow: true });
-		expect(space.md + spacing.marginHorizontal).toBe(space.xs);
-		expect(interactiveRow.borderRadius).toBeGreaterThan(0);
+	test("row hover adds clearance around aligned content without shifting its leading edge", (): void => {
+		const spacing = listRowSpacing({ interactive: true });
+		expect(spacing.paddingHorizontal).toBeGreaterThan(0);
+		expect(spacing.marginHorizontal).toBe(-spacing.paddingHorizontal);
 		expect(interactiveRow.focusOffset).toBe(-geometry.focus);
-	});
-
-	test("read-only content preserves its existing compact and flush alignment", (): void => {
-		expect(listRowSpacing({ interactive: false, flush: true })).toEqual({
-			paddingHorizontal: 0,
-			paddingVertical: space.xxs,
-			marginHorizontal: 0,
-		});
-		expect(
-			listRowSpacing({ interactive: false, cardRow: true, hasLeading: true }),
-		).toEqual({
-			paddingHorizontal: space.md,
-			paddingVertical: space.xs,
-			marginHorizontal: -space.md,
-		});
 	});
 
 	test("menus, select rows, person choices and autocomplete share centered, padded targets on every pointer type", (): void => {

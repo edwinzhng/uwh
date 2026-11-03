@@ -1,26 +1,27 @@
 import type { Account, AppData, Member } from "../domain/app-types";
+import { defaultPrograms } from "../domain/programs";
 
 export const previewAccounts: Account[] = [
 	{
 		id: "alex",
 		personId: "alex",
-		name: "Alex Rivera",
-		children: ["sam", "mila"],
-		coachPrograms: ["club", "youth"],
+		name: "Jordan Fryers",
+		children: [],
+		coachPrograms: ["club", "youth", "sunday", "friday"],
 		admin: true,
 	},
 	{
 		id: "taylor",
 		personId: "taylor",
-		name: "Taylor Brooks",
-		children: [],
+		name: "Brad Smith",
+		children: ["sam", "mila"],
 		coachPrograms: [],
 		admin: false,
 	},
 	{
 		id: "jamie",
 		personId: "jamie",
-		name: "Jamie Rivera",
+		name: "Alexis Smith",
 		children: ["sam", "mila"],
 		coachPrograms: [],
 		admin: false,
@@ -28,7 +29,7 @@ export const previewAccounts: Account[] = [
 	{
 		id: "morgan",
 		personId: "morgan",
-		name: "Morgan Ellis",
+		name: "Ross Zariski",
 		children: [],
 		coachPrograms: [],
 		admin: true,
@@ -36,24 +37,24 @@ export const previewAccounts: Account[] = [
 	{
 		id: "casey",
 		personId: "casey",
-		name: "Casey Morgan",
+		name: "Nathaniel Schoenberger",
 		children: [],
-		coachPrograms: ["club"],
+		coachPrograms: ["club", "sunday", "friday"],
 		admin: false,
 	},
 ];
 export const primaryAccount: Account = {
 	id: "alex",
 	personId: "alex",
-	name: "Alex Rivera",
-	children: ["sam", "mila"],
-	coachPrograms: ["club", "youth"],
+	name: "Jordan Fryers",
+	children: [],
+	coachPrograms: ["club", "youth", "sunday", "friday"],
 	admin: true,
 };
 const members: Member[] = [
 	{
 		id: "alex",
-		name: "Alex Rivera",
+		name: "Jordan Fryers",
 		programs: ["club"],
 		position: "Center",
 		rating: 5,
@@ -63,17 +64,17 @@ const members: Member[] = [
 	},
 	{
 		id: "sam",
-		name: "Sam Rivera",
+		name: "Rylan Smith",
 		programs: ["youth", "club"],
 		position: "Forward",
 		rating: 3,
 		registration: "approved",
-		goal: "Find support before the first touch",
+		goal: "Improve positioning and passing",
 		steps: 2,
 	},
 	{
 		id: "mila",
-		name: "Mila Rivera",
+		name: "Blake Smith",
 		programs: ["youth"],
 		position: "Wing",
 		rating: 2,
@@ -83,9 +84,9 @@ const members: Member[] = [
 	},
 	{
 		id: "taylor",
-		name: "Taylor Brooks",
-		programs: ["club"],
-		position: "Wing",
+		name: "Brad Smith",
+		programs: [],
+		position: "Guardian",
 		rating: 3,
 		registration: "approved",
 		goal: "Recover into defensive shape",
@@ -93,12 +94,12 @@ const members: Member[] = [
 	},
 	{
 		id: "casey",
-		name: "Casey Morgan",
+		name: "Nathaniel Schoenberger",
 		programs: ["club"],
 		position: "Full back",
 		rating: 5,
 		registration: "approved",
-		goal: "Build a calmer first touch",
+		goal: "Improve puck control",
 		steps: 5,
 	},
 	{
@@ -143,7 +144,7 @@ const members: Member[] = [
 	},
 	{
 		id: "jamie",
-		name: "Jamie Rivera",
+		name: "Alexis Smith",
 		programs: [],
 		position: "Guardian",
 		rating: 0,
@@ -153,9 +154,9 @@ const members: Member[] = [
 	},
 	{
 		id: "morgan",
-		name: "Morgan Ellis",
-		programs: [],
-		position: "Club administrator",
+		name: "Ross Zariski",
+		programs: ["club"],
+		position: "Full back",
 		rating: 0,
 		registration: "approved",
 		goal: "",
@@ -163,6 +164,18 @@ const members: Member[] = [
 	},
 ];
 export const initialAppData: AppData = {
+	programs: [
+		...defaultPrograms().map((program) => ({
+			...program,
+			name: program.id === "club" ? "Thursday" : "Monday",
+		})),
+		...defaultPrograms()
+			.filter((entry) => entry.id === "club")
+			.flatMap((base) => [
+				{ ...base, id: "sunday", name: "Sunday" },
+				{ ...base, id: "friday", name: "Friday" },
+			]),
+	],
 	seasons: [
 		{
 			id: "2026-2027",
@@ -172,12 +185,17 @@ export const initialAppData: AppData = {
 		},
 	],
 	clubName: "Calgary Crocs",
-	members,
+	members: members.map((member) => ({
+		...member,
+		programs: member.programs.includes("club")
+			? [...member.programs, "sunday", "friday"]
+			: member.programs,
+	})),
 	events: [
 		{
 			id: "youth-thu",
-			title: "Youth training",
-			date: "2026-09-10",
+			title: "Monday practice",
+			date: "2026-09-14",
 			start: "19:00",
 			end: "19:45",
 			venue: "MNP Community & Sport Centre",
@@ -226,7 +244,7 @@ export const initialAppData: AppData = {
 			start: "20:30",
 			end: "21:30",
 			venue: "MNP Community & Sport Centre",
-			program: "club",
+			program: "friday",
 			kind: "hockey",
 			signup: "open",
 			capacity: 24,
@@ -235,16 +253,32 @@ export const initialAppData: AppData = {
 		},
 		{
 			id: "sun",
-			title: "Sunday skills",
+			title: "Sunday practice",
 			date: "2026-09-13",
 			start: "09:00",
 			end: "10:30",
 			venue: "MNP Community & Sport Centre",
-			program: "club",
+			program: "sunday",
+			parts: [
+				{
+					id: "training",
+					title: "Training",
+					kind: "training",
+					start: "09:00",
+					end: "09:45",
+				},
+				{
+					id: "hockey",
+					title: "Hockey",
+					kind: "hockey",
+					start: "09:45",
+					end: "10:30",
+				},
+			],
 			kind: "training",
 			signup: "scheduled",
 			capacity: 24,
-			description: "First touch and support. Signup opens Friday at 6 PM.",
+			description: "Training and hockey. Signup opens Friday at 6 PM.",
 			cancelled: false,
 		},
 		{
@@ -264,7 +298,7 @@ export const initialAppData: AppData = {
 		},
 		{
 			id: "past",
-			title: "Club training",
+			title: "Thursday practice",
 			date: "2026-09-03",
 			start: "19:45",
 			end: "21:00",
@@ -273,7 +307,23 @@ export const initialAppData: AppData = {
 			kind: "training",
 			signup: "closed",
 			capacity: 24,
-			description: "First touch under pressure.",
+			description: "Passing under pressure.",
+			parts: [
+				{
+					id: "training",
+					title: "Training",
+					kind: "training",
+					start: "19:45",
+					end: "20:15",
+				},
+				{
+					id: "hockey",
+					title: "Hockey",
+					kind: "hockey",
+					start: "20:15",
+					end: "21:00",
+				},
+			],
 			cancelled: false,
 		},
 	],
@@ -318,7 +368,7 @@ export const initialAppData: AppData = {
 			id: "f-sam",
 			personId: "sam",
 			authorId: "casey",
-			body: "Your first touch is calmer. Scan for support before receiving, then try finding the second pass.",
+			body: "Keep moving after a pass and offer a clear passing option.",
 			visibility: "published",
 			date: "2026-09-03",
 		},
@@ -368,7 +418,7 @@ export const initialAppData: AppData = {
 		},
 		{
 			id: "casey",
-			title: "Casey Morgan",
+			title: "Nathaniel Schoenberger",
 			subtitle: "Coach",
 			accountIds: ["alex", "casey"],
 		},
@@ -379,7 +429,7 @@ export const initialAppData: AppData = {
 			createdAt: Date.parse("2026-10-25T15:10:00Z"),
 			threadId: "club",
 			accountId: "casey",
-			author: "Casey Morgan",
+			author: "Nathaniel Schoenberger",
 			body: "Welcome back! Thursday training is on the schedule.",
 			time: "9:10 AM",
 		},
@@ -388,7 +438,7 @@ export const initialAppData: AppData = {
 			createdAt: Date.parse("2026-10-25T15:24:00Z"),
 			threadId: "club",
 			accountId: "taylor",
-			author: "Taylor Brooks",
+			author: "Brad Smith",
 			body: "See you poolside. Bringing a spare stick if anyone needs one.",
 			time: "9:24 AM",
 		},
@@ -397,7 +447,7 @@ export const initialAppData: AppData = {
 			createdAt: Date.parse("2026-10-25T16:30:00Z"),
 			threadId: "youth",
 			accountId: "casey",
-			author: "Casey Morgan",
+			author: "Nathaniel Schoenberger",
 			body: "Please bring both caps for Thursday. We’ll start with passing in pairs.",
 			time: "10:30 AM",
 		},
@@ -406,7 +456,7 @@ export const initialAppData: AppData = {
 			createdAt: Date.parse("2026-10-25T17:00:00Z"),
 			threadId: "session",
 			accountId: "casey",
-			author: "Casey Morgan",
+			author: "Nathaniel Schoenberger",
 			body: "Meet poolside 10 minutes early for a quick briefing.",
 			time: "11:00 AM",
 		},
@@ -415,7 +465,7 @@ export const initialAppData: AppData = {
 			createdAt: Date.parse("2026-10-24T17:00:00Z"),
 			threadId: "casey",
 			accountId: "casey",
-			author: "Casey Morgan",
+			author: "Nathaniel Schoenberger",
 			body: "I’ve shared feedback from last week. Happy to chat at training.",
 			time: "Yesterday",
 		},
@@ -426,7 +476,7 @@ export const initialAppData: AppData = {
 			title: "Autumn registration",
 			body: "Please complete your Autumn 2026 registration before September 14. Your current status is in Club.",
 			program: "all",
-			date: "2026-09-07",
+			date: "2026-09-14",
 			acknowledgedBy: [],
 		},
 		{

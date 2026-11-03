@@ -10,13 +10,10 @@ test("disclosure retains mounted field state and exposes a named expanded contro
 	expect(source).not.toContain("open ? children");
 });
 
-test("event registration and saved drills are progressive rather than giant always-open forms", async (): Promise<void> => {
+test("event registration details remain progressive", async (): Promise<void> => {
 	const event = await Bun.file("src/features/event-editor.tsx").text();
-	const drill = await Bun.file("src/features/session-drill-editor.tsx").text();
 	expect(event).toContain('title="Registration & details"');
 	expect(event).toContain("registrationOpen || Boolean(error || task.error)");
-	expect(drill).toContain("useState(!drill.title)");
-	expect(drill).toContain("isOpen={expanded || Boolean(error)}");
 });
 
 test("production preferences exclude avatar experiments and empty block management", async (): Promise<void> => {

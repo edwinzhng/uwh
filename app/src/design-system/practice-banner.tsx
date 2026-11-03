@@ -1,5 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { Pressable, View } from "react-native";
+import { CardAtmosphere } from "./card-atmosphere";
 import { Icon } from "./icon";
 import { Text } from "./text";
 import { useTheme } from "./theme";
@@ -36,11 +37,9 @@ export const PracticeBanner = ({
 				padding: space.sm,
 				borderRadius: corners.panel,
 				borderWidth: geometry.border,
-				borderColor: theme.colorScales.accent.border,
+				borderColor: theme.border,
 				backgroundColor:
-					pressed || hovered
-						? theme.colorScales.accent.muted
-						: theme.colorScales.accent.subtle,
+					pressed || hovered ? theme.background.pressed : theme.background.card,
 				flexDirection: "row",
 				alignItems: "center",
 				gap: space.sm,
@@ -49,7 +48,8 @@ export const PracticeBanner = ({
 				outlineOffset: space.half,
 			})}
 		>
-			<Icon name="calendar" tone="primary" />
+			<CardAtmosphere />
+			<Icon name="calendar" tone="secondary" size="sm" />
 			<View style={{ flex: 1, minWidth: 0, gap: space.xxs }}>
 				<View
 					style={{

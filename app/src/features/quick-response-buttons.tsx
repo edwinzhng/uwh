@@ -25,7 +25,13 @@ export const QuickResponseButtons = ({
 				label={full && response !== "going" ? "Waitlist" : "Yes"}
 				accessibilityLabel={`${name} · ${full && response !== "going" ? "Join waitlist" : "Attending"}`}
 				prefix="check"
-				variant={response === "going" ? "solid" : "secondary"}
+				variant={
+					response === "going"
+						? "solid"
+						: response === "waiting"
+							? "selection"
+							: "secondary"
+				}
 				isSelected={response === "going" || response === "waiting"}
 				isDisabled={disabled}
 				compact

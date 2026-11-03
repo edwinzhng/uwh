@@ -25,7 +25,12 @@ const RootLayout = (): ReactElement => {
 	return (
 		<Provider>
 			<DesignProvider>
-				<LoadingPreview enabled={__DEV__ && params.loadingPreview === "orb"}>
+				<LoadingPreview
+					enabled={
+						(__DEV__ || process.env.EXPO_PUBLIC_REVIEW_MODE === "true") &&
+						params.loadingPreview === "orb"
+					}
+				>
 					<BackendProvider>
 						<MessagingProvider>
 							<InboxProvider>

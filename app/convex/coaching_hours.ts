@@ -6,6 +6,7 @@ import {
 	type CoachingAssignment,
 	type CoachingPractice,
 	canAssignPracticeCoach,
+	coachingHoursCorrectionError,
 	coachingPartIds,
 	coachingPartMinutes,
 	completedCoachingEvent,
@@ -130,6 +131,7 @@ export const setCoach = mutation({
 		eventId: v.string(),
 		coachId: v.string(),
 		durationMinutes: v.optional(v.number()),
+		expectedDurationMinutes: v.optional(v.number()),
 		partId: v.optional(v.string()),
 		assigned: v.boolean(),
 	},
@@ -144,13 +146,15 @@ export const setCoach = mutation({
 			throw new Error("Choose a practice part.");
 		if (event.parts?.length && args.durationMinutes !== undefined)
 			throw new Error("Hours follow assigned practice parts.");
-		if (
-			args.assigned &&
-			!canAssignPracticeCoach(
-				(await effectiveEventCoaches(ctx, actor.clubId, event)).assignments,
-				args.coachId,
-			)
-		)
+		const effective = (await effectiveEventCoaches(ctx, actor.clubId, event))
+			.assignments;
+		const correctionError = coachingHoursCorrectionError(
+			effective,
+			args.coachId,
+			args.expectedDurationMinutes,
+		);
+		if (correctionError) throw new Error(correctionError);
+		if (args.assigned && !canAssignPracticeCoach(effective, args.coachId))
 			throw new Error(
 				"A practice can have up to 3 coaches. Remove a coach first.",
 			);
@@ -261,7 +265,10 @@ export const seasonPractices = query({
 						title: value.title,
 						date: value.date,
 						start: value.start,
-						coaches: await assignmentsFor(ctx, actor.clubId, value),
+						durationEditable: !value.parts?.length,
+						practiceDurationMinutes: practiceCoachingDuration(value),
+						coaches: (await effectiveEventCoaches(ctx, actor.clubId, value))
+							.assignments,
 					}),
 				),
 		);

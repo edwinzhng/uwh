@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { Avatar, AvatarStack } from "../design-system";
+import { AvatarStack } from "../design-system";
 import {
 	type ConversationSummary,
 	conversationKind,
@@ -30,7 +30,7 @@ export const ConversationAvatar = ({
 			]),
 		]
 			.filter((id) => id !== account.personId)
-			.slice(0, 2)
+			.slice(0, 3)
 			.flatMap((personId) => {
 				const person = data.members.find((entry) => entry.id === personId);
 				return person ? [{ personId, name: person.name }] : [];
@@ -43,10 +43,11 @@ export const ConversationAvatar = ({
 			: people;
 	if (thread.avatarIcon || thread.avatarImageId)
 		return (
-			<Avatar
+			<AvatarStack
 				name={thread.title}
-				icon={thread.avatarIcon ?? "users"}
-				uri={photo.uri}
+				people={[{ name: thread.title }]}
+				avatarIcon={thread.avatarIcon ?? "users"}
+				imageUri={photo.uri}
 			/>
 		);
 	return (

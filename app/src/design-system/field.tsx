@@ -5,12 +5,12 @@ import { Stack } from "./stack";
 import { isSubmitKey } from "./submit-key";
 import { Text } from "./text";
 import { useTheme } from "./theme";
-import { control, corners, font, geometry } from "./tokens";
+import { control, corners, font, geometry, typography } from "./tokens";
 import { useControlSize } from "./use-control-size";
 
 type Props = {
 	label: string;
-	variant?: "default" | "composer";
+	variant?: "default" | "composer" | "score";
 	hideLabel?: boolean;
 	labelTone?: "primary" | "secondary";
 	value: string;
@@ -164,9 +164,16 @@ export const Field = ({
 								? theme.background.tertiary
 								: theme.background.primary,
 						color: theme.text.primary,
-						fontFamily: font.regular,
-						fontSize: control.typography.fontSize,
-						lineHeight: control.typography.lineHeight,
+						fontFamily: variant === "score" ? font.heading : font.regular,
+						fontSize:
+							variant === "score"
+								? typography.number.fontSize
+								: control.typography.fontSize,
+						lineHeight:
+							variant === "score"
+								? typography.number.lineHeight
+								: control.typography.lineHeight,
+						textAlign: variant === "score" ? "center" : undefined,
 						textAlignVertical: multiline ? "top" : "center",
 						opacity: isDisabled ? geometry.disabledOpacity : 1,
 					}}

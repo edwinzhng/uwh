@@ -38,7 +38,7 @@ const Tasks = ({ tasks }: { tasks?: CoachingTasks }): ReactElement => {
 			{!tasks ? (
 				<LoadingContent />
 			) : (
-				<Surface padding="sm">
+				<Surface>
 					<List>
 						{tasks.goals.map((person) => (
 							<ListItem
@@ -51,7 +51,7 @@ const Tasks = ({ tasks }: { tasks?: CoachingTasks }): ReactElement => {
 								onPress={(): void =>
 									router.push({
 										pathname: "/member",
-										params: { id: person.id, tab: "progress" },
+										params: { id: person.id, tab: "goals" },
 									})
 								}
 							/>

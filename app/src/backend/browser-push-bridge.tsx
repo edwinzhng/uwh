@@ -2,8 +2,16 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect } from "react";
 import { Platform } from "react-native";
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { useApp } from "../demo/app-state";
-import { restoreBrowserNotifications } from "./browser-push";
+import {
+	type BrowserNotificationRegistration,
+	browserInstallationId,
+	restoreBrowserNotifications,
+	watchBrowserNotifications,
+} from "./browser-push";
+import { trackPushLifecycle } from "./push-lifecycle";
+import { createPushRegistrationController } from "./push-registration";
 
 export const BrowserPushBridge = (): undefined => {
 	const { account } = useApp();
@@ -12,17 +20,41 @@ export const BrowserPushBridge = (): undefined => {
 		Platform.OS === "web" ? {} : "skip",
 	);
 	const register = useMutation(api.web_push.register);
+	const unregister = useMutation(api.web_push.unregister);
 	useEffect(() => {
-		if (!account.id || !configuration?.publicKey) return;
-		const controller = { active: true };
-		void restoreBrowserNotifications(configuration.publicKey)
-			.then(async (registration): Promise<void> => {
-				if (controller.active && registration) await register(registration);
-			})
-			.catch((): void => {});
-		return (): void => {
-			controller.active = false;
+		const publicKey = configuration?.publicKey;
+		if (!account.id || !publicKey) return;
+		const registration = createPushRegistrationController<
+			never,
+			BrowserNotificationRegistration
+		>({
+			read: (): ReturnType<typeof restoreBrowserNotifications> =>
+				restoreBrowserNotifications(publicKey),
+			register: async (value): Promise<void> => {
+				await register(value);
+			},
+			unregister: async (): Promise<void> => {
+				const id = browserInstallationId();
+				if (id)
+					await unregister({
+						installationId: id,
+						expectedUserId: account.id as Id<"users">,
+					});
+			},
+		});
+		const refresh = (): void => {
+			void registration.refresh().catch((): void => {});
 		};
-	}, [account.id, configuration?.publicKey, register]);
+		const stopRegistration = trackPushLifecycle(
+			registration.stop,
+			registration.resume,
+		);
+		const stopWatching = watchBrowserNotifications(refresh);
+		refresh();
+		return (): void => {
+			stopWatching();
+			stopRegistration();
+		};
+	}, [account.id, configuration?.publicKey, register, unregister]);
 	return undefined;
 };

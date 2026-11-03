@@ -1,9 +1,10 @@
 import { type ReactElement, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { Avatar } from "./avatar";
 import { Icon, type IconName } from "./icon";
 import { type PickerLayoutKind, pickerTriggerWidth } from "./picker-layout";
 import { usePickerSizing } from "./picker-layout-context";
-import type { StatusTone } from "./picker-props";
+import type { ChoicePerson, StatusTone } from "./picker-props";
 import { useTheme } from "./theme";
 import { control, corners, font, geometry } from "./tokens";
 
@@ -12,6 +13,7 @@ type Props = {
 	value: string;
 	isOpen: boolean;
 	isDisabled?: boolean;
+	person?: ChoicePerson;
 	icon?: IconName;
 	tone?: StatusTone;
 	onPress: () => void;
@@ -22,6 +24,7 @@ type Props = {
 export const PickerTrigger = ({
 	label,
 	value,
+	person,
 	isOpen,
 	isDisabled,
 	icon = "chevronDown",
@@ -71,6 +74,9 @@ export const PickerTrigger = ({
 					opacity: isDisabled ? geometry.disabledOpacity : 1,
 				}}
 			>
+				{person ? (
+					<Avatar name={person.name ?? value} personId={person.id} compact />
+				) : undefined}
 				<Text
 					numberOfLines={1}
 					style={{

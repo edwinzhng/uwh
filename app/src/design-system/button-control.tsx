@@ -1,32 +1,27 @@
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useContext, useState } from "react";
 import {
 	Text as NativeText,
 	Pressable,
 	View,
 	type ViewStyle,
 } from "react-native";
-import Animated, { type useAnimatedStyle } from "react-native-reanimated";
 import { buttonColors } from "./button-colors";
-import { activateButton, raisedButton } from "./button-feedback";
+import { activateButton } from "./button-feedback";
 import type { ButtonProps } from "./button-props";
 import { ButtonSpinner } from "./button-spinner";
+import { FloatingControlContext } from "./floating-control-context";
 import { useButtonHaptics } from "./haptics";
 import { Icon } from "./icon";
+import { roleGlow } from "./role-glow";
 import { useTheme } from "./theme";
-import {
-	control,
-	corners,
-	elevation,
-	font,
-	geometry,
-	space,
-	typography,
-} from "./tokens";
+import { control, corners, font, geometry, space, typography } from "./tokens";
+import { ToolbarHighlight } from "./toolbar-highlight";
 import { useControlSize } from "./use-control-size";
 
 export const ButtonControl = ({
-	feedback,
 	label,
+	density = "standard",
+	roleTone,
 	validationError,
 	onInvalid,
 	leading,
@@ -41,15 +36,9 @@ export const ButtonControl = ({
 	testID,
 	compact = false,
 	round = false,
-}: ButtonProps & {
-	feedback?: {
-		style: ReturnType<
-			typeof useAnimatedStyle<{ transform: { translateY: number }[] }>
-		>;
-		onPressChange: (pressed: boolean) => void;
-	};
-}): ReactElement => {
+}: ButtonProps): ReactElement => {
 	const theme = useTheme();
+	const floating = useContext(FloatingControlContext) && variant === "ghost";
 	const [attempted, setAttempted] = useState(false);
 	const haptic = useButtonHaptics();
 	const defaultSize = useControlSize();
@@ -61,15 +50,6 @@ export const ButtonControl = ({
 	const [focused, setFocused] = useState(false);
 	const [hovered, setHovered] = useState(false);
 	const blocked = isDisabled || isLoading;
-	const raised = raisedButton(variant);
-	const depth = raised ? geometry.focus : space.none;
-	const buttonRadius = round ? controlSize / 2 : corners.button;
-	const updatePressed = (value: boolean): void => {
-		feedback?.onPressChange(value);
-		setPressed(value && !blocked);
-	};
-
-	const solid = variant === "solid";
 	const interaction = isDisabled
 		? "disabled"
 		: isLoading
@@ -79,25 +59,37 @@ export const ButtonControl = ({
 				: hovered
 					? "hover"
 					: "rest";
-	const colors = buttonColors(theme, variant, interaction);
+	const colors = buttonColors(
+		theme,
+		variant,
+		floating && (interaction === "hover" || interaction === "pressed")
+			? "rest"
+			: interaction,
+		Boolean(isSelected),
+	);
 	const glyph = icon ?? prefix;
+	const filter = density === "filter";
+	const faceSize = filter ? geometry.compactControl : controlSize;
+	const textStyle = filter ? typography.small : control.typography;
 	const faceStyle: ViewStyle = {
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "center",
 		gap: control.gap,
-		minHeight: controlSize - depth,
-		marginBottom: depth,
+		minHeight: faceSize,
 		minWidth: icon ? controlSize : undefined,
 		alignSelf: icon ? "center" : "stretch",
-		paddingHorizontal:
-			icon || variant === "danger-text" || variant === "ghost"
-				? space.none
+		paddingHorizontal: icon
+			? space.none
+			: filter
+				? space.md
 				: compact
 					? space.xs
 					: control.paddingX,
-		paddingVertical: compact ? space.xxs : control.paddingY,
-		borderRadius: buttonRadius,
+		paddingVertical: compact || filter ? space.xxs : control.paddingY,
+		borderRadius: round ? faceSize / 2 : corners.button,
+		boxShadow:
+			roleTone && !blocked ? roleGlow(roleTone, theme.mode) : undefined,
 		borderWidth: geometry.border,
 		borderColor: colors.border,
 		outlineWidth: focused ? geometry.focus : 0,
@@ -105,52 +97,6 @@ export const ButtonControl = ({
 		outlineColor: theme.focus,
 		backgroundColor: colors.background,
 	};
-	const faceContent = (
-		<>
-			{leading}
-			{isLoading ? (
-				<ButtonSpinner color={colors.foreground} />
-			) : glyph ? (
-				<Icon
-					name={glyph}
-					size={icon ? "md" : "sm"}
-					tone={
-						isDisabled
-							? "secondary"
-							: solid
-								? "onAccent"
-								: variant === "danger"
-									? "onDanger"
-									: variant === "ghost" && interaction === "rest"
-										? "secondary"
-										: "primary"
-					}
-				/>
-			) : undefined}
-			{icon ? undefined : (
-				<NativeText
-					style={{
-						fontFamily: font.medium,
-						fontSize: control.typography.fontSize,
-						lineHeight: control.typography.lineHeight,
-						textAlign: "center",
-						textAlignVertical: "center",
-						includeFontPadding: false,
-						color: colors.foreground,
-						textDecorationLine:
-							hovered &&
-							!blocked &&
-							(variant === "ghost" || variant === "danger-text")
-								? "underline"
-								: "none",
-						flexShrink: 1,
-					}}
-				>
-					{label}
-				</NativeText>
-			)}
-		</>
-	);
 	return (
 		<>
 			<Pressable
@@ -168,13 +114,14 @@ export const ButtonControl = ({
 					alignSelf: icon ? "flex-start" : undefined,
 					minHeight: controlSize,
 					minWidth: icon || compact ? controlSize : undefined,
+					maxWidth: "100%",
 					justifyContent: "center",
 					alignItems: "center",
 				}}
 				disabled={blocked}
 				onPress={(): void => {
 					if (blocked) return;
-					updatePressed(false);
+					setPressed(false);
 					setAttempted(false);
 					activateButton(
 						{ isDisabled, isLoading, validationError },
@@ -186,40 +133,47 @@ export const ButtonControl = ({
 						},
 					);
 				}}
-				onPressIn={(): void => updatePressed(true)}
-				onPressOut={(): void => updatePressed(false)}
+				onPressIn={(): void => setPressed(!blocked)}
+				onPressOut={(): void => setPressed(false)}
 				onFocus={(): void => setFocused(true)}
 				onBlur={(): void => {
 					setFocused(false);
-					updatePressed(false);
+					setPressed(false);
 				}}
 				onHoverIn={(): void => setHovered(true)}
 				onHoverOut={(): void => setHovered(false)}
 			>
-				{raised ? (
-					<View
-						pointerEvents="none"
-						style={[
-							{
-								position: "absolute",
-								top: depth,
-								left: space.none,
-								right: space.none,
-								bottom: space.none,
-								borderRadius: buttonRadius,
-								backgroundColor: colors.base,
-							},
-							blocked || pressed ? elevation.none : elevation.raised,
-						]}
-					/>
-				) : undefined}
-				{feedback ? (
-					<Animated.View style={[faceStyle, feedback.style]}>
-						{faceContent}
-					</Animated.View>
-				) : (
-					<View style={faceStyle}>{faceContent}</View>
-				)}
+				<View style={faceStyle}>
+					{floating ? (
+						<ToolbarHighlight active={!blocked && (hovered || pressed)} />
+					) : undefined}
+					{leading}
+					{isLoading ? (
+						<ButtonSpinner color={colors.foreground} />
+					) : glyph ? (
+						<Icon
+							name={glyph}
+							size={icon ? "md" : "sm"}
+							color={colors.foreground}
+						/>
+					) : undefined}
+					{icon ? undefined : (
+						<NativeText
+							style={{
+								fontFamily: font.medium,
+								fontSize: textStyle.fontSize,
+								lineHeight: textStyle.lineHeight,
+								textAlign: "center",
+								textAlignVertical: "center",
+								includeFontPadding: false,
+								color: colors.foreground,
+								flexShrink: 1,
+							}}
+						>
+							{label}
+						</NativeText>
+					)}
+				</View>
 			</Pressable>
 			{attempted && validationError && !blocked ? (
 				<NativeText

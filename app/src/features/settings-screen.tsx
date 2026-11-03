@@ -173,16 +173,7 @@ export const SettingsScreen = (): ReactElement => {
 						</Surface>
 					</Stack>
 					<AccessPanel />
-					<Surface>
-						<Row justify="between" wrap>
-							<Text variant="h4">Club terms</Text>
-							<Button
-								label="Manage club terms"
-								variant="secondary"
-								onPress={(): void => router.navigate("/terms")}
-							/>
-						</Row>
-					</Surface>
+
 					<SeasonSettings />
 					{source === "convex" ? <PublicScheduleSettings /> : undefined}
 				</Stack>

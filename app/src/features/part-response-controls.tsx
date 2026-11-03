@@ -12,6 +12,9 @@ export const PartResponseControls = ({
 	name,
 	disabled,
 	full,
+	partId,
+	hideLabel = false,
+	isPending,
 	onRespond,
 }: {
 	event: ClubEvent;
@@ -19,6 +22,9 @@ export const PartResponseControls = ({
 	name: string;
 	disabled: boolean;
 	full: boolean;
+	partId?: string;
+	hideLabel?: boolean;
+	isPending: () => boolean;
 	onRespond: (
 		response: "going" | "unavailable" | "unanswered",
 		partIds?: string[],
@@ -26,12 +32,49 @@ export const PartResponseControls = ({
 	) => Promise<void>;
 }): ReactElement => {
 	const [absence, setAbsence] = useState(false);
+	const parts = event.parts?.filter(
+		(part) => partId === undefined || part.id === partId,
+	);
 	return (
 		<>
 			<List gap="xs">
-				{event.parts?.map((part) => {
+				{parts?.map((part) => {
 					const response = partResponse(current, part.id);
-					return (
+					const buttons = (
+						<QuickResponseButtons
+							key={part.id}
+							name={`${name} · ${part.title}`}
+							response={response}
+							full={full}
+							disabled={disabled}
+							onRespond={(going): void => {
+								if (
+									disabled ||
+									isPending() ||
+									(going && response === "going") ||
+									(!going && response === "unavailable")
+								)
+									return;
+								const next = changedPartResponse(
+									event,
+									current,
+									part.id,
+									going,
+								);
+								if (current.seriesExpected && next.response === "unavailable")
+									setAbsence(true);
+								else
+									void onRespond(
+										next.response,
+										next.partIds,
+										next.declinedPartIds,
+									);
+							}}
+						/>
+					);
+					return partId !== undefined && hideLabel ? (
+						buttons
+					) : (
 						<EventResponseRow
 							key={part.id}
 							label={part.title}
@@ -46,33 +89,7 @@ export const PartResponseControls = ({
 											: "neutral"
 							}
 						>
-							<QuickResponseButtons
-								name={`${name} · ${part.title}`}
-								response={response}
-								full={full}
-								disabled={disabled}
-								onRespond={(going): void => {
-									if (
-										(going && response === "going") ||
-										(!going && response === "unavailable")
-									)
-										return;
-									const next = changedPartResponse(
-										event,
-										current,
-										part.id,
-										going,
-									);
-									if (current.seriesExpected && next.response === "unavailable")
-										setAbsence(true);
-									else
-										void onRespond(
-											next.response,
-											next.partIds,
-											next.declinedPartIds,
-										);
-								}}
-							/>
+							{buttons}
 						</EventResponseRow>
 					);
 				})}

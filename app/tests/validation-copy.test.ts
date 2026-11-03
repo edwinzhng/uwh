@@ -13,7 +13,6 @@ import {
 import {
 	emptySessionPlan,
 	nextSessionPlan,
-	type SessionDrill,
 	validateSessionPlan,
 } from "../src/domain/session-plan";
 import { termsError } from "../src/domain/terms";
@@ -32,13 +31,6 @@ const program: ProgramDraft = {
 	kind: "hockey",
 	rsvp: defaultProgramRsvp(),
 };
-const drill: SessionDrill = {
-	id: "drill",
-	title: "Passing",
-	minutes: 10,
-	instructions: "",
-	media: [],
-};
 
 describe("concise validation copy", () => {
 	test("empty fields ask only for the missing value, not an unrelated length constraint", (): void => {
@@ -48,12 +40,6 @@ describe("concise validation copy", () => {
 		expect(validateProgram({ ...program, name: " " }, { seasons: [] })).toBe(
 			"Add a program name",
 		);
-		expect(
-			validateSessionPlan({
-				...emptySessionPlan(),
-				drills: [{ ...drill, title: " " }],
-			}),
-		).toBe("Add a drill name");
 	});
 
 	test("oversized values explain the actual limit and preserve inclusive boundaries", (): void => {
@@ -110,40 +96,26 @@ describe("concise validation copy", () => {
 		);
 	});
 
-	test("plan limits identify the failing field and links still require HTTPS", (): void => {
+	test("plan limits identify the failing field and links require supported secure media", (): void => {
+		expect(
+			validateSessionPlan({ ...emptySessionPlan(), body: "x".repeat(20001) }),
+		).toBe("Keep the plan to 20,000 characters");
+		expect(
+			validateSessionPlan({ ...emptySessionPlan(), notes: "x".repeat(10001) }),
+		).toBe("Keep notes to 10,000 characters");
 		expect(
 			validateSessionPlan({
 				...emptySessionPlan(),
-				objective: "x".repeat(301),
-			}),
-		).toBe("Keep the objective to 300 characters");
-		expect(validateSessionPlan(emptySessionPlan("x".repeat(10001)))).toBe(
-			"Keep notes to 10,000 characters",
-		);
-		expect(
-			validateSessionPlan({
-				...emptySessionPlan(),
-				drills: [{ ...drill, instructions: "x".repeat(2001) }],
-			}),
-		).toBe("Keep drill instructions to 2,000 characters");
-		expect(
-			validateSessionPlan({
-				...emptySessionPlan(),
-				drills: [
+				media: [
 					{
-						...drill,
-						media: [
-							{
-								id: "link",
-								source: "link",
-								label: "Clip",
-								url: "http://example.test/clip",
-							},
-						],
+						id: "link",
+						source: "link",
+						label: "Clip",
+						url: "http://example.test/clip",
 					},
 				],
 			}),
-		).toBe("Use a complete HTTPS link");
+		).toContain("YouTube or Vimeo");
 	});
 
 	test("stale plan errors retain both the recovery action and draft-preservation fact", (): void => {

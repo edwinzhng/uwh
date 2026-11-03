@@ -16,7 +16,7 @@ test("web checkboxes render a labeled native input with browser keyboard semanti
 	expect(markup).not.toContain('checked=""');
 	expect(markup).toContain("min-height:44px");
 	expect(markup).toContain("padding:8px 12px");
-	expect(markup).toContain("margin-inline:8px");
+	expect(markup).toContain("margin-inline:0");
 	expect(markup).toContain('class="club-checkbox-row"');
 });
 

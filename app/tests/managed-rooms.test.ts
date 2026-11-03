@@ -60,7 +60,7 @@ test("canonical club and program channels stay distinct without creating a Staff
 	expect(data.conversations.some((thread) => thread.id === staffRoomId)).toBe(
 		false,
 	);
-	expect(room(data, programRoomId("club")).title).toBe("Club program");
+	expect(room(data, programRoomId("club")).title).toBe("Thursday program");
 	expect(conversationKind(room(data, "youth"))).toBe("program");
 	expect(data.messages).toBe(initialAppData.messages);
 	expect(withManagedRooms(data, previewAccounts)).toEqual(data);
@@ -138,7 +138,7 @@ test("retired Staff history stays stored but no current role can list or access 
 test("program membership dynamically follows active household players and revokes without erasing chats", (): void => {
 	const data = withManagedRooms(initialAppData, previewAccounts);
 	expect(room(data, "youth").accountIds).toContain("jamie");
-	expect(room(data, "youth").accountIds).not.toContain("taylor");
+	expect(room(data, "youth").accountIds).toContain("taylor");
 	const unlinked = withManagedRooms(
 		data,
 		previewAccounts.map((entry) =>
@@ -172,7 +172,8 @@ test("program membership dynamically follows active household players and revoke
 		previewAccounts,
 	);
 	expect(room(merged, "youth").accountIds).not.toContain("jamie");
-	expect(room(merged, programRoomId("club")).accountIds).toContain("jamie");
+	expect(room(merged, programRoomId("club")).accountIds).not.toContain("jamie");
+	expect(room(merged, "club").accountIds).toContain("jamie");
 });
 
 test("inactive, archived, unknown and out-of-season programs fail closed", (): void => {
@@ -220,8 +221,12 @@ test("managed-room participant lists are current and cannot be edited or forged"
 	expect(state.candidates).toEqual([]);
 	expect(state.members.some((entry) => entry.id === "person:sam")).toBe(true);
 	expect(
-		previewThreadParticipants(data, previewAccounts, account("taylor"), youth)
-			.members,
+		previewThreadParticipants(
+			data,
+			previewAccounts,
+			{ ...account("taylor"), id: "unrelated-account", children: [] },
+			youth,
+		).members,
 	).toEqual([]);
 	expect(() =>
 		addPreviewParticipants(

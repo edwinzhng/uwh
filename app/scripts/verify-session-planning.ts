@@ -287,23 +287,7 @@ const verify = async (): Promise<void> => {
 	assert(lineupPeople(lineupSnapshot(carried)).includes(people.at(-1) ?? ""));
 	assert.deepEqual(await planFor(owner, sourceId), published);
 	await assert.rejects(owner.mutation(api.club.apply, { action: carry }));
-	await owner.mutation(api.club.apply, {
-		action: {
-			type: "save-plan",
-			eventId: targetId,
-			partId: "training",
-			body: "Earlier text-only plan",
-		},
-	});
-	assert.equal(
-		(
-			await owner.query(api.session_plans.state, {
-				eventId: targetId,
-				partId: "training",
-			})
-		).notes,
-		"Earlier text-only plan",
-	);
+
 	const resourceId = await owner.mutation(api.resources.save, {
 		title: "Planning drill reference",
 		description: "Synthetic drill reference",
@@ -311,7 +295,7 @@ const verify = async (): Promise<void> => {
 		category: "drills",
 		audience: "coaches",
 		personIds: [],
-		url: "https://example.test/drill",
+		url: "https://example.test/drill.pdf",
 		key: crypto.randomUUID(),
 		revision: 0,
 	});
@@ -322,7 +306,7 @@ const verify = async (): Promise<void> => {
 		category: "drills",
 		audience: "coaches",
 		personIds: [],
-		url: "https://example.test/private",
+		url: "https://example.test/private.pdf",
 		key: crypto.randomUUID(),
 		revision: 0,
 	});
@@ -331,35 +315,20 @@ const verify = async (): Promise<void> => {
 		partId: "training",
 		requestId: crypto.randomUUID(),
 		revision: 0,
-		objective: "Support the receiver",
+		body: "Support the receiver\nPassing lanes: pass and move into support.\nThree on two: find an open teammate.",
 		notes: "Keep partner rotations short",
-		drills: [
+		media: [
 			{
-				id: "passing",
-				title: "Passing lanes",
-				minutes: 10,
-				instructions: "Pass and move into support",
-				media: [
-					{
-						id: "resource",
-						label: "Planning drill reference",
-						source: "resource",
-						resourceId,
-					},
-					{
-						id: "video",
-						label: "Secure demonstration",
-						source: "link",
-						url: "https://example.test/demo",
-					},
-				],
+				id: "resource",
+				label: "Planning reference",
+				source: "resource",
+				resourceId,
 			},
 			{
-				id: "pressure",
-				title: "Three on two",
-				minutes: 15,
-				instructions: "Find an open teammate",
-				media: [],
+				id: "video",
+				label: "Secure demonstration",
+				source: "link",
+				url: "https://youtu.be/dQw4w9WgXcQ",
 			},
 		],
 	};
@@ -375,21 +344,12 @@ const verify = async (): Promise<void> => {
 	await assert.rejects(
 		owner.mutation(api.session_plans.save, {
 			...command,
-			drills: [
+			media: [
 				{
-					...command.drills.at(0),
 					id: "foreign",
-					title: "Foreign",
-					minutes: 5,
-					instructions: "",
-					media: [
-						{
-							id: "other",
-							label: "Foreign",
-							source: "resource",
-							resourceId: foreignResource,
-						},
-					],
+					label: "Foreign",
+					source: "resource",
+					resourceId: foreignResource,
 				},
 			],
 		}),
@@ -403,11 +363,8 @@ const verify = async (): Promise<void> => {
 		partId: "training",
 	});
 	assert.equal(saved.revision, 1);
-	assert.deepEqual(
-		saved.drills.map((drill) => drill.id),
-		["passing", "pressure"],
-	);
-	assert.equal(saved.drills.at(0)?.media.length, 2);
+	assert.equal(saved.body, command.body);
+	assert.equal(saved.media.length, 2);
 	assert.equal(
 		(
 			await owner.query(api.session_plans.state, {
@@ -468,20 +425,12 @@ const verify = async (): Promise<void> => {
 			...command,
 			revision: 2,
 			requestId: crypto.randomUUID(),
-			drills: [
+			media: [
 				{
 					id: "unsafe",
-					title: "Unsafe",
-					minutes: 5,
-					instructions: "",
-					media: [
-						{
-							id: "url",
-							label: "Unsafe",
-							source: "link",
-							url: "javascript:alert(1)",
-						},
-					],
+					label: "Unsafe",
+					source: "link",
+					url: "javascript:alert(1)",
 				},
 			],
 		}),
@@ -506,7 +455,7 @@ const verify = async (): Promise<void> => {
 		2,
 	);
 	console.log(
-		"Session-planning checks passed: exact pool spots, dual-role referee persistence/publication, protected carry-forward with current eligibility and concurrency, unchanged source, coach-only structured plans, legacy notes, protected resource references, ordered drills/media, part/club isolation, canonical retry keys, stale/concurrent saves and cancelled-session guards.",
+		"Session-planning checks passed: exact pool spots, dual-role referee persistence/publication, protected carry-forward with current eligibility and concurrency, unchanged source, coach-only freeform plans, private notes, protected resource references, ordered media, part/club isolation, canonical retry keys, stale/concurrent saves and cancelled-session guards.",
 	);
 };
 

@@ -19,7 +19,6 @@ export const EmojiChoice = ({
 	isSelected?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
-	const [hovered, setHovered] = useState(false);
 	const [focused, setFocused] = useState(false);
 	const haptic = useButtonHaptics();
 	return (
@@ -28,8 +27,6 @@ export const EmojiChoice = ({
 			accessibilityLabel={label}
 			accessibilityState={{ disabled: isDisabled, selected: isSelected }}
 			disabled={isDisabled}
-			onHoverIn={(): void => setHovered(true)}
-			onHoverOut={(): void => setHovered(false)}
 			onFocus={(): void => setFocused(true)}
 			onBlur={(): void => setFocused(false)}
 			onPress={(): void => {
@@ -47,12 +44,11 @@ export const EmojiChoice = ({
 				outlineWidth: focused ? geometry.focus : 0,
 				outlineColor: theme.focus,
 				outlineOffset: -geometry.focus,
-				backgroundColor:
-					pressed || hovered
-						? theme.background.pressed
-						: isSelected
-							? theme.background.selected
-							: "transparent",
+				backgroundColor: pressed
+					? theme.background.pressed
+					: isSelected
+						? theme.background.selected
+						: "transparent",
 				opacity: isDisabled ? geometry.disabledOpacity : 1,
 				paddingVertical: space.xxs,
 			})}

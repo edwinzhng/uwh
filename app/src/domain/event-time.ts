@@ -47,6 +47,17 @@ export const signupState = (
 			: event.opensAt !== undefined
 				? "open"
 				: event.signup;
+export const futureSignupOpening = (
+	event: ClubEvent,
+	now: number,
+): number | undefined =>
+	!event.cancelled &&
+	event.opensAt !== undefined &&
+	event.closesAt !== undefined &&
+	event.opensAt > now &&
+	event.opensAt < event.closesAt
+		? event.opensAt
+		: undefined;
 export const signupWindow = (
 	date: string,
 	draft: EventDraft,

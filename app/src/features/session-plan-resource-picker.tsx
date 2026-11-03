@@ -53,8 +53,8 @@ const Options = ({
 		)}
 		{!state.loading && !state.items.length ? (
 			<EmptyState
-				title="No matching resources"
-				description="Add a resource in Club → Resources, or attach a secure media link."
+				title="No matching files"
+				description="Add a resource in Club → Files, or attach a secure media link."
 			/>
 		) : undefined}
 		{state.loadMore ? (

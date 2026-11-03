@@ -36,7 +36,7 @@ export const FitnessSessions = ({
 							/>
 						</Row>
 					) : undefined}
-					<Surface padding="xs">
+					<Surface>
 						<List>
 							{sessions.results.map((session) => (
 								<ListItem

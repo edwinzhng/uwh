@@ -197,6 +197,7 @@ test("preview photos are actor/person bound with idempotent upload and bounded p
 		.get(previewDataAtom)
 		.members.find((member) => member.id === "sam");
 	if (!sam) throw new Error("Fixture unavailable");
+	store.set(previewAccountIdAtom, "jamie");
 	expect(() =>
 		store.set(savePreviewMemberProfile, {
 			...input,
@@ -204,11 +205,14 @@ test("preview photos are actor/person bound with idempotent upload and bounded p
 			expectedName: sam.name,
 			personId: "sam",
 			revision: 0,
-			actorId: "alex",
+			actorId: "jamie",
 			key: "profile-preview-wrong-photo",
+			capNumber:
+				store.get(previewMemberProfiles)[sam.id]?.capNumber?.toString() ?? "",
 			photoId: id,
 		}),
 	).toThrow("Photo unavailable");
+	store.set(previewAccountIdAtom, "alex");
 	for (const index of [1, 2, 3])
 		store.set(uploadPreviewProfilePhoto, {
 			...upload,

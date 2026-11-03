@@ -29,6 +29,7 @@ export const ConversationRow = ({
 	const pathname = usePathname();
 	return (
 		<ListItem
+			density="compact"
 			title={thread.title}
 			selected={id === thread.id}
 			titleLines={1}
@@ -48,7 +49,7 @@ export const ConversationRow = ({
 			}
 			trailing={
 				<Stack gap="xxs">
-					<Text variant="caption" tone="secondary">
+					<Text variant="navigation" tone="secondary">
 						{thread.latest
 							? chatTimeLabel(conversationActivityAt(thread), data.timeZone)
 							: undefined}

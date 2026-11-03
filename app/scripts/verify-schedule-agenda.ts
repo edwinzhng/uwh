@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import type { ScheduleEntry } from "../convex/pages";
 import { addDays } from "../src/domain/calendar-dates";
@@ -114,6 +115,58 @@ try {
 		pages.flat().map((entry) => entry.event.id),
 		[upcoming, "agenda-last-0"],
 	);
+	const historyPagesFor = async (
+		cursor: string | null,
+		programId?: string,
+	): Promise<ScheduleEntry[][]> => {
+		const page = await client.query(api.schedule_agenda.historical, {
+			now,
+			programId,
+			paginationOpts: { numItems: 1, cursor },
+		});
+		assert(page.page.length <= 1);
+		return [
+			page.page,
+			...(page.isDone
+				? []
+				: await historyPagesFor(page.continueCursor, programId)),
+		];
+	};
+	const history = await historyPagesFor(null);
+	assert(history.some((page) => page.length === 0));
+	const historyIds = history.flat().map((entry) => entry.event.id);
+	assert.equal(new Set(historyIds).size, historyIds.length);
+	assert.deepEqual(
+		historyIds.filter((id) => id.startsWith("agenda-")),
+		[recent, "agenda-old-0", "agenda-youth-past-0"],
+	);
+	const clubHistory = (await historyPagesFor(null, "club")).flat();
+	assert(clubHistory.every((entry) => entry.event.program === "club"));
+	assert.deepEqual(
+		clubHistory
+			.filter((entry) => entry.event.id.startsWith("agenda-"))
+			.map((entry) => entry.event.id),
+		[recent, "agenda-old-0"],
+	);
+	const anonymous = new ConvexHttpClient("http://127.0.0.1:3210", {
+		logger: false,
+	});
+	await assert.rejects(
+		anonymous.query(api.schedule_agenda.historical, {
+			now,
+			paginationOpts: { numItems: 1, cursor: null },
+		}),
+	);
+	const otherClub = await verification.fixture("Other schedule club");
+	await otherClub.client.mutation(api.club.create, {
+		name: "Other schedule verification",
+		samples: false,
+	});
+	const unrelated = await otherClub.client.query(
+		api.schedule_agenda.historical,
+		{ now, paginationOpts: { numItems: 20, cursor: null } },
+	);
+	assert.deepEqual(unrelated.page, []);
 	const detail = await client.query(api.club.current, {
 		screen: "session",
 		id: upcoming,
@@ -189,7 +242,7 @@ try {
 		}),
 	);
 	console.log(
-		"One recent event, upcoming program filters, independent section saves, and contradictory-choice rejection verified.",
+		"One recent event, paginated upward history, program filters, club isolation, independent section saves, and contradictory-choice rejection verified.",
 	);
 	if (process.env.UI_REVIEW === "true") {
 		const account = await client.query(api.account.current, {});

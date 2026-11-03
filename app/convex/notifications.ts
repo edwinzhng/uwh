@@ -7,6 +7,7 @@ import {
 	notificationPreferenceFor,
 	resolvedNotificationPreferences,
 } from "../src/domain/notification-preferences";
+import { canUnregisterInstallation } from "../src/domain/push-installation-ownership";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import {
@@ -20,6 +21,7 @@ import {
 import { getAuthUserId, memberFor, requireMember } from "./identity";
 import { recordInbox } from "./inbox_store";
 import { notificationContent } from "./notification_access";
+import { requiresSessionReminders } from "./notification_event_changes";
 import { notificationPreference } from "./notification_schema";
 import { pushRegistrationPlan } from "./push_registration";
 import { recordWebPush } from "./web_push_store";
@@ -114,10 +116,13 @@ export const register = mutation({
 	},
 });
 export const unregister = mutation({
-	args: { installationId: v.optional(v.string()) },
-	handler: async (ctx, { installationId }): Promise<void> => {
+	args: {
+		installationId: v.optional(v.string()),
+		expectedUserId: v.optional(v.id("users")),
+	},
+	handler: async (ctx, { installationId, expectedUserId }): Promise<void> => {
 		const userId = await getAuthUserId(ctx);
-		if (!userId) return;
+		if (!userId || !canUnregisterInstallation(userId, expectedUserId)) return;
 		const devices = await ctx.db
 			.query("pushDevices")
 			.withIndex("by_user", (q) => q.eq("userId", userId))
@@ -169,8 +174,7 @@ export const pushEnabled = async (
 	)
 		return false;
 	return (
-		job.kind !== "events" ||
-		(job.topic && job.topic !== "event") ||
+		!requiresSessionReminders(job) ||
 		Boolean((await ctx.db.get(job.clubId))?.reminders)
 	);
 };

@@ -11,12 +11,12 @@ import {
 } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import {
-	moveSessionDrill,
+	maxSessionPlanBodyLength,
 	normalizeSessionPlan,
 	type SessionPlan,
 	validateSessionPlan,
 } from "../domain/session-plan";
-import { SessionDrillEditor } from "./session-drill-editor";
+import { SessionDrillMediaEditor } from "./session-drill-media-editor";
 import { useFormTask } from "./use-form-task";
 import { useOperationKey } from "./use-operation-key";
 
@@ -33,13 +33,7 @@ export const SessionPlanEditor = ({
 	save: SessionPlanService["save"];
 	onClose: () => void;
 }): ReactElement => {
-	const [draft, setDraft] = useState({
-		...plan,
-		body: plan.body ?? "",
-		goals: plan.goals ?? plan.objective,
-		objective: "",
-	});
-	const [revealErrors, setRevealErrors] = useState(false);
+	const [draft, setDraft] = useState(plan);
 	const task = useFormTask();
 	const operationKey = useOperationKey();
 
@@ -47,7 +41,7 @@ export const SessionPlanEditor = ({
 		<Dialog
 			intent="form"
 			isDismissDisabled={task.busy}
-			title="Session plan"
+			title="Plan"
 			isOpen
 			onOpenChange={(open): void => {
 				if (!open && !task.busy) onClose();
@@ -57,7 +51,6 @@ export const SessionPlanEditor = ({
 					label="Save plan"
 					isLoading={task.busy}
 					onPress={(): void => {
-						setRevealErrors(true);
 						void task.submit(
 							() => validateSessionPlan(draft),
 							async (): Promise<void> => {
@@ -90,67 +83,16 @@ export const SessionPlanEditor = ({
 					value={draft.body}
 					onValueChange={(body): void => setDraft({ ...draft, body })}
 					placeholder="Write the session plan…"
-					maxLength={20000}
+					maxLength={maxSessionPlanBodyLength}
 					isDisabled={task.busy}
 				/>
-				<Field
-					label="Goals / game focus"
-					value={draft.goals}
-					onValueChange={(goals): void => setDraft({ ...draft, goals })}
-					placeholder={
-						"Game focus\n- Stay tight on the bottom\n- Sub on the fly\n- Balance the load"
+				<SessionDrillMediaEditor
+					media={draft.media}
+					disabled={task.busy}
+					onChange={(media): void =>
+						setDraft((current) => ({ ...current, media }))
 					}
-					multiline
-					rows={5}
-					maxLength={10000}
-					isDisabled={task.busy}
 				/>
-				{draft.drills.length ? (
-					<Disclosure
-						title="Existing drills and attachments"
-						summary={`${draft.drills.length} saved drills`}
-						isDisabled={task.busy}
-					>
-						<Stack>
-							{draft.drills.map((drill, index) => (
-								<SessionDrillEditor
-									key={drill.id}
-									drill={drill}
-									index={index}
-									count={draft.drills.length}
-									disabled={task.busy}
-									revealErrors={revealErrors}
-									onChange={(next): void =>
-										setDraft({
-											...draft,
-											drills: draft.drills.map((entry) =>
-												entry.id === drill.id ? next : entry,
-											),
-										})
-									}
-									onMove={(direction): void =>
-										setDraft({
-											...draft,
-											drills: moveSessionDrill(
-												draft.drills,
-												drill.id,
-												direction,
-											),
-										})
-									}
-									onRemove={(): void =>
-										setDraft({
-											...draft,
-											drills: draft.drills.filter(
-												(entry) => entry.id !== drill.id,
-											),
-										})
-									}
-								/>
-							))}
-						</Stack>
-					</Disclosure>
-				) : undefined}
 				<Disclosure
 					title="Private coaching notes"
 					summary={draft.notes ? "Notes added · coaches only" : "Coaches only"}
@@ -171,13 +113,7 @@ export const SessionPlanEditor = ({
 						variant="secondary"
 						isDisabled={task.busy}
 						onPress={(): void => {
-							setDraft({
-								...plan,
-								body: plan.body ?? "",
-								goals: plan.goals ?? plan.objective,
-								objective: "",
-							});
-							setRevealErrors(false);
+							setDraft(plan);
 							task.clear();
 						}}
 					/>

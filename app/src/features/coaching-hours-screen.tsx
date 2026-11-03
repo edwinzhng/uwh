@@ -4,7 +4,6 @@ import { useApp } from "../demo/app-state";
 import { Button, Row, Stack, TabContent, Tabs, Text } from "../design-system";
 import { ClubShell } from "./club-shell";
 import { CoachingHoursReport } from "./coaching-hours-report";
-import { CoachingPractices } from "./coaching-practices";
 import { ProgramCoachingRoster } from "./program-coaching-roster";
 import { SeasonSelect } from "./season-select";
 import {
@@ -14,32 +13,51 @@ import {
 import { useSeason } from "./use-season";
 
 const LiveReport = ({ seasonId }: { seasonId: string }): ReactElement => {
-	const { practices, loading } = useLiveCoachingHours(seasonId);
-	return <CoachingHoursReport practices={practices} loading={loading} />;
+	const { practices, coaches, loading, correct } =
+		useLiveCoachingHours(seasonId);
+	return (
+		<CoachingHoursReport
+			correct={correct}
+			practices={practices}
+			coaches={coaches}
+			loading={loading}
+		/>
+	);
 };
 const PreviewReport = ({ seasonId }: { seasonId: string }): ReactElement => {
-	const { practices, loading } = usePreviewCoachingHours(seasonId);
-	return <CoachingHoursReport practices={practices} loading={loading} />;
+	const { practices, coaches, loading, correct } =
+		usePreviewCoachingHours(seasonId);
+	return (
+		<CoachingHoursReport
+			correct={correct}
+			practices={practices}
+			coaches={coaches}
+			loading={loading}
+		/>
+	);
 };
 export const CoachingHoursScreen = (): ReactElement => {
 	const router = useRouter();
 	const { account, source } = useApp();
 	const [seasonId] = useSeason();
 	const params = useLocalSearchParams<{ tab?: string }>();
-	const tab = params.tab === "hours" ? "hours" : "assignments";
+	const tab =
+		params.tab === "program-coaches" || params.tab === "assignments"
+			? "program-coaches"
+			: "hours";
 	return (
 		<ClubShell
-			title="Coaching"
+			title="Hours"
 			tabs={
 				account.admin || account.coachPrograms.length ? (
 					<Tabs
 						page
 						hideLabel
-						label="Coaching"
+						label="Hours"
 						value={tab}
 						options={[
-							{ value: "assignments", label: "Assignments" },
 							{ value: "hours", label: "Hours" },
+							{ value: "program-coaches", label: "Program coaches" },
 						]}
 						onValueChange={(value): void => router.setParams({ tab: value })}
 					/>
@@ -60,18 +78,15 @@ export const CoachingHoursScreen = (): ReactElement => {
 				<Text>Coach access required.</Text>
 			) : (
 				<TabContent value={tab}>
-					{tab === "assignments" ? (
-						<Stack gap="xl">
-							<CoachingPractices />
-							<ProgramCoachingRoster />
-						</Stack>
+					{tab === "program-coaches" ? (
+						<ProgramCoachingRoster />
 					) : (
 						<Stack>
 							<SeasonSelect />
 							{source === "convex" ? (
-								<LiveReport key={seasonId} seasonId={seasonId} />
+								<LiveReport seasonId={seasonId} />
 							) : (
-								<PreviewReport key={seasonId} seasonId={seasonId} />
+								<PreviewReport seasonId={seasonId} />
 							)}
 						</Stack>
 					)}

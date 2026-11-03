@@ -2,7 +2,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { atom, useAtom } from "jotai";
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { ContextPicker, GlassPanel, TabContent } from "../design-system";
+import {
+	ClubMark,
+	ContextPicker,
+	GlassPanel,
+	TabContent,
+} from "../design-system";
 import { canCoach } from "../domain/app-rules";
 import { nextCoachingEvent } from "../domain/home";
 import { ClubShell } from "./club-shell";
@@ -28,7 +33,8 @@ export const HomeScreen = (): ReactElement => {
 	return (
 		<ClubShell
 			title="Summary"
-			toolbarLeading={
+			toolbarLeading={<ClubMark />}
+			toolbarCenter={
 				canCoach(account) ? (
 					<GlassPanel padding="none" shape="pill" interactive>
 						<ContextPicker

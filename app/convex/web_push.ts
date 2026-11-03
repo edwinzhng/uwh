@@ -1,6 +1,7 @@
 import { getAuthSessionId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { notificationPayload } from "../src/domain/notification-payload";
+import { canUnregisterInstallation } from "../src/domain/push-installation-ownership";
 import { validateBrowserSubscription } from "../src/domain/web-push";
 import { internal } from "./_generated/api";
 import {
@@ -130,10 +131,13 @@ export const register = mutation({
 	},
 });
 export const unregister = mutation({
-	args: { installationId: v.optional(v.string()) },
-	handler: async (ctx, { installationId }): Promise<void> => {
+	args: {
+		installationId: v.optional(v.string()),
+		expectedUserId: v.optional(v.id("users")),
+	},
+	handler: async (ctx, { installationId, expectedUserId }): Promise<void> => {
 		const userId = await getAuthUserId(ctx);
-		if (!userId) return;
+		if (!userId || !canUnregisterInstallation(userId, expectedUserId)) return;
 		const rows = await ctx.db
 			.query("webPushSubscriptions")
 			.withIndex("by_user", (q) => q.eq("userId", userId))

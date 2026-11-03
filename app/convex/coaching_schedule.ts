@@ -2,11 +2,7 @@ import { v } from "convex/values";
 import type { ClubEvent } from "../src/domain/app-types";
 import {
 	type CoachingAssignment,
-	coachingPartIds,
-	coachingPartMinutes,
 	maxPracticeCoaches,
-	practiceCoachingDuration,
-	resolvedCoachingAssignment,
 } from "../src/domain/coaching-hours";
 import {
 	changedCoachingPrograms,
@@ -16,6 +12,8 @@ import {
 	validateProgramCoaching,
 	type WeeklyCoachingSchedule,
 } from "../src/domain/coaching-schedule";
+import { effectivePracticeCoaches } from "../src/domain/event-coaching";
+import { clubTimestamp } from "../src/domain/event-time";
 import { defaultPrograms } from "../src/domain/programs";
 import { defaultSeasonId } from "../src/domain/seasons";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -93,43 +91,56 @@ export const effectiveEventCoaches = async (
 			.unique(),
 	]);
 	const usingWeekly = !rows.length && !override;
-	const defaults = usingWeekly
-		? await Promise.all(
-				programCoachesFor(schedule, event.program).map((id) =>
-					activeCoach(ctx, clubId, id),
-				),
-			)
-		: [];
-	const assignments: CoachingAssignment[] = usingWeekly
-		? defaults.flatMap((coach) =>
-				coach?.coachPrograms.includes(event.program)
-					? [
-							{
-								coachId: coach.userId,
-								personId: coach.personId,
-								name: coach.name,
-								durationMinutes: event.parts?.length
-									? coachingPartMinutes(event)
-									: practiceCoachingDuration(event),
-							},
-						]
-					: [],
-			)
-		: rows.map(({ coachId, personId, name, durationMinutes, partIds }) => ({
-				coachId,
-				personId,
-				name,
-				durationMinutes,
-				partIds,
-			}));
+	const historical = usingWeekly
+		? await ctx.db
+				.query("coachingScheduleHistory")
+				.withIndex("by_club_until", (q) =>
+					q
+						.eq("clubId", clubId)
+						.gte(
+							"validUntil",
+							clubTimestamp(
+								event.endDate ?? event.date,
+								event.end,
+								event.timeZone,
+							),
+						),
+				)
+				.first()
+		: undefined;
+	const effectiveSchedule = historical ?? schedule;
+	const defaults =
+		usingWeekly && !historical
+			? await Promise.all(
+					programCoachesFor(effectiveSchedule, event.program).map((id) =>
+						activeCoach(ctx, clubId, id),
+					),
+				)
+			: [];
+	const roster =
+		historical?.coaches ??
+		defaults.flatMap((coach) =>
+			coach
+				? [
+						{
+							coachId: coach.userId,
+							personId: coach.personId,
+							name: coach.name,
+							programIds: coach.coachPrograms,
+						},
+					]
+				: [],
+		);
+	const assignments = effectivePracticeCoaches(
+		event,
+		effectiveSchedule,
+		roster,
+		usingWeekly ? undefined : rows,
+		partId,
+	);
+
 	return {
-		assignments: assignments
-			.filter(
-				(entry) =>
-					!partId || coachingPartIds(event, entry.partIds).includes(partId),
-			)
-			.map((entry) => resolvedCoachingAssignment(event, entry, partId))
-			.filter((entry) => entry.durationMinutes > 0),
+		assignments,
 		usingWeekly,
 		backupCoachIds: schedule.backupCoachIds,
 	};
@@ -237,6 +248,33 @@ export const save = mutation({
 			),
 		);
 		if (accessError) throw new Error(accessError);
+		if (stored && changedPrograms.length) {
+			const previousIds = [
+				...new Set(
+					(previous.programs ?? []).flatMap((program) => program.coachIds),
+				),
+			];
+			const previousCoaches = await Promise.all(
+				previousIds.map((id) => activeCoach(ctx, actor.clubId, id)),
+			);
+			await ctx.db.insert("coachingScheduleHistory", {
+				clubId: actor.clubId,
+				validUntil: Date.now(),
+				...previous,
+				coaches: previousCoaches.flatMap((coach) =>
+					coach
+						? [
+								{
+									coachId: coach.userId,
+									personId: coach.personId,
+									name: coach.name,
+									programIds: coach.coachPrograms,
+								},
+							]
+						: [],
+				),
+			});
+		}
 		const next = { ...schedule, revision: schedule.revision + 1 };
 		if (stored) await ctx.db.patch(stored._id, next);
 		else

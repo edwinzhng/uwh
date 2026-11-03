@@ -15,6 +15,7 @@ export type MemberProfile = {
 	contact?: { email: string; phone: string };
 	revision: number;
 	canEdit: boolean;
+	canEditCapNumber: boolean;
 };
 export type MemberProfileInput = {
 	name: string;
@@ -27,6 +28,12 @@ export type MemberProfileSave = MemberProfileInput & {
 	personId: string;
 	revision: number;
 	expectedName: string;
+	key: string;
+};
+export type MemberCapNumberSave = {
+	personId: string;
+	capNumber: string;
+	revision: number;
 	key: string;
 };
 export const memberProfileLimits = {
@@ -43,6 +50,19 @@ export const canEditMemberProfile = (
 ): boolean =>
 	!member.archived &&
 	(account.personId === member.id || account.children.includes(member.id));
+export const canEditMemberCapNumber = (
+	account: Pick<Account, "admin" | "coachPrograms">,
+	member: Pick<Member, "archived" | "mergedInto" | "programs">,
+): boolean =>
+	!member.archived &&
+	!member.mergedInto &&
+	member.programs.some((program) => account.coachPrograms.includes(program));
+export const memberCapNumberError = (capNumber: string): string | undefined => {
+	const cap = capNumber.trim();
+	return cap && (!/^\d{1,2}$/.test(cap) || Number(cap) < 1 || Number(cap) > 99)
+		? "Choose a cap number from 1–99"
+		: undefined;
+};
 export const memberProfileError = (
 	input: MemberProfileInput,
 ): string | undefined => {
@@ -66,9 +86,8 @@ export const memberProfileError = (
 			digits.length > 15)
 	)
 		return "Use a phone number with 7–15 digits";
-	const cap = input.capNumber.trim();
-	if (cap && (!/^\d{1,2}$/.test(cap) || Number(cap) < 1 || Number(cap) > 99))
-		return "Choose a cap number from 1–99";
+	const capError = memberCapNumberError(input.capNumber);
+	if (capError) return capError;
 	if (input.photoId && input.photoId.length > 120)
 		return "Choose a valid profile photo.";
 	return undefined;
@@ -105,4 +124,5 @@ export const memberProfileProjection = (
 		: undefined,
 	revision: fields?.revision ?? 0,
 	canEdit: canEditMemberProfile(account, member),
+	canEditCapNumber: canEditMemberCapNumber(account, member),
 });

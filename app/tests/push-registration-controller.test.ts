@@ -175,3 +175,82 @@ test("push bridge forwards emitted tokens and does not restart on route changes"
 	expect(bridge).toContain("registerNativePush(false, token)");
 	expect(bridge).toContain("[register, unregister, account.id]");
 });
+
+test("a foreground permission refresh during acquisition is not dropped", async (): Promise<void> => {
+	const pending: { finish?: () => void } = {};
+	const state = { enabled: true, reads: 0, writes: 0, removals: 0 };
+	const controller = createPushRegistrationController<Token>({
+		read: async () => {
+			state.reads += 1;
+			const enabled = state.enabled;
+			if (state.reads === 1)
+				await new Promise<void>((resolve) => {
+					pending.finish = resolve;
+				});
+			return enabled ? registration : undefined;
+		},
+		register: async (): Promise<void> => {
+			state.writes += 1;
+		},
+		unregister: async (): Promise<void> => {
+			state.removals += 1;
+		},
+	});
+	const first = controller.refresh();
+	await Promise.resolve();
+	state.enabled = false;
+	void controller.refresh();
+	pending.finish?.();
+	await first;
+	expect(state).toEqual({ enabled: false, reads: 2, writes: 1, removals: 1 });
+	controller.stop();
+});
+
+test("a stopped controller resumes registration after a failed logout cleanup", async (): Promise<void> => {
+	const state = { writes: 0 };
+	const controller = createPushRegistrationController<
+		never,
+		typeof registration
+	>({
+		read: async () => registration,
+		register: async (): Promise<void> => {
+			state.writes += 1;
+		},
+		unregister: async (): Promise<void> => {},
+	});
+	await controller.refresh();
+	controller.stop();
+	await controller.refresh();
+	expect(state.writes).toBe(1);
+	await controller.resume();
+	expect(state.writes).toBe(2);
+	controller.stop();
+});
+
+test("resuming while an old registration finishes still restores the server registration", async (): Promise<void> => {
+	const pending: { finish?: () => void } = {};
+	const state = { writes: 0 };
+	const controller = createPushRegistrationController<
+		never,
+		typeof registration
+	>({
+		read: async () => registration,
+		register: async (): Promise<void> => {
+			state.writes += 1;
+			if (state.writes === 1)
+				await new Promise<void>((resolve) => {
+					pending.finish = resolve;
+				});
+		},
+		unregister: async (): Promise<void> => {},
+	});
+	const first = controller.refresh();
+	await Promise.resolve();
+	await Promise.resolve();
+	controller.stop();
+	const resumed = controller.resume();
+	pending.finish?.();
+	await Promise.all([first, resumed]);
+	expect(state.writes).toBe(2);
+	controller.stop();
+});

@@ -97,6 +97,7 @@ export const LineupPlayerTools = ({
 								.map((member) => ({
 									value: member.id,
 									label: member.name,
+									person: { id: member.id, name: member.name },
 								}))}
 							isDisabled={disabled}
 							onValueChange={(value): void => {
@@ -125,6 +126,7 @@ export const LineupPlayerTools = ({
 					options={people.map((id) => ({
 						value: id,
 						label: memberName(data, id),
+						person: { id, name: memberName(data, id) },
 					}))}
 					isDisabled={disabled}
 					onValueChange={choosePlayer}
@@ -185,7 +187,11 @@ export const LineupPlayerTools = ({
 											(entry) => entry.personId === personId,
 										)?.ageGroup),
 						)
-						.map((id) => ({ value: id, label: memberName(data, id) }))}
+						.map((id) => ({
+							value: id,
+							label: memberName(data, id),
+							person: { id, name: memberName(data, id) },
+						}))}
 					isDisabled={disabled}
 					onValueChange={setSwapId}
 				/>

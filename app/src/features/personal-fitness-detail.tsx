@@ -26,12 +26,14 @@ export const PersonalFitnessDetail = ({
 					</Text>
 					<Text variant="number">{format(latest?.value)}</Text>
 				</Stack>
-				<Stack gap="xs">
-					<Text variant="caption" tone="secondary">
-						Personal best
-					</Text>
-					<Text variant="number">{format(row.stats?.best)}</Text>
-				</Stack>
+				{row.test.unit !== "pass_fail" ? (
+					<Stack gap="xs">
+						<Text variant="caption" tone="secondary">
+							Personal best
+						</Text>
+						<Text variant="number">{format(row.stats?.best)}</Text>
+					</Stack>
+				) : undefined}
 			</Row>
 			<Text variant="small" tone="secondary">
 				{fitnessUnitLabel(row.test.unit, fitnessLowerIsBetter(row.test))}

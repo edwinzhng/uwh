@@ -5,6 +5,7 @@ import {
 	browserNotificationStatus,
 	disableBrowserNotifications,
 	registerBrowserNotifications,
+	watchBrowserNotifications,
 } from "../backend/browser-push";
 import { useBrowserInstall } from "../backend/use-browser-install";
 import { Button, Row, Stack, Text } from "../design-system";
@@ -19,7 +20,11 @@ export const BrowserNotificationSettings = (): ReactElement => {
 	const [capability, setCapability] =
 		useState<ReturnType<typeof browserNotificationStatus>>();
 	const [status, setStatus] = useState<string>();
-	useEffect((): void => setCapability(browserNotificationStatus()), []);
+	useEffect(() => {
+		const refresh = (): void => setCapability(browserNotificationStatus());
+		refresh();
+		return watchBrowserNotifications(refresh);
+	}, []);
 	return (
 		<Stack gap="sm">
 			<Text variant="small" tone="secondary">

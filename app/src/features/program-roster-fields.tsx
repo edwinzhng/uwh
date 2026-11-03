@@ -1,9 +1,9 @@
 import { type ReactElement, useState } from "react";
 import {
-	Checkbox,
 	EmptyState,
 	Field,
 	List,
+	PersonChoice,
 	Stack,
 	Text,
 } from "../design-system";
@@ -41,9 +41,10 @@ export const ProgramRosterFields = ({
 			<Text variant="label">{value.length} members selected</Text>
 			<List>
 				{matching.map((member) => (
-					<Checkbox
+					<PersonChoice
 						key={member.id}
-						label={member.name}
+						name={member.name}
+						personId={member.id}
 						checked={value.includes(member.id)}
 						isDisabled={disabled}
 						onChange={(checked): void => {

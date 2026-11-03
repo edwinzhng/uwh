@@ -66,8 +66,9 @@ test("the schedule team preview leaves its title to the dialog and only renders 
 	const preview = await Bun.file(
 		"src/features/event-preview-actions.tsx",
 	).text();
-	expect(preview).toContain('title="My team"');
-	expect(preview).toContain("plan.published");
+	expect(preview).toContain('title="Lineup"');
+	expect(preview).toContain("publishedEventLineups(");
+	expect(preview).toContain("eventResponse(data, event.id, person.id)");
 	expect(preview).toContain(
 		"<TeamPool plan={plan} side={side} group={group} />",
 	);

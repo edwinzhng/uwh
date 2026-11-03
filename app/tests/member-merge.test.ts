@@ -366,8 +366,9 @@ test("Jotai merge is atomic, replay-safe, stale-safe and preserves canonical goa
 	).toBe(9);
 	expect(
 		after.members.find((row) => row.id === canonical.id)?.programs,
-	).toEqual(["club", "youth"]);
+	).toEqual(["club", "youth", "sunday", "friday"]);
 	expect(after.responses.some((row) => row.personId === sam.id)).toBe(false);
+	store.set(previewAccountIdAtom, "jamie");
 	expect(store.get(previewAccountAtom).children).toContain(canonical.id);
 	expect(store.get(previewAccountAtom).children).not.toContain(sam.id);
 	expect(store.get(previewGoalReflectionsAtom).at(0)).toMatchObject({

@@ -1,5 +1,6 @@
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { type ReactElement, useId } from "react";
+import { Avatar } from "./avatar";
 import { HoverSurface } from "./hover-surface.web";
 import { Icon } from "./icon";
 import { matchesQuery } from "./matches-query";
@@ -50,7 +51,15 @@ export const Combobox = <T extends string>({
 					{label}
 				</label>
 				<BaseCombobox.InputGroup className="club-combo">
-					<Icon name="search" tone="secondary" />
+					{selected?.person ? (
+						<Avatar
+							name={selected.person.name ?? selected.label}
+							personId={selected.person.id}
+							compact
+						/>
+					) : (
+						<Icon name="search" tone="secondary" />
+					)}
 					<BaseCombobox.Input
 						id={id}
 						placeholder={placeholder}
@@ -94,15 +103,23 @@ export const Combobox = <T extends string>({
 										disabled={option.isDisabled}
 										className="club-popup-item"
 									>
-										{option.icon ? (
+										{option.person ? (
+											<Avatar
+												name={option.person.name ?? option.label}
+												personId={option.person.id}
+												compact
+											/>
+										) : option.icon ? (
 											<Icon name={option.icon} tone="secondary" />
 										) : undefined}
 										<span className="club-popup-item-label">
 											{option.label}
 										</span>
-										<BaseCombobox.ItemIndicator className="club-popup-indicator">
-											<Icon name="check" />
-										</BaseCombobox.ItemIndicator>
+										<span className="club-popup-indicator">
+											<BaseCombobox.ItemIndicator>
+												<Icon name="check" />
+											</BaseCombobox.ItemIndicator>
+										</span>
 									</BaseCombobox.Item>
 								)}
 							</BaseCombobox.List>

@@ -25,7 +25,11 @@ export const TeamCaptain = ({
 			value={personId ?? "none"}
 			options={[
 				{ value: "none", label: "No captain" },
-				...people.map((id) => ({ value: id, label: memberName(data, id) })),
+				...people.map((id) => ({
+					value: id,
+					label: memberName(data, id),
+					person: { id, name: memberName(data, id) },
+				})),
 			]}
 			onValueChange={(id): void => {
 				if (id) onChange(id === "none" ? undefined : id);

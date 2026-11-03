@@ -105,7 +105,10 @@ test("Home relevance includes all household players and respects explicit invita
 
 test("household attendance explains hidden eligibility without dropping children", async (): Promise<void> => {
 	const { householdAttendanceReason } = await import("../src/domain/home");
-	const people = householdMembers(initialAppData, primaryAccount);
+	const people = householdMembers(initialAppData, {
+		...primaryAccount,
+		children: ["sam", "mila"],
+	});
 	const sam = people.find((person) => person.id === "sam");
 	const mila = people.find((person) => person.id === "mila");
 	if (!sam || !mila) throw new Error("Both children must be present");

@@ -1,23 +1,14 @@
 import type { Account, ClubEvent, Member } from "./app-types";
 import { canRegister } from "./event-eligibility";
-import { resourceUrl } from "./resources";
+import { resourceUrl, supportedResourceLink } from "./resources";
 
 export type SessionPlanMedia =
 	| { id: string; label: string; source: "link"; url: string }
 	| { id: string; label: string; source: "resource"; resourceId: string };
-export type SessionDrill = {
-	id: string;
-	title: string;
-	minutes: number;
-	instructions: string;
-	media: SessionPlanMedia[];
-};
 export type SessionPlanDraft = {
-	body?: string;
-	goals?: string;
-	objective: string;
+	body: string;
+	media: SessionPlanMedia[];
 	notes: string;
-	drills: SessionDrill[];
 };
 export type SessionPlan = SessionPlanDraft & {
 	revision: number;
@@ -25,10 +16,7 @@ export type SessionPlan = SessionPlanDraft & {
 	published?: boolean;
 	publishedAt?: number;
 };
-export type SharedSessionPlan = Pick<
-	SessionPlanDraft,
-	"objective" | "drills" | "body" | "goals"
-> & {
+export type SharedSessionPlan = Pick<SessionPlanDraft, "body" | "media"> & {
 	revision: number;
 	publishedAt: number;
 };
@@ -45,86 +33,57 @@ export type SessionPlanCommand = SessionPlanDraft & {
 	revision: number;
 	requestId: string;
 };
-export const emptySessionPlan = (notes = ""): SessionPlan => ({
-	objective: "",
-	notes,
-	drills: [],
+export const emptySessionPlan = (): SessionPlan => ({
+	body: "",
+	notes: "",
+	media: [],
 	revision: 0,
 });
+export const maxSessionPlanBodyLength = 20000;
+export const maxSessionPlanMedia = 20;
+export const supportedSessionPlanMedia = (url: string): boolean =>
+	supportedResourceLink("video", url) || supportedResourceLink("document", url);
 export const validateSessionPlan = (
 	draft: SessionPlanDraft,
 ): string | undefined => {
-	if ((draft.body?.length ?? 0) > 20000)
+	if (draft.body.length > maxSessionPlanBodyLength)
 		return "Keep the plan to 20,000 characters";
-	if ((draft.goals?.length ?? 0) > 10000)
-		return "Keep goals to 10,000 characters";
-	if (draft.objective.trim().length > 300)
-		return "Keep the objective to 300 characters";
 	if (draft.notes.length > 10000) return "Keep notes to 10,000 characters";
-	if (draft.drills.length > 20) return "Use up to 20 drills";
-	const ids = draft.drills.flatMap((drill) => [
-		drill.id,
-		...drill.media.map((media) => media.id),
-	]);
+	if (draft.media.length > maxSessionPlanMedia) return "Attach up to 20 items";
+	const ids = draft.media.map((media) => media.id);
 	if (
 		new Set(ids).size !== ids.length ||
 		ids.some((id) => !id.trim() || id.length > 128)
 	)
-		return "Use unique drill and attachment IDs";
-	for (const drill of draft.drills) {
-		if (!drill.title.trim()) return "Add a drill name";
-		if (drill.title.trim().length > 120)
-			return "Keep drill names to 120 characters";
-		if (
-			!Number.isInteger(drill.minutes) ||
-			drill.minutes < 1 ||
-			drill.minutes > 240
-		)
-			return "Use 1–240 minutes per drill";
-		if (drill.instructions.length > 2000)
-			return "Keep drill instructions to 2,000 characters";
-		if (drill.media.length > 6) return "Attach up to 6 items per drill";
-		for (const media of drill.media) {
-			if (!media.label.trim()) return "Add an attachment name";
-			if (media.label.trim().length > 120)
-				return "Keep attachment names to 120 characters";
-			if (media.source === "link") {
-				if (media.url.length > 2048 || !resourceUrl(media.url.trim()))
-					return "Use a complete HTTPS link";
-			} else if (media.resourceId.length > 128 || !media.resourceId.trim())
-				return "Choose a club resource";
-		}
+		return "Use unique attachment IDs";
+	for (const media of draft.media) {
+		if (!media.label.trim() || media.label.trim().length > 120)
+			return "Use an attachment name of 1–120 characters";
+		if (media.source === "link") {
+			if (
+				media.url.length > 2048 ||
+				!supportedSessionPlanMedia(media.url.trim())
+			)
+				return "Use a YouTube or Vimeo video, PDF, or image link. Remove or replace unsupported attachments.";
+		} else if (!media.resourceId.trim() || media.resourceId.length > 128)
+			return "Choose a club resource";
 	}
 	return undefined;
 };
 export const normalizeSessionPlan = (
 	draft: SessionPlanDraft,
 ): SessionPlanDraft => ({
-	...(draft.body !== undefined ? { body: draft.body.trim() } : {}),
-	...(draft.goals !== undefined ? { goals: draft.goals.trim() } : {}),
-	objective: draft.objective.trim(),
+	body: draft.body.trim(),
 	notes: draft.notes.trim(),
-	drills: draft.drills.map((drill) => ({
-		id: drill.id,
-		title: drill.title.trim(),
-		minutes: drill.minutes,
-		instructions: drill.instructions.trim(),
-		media: drill.media.map((media) =>
-			media.source === "link"
-				? {
-						id: media.id,
-						source: media.source,
-						label: media.label.trim(),
-						url: resourceUrl(media.url.trim()) ?? media.url,
-					}
-				: {
-						id: media.id,
-						source: media.source,
-						label: media.label.trim(),
-						resourceId: media.resourceId,
-					},
-		),
-	})),
+	media: draft.media.map((media) =>
+		media.source === "link"
+			? {
+					...media,
+					label: media.label.trim(),
+					url: resourceUrl(media.url.trim()) ?? media.url,
+				}
+			: { ...media, label: media.label.trim() },
+	),
 });
 export const sameSessionPlan = (
 	left: SessionPlanDraft,
@@ -174,13 +133,11 @@ export const canReadSharedSessionPlan = (
 					person.programs.includes(event.program)),
 		));
 export const planResourceIds = (
-	plan: Pick<SessionPlanDraft, "drills">,
+	plan: Pick<SessionPlanDraft, "media">,
 ): string[] => [
 	...new Set(
-		plan.drills.flatMap((drill) =>
-			drill.media.flatMap((media) =>
-				media.source === "resource" ? [media.resourceId] : [],
-			),
+		plan.media.flatMap((media) =>
+			media.source === "resource" ? [media.resourceId] : [],
 		),
 	),
 ];
@@ -191,15 +148,9 @@ export const sharedSessionPlan = (
 	plan.published && plan.publishedAt !== undefined
 		? {
 				body: plan.body,
-				goals: plan.goals,
-				objective: plan.objective,
-				drills: plan.drills.map((drill) => ({
-					...drill,
-					media: drill.media.filter(
-						(media) =>
-							media.source === "link" || canReadMedia(media.resourceId),
-					),
-				})),
+				media: plan.media.filter(
+					(media) => media.source === "link" || canReadMedia(media.resourceId),
+				),
 				revision: plan.revision,
 				publishedAt: plan.publishedAt,
 			}
@@ -222,15 +173,9 @@ export const publishSessionPlan = (
 		throw new Error(
 			"The session plan changed. Review the latest version before publishing.",
 		);
-	if (
-		command.published &&
-		!current.body &&
-		!current.goals &&
-		!current.objective &&
-		!current.drills.length
-	)
+	if (command.published && !current.body.trim() && !current.media.length)
 		throw new Error(
-			"Add a plan or goals before publishing. Coaching notes stay private.",
+			"Add a plan or attachment before publishing. Coaching notes stay private.",
 		);
 	if (Boolean(current.published) === command.published) return current;
 	return {
@@ -241,22 +186,11 @@ export const publishSessionPlan = (
 		updatedAt: now,
 	};
 };
-export const planMinutes = (plan: Pick<SessionPlanDraft, "drills">): number =>
-	plan.drills.reduce((total, drill) => total + drill.minutes, 0);
-export const moveSessionDrill = (
-	drills: SessionDrill[],
-	id: string,
-	direction: -1 | 1,
-): SessionDrill[] => {
-	const index = drills.findIndex((drill) => drill.id === id);
-	const target = drills.at(index + direction);
-	const current = drills.at(index);
-	if (index < 0 || index + direction < 0 || !current || !target) return drills;
-	return drills.map((drill, position) =>
-		position === index
-			? target
-			: position === index + direction
-				? current
-				: drill,
+export const hasSessionPlanContent = (plan: SessionPlan): boolean =>
+	Boolean(
+		plan.body ||
+			plan.notes ||
+			plan.media.length ||
+			plan.revision ||
+			plan.published,
 	);
-};

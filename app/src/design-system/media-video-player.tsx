@@ -7,11 +7,15 @@ import { Text } from "./text";
 export const MediaVideoPlayer = ({
 	uri,
 	label,
+	autoPlay = false,
 }: {
 	uri: string;
 	label: string;
+	autoPlay?: boolean;
 }): ReactElement => {
-	const player = useVideoPlayer(uri);
+	const player = useVideoPlayer(uri, (instance): void => {
+		if (autoPlay) instance.play();
+	});
 	const status = useEvent(player, "statusChange", { status: player.status });
 	return (
 		<Stack gap="xs">

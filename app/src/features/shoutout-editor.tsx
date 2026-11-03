@@ -3,6 +3,7 @@ import { useApp } from "../demo/app-state";
 import {
 	Button,
 	Dialog,
+	Disclosure,
 	Field,
 	GlassPanel,
 	Row,
@@ -38,11 +39,7 @@ export const ShoutoutEditor = ({
 		(member) => !member.archived && !member.mergedInto,
 	);
 	const [open, setOpen] = useState(false);
-	const [targetId, setTargetId] = useState(
-		personId ??
-			members.find((member) => member.id !== account.personId)?.id ??
-			"",
-	);
+	const [targetId, setTargetId] = useState(personId ?? "");
 	const [body, setBody] = useState("");
 	const [targetName, setTargetName] = useState(
 		members.find((member) => member.id === targetId)?.name ?? "",
@@ -164,37 +161,43 @@ export const ShoutoutEditor = ({
 							)
 						}
 					/>
-					{!event ? (
-						<Select
-							label="Practice (optional)"
-							value={practiceId}
-							options={[
-								{ value: "", label: "No practice" },
-								...data.events
-									.filter((entry) => practiceEvent(entry) && !entry.cancelled)
-									.map((entry) => ({
-										value: entry.id,
-										label: `${entry.date} · ${entry.title}`,
-									})),
-							]}
-							isDisabled={task.busy}
-							onValueChange={(value): void => setPracticeId(value ?? "")}
-						/>
-					) : undefined}
-					<Field
-						label={
-							personId
-								? `Note for ${memberName(data, personId)} (optional)`
-								: "Note (optional)"
-						}
-						placeholder="What did they do well?"
-						value={body}
-						onValueChange={setBody}
-						multiline
-						rows={4}
-						maxLength={1000}
+					<Disclosure
+						title="Add a note or practice"
+						summary={body || practiceId ? "Optional details added" : undefined}
 						isDisabled={task.busy}
-					/>
+					>
+						{!event ? (
+							<Select
+								label="Practice (optional)"
+								value={practiceId}
+								options={[
+									{ value: "", label: "No practice" },
+									...data.events
+										.filter((entry) => practiceEvent(entry) && !entry.cancelled)
+										.map((entry) => ({
+											value: entry.id,
+											label: `${entry.date} · ${entry.title}`,
+										})),
+								]}
+								isDisabled={task.busy}
+								onValueChange={(value): void => setPracticeId(value ?? "")}
+							/>
+						) : undefined}
+						<Field
+							label={
+								personId
+									? `Note for ${memberName(data, personId)} (optional)`
+									: "Note (optional)"
+							}
+							placeholder="What did they do well?"
+							value={body}
+							onValueChange={setBody}
+							multiline
+							rows={4}
+							maxLength={1000}
+							isDisabled={task.busy}
+						/>
+					</Disclosure>
 					{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
 				</Stack>
 			</Dialog>

@@ -61,7 +61,7 @@ const ClipsList = ({
 						</Row>
 					}
 				>
-					Videos
+					Assigned videos
 				</SectionHeading>
 				{!state.loading && !state.items.length ? (
 					<Text variant="small" tone="secondary">
@@ -72,24 +72,22 @@ const ClipsList = ({
 						{state.loading ? (
 							<LoadingContent />
 						) : (
-							state.items
-								.slice(0, 2)
-								.map((resource) => (
-									<ListItem
-										key={resource.id}
-										title={resource.title}
-										description={resource.description}
-										descriptionLines={2}
-										trailing={
-											<ResourceThumbnail
-												state={state}
-												resource={resource}
-												compact
-											/>
-										}
-										onPress={(): void => open({ id: resource.id })}
-									/>
-								))
+							state.items.map((resource) => (
+								<ListItem
+									key={resource.id}
+									title={resource.title}
+									description={resource.description}
+									descriptionLines={2}
+									trailing={
+										<ResourceThumbnail
+											state={state}
+											resource={resource}
+											compact
+										/>
+									}
+									onPress={(): void => open({ id: resource.id })}
+								/>
+							))
 						)}
 					</List>
 				)}

@@ -84,7 +84,7 @@ export const MembersScreen = (): ReactElement => {
 					<InviteList />
 				) : (
 					<>
-						<Surface padding="xs">
+						<Surface>
 							<ListItem
 								title={
 									active.id === account.personId
@@ -129,7 +129,7 @@ export const MembersScreen = (): ReactElement => {
 								}}
 							>
 								{(items) => (
-									<Surface padding="xs">
+									<Surface>
 										<List>
 											{items.map(({ member }) => (
 												<ListItem

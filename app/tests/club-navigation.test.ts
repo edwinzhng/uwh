@@ -17,14 +17,12 @@ test("members retain people, swim tests, videos and documents without management
 		"documents",
 		"announcements",
 	]);
-	expect(groups.find((group) => group.title === "Browse")?.tools).toEqual([
+	expect(groups.map((group) => group.title)).toEqual(["Club"]);
+	expect(groups.at(0)?.tools).toEqual([
 		"programs",
 		"members",
 		"fitness",
 		"videos",
-	]);
-	expect(groups.find((group) => group.title === "Manage club")).toBeUndefined();
-	expect(groups.find((group) => group.title === "Resources")?.tools).toEqual([
 		"documents",
 		"announcements",
 	]);
@@ -62,4 +60,22 @@ test("feedback deep links validate their section without changing the parent tab
 	expect(feedbackSection("coach")).toBe("coach");
 	expect(feedbackSection("admin")).toBe("coach");
 	expect(feedbackSection(undefined, "self")).toBe("self");
+});
+
+test("club resources share the primary group and equipment remains available to administrators", (): void => {
+	const groups = clubToolGroups(primaryAccount);
+	expect(groups.map((group) => group.title)).toEqual([
+		"Club",
+		"Coaching",
+		"Administration",
+	]);
+	expect(groups.at(0)?.tools).toContain("equipment");
+	expect(groups.at(0)?.tools).toEqual(
+		expect.arrayContaining(["videos", "documents", "announcements"]),
+	);
+	expect(
+		groups
+			.flatMap((group) => group.tools)
+			.filter((tool) => tool === "equipment"),
+	).toHaveLength(1);
 });

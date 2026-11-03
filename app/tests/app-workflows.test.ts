@@ -46,12 +46,13 @@ const draft: EventDraft = {
 
 describe("combined permissions and family context", () => {
 	test("all roles coexist without changing the managed person", () => {
-		expect(primaryAccount.admin).toBe(true);
-		expect(canCoach(primaryAccount, "club")).toBe(true);
-		expect(canManagePerson(primaryAccount, "alex")).toBe(true);
-		expect(canManagePerson(primaryAccount, "sam")).toBe(true);
-		expect(canManagePerson(primaryAccount, "mila")).toBe(true);
-		expect(canManagePerson(primaryAccount, "taylor")).toBe(false);
+		const combined = { ...primaryAccount, children: ["sam", "mila"] };
+		expect(combined.admin).toBe(true);
+		expect(canCoach(combined, "club")).toBe(true);
+		expect(canManagePerson(combined, "alex")).toBe(true);
+		expect(canManagePerson(combined, "sam")).toBe(true);
+		expect(canManagePerson(combined, "mila")).toBe(true);
+		expect(canManagePerson(combined, "taylor")).toBe(false);
 	});
 	test("RSVPs are independent by event and person, and cannot retarget unrelated members", () => {
 		const next = reduceApp(initialAppData, parent, {

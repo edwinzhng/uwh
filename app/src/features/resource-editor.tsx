@@ -13,66 +13,48 @@ import {
 	createMediaAsset,
 	Dialog,
 	Field,
-	List,
-	ListItem,
 	Row,
 	Select,
 	Stack,
-	Tabs,
 	Text,
 } from "../design-system";
 import {
-	initialResourceAudience,
 	type Resource,
 	type ResourceAudience,
-	type ResourceCategory,
 	type ResourceDraft,
 	type ResourceFile,
 	type ResourceFilePurpose,
 	type ResourceKind,
-	resourceCategories,
 	resourceUrl,
 	validateResource,
 } from "../domain/resources";
-import { ResourcePlayerPicker } from "./resource-player-picker";
 import { ResourceProgramPicker } from "./resource-program-picker";
-import { ResourceThumbnailEditor } from "./resource-thumbnail-editor";
-import { ResourceVoiceEditor } from "./resource-voice-editor";
 import { useFormTask } from "./use-form-task";
 import { useOperationKey } from "./use-operation-key";
 import { useReviewFlow } from "./use-review-flow";
 
 const audienceOptions: { value: ResourceAudience; label: string }[] = [
-	{ value: "club", label: "Everyone in the club" },
-	{ value: "coaches", label: "Coaches and admins" },
-	{ value: "programs", label: "Selected programs and staff" },
-	{ value: "players", label: "Tagged players, guardians and staff" },
+	{ value: "club", label: "Club" },
+	{ value: "programs", label: "Programs" },
+	{ value: "coaches", label: "Coaches" },
 ];
 
 export const ResourceEditor = ({
 	previous,
 	initialKind,
-	initialPersonId,
 	state,
 	onClose,
 	onSaved,
 }: {
 	previous?: Resource;
 	initialKind?: ResourceKind;
-	initialPersonId?: string;
 	state: ResourceState;
 	onClose: () => void;
 	onSaved: (id: string) => void;
 }): ReactElement => {
-	const { data, account } = useApp();
+	const { account } = useApp();
 	const review = useReviewFlow();
-	const [panel, setPanel] = useState<"details" | "media" | "sharing">(
-		review === "video-annotations"
-			? "media"
-			: review === "resource-programs"
-				? "sharing"
-				: "details",
-	);
+	const [sharing, setSharing] = useState(false);
 	const task = useFormTask();
 	const operationKey = useOperationKey();
 	const [title, setTitle] = useState(previous?.title ?? "");
@@ -84,61 +66,44 @@ export const ResourceEditor = ({
 	);
 	const [audience, setAudience] = useState<ResourceAudience>(
 		previous?.audience ??
-			(review === "resource-programs"
-				? "programs"
-				: initialResourceAudience(initialPersonId)),
+			(review === "resource-programs" ? "programs" : "coaches"),
 	);
-	const [personIds, setPersonIds] = useState(
-		previous?.personIds ?? (initialPersonId ? [initialPersonId] : []),
-	);
+	const personIds = previous?.personIds ?? [];
 	const [programIds, setProgramIds] = useState(previous?.programIds ?? []);
-	const [personNames, setPersonNames] = useState<Record<string, string>>(
-		previous?.personNames ??
-			Object.fromEntries(
-				data.members.map((member) => [member.id, member.name]),
-			),
-	);
+	const audienceLocked =
+		previous?.audience === "players" || previous?.audience === "coaches";
+	const availableAudienceOptions = audienceLocked
+		? [
+				{
+					value: previous.audience,
+					label:
+						previous.audience === "players"
+							? "Existing private recipients"
+							: "Coaches and admins",
+				},
+			]
+		: audienceOptions;
 	const [url, setUrl] = useState(previous?.url ?? "");
 	const [source, setSource] = useState<"link" | "upload">(
 		previous?.fileId || review === "video-upload" ? "upload" : "link",
 	);
 	const [picked, setPicked] = useState<PickedResourceFile>();
 	const [uploaded, setUploaded] = useState<ResourceFile>();
-	const [category, setCategory] = useState<ResourceCategory>(
-		previous?.category ?? "other",
-	);
-	const [sessionNumber, setSessionNumber] = useState(
-		previous?.sessionNumber?.toString() ?? "",
-	);
 	const [thumbnail, setThumbnail] = useState<PickedResourceFile>();
 	const [thumbnailUpload, setThumbnailUpload] = useState<ResourceFile>();
 	const [thumbnailRemoved, setThumbnailRemoved] = useState(false);
-	const [voice, setVoice] = useState<PickedResourceFile>();
-	const [voiceUpload, setVoiceUpload] = useState<ResourceFile>();
-	const [voiceRemoved, setVoiceRemoved] = useState(false);
-	const [voiceTranscript, setVoiceTranscript] = useState(
-		previous?.voiceTranscript ?? "",
-	);
-	const [recording, setRecording] = useState(false);
-	const disabled = task.busy || recording;
+	const disabled = task.busy;
 	const fileId =
 		uploaded?.id ??
 		(!picked && previous?.kind === kind ? previous?.fileId : undefined);
 	const thumbnailFileId =
 		thumbnailUpload?.id ??
 		(!thumbnail && !thumbnailRemoved ? previous?.thumbnailFileId : undefined);
-	const voiceFileId =
-		voiceUpload?.id ??
-		(!voice && !voiceRemoved ? previous?.voiceFileId : undefined);
+	const voiceFileId = previous?.voiceFileId;
 	const changeThumbnail = (value: PickedResourceFile | undefined): void => {
 		setThumbnail(value);
 		setThumbnailUpload(undefined);
 		setThumbnailRemoved(!value);
-	};
-	const changeVoice = (value: PickedResourceFile | undefined): void => {
-		setVoice(value);
-		setVoiceUpload(undefined);
-		setVoiceRemoved(!value);
 	};
 	const draft: ResourceDraft = {
 		title,
@@ -149,15 +114,11 @@ export const ResourceEditor = ({
 		programIds: audience === "programs" ? programIds : undefined,
 		url: source === "link" ? url.trim() || undefined : undefined,
 		fileId: source === "upload" ? fileId : undefined,
-		category: kind === "document" ? category : undefined,
-		sessionNumber:
-			kind === "video" && sessionNumber.trim()
-				? Number(sessionNumber)
-				: undefined,
+		category: kind === "document" ? (previous?.category ?? "other") : undefined,
+		sessionNumber: kind === "video" ? previous?.sessionNumber : undefined,
 		thumbnailFileId: kind === "video" ? thumbnailFileId : undefined,
 		voiceFileId: kind === "video" ? voiceFileId : undefined,
-		voiceTranscript:
-			kind === "video" ? voiceTranscript.trim() || undefined : undefined,
+		voiceTranscript: kind === "video" ? previous?.voiceTranscript : undefined,
 	};
 	const uploadPicked = async (
 		file: PickedResourceFile | undefined,
@@ -171,7 +132,6 @@ export const ResourceEditor = ({
 		return result;
 	};
 	const save = async (): Promise<void> => {
-		if (recording) return;
 		await task.submit(
 			(): string | undefined =>
 				validateResource({
@@ -182,11 +142,9 @@ export const ResourceEditor = ({
 						kind === "video" && thumbnail
 							? "pending-thumbnail"
 							: draft.thumbnailFileId,
-					voiceFileId:
-						kind === "video" && voice ? "pending-voice" : draft.voiceFileId,
 				}),
 			async (): Promise<void> => {
-				const [file, thumbFile, voiceFile] = await Promise.all([
+				const [file, thumbFile] = await Promise.all([
 					source === "upload"
 						? uploadPicked(picked, uploaded, kind, setUploaded)
 						: undefined,
@@ -198,9 +156,6 @@ export const ResourceEditor = ({
 								setThumbnailUpload,
 							)
 						: undefined,
-					kind === "video"
-						? uploadPicked(voice, voiceUpload, "voice", setVoiceUpload)
-						: undefined,
 				]);
 				const value: ResourceDraft = {
 					...draft,
@@ -211,8 +166,6 @@ export const ResourceEditor = ({
 					fileId: source === "upload" ? (file?.id ?? fileId) : undefined,
 					thumbnailFileId:
 						kind === "video" ? (thumbFile?.id ?? thumbnailFileId) : undefined,
-					voiceFileId:
-						kind === "video" ? (voiceFile?.id ?? voiceFileId) : undefined,
 				};
 				const id = await state.save(
 					value,
@@ -260,7 +213,7 @@ export const ResourceEditor = ({
 		<Dialog
 			intent="form"
 			isDismissDisabled={disabled}
-			title={previous ? "Edit resource" : "Add resource"}
+			title={previous ? "Edit file" : "Add file"}
 			isOpen
 			onOpenChange={(open): void => {
 				if (!open && !disabled) onClose();
@@ -270,24 +223,20 @@ export const ResourceEditor = ({
 					<Row justify="between" wrap>
 						<ActionMenu
 							label="Permissions"
-							accessibilityLabel={`Permissions: ${audienceOptions.find((option) => option.value === audience)?.label}`}
+							accessibilityLabel={`Permissions: ${availableAudienceOptions.find((option) => option.value === audience)?.label}`}
 							compact
-							isDisabled={disabled}
+							isDisabled={disabled || audienceLocked}
 							groups={[
 								{
 									id: "audience",
 									label: "Who can view",
-									items: audienceOptions.map((option) => ({
+									items: availableAudienceOptions.map((option) => ({
 										id: option.value,
 										label: option.label,
 										checked: audience === option.value,
 										onSelect: (): void => {
 											setAudience(option.value);
-											if (
-												option.value === "players" ||
-												option.value === "programs"
-											)
-												setPanel("sharing");
+											if (option.value === "programs") setSharing(true);
 										},
 									})),
 								},
@@ -296,9 +245,9 @@ export const ResourceEditor = ({
 									items: [
 										{
 											id: "manage",
-											label: "Manage recipients",
+											label: "Sharing settings",
 											icon: "users",
-											onSelect: (): void => setPanel("sharing"),
+											onSelect: (): void => setSharing(true),
 										},
 									],
 								},
@@ -307,7 +256,7 @@ export const ResourceEditor = ({
 						<Button
 							label="Save"
 							isLoading={task.busy}
-							isDisabled={recording}
+							isDisabled={disabled}
 							onPress={(): void => {
 								void save();
 							}}
@@ -317,221 +266,124 @@ export const ResourceEditor = ({
 			}
 		>
 			<Stack>
-				<Tabs
-					label="Resource editor"
-					value={panel}
-					onValueChange={setPanel}
-					options={[
-						{ value: "details", label: "Details", isDisabled: disabled },
-						...(kind === "video"
-							? [
-									{
-										value: "media" as const,
-										label: "Media",
-										isDisabled: disabled,
-									},
-								]
-							: []),
-						{ value: "sharing", label: "Sharing", isDisabled: disabled },
-					]}
-				/>
 				{task.error ? (
 					<Text variant="small" tone="danger">
 						{task.error}
 					</Text>
 				) : undefined}
-				{panel === "details" ? (
-					<Stack>
+				<Stack>
+					<Field
+						label="Title"
+						value={title}
+						onValueChange={setTitle}
+						isDisabled={disabled}
+					/>
+					<Select
+						label="Type"
+						value={kind}
+						isDisabled={disabled}
+						options={[
+							{ value: "document", label: "Document" },
+							{ value: "video", label: "Video" },
+						]}
+						onValueChange={(value): void => {
+							if (value) {
+								setKind(value);
+								setSource("link");
+								setPicked(undefined);
+								setUploaded(undefined);
+								task.clear();
+							}
+						}}
+					/>
+					<Field
+						label="Description"
+						value={description}
+						onValueChange={setDescription}
+						multiline
+						isDisabled={disabled}
+					/>
+					<Select
+						label="Source"
+						value={source}
+						isDisabled={disabled}
+						options={[
+							{ value: "link", label: "Supported link" },
+							{
+								value: "upload",
+								label: kind === "video" ? "Upload video" : "Upload document",
+							},
+						]}
+						onValueChange={(value): void => {
+							if (value) {
+								setSource(value);
+								task.clear();
+							}
+						}}
+					/>
+					{source === "link" ? (
 						<Field
-							label="Title"
-							value={title}
-							onValueChange={setTitle}
+							label={
+								kind === "video" ? "YouTube or Vimeo link" : "Document link"
+							}
+							value={url}
+							onValueChange={setUrl}
+							placeholder="https://"
 							isDisabled={disabled}
 						/>
-						<Select
-							label="Type"
-							value={kind}
-							isDisabled={disabled}
-							options={[
-								{ value: "document", label: "Document" },
-								{ value: "video", label: "Video" },
-							]}
-							onValueChange={(value): void => {
-								if (value) {
-									setKind(value);
-									setSource("link");
-									setPicked(undefined);
-									setUploaded(undefined);
-									task.clear();
-								}
-							}}
-						/>
-						{kind === "document" ? (
+					) : (
+						<Stack gap="xs">
+							<Row>
+								<Button
+									label={
+										picked || previous?.fileName
+											? `Replace ${kind}`
+											: `Choose ${kind}`
+									}
+									prefix="plus"
+									variant="secondary"
+									isDisabled={disabled}
+									onPress={(): void => {
+										void pick();
+									}}
+								/>
+							</Row>
+							<Text variant="small" tone="secondary">
+								{picked?.name ??
+									previous?.fileName ??
+									(kind === "video"
+										? "MP4, MOV or WebM · up to 50 MB"
+										: "PDF, images, DOCX, XLSX, PPTX, OpenDocument, CSV or text · up to 10 MB")}
+							</Text>
+						</Stack>
+					)}
+				</Stack>
+				{sharing ? (
+					<Dialog title="Permissions" isOpen onOpenChange={setSharing}>
+						<Stack>
 							<Select
-								label="Document category"
-								value={category}
-								options={resourceCategories}
-								isDisabled={disabled}
+								label="Who can view"
+								value={audience}
+								isDisabled={disabled || audienceLocked}
+								options={availableAudienceOptions}
 								onValueChange={(value): void => {
-									if (value) setCategory(value);
+									if (value) setAudience(value);
 								}}
 							/>
-						) : (
-							<Field
-								label="Session number (optional)"
-								value={sessionNumber}
-								onValueChange={setSessionNumber}
-								inputMode="numeric"
-								isDisabled={disabled}
-							/>
-						)}
-						<Select
-							label="Add"
-							value={source}
-							isDisabled={disabled}
-							options={[
-								{ value: "link", label: "Web link" },
-								{
-									value: "upload",
-									label: kind === "video" ? "Upload video" : "Upload document",
-								},
-							]}
-							onValueChange={(value): void => {
-								if (value) {
-									setSource(value);
-									task.clear();
-								}
-							}}
-						/>
-						{source === "link" ? (
-							<Field
-								label={kind === "video" ? "Video link" : "Link"}
-								value={url}
-								onValueChange={setUrl}
-								placeholder="https://"
-								isDisabled={disabled}
-							/>
-						) : (
-							<Stack gap="xs">
-								<Row>
-									<Button
-										label={
-											picked || previous?.fileName
-												? `Replace ${kind}`
-												: `Choose ${kind}`
-										}
-										prefix="plus"
-										variant="secondary"
-										isDisabled={disabled}
-										onPress={(): void => {
-											void pick();
-										}}
-									/>
-								</Row>
+							{audience === "programs" ? (
+								<ResourceProgramPicker
+									selected={programIds}
+									disabled={disabled}
+									onChange={setProgramIds}
+								/>
+							) : undefined}
+							{audienceLocked ? (
 								<Text variant="small" tone="secondary">
-									{picked?.name ??
-										previous?.fileName ??
-										(kind === "video"
-											? "MP4, MOV or WebM · up to 50 MB"
-											: "PDF, images, DOCX, XLSX, PPTX, OpenDocument, CSV or text · up to 10 MB")}
+									Existing private access is preserved.
 								</Text>
-							</Stack>
-						)}
-						<Field
-							label="Description or coaching note"
-							value={description}
-							onValueChange={setDescription}
-							multiline
-							isDisabled={disabled}
-						/>
-					</Stack>
-				) : undefined}
-				{kind === "video" && panel === "media" ? (
-					<Stack>
-						<ResourceThumbnailEditor
-							state={state}
-							previous={
-								source === "upload" && previous?.kind === "video"
-									? previous
-									: previous?.kind === "video" && !picked
-										? previous
-										: undefined
-							}
-							main={source === "upload" ? picked : undefined}
-							value={thumbnail}
-							removed={thumbnailRemoved}
-							disabled={disabled}
-							task={task}
-							onChange={changeThumbnail}
-						/>
-						<ResourceVoiceEditor
-							state={state}
-							previous={previous?.kind === "video" ? previous : undefined}
-							value={voice}
-							removed={voiceRemoved}
-							task={task}
-							onChange={changeVoice}
-							onRecordingChange={setRecording}
-						/>
-						<Field
-							label="Voice transcript (optional)"
-							value={voiceTranscript}
-							onValueChange={setVoiceTranscript}
-							multiline
-							isDisabled={disabled}
-						/>
-					</Stack>
-				) : undefined}
-				{panel === "sharing" ? (
-					<Stack>
-						<Select
-							label="Who can view"
-							value={audience}
-							isDisabled={disabled}
-							options={audienceOptions}
-							onValueChange={(value): void => {
-								if (value) setAudience(value);
-							}}
-						/>
-						{audience === "programs" ? (
-							<ResourceProgramPicker
-								selected={programIds}
-								disabled={disabled}
-								onChange={setProgramIds}
-							/>
-						) : undefined}
-						<ResourcePlayerPicker
-							selected={personIds}
-							disabled={disabled}
-							onSelect={(id, name): void => {
-								setPersonIds((ids) => [...ids, id]);
-								setPersonNames((current) => ({ ...current, [id]: name }));
-							}}
-						/>
-						{personIds.length ? (
-							<List>
-								{personIds.map((personId) => (
-									<ListItem
-										key={personId}
-										title={personNames[personId] ?? "Player"}
-										trailing={
-											<Button
-												label="Remove"
-												compact
-												variant="ghost"
-												isDisabled={disabled}
-												onPress={(): void =>
-													setPersonIds((ids) =>
-														ids.filter((id) => id !== personId),
-													)
-												}
-											/>
-										}
-									/>
-								))}
-							</List>
-						) : undefined}
-					</Stack>
+							) : undefined}
+						</Stack>
+					</Dialog>
 				) : undefined}
 			</Stack>
 		</Dialog>

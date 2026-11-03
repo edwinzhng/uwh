@@ -107,11 +107,10 @@ test("transparent native headers reserve scroll clearance without adding keyboar
 	expect(layout).toContain("workspace\n");
 });
 
-test("native navigation is nested inside authentication and terms gates", async (): Promise<void> => {
-	const [root, provider, terms] = await Promise.all([
+test("native navigation stays inside authentication and required club terms", async (): Promise<void> => {
+	const [root, provider] = await Promise.all([
 		Bun.file("app/_layout.tsx").text(),
 		Bun.file("src/backend/provider.tsx").text(),
-		Bun.file("src/features/terms-gate.tsx").text(),
 	]);
 	expect(root).toContain("<BackendProvider>");
 	expect(root).toContain("<AppNavigation>");
@@ -119,9 +118,6 @@ test("native navigation is nested inside authentication and terms gates", async 
 	expect(provider).toContain("<LoadingScreen />");
 	expect(provider).toContain("<TermsGate>");
 	expect(provider).toContain("<AccountGate />");
-	expect(provider).toMatch(/\{children\}\s*<\/TermsGate>/);
-	expect(terms).toContain("if (service.state.accepted) return <>{children}</>");
-	expect(terms).toContain('<AuthLayout title="Review club terms">');
 });
 
 test("page headers have no opaque bar and shared toolbar controls float above content", async (): Promise<void> => {

@@ -1,7 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
-import { Button, GlassPanel, IconButton, Row, Stack } from "../design-system";
+import {
+	FilterChip,
+	IconButton,
+	Row,
+	Stack,
+	ToolbarGroup,
+} from "../design-system";
 import { clubPrograms } from "../domain/programs";
 import { CalendarExportButton } from "./calendar-export-button";
 import { ClubShell } from "./club-shell";
@@ -27,36 +33,30 @@ export const AgendaScreen = (): ReactElement => {
 		<ClubShell
 			title="Schedule"
 			toolbarLeading={
-				<GlassPanel padding="none" shape="pill" interactive>
-					<Row gap="none">
-						<CalendarExportButton />
-						{account.admin ? (
-							<IconButton
-								label="New event"
-								icon="plus"
-								onPress={(): void => setCreate(true)}
-							/>
-						) : undefined}
-					</Row>
-				</GlassPanel>
+				<ToolbarGroup label="Schedule actions">
+					<CalendarExportButton />
+					{account.admin ? (
+						<IconButton
+							label="New event"
+							icon="plus"
+							onPress={(): void => setCreate(true)}
+						/>
+					) : undefined}
+				</ToolbarGroup>
 			}
 		>
 			<Stack gap="md">
-				<Row wrap>
-					<Button
+				<Row wrap gap="xs">
+					<FilterChip
 						label="All programs"
-						round
-						variant={programId ? "selection" : "solid"}
-						isSelected={!programId}
+						selected={!programId}
 						onPress={(): void => router.setParams({ program: undefined })}
 					/>
 					{programs.map((program) => (
-						<Button
+						<FilterChip
 							key={program.id}
 							label={program.name}
-							round
-							variant={programId === program.id ? "solid" : "selection"}
-							isSelected={programId === program.id}
+							selected={programId === program.id}
 							onPress={(): void =>
 								router.setParams({
 									program: programId === program.id ? undefined : program.id,

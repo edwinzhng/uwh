@@ -1,11 +1,13 @@
 import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
+import { canManagePerson } from "../src/domain/app-rules";
+import { publishedEventLineups } from "../src/domain/event-lineups";
 import {
 	type CarryLineupSource,
 	compatibleCarrySource,
 } from "../src/domain/lineup-carry";
 import { query } from "./_generated/server";
-import { requireMember } from "./identity";
+import { accountFor, requireMember } from "./identity";
 
 export const sources = query({
 	args: {
@@ -74,5 +76,43 @@ export const sources = query({
 			}),
 		);
 		return { ...page, page: sources.flat() };
+	},
+});
+
+export const available = query({
+	args: { eventId: v.string(), personId: v.string() },
+	handler: async (ctx, { eventId, personId }): Promise<boolean> => {
+		const actor = await requireMember(ctx);
+		if (!canManagePerson(accountFor(actor), personId)) return false;
+		const event = await ctx.db
+			.query("events")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", actor.clubId).eq("value.id", eventId),
+			)
+			.unique();
+		if (!event || event.value.cancelled) return false;
+		const [plans, response] = await Promise.all([
+			ctx.db
+				.query("teams")
+				.withIndex("by_event", (q) =>
+					q.eq("clubId", actor.clubId).eq("value.eventId", eventId),
+				)
+				.take(14),
+			ctx.db
+				.query("responses")
+				.withIndex("by_event", (q) =>
+					q.eq("clubId", actor.clubId).eq("value.eventId", eventId),
+				)
+				.filter((q) => q.eq(q.field("value.personId"), personId))
+				.first(),
+		]);
+		return (
+			publishedEventLineups(
+				event.value,
+				plans.map((row) => row.value),
+				personId,
+				response?.value,
+			).length > 0
+		);
 	},
 });

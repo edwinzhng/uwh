@@ -1,5 +1,5 @@
 import { type ReactElement, useState } from "react";
-import { Button, Checkbox, List, Row, Stack, Text } from "../design-system";
+import { Button, List, PersonChoice, Row, Stack, Text } from "../design-system";
 import { useFormTask } from "./use-form-task";
 
 export const CalendarPeople = ({
@@ -20,9 +20,10 @@ export const CalendarPeople = ({
 		<Stack gap="sm">
 			<List>
 				{people.map((person) => (
-					<Checkbox
+					<PersonChoice
 						key={person.id}
-						label={person.name}
+						name={person.name}
+						personId={person.id}
 						checked={draft.includes(person.id)}
 						isDisabled={task.busy}
 						onChange={(checked): void =>

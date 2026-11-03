@@ -114,6 +114,8 @@ export const updatedCoachingPartIds = (
 		: current.filter((id) => id !== partId);
 };
 export type CoachingPractice = {
+	durationEditable?: boolean;
+	practiceDurationMinutes?: number;
 	eventId: string;
 	title: string;
 	date: string;
@@ -154,3 +156,29 @@ export const coachingTotals = (
 				right.minutes - left.minutes || left.name.localeCompare(right.name),
 		);
 };
+
+export const coachingDurationEditError = (
+	minutes: number,
+	scheduledMinutes: number,
+	savedMinutes: number,
+	currentMinutes: number,
+): string | undefined =>
+	savedMinutes !== currentMinutes
+		? "Coaching hours changed. Reload them before saving."
+		: validCoachingDuration(minutes) || minutes === scheduledMinutes
+			? undefined
+			: "Choose coaching time";
+
+export const coachingHoursCorrectionError = (
+	assignments: readonly Pick<
+		CoachingAssignment,
+		"coachId" | "durationMinutes"
+	>[],
+	coachId: string,
+	expectedDurationMinutes: number | undefined,
+): string | undefined =>
+	expectedDurationMinutes !== undefined &&
+	assignments.find((assignment) => assignment.coachId === coachId)
+		?.durationMinutes !== expectedDurationMinutes
+		? "Coach assignment or hours changed. Reopen hours before saving."
+		: undefined;

@@ -26,7 +26,7 @@ const coachSeed: SessionPerformance = {
 	id: "sample-coach-session-rating",
 	kind: "coach",
 	authorId: "alex",
-	authorName: "Alex Rivera",
+	authorName: "Jordan Fryers",
 	rating: 7,
 	comments:
 		"You looked for support after each pass. Keep moving into the next open lane.",
@@ -38,7 +38,7 @@ export const previewSessionPerformanceAtom = atom<SessionPerformance[]>([
 		id: "sample-self-session-rating",
 		kind: "self",
 		authorId: "jamie",
-		authorName: "Jamie Rivera",
+		authorName: "Alexis Smith",
 		rating: 6,
 		comments:
 			"I found space more consistently and want to react sooner after a turnover.",

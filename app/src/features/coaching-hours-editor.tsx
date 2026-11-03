@@ -2,9 +2,9 @@ import { type ReactElement, useState } from "react";
 import { Button, Dialog, Select, Stack, Text } from "../design-system";
 import {
 	type CoachingAssignment,
+	coachingDurationEditError,
 	coachingDurations,
 	coachingHoursLabel,
-	validCoachingDuration,
 } from "../domain/coaching-hours";
 import { useFormTask } from "./use-form-task";
 
@@ -22,14 +22,18 @@ export const CoachingHoursEditor = ({
 	onClose: () => void;
 }): ReactElement => {
 	const [minutes, setMinutes] = useState(assignment.durationMinutes);
+	const [savedMinutes, setSavedMinutes] = useState(assignment.durationMinutes);
 	const task = useFormTask();
 	const save = async (): Promise<void> => {
 		if (
 			await task.submit(
 				(): string | undefined =>
-					validCoachingDuration(minutes) || minutes === scheduledMinutes
-						? undefined
-						: "Choose coaching time",
+					coachingDurationEditError(
+						minutes,
+						scheduledMinutes,
+						savedMinutes,
+						assignment.durationMinutes,
+					),
 				async (): Promise<void> => {
 					if (!(await onSave(minutes)))
 						throw new Error("Couldn’t save hours. Try again.");
@@ -73,6 +77,18 @@ export const CoachingHoursEditor = ({
 						if (value) setMinutes(Number(value));
 					}}
 				/>
+				{savedMinutes !== assignment.durationMinutes ? (
+					<Button
+						label="Reload saved hours"
+						variant="ghost"
+						isDisabled={task.busy}
+						onPress={(): void => {
+							setMinutes(assignment.durationMinutes);
+							setSavedMinutes(assignment.durationMinutes);
+							task.clear();
+						}}
+					/>
+				) : undefined}
 				{task.error ? (
 					<Text variant="small" tone="danger">
 						{task.error}

@@ -48,3 +48,5 @@ yarn-error.log*
 /site/.next/
 /site/node_modules/
 /.expo/
+/tools/flow-map/dist/
+/tools/flow-map/.openai/

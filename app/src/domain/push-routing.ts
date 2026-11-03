@@ -2,12 +2,11 @@ import { disabledConversation } from "./conversation-policy";
 
 export const notificationPath = (path: unknown): string | undefined => {
 	if (typeof path !== "string") return undefined;
-	if (
-		["/progress", "/club", "/schedule", "/messages?tab=notices"].includes(path)
-	)
+	if (path === "/messages?tab=notices") return "/announcements";
+	if (["/progress", "/club", "/schedule", "/announcements"].includes(path))
 		return path;
 	if (
-		/^\/member\?id=[A-Za-z0-9_%.-]{1,180}&tab=(progress|feedback|shoutouts)$/.test(
+		/^\/member\?id=[A-Za-z0-9_%.-]{1,180}&tab=(progress|goals|feedback|shoutouts)$/.test(
 			path,
 		)
 	)

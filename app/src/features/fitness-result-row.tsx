@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { Field, Grid, Select, Stack, Text } from "../design-system";
+import { Disclosure, Field, Grid, Select, Stack, Text } from "../design-system";
 import {
 	type FitnessSummary,
 	type FitnessUnit,
@@ -30,9 +30,9 @@ export const FitnessResultRow = ({
 				<Text variant="label">{name}</Text>
 				{stats ? (
 					<Text variant="caption" tone="secondary">
-						Best {formatFitnessValue(unit, stats.best)} ·{" "}
-						{fitnessAverage(unit, stats)}
-						{unit !== "pass_fail" ? " average" : ""}
+						{unit === "pass_fail"
+							? fitnessAverage(unit, stats)
+							: `Best ${formatFitnessValue(unit, stats.best)} · ${fitnessAverage(unit, stats)} average`}
 					</Text>
 				) : undefined}
 			</Stack>
@@ -44,8 +44,8 @@ export const FitnessResultRow = ({
 					value={entry.value}
 					options={[
 						{ value: "", label: "Not recorded" },
-						{ value: "pass", label: "Pass" },
-						{ value: "fail", label: "Fail" },
+						{ value: "pass", label: "Passed" },
+						{ value: "fail", label: "Not passed" },
 					]}
 					onValueChange={(value): void =>
 						onChange({ ...entry, value: value ?? "" })
@@ -70,13 +70,20 @@ export const FitnessResultRow = ({
 					isDisabled={disabled}
 				/>
 			)}
-			<Field
-				label={compact ? "Notes (optional)" : `${name} notes`}
-				value={entry.notes}
-				onValueChange={(notes): void => onChange({ ...entry, notes })}
-				maxLength={1000}
+			<Disclosure
+				title="Result notes"
+				summary={entry.notes ? "Note added" : "Optional"}
+				defaultOpen={Boolean(entry.notes)}
 				isDisabled={disabled}
-			/>
+			>
+				<Field
+					label={compact ? "Notes (optional)" : `${name} notes`}
+					value={entry.notes}
+					onValueChange={(notes): void => onChange({ ...entry, notes })}
+					maxLength={1000}
+					isDisabled={disabled}
+				/>
+			</Disclosure>
 		</Grid>
 	</Stack>
 );

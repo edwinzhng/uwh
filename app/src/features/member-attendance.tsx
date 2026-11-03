@@ -99,7 +99,7 @@ const AttendanceContent = ({
 			{summary.records.length ? (
 				<Stack gap="sm">
 					<SectionHeading>Practice history</SectionHeading>
-					<Surface>
+					<Surface variant="plain">
 						<AttendanceRecords
 							key={member.id + seasonId}
 							records={summary.records}

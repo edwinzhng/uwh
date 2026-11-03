@@ -36,12 +36,12 @@ export const clubToolLinks = {
 	videos: {
 		title: "Videos",
 		description: "Clips and video feedback",
-		icon: "image",
+		icon: "video",
 		href: { pathname: "/resources", params: { kind: "video" } },
 	},
 	documents: {
-		title: "Documents",
-		icon: "archive",
+		title: "Files",
+		icon: "document",
 		href: { pathname: "/resources", params: { kind: "document" } },
 	},
 	coaching: {
@@ -57,19 +57,19 @@ export const clubToolLinks = {
 		href: "/development",
 	},
 	hours: {
-		title: "Assignments & hours",
+		title: "Hours",
 		icon: "clock",
 		href: "/coaching-hours",
 	},
 	attendance: {
-		title: "Attendance reports",
-		icon: "layers",
+		title: "Attendance",
+		icon: "attendance",
 		href: "/attendance-report",
 	},
 	registration: { title: "Registration", icon: "users", href: "/registration" },
-	payments: { title: "Payments", icon: "layers", href: "/payments" },
-	equipment: { title: "Equipment", icon: "archive", href: "/equipment" },
-	settings: { title: "Club settings", icon: "settings", href: "/settings" },
-	moderation: { title: "Moderation", icon: "message", href: "/moderation" },
-	imports: { title: "Import data", icon: "download", href: "/import" },
+	payments: { title: "Payments", icon: "payments", href: "/payments" },
+	equipment: { title: "Equipment", icon: "equipment", href: "/equipment" },
+	settings: { title: "Settings", icon: "settings", href: "/settings" },
+	moderation: { title: "Moderation", icon: "moderation", href: "/moderation" },
+	imports: { title: "Import", icon: "download", href: "/import" },
 } satisfies Record<ClubTool, ClubToolLink>;

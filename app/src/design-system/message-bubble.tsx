@@ -1,6 +1,7 @@
 import { type ReactElement, type ReactNode, useState } from "react";
 import { useWindowDimensions, View } from "react-native";
 import { Avatar } from "./avatar";
+import { chatColors } from "./chat-colors";
 import {
 	messageBubbleLayout,
 	showMessageReaction,
@@ -8,6 +9,7 @@ import {
 import { MessageMenuPosition } from "./message-menu-position";
 import { Text } from "./text";
 import { useTheme } from "./theme";
+import { ThemeScope } from "./theme-scope";
 import { corners, geometry, space } from "./tokens";
 
 export const MessageBubble = ({
@@ -48,31 +50,37 @@ export const MessageBubble = ({
 		Boolean(reaction),
 	);
 	const bubble = (
-		<View
-			style={{
-				maxWidth: layout.maxWidth,
-				minWidth: 0,
-				flexShrink: 1,
-				minHeight: geometry.touch,
-				borderRadius: corners.panel,
-				backgroundColor: outgoing
-					? theme.colorScales.accent.muted
-					: theme.background.primary,
-				borderWidth: geometry.border,
-				borderColor: outgoing ? theme.colorScales.accent.border : theme.border,
-				paddingHorizontal: space.md,
-				paddingVertical: space.xs,
-			}}
+		<ThemeScope
+			appearance={
+				outgoing ? (theme.mode === "dark" ? "light" : "dark") : theme.mode
+			}
 		>
-			{children}
-			{stamp ? (
-				<View style={{ alignSelf: "flex-end", paddingTop: space.xxs }}>
-					<Text variant="caption" tone="secondary">
-						{stamp}
-					</Text>
-				</View>
-			) : undefined}
-		</View>
+			<View
+				style={{
+					maxWidth: layout.maxWidth,
+					minWidth: 0,
+					flexShrink: 1,
+					minHeight: geometry.touch,
+					borderRadius: corners.panel,
+					backgroundColor: outgoing
+						? chatColors[theme.mode].outgoing
+						: theme.background.primary,
+					borderWidth: geometry.border,
+					borderColor: outgoing ? chatColors[theme.mode].border : theme.border,
+					paddingHorizontal: space.md,
+					paddingVertical: space.xs,
+				}}
+			>
+				{children}
+				{stamp ? (
+					<View style={{ alignSelf: "flex-end", paddingTop: space.xxs }}>
+						<Text variant="caption" tone="secondary">
+							{stamp}
+						</Text>
+					</View>
+				) : undefined}
+			</View>
+		</ThemeScope>
 	);
 	return (
 		<View

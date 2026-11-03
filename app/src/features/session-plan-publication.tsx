@@ -40,7 +40,7 @@ export const SessionPlanPublication = ({
 			<Dialog
 				intent="confirmation"
 				isDismissDisabled={task.busy}
-				title={`${action} session plan`}
+				title={`${action} plan`}
 				isOpen={open}
 				onOpenChange={(next): void => {
 					if (!task.busy) setOpen(next);
@@ -52,12 +52,8 @@ export const SessionPlanPublication = ({
 						onPress={(): void => {
 							void task.submit(
 								() =>
-									!plan.published &&
-									!plan.body &&
-									!plan.goals &&
-									!plan.objective &&
-									!plan.drills.length
-										? "Add a plan or goals before publishing."
+									!plan.published && !plan.body && !plan.media.length
+										? "Add a plan or attachment before publishing."
 										: undefined,
 								async (): Promise<void> => {
 									const draft = {
@@ -84,7 +80,7 @@ export const SessionPlanPublication = ({
 					<Text>
 						{plan.published
 							? "Remove this plan from the player and guardian view. Coaches will keep the saved plan and private notes."
-							: "Share this version’s plan, goals and available media with eligible players and their linked guardians. Coaching notes stay private."}
+							: "Share this version’s plan and attachments with eligible players and their linked guardians. Coaching notes stay private."}
 					</Text>
 					{!plan.published ? (
 						<Text variant="small" tone="secondary">

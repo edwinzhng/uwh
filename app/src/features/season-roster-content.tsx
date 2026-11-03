@@ -22,7 +22,7 @@ export const SeasonRosterContent = ({
 }): ReactElement => {
 	const router = useRouter();
 	return (
-		<Surface padding="xs">
+		<Surface>
 			<List>
 				{!records ? (
 					<LoadingContent />
@@ -32,34 +32,50 @@ export const SeasonRosterContent = ({
 							(record) => record.personId === member.id,
 						);
 						const due = (record?.due ?? 0) - (record?.paid ?? 0);
+						const registrationLabel =
+							record?.registration === "approved"
+								? "Approved"
+								: record?.registration === "submitted"
+									? "Awaiting review"
+									: "Missing registration";
+						const accountLabel =
+							section === "registration"
+								? `CUGA: ${record?.cuga ? "Yes" : "No"}`
+								: due > 0
+									? `${money(due)} due`
+									: due < 0
+										? `${money(-due)} credit`
+										: "Settled";
 						return (
 							<ListItem
 								key={member.id}
 								title={member.name}
+								accessibilityLabel={`${member.name}. ${registrationLabel}. ${accountLabel}`}
 								avatar={member.name}
 								avatarId={member.id}
-								description={
-									record?.registration === "approved"
-										? "Approved"
-										: record?.registration === "submitted"
-											? "Awaiting review"
-											: "Missing registration"
+								titleAccessory={
+									<Badge
+										label={registrationLabel}
+										kind={
+											record?.registration === "approved"
+												? "success"
+												: record?.registration === "submitted"
+													? "pending"
+													: "warning"
+										}
+									/>
 								}
 								trailing={
 									<Badge
-										label={
-											section === "registration"
-												? `CUGA: ${record?.cuga ? "Yes" : "No"}`
-												: due > 0
-													? `${money(due)} due`
-													: due < 0
-														? `${money(-due)} credit`
-														: "Settled"
-										}
+										label={accountLabel}
 										kind={
-											due > 0 && section !== "registration"
-												? "warning"
-												: "neutral"
+											section === "registration"
+												? record?.cuga
+													? "success"
+													: "warning"
+												: due > 0
+													? "warning"
+													: "neutral"
 										}
 									/>
 								}

@@ -48,6 +48,7 @@ import { JoinInviteScreen } from "../features/join-invite-screen";
 import { PublicScheduleScreen } from "../features/public-schedule-screen";
 import { TermsGate } from "../features/terms-gate";
 import { callbackAddress, handlesAuthCode } from "./auth-browser";
+import { browserInstallationId } from "./browser-push";
 import { BrowserPushBridge } from "./browser-push-bridge";
 import { ChatSafetyProvider } from "./chat-safety";
 import { type Backend, BackendContext } from "./context";
@@ -55,6 +56,7 @@ import { friendlyError } from "./errors";
 import { createImageService } from "./image-service";
 import { installationId } from "./native-push";
 import { PushBridge } from "./push-bridge";
+import { signOutAfterPushCleanup } from "./push-lifecycle";
 import { tokenStorage } from "./token-storage";
 import { useInvites } from "./use-invites";
 import { useRetainedQuery } from "./use-retained-query";
@@ -139,6 +141,7 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 	const cancelRequest = useMutation(api.account.cancelRequest);
 	const declineRequest = useMutation(api.account.declineRequest);
 	const unregisterPush = useMutation(api.notifications.unregister);
+	const unregisterBrowserPush = useMutation(api.web_push.unregister);
 	const apply = useMutation(api.club.apply);
 	const create = useMutation(api.club.create);
 	const join = useMutation(api.club.requestToJoin);
@@ -227,10 +230,26 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 			requests: workspace?.requests ?? [],
 			signOut: async (): Promise<void> => {
 				setError(undefined);
-				void installationId()
-					.then((id) => unregisterPush({ installationId: id }))
-					.catch((): void => {});
-				await auth.signOut();
+				await signOutAfterPushCleanup({
+					cleanup: async (signal): Promise<void> => {
+						if (Platform.OS === "web") {
+							const id = browserInstallationId();
+							if (id && accountInfo && !signal.aborted)
+								await unregisterBrowserPush({
+									installationId: id,
+									expectedUserId: accountInfo.id,
+								});
+						} else {
+							const id = await installationId();
+							if (accountInfo && !signal.aborted)
+								await unregisterPush({
+									installationId: id,
+									expectedUserId: accountInfo.id,
+								});
+						}
+					},
+					signOut: auth.signOut,
+				});
 			},
 			createClub: async (name, samples): Promise<void> => {
 				await create({ name, samples });
@@ -271,6 +290,7 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 			isLoading,
 			workspace,
 			unregisterPush,
+			unregisterBrowserPush,
 			create,
 			join,
 			setAccess,

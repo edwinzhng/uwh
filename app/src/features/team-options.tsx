@@ -1,6 +1,14 @@
 import { type ReactElement, useState } from "react";
 import { useApp, useAppStatus } from "../demo/app-state";
-import { Button, Dialog, Divider, Stack, Text, Toggle } from "../design-system";
+import {
+	Button,
+	Dialog,
+	Divider,
+	PersonChoice,
+	Stack,
+	Text,
+	Toggle,
+} from "../design-system";
 import { eventAttendees } from "../domain/app-rules";
 import type { TeamPlan } from "../domain/app-types";
 import { useFormTask } from "./use-form-task";
@@ -99,13 +107,13 @@ export const TeamOptions = ({
 					</Text>
 					<Stack gap="none">
 						{attendees.map((member) => (
-							<Toggle
-								compact
+							<PersonChoice
 								key={member.id}
-								label={member.name}
-								value={!excluded.includes(member.id)}
+								name={member.name}
+								personId={member.id}
+								checked={!excluded.includes(member.id)}
 								isDisabled={busy}
-								onValueChange={(included): void =>
+								onChange={(included): void =>
 									setExcluded((current) =>
 										included
 											? current.filter((id) => id !== member.id)

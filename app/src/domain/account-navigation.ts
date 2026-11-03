@@ -1,11 +1,8 @@
-import { feedbackSection } from "./feedback-navigation";
-
 export const accountSections = [
 	{ value: "membership", label: "Membership" },
-	{ value: "progress", label: "Progress" },
-	{ value: "coach", label: "Coach feedback" },
-	{ value: "self", label: "My reflections" },
-	{ value: "videos", label: "Videos" },
+	{ value: "fitness", label: "Fitness" },
+	{ value: "goals", label: "Goals & reflections" },
+	{ value: "feedback", label: "Feedback" },
 	{ value: "attendance", label: "Attendance" },
 ] as const;
 
@@ -16,14 +13,18 @@ export const accountSection = (
 	feedback?: string,
 ): AccountSection =>
 	tab === "feedback"
-		? feedbackSection(feedback)
-		: tab === "progress" || tab === "attendance"
-			? tab
-			: "membership";
+		? feedback === "self"
+			? "goals"
+			: "feedback"
+		: tab === "progress" || tab === "fitness"
+			? "fitness"
+			: tab === "goals" || tab === "attendance"
+				? tab
+				: "membership";
 
 export const accountSectionParams = (
 	section: AccountSection,
-): { tab: string; feedback?: string } =>
-	section === "coach" || section === "self" || section === "videos"
-		? { tab: "feedback", feedback: section }
-		: { tab: section, feedback: undefined };
+): { tab: string; feedback?: string } => ({
+	tab: section,
+	feedback: undefined,
+});

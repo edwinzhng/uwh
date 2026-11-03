@@ -14,10 +14,12 @@ export const InteractionHighlight = ({
 	active,
 	color,
 	radius,
+	subtle = false,
 }: {
 	active: boolean;
 	color: string;
 	radius: number;
+	subtle?: boolean;
 }): ReactElement => {
 	const animate = useMotion();
 	const progress = useSharedValue(active ? 1 : 0);
@@ -31,8 +33,10 @@ export const InteractionHighlight = ({
 		);
 	}, [active, animate, progress]);
 	const style = useAnimatedStyle(() => ({
-		opacity: progress.get(),
-		transform: [{ scale: animate ? 0.97 + progress.get() * 0.03 : 1 }],
+		opacity: progress.get() * (subtle ? 0.06 : 1),
+		transform: [
+			{ scale: animate && !subtle ? 0.97 + progress.get() * 0.03 : 1 },
+		],
 	}));
 	return (
 		<Animated.View

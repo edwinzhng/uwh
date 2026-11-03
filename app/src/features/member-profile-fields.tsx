@@ -1,11 +1,12 @@
 import type { ReactElement } from "react";
-import { Field, Stack, Text } from "../design-system";
+import { Field, Stack } from "../design-system";
 import type { MemberProfileInput } from "../domain/member-profile";
 
 export const MemberProfileFields = ({
 	input,
 	onChange,
 	isDisabled,
+	canEditCapNumber = false,
 }: {
 	input: MemberProfileInput;
 	onChange: (
@@ -13,11 +14,9 @@ export const MemberProfileFields = ({
 		value: string,
 	) => void;
 	isDisabled: boolean;
+	canEditCapNumber?: boolean;
 }): ReactElement => (
 	<Stack>
-		<Text variant="caption" tone="secondary">
-			Name, cap and photo are shared with the club.
-		</Text>
 		<Field
 			label="Name"
 			value={input.name}
@@ -25,32 +24,19 @@ export const MemberProfileFields = ({
 			maxLength={80}
 			isDisabled={isDisabled}
 		/>
+		{canEditCapNumber ? (
+			<Field
+				label="Cap number"
+				hint="1–99"
+				inputMode="numeric"
+				value={input.capNumber}
+				onValueChange={(value): void => onChange("capNumber", value)}
+				maxLength={2}
+				isDisabled={isDisabled}
+			/>
+		) : undefined}
 		<Field
-			label="Cap number"
-			hint="1–99, optional"
-			inputMode="numeric"
-			value={input.capNumber}
-			onValueChange={(value): void => onChange("capNumber", value)}
-			maxLength={2}
-			isDisabled={isDisabled}
-		/>
-		<Stack gap="xs">
-			<Text variant="label">Contact details</Text>
-			<Text variant="caption" tone="secondary">
-				Only you and linked guardians can see these.
-			</Text>
-		</Stack>
-		<Field
-			label="Contact email"
-			hint="Doesn’t change your sign-in email."
-			inputMode="email"
-			value={input.email}
-			onValueChange={(value): void => onChange("email", value)}
-			maxLength={254}
-			isDisabled={isDisabled}
-		/>
-		<Field
-			label="Phone"
+			label="Phone (private)"
 			inputMode="tel"
 			value={input.phone}
 			onValueChange={(value): void => onChange("phone", value)}

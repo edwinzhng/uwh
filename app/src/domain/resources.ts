@@ -1,4 +1,5 @@
 import { documentContainerMime } from "./resource-documents";
+import { videoEmbedUrl } from "./video-embed";
 
 export type ResourceKind = "document" | "video";
 export const resourceCategories = [
@@ -42,11 +43,19 @@ export type Resource = ResourceDraft & {
 	clubId: string;
 	archived: boolean;
 	revision: number;
+	createdAt?: number;
 	updatedAt: number;
 	fileName?: string;
 	fileMime?: string;
 	personNames?: Record<string, string>;
 };
+export const resourceTimestamps = (
+	previous: Pick<Resource, "createdAt" | "updatedAt"> | undefined,
+	now: number,
+): { createdAt: number; updatedAt: number } => ({
+	createdAt: previous?.createdAt ?? previous?.updatedAt ?? now,
+	updatedAt: now,
+});
 export type ResourceComment = {
 	id: string;
 	authorId: string;
@@ -174,7 +183,20 @@ export const validateResource = (draft: ResourceDraft): string | undefined => {
 		return "Use a separate file for each media attachment.";
 	if (draft.url && !resourceUrl(draft.url.trim()))
 		return "Use a complete secure link beginning with https://.";
+	if (draft.url && !supportedResourceLink(draft.kind, draft.url.trim()))
+		return draft.kind === "video"
+			? "Use a YouTube or Vimeo video link, or upload a video."
+			: "Use a direct PDF or image link, or upload a document.";
 	return undefined;
+};
+export const supportedResourceLink = (
+	kind: ResourceKind,
+	value: string,
+): boolean => {
+	const secure = resourceUrl(value);
+	if (!secure) return false;
+	if (kind === "video") return Boolean(videoEmbedUrl(secure));
+	return /\.(?:pdf|png|jpe?g|webp|gif)$/i.test(new URL(secure).pathname);
 };
 export const validateResourceComment = (body: string): string | undefined =>
 	!body.trim() || body.trim().length > resourceLimits.comment

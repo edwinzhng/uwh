@@ -1,0 +1,162 @@
+:root {
+	color-scheme: dark;
+	--bg: #121812;
+	--ink: #eef2d9;
+	--muted: #a9b8a5;
+	--line: #344634;
+}
+* {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--ink);
+	font:
+		14px / 1.5 Inter,
+		system-ui,
+		sans-serif;
+}
+header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 20px 28px;
+	border-bottom: 1px solid var(--line);
+	gap: 16px;
+	flex-wrap: wrap;
+}
+h1 {
+	font-size: 20px;
+	margin: 0;
+	letter-spacing: -0.03em;
+}
+.controls,
+fieldset {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+fieldset {
+	border: 0;
+	margin: 0;
+	padding: 0;
+}
+label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--muted);
+}
+select,
+button,
+a {
+	font: inherit;
+	color: inherit;
+}
+select {
+	padding: 8px;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	background: var(--bg);
+	font-size: 14px;
+}
+button,
+a {
+	display: inline-block;
+	background: transparent;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	padding: 6px 12px;
+	min-height: 36px;
+	cursor: pointer;
+	text-decoration: none;
+	font-size: 12px;
+	touch-action: manipulation;
+}
+button[aria-pressed="true"] {
+	background: #384436;
+}
+button:focus-visible,
+a:focus-visible,
+select:focus-visible {
+	outline: 2px solid #d8ff63;
+	outline-offset: 3px;
+}
+main {
+	padding: 28px;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 24px;
+	align-items: start;
+}
+section {
+	min-width: 0;
+}
+h2 {
+	font-size: 16px;
+	letter-spacing: -0.02em;
+	margin: 0 0 6px;
+}
+p {
+	font-size: 14px;
+	color: var(--muted);
+	margin: 0;
+	min-height: 44px;
+}
+.actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+	margin: 16px 0 12px;
+}
+.frame {
+	position: relative;
+	overflow: hidden;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	background: var(--bg);
+}
+iframe {
+	position: absolute;
+	left: 0;
+	top: 0;
+	border: 0;
+	transform-origin: top left;
+	pointer-events: none;
+	color-scheme: dark;
+}
+.interacting iframe {
+	pointer-events: auto;
+}
+.sr-only {
+	position: absolute;
+	clip-path: inset(50%);
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+@media (max-width: 950px) {
+	main {
+		grid-template-columns: minmax(0, 1fr);
+		max-width: 620px;
+		margin: auto;
+	}
+	header {
+		padding: 16px;
+	}
+	main {
+		padding: 20px 16px;
+	}
+	p {
+		min-height: 0;
+	}
+}
+@media (hover: hover) {
+	button:hover,
+	a:hover {
+		background: #263026;
+	}
+}

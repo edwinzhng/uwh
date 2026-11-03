@@ -1,44 +1,22 @@
-import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
-import { Linking } from "react-native";
-import { Button, Stack, Text } from "../design-system";
-import { resourceUrl } from "../domain/resources";
+import { Stack, Text } from "../design-system";
 import type { SessionPlanMedia as PlanMedia } from "../domain/session-plan";
-import { useTask } from "./use-task";
+import { SessionPlanLinkMedia } from "./session-plan-link-media";
+import { SessionPlanResourceMedia } from "./session-plan-resource-media";
 
 export const SessionPlanMedia = ({
 	media,
 }: {
 	media: PlanMedia;
-}): ReactElement => {
-	const router = useRouter();
-	const task = useTask();
-	return (
-		<Stack gap="xxs">
-			<Button
-				label={media.label}
-				prefix={media.source === "resource" ? "archive" : "image"}
-				variant="ghost"
-				isLoading={task.busy}
-				onPress={(): void => {
-					if (media.source === "resource")
-						router.push({
-							pathname: "/resources",
-							params: { id: media.resourceId },
-						});
-					else
-						void task.run(async (): Promise<void> => {
-							const url = resourceUrl(media.url);
-							if (!url) throw new Error("This media link is unavailable.");
-							await Linking.openURL(url);
-						});
-				}}
-			/>
-			{task.error ? (
-				<Text tone="danger" variant="small">
-					{task.error}
-				</Text>
-			) : undefined}
-		</Stack>
-	);
-};
+}): ReactElement => (
+	<Stack gap="xs">
+		<Text variant="small" weight="medium">
+			{media.label}
+		</Text>
+		{media.source === "resource" ? (
+			<SessionPlanResourceMedia resourceId={media.resourceId} />
+		) : (
+			<SessionPlanLinkMedia url={media.url} label={media.label} />
+		)}
+	</Stack>
+);

@@ -1,13 +1,16 @@
 import { type ReactElement, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { Avatar } from "./avatar";
 import { useButtonHaptics } from "./haptics";
 import { Icon } from "./icon";
+import type { ChoicePerson } from "./picker-props";
 import { useTheme } from "./theme";
 import { control, corners, font, geometry } from "./tokens";
 
 export const ContextTrigger = ({
 	label,
 	value,
+	person,
 	isOpen,
 	isDisabled,
 	onPress,
@@ -16,6 +19,7 @@ export const ContextTrigger = ({
 	value: string;
 	isOpen: boolean;
 	isDisabled?: boolean;
+	person?: ChoicePerson;
 	onPress: () => void;
 }): ReactElement => {
 	const theme = useTheme();
@@ -54,6 +58,9 @@ export const ContextTrigger = ({
 			<View
 				style={{ flexDirection: "row", alignItems: "center", gap: control.gap }}
 			>
+				{person ? (
+					<Avatar name={person.name ?? value} personId={person.id} compact />
+				) : undefined}
 				<Text
 					style={{
 						flexShrink: 1,

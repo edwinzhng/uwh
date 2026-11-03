@@ -1,16 +1,21 @@
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
 import { previewCoachingSchedule } from "../demo/coaching-schedule-state";
-import type { CoachOption } from "../domain/coaching-hours";
+import {
+	type CoachOption,
+	completedCoachingEvent,
+} from "../domain/coaching-hours";
 import {
 	validateCoachingSchedule,
 	validateProgramCoaching,
 	type WeeklyCoachingSchedule,
 } from "../domain/coaching-schedule";
+import { effectivePracticeCoaches } from "../domain/event-coaching";
 import { clubPrograms } from "../domain/programs";
+import { previewCoachAssignments } from "../features/use-event-coaches";
 
 export type WeeklyCoachingState = {
 	schedule?: WeeklyCoachingSchedule;
@@ -45,6 +50,7 @@ export const useLiveCoachingSchedule = (): WeeklyCoachingState => {
 export const usePreviewCoachingSchedule = (): WeeklyCoachingState => {
 	const { accounts, account, data } = useApp();
 	const [schedule, setSchedule] = useAtom(previewCoachingSchedule);
+	const setAssignments = useSetAtom(previewCoachAssignments);
 	const coaches = accounts
 		.filter((entry) => entry.coachPrograms.length)
 		.map((entry) => ({
@@ -74,6 +80,22 @@ export const usePreviewCoachingSchedule = (): WeeklyCoachingState => {
 				coaches,
 			);
 			if (accessError) throw new Error(accessError);
+			setAssignments((current) => ({
+				...current,
+				...Object.fromEntries(
+					data.events
+						.filter((event) => completedCoachingEvent(event, Date.now()))
+						.map((event) => [
+							event.id,
+							effectivePracticeCoaches(
+								event,
+								schedule,
+								coaches,
+								current[event.id],
+							),
+						]),
+				),
+			}));
 			setSchedule({ ...next, revision: next.revision + 1 });
 		},
 	};

@@ -1,7 +1,6 @@
 import {
 	type ReactElement,
 	useCallback,
-	useContext,
 	useEffect,
 	useMemo,
 	useRef,
@@ -15,7 +14,6 @@ import Animated, {
 	useSharedValue,
 } from "react-native-reanimated";
 import { Avatar } from "./avatar";
-import { LiquidBubble, LiquidBubbleContext } from "./liquid-bubble-scene";
 import { PoolAddButton } from "./pool-add-button";
 import type { PoolBoardSpot } from "./pool-board";
 import type { PoolBoardDrag } from "./pool-board-layout";
@@ -47,26 +45,18 @@ export const PoolPiece = ({
 	acceptsDrop?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
-	const liquid = useContext(LiquidBubbleContext);
 	const suppressPress = useRef(false);
 	const releaseFrame = useRef(0);
 	useEffect(() => (): void => cancelAnimationFrame(releaseFrame.current), []);
-	const moveLiquid = useCallback(
-		(id: string, x: number, y: number, vx: number, vy: number): void =>
-			liquid?.move(id, x, y, vx, vy),
-		[liquid],
-	);
-	const refreshLiquid = useCallback((): void => {
+	const beginDrag = useCallback((): void => {
 		cancelAnimationFrame(releaseFrame.current);
 		suppressPress.current = true;
-		liquid?.refresh();
-	}, [liquid]);
-	const releaseLiquid = useCallback((): void => {
-		liquid?.release();
+	}, []);
+	const endDrag = useCallback((): void => {
 		releaseFrame.current = requestAnimationFrame((): void => {
 			suppressPress.current = false;
 		});
-	}, [liquid]);
+	}, []);
 	const latest = useRef({ spot, onDrop });
 	latest.current = { spot, onDrop };
 	const x = useSharedValue(0);
@@ -84,7 +74,7 @@ export const PoolPiece = ({
 				.minDistance(6)
 				.maxPointers(1)
 				.onStart((event): void => {
-					runOnJS(refreshLiquid)();
+					runOnJS(beginDrag)();
 					if (personId)
 						dragState.set({
 							personId,
@@ -94,14 +84,6 @@ export const PoolPiece = ({
 						});
 				})
 				.onUpdate((event): void => {
-					if (personId)
-						runOnJS(moveLiquid)(
-							personId,
-							event.translationX,
-							event.translationY,
-							event.velocityX,
-							event.velocityY,
-						);
 					x.set(event.translationX);
 					y.set(event.translationY);
 					if (personId)
@@ -120,20 +102,9 @@ export const PoolPiece = ({
 					x.set(0);
 					y.set(0);
 					dragState.set(undefined);
-					runOnJS(releaseLiquid)();
+					runOnJS(endDrag)();
 				}),
-		[
-			canDrag,
-			personId,
-			scope,
-			drop,
-			dragState,
-			x,
-			y,
-			moveLiquid,
-			refreshLiquid,
-			releaseLiquid,
-		],
+		[canDrag, personId, scope, drop, dragState, x, y, beginDrag, endDrag],
 	);
 	const chipStyle = useAnimatedStyle(() => ({
 		transform: [{ translateX: x.get() }, { translateY: y.get() }],
@@ -157,14 +128,12 @@ export const PoolPiece = ({
 					width: geometry.touch,
 					height: geometry.touch,
 					borderRadius: geometry.touch / 2,
-					borderWidth: selected
-						? geometry.focus
-						: spot.person
-							? 0
-							: geometry.border,
+					borderWidth: selected ? geometry.focus : geometry.border,
 					borderStyle: spot.person ? "solid" : "dashed",
 					borderColor: selected ? theme.focus : theme.border,
-					backgroundColor: selected ? theme.background.selected : "transparent",
+					backgroundColor: selected
+						? theme.background.selected
+						: theme.background.card,
 					alignItems: "center",
 					justifyContent: "center",
 				}}
@@ -261,19 +230,7 @@ export const PoolPiece = ({
 							scope={scope}
 							drag={dragState}
 						>
-							<LiquidBubble
-								id={spot.person.id}
-								size={geometry.touch}
-								overlay={
-									<Avatar
-										compact
-										name={spot.person.name}
-										personId={spot.person.id}
-									/>
-								}
-							>
-								{trigger}
-							</LiquidBubble>
+							{trigger}
 						</PoolDropTarget>
 					) : (
 						<PoolDropTarget slotId={positionId} scope={scope} drag={dragState}>

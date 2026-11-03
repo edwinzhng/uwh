@@ -14,7 +14,7 @@ export const parseFitnessValue = (
 	if (unit === "pass_fail") {
 		if (value === "pass") return 1;
 		if (value === "fail") return 0;
-		throw new Error("Choose Pass or Fail.");
+		throw new Error("Choose Passed or Not passed.");
 	}
 	if (unit === "count") {
 		if (!/^\d+$/.test(value) || Number(value) > 1000000)
@@ -40,7 +40,7 @@ export const formatFitnessValue = (
 	value: number | undefined,
 ): string => {
 	if (value === undefined) return "—";
-	if (unit === "pass_fail") return value === 1 ? "Pass" : "Fail";
+	if (unit === "pass_fail") return value === 1 ? "Passed" : "Not passed";
 	if (unit === "distance") return String(Number(value.toFixed(2)));
 	if (unit === "count")
 		return Number.isInteger(value) ? String(value) : value.toFixed(1);
@@ -59,7 +59,7 @@ export const fitnessAverage = (
 	!stats.count
 		? "—"
 		: unit === "pass_fail"
-			? `${Math.round((stats.total / stats.count) * 100)}% pass`
+			? `${Math.round((stats.total / stats.count) * 100)}% passed`
 			: formatFitnessValue(unit, stats.total / stats.count);
 export const fitnessUnitLabel = (
 	unit: FitnessUnit,
@@ -71,4 +71,4 @@ export const fitnessUnitLabel = (
 			? `Distance (m) · ${lowerIsBetter ? "lower" : "higher"} is better`
 			: unit === "count"
 				? "Count · higher is better"
-				: "Pass / fail";
+				: "Pass/fail";

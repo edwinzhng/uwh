@@ -68,7 +68,7 @@ test("eligibility controls and nested sheet remain disabled during event persist
 		"Select",
 		"Button",
 		"Field",
-		"Checkbox",
+		"PersonChoice",
 		"Dialog",
 	]);
 	expect(eligibility).toHaveLength(7);

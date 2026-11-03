@@ -48,6 +48,7 @@ export const NativePicker = <T extends string>({
 				label={label}
 				compact={compact}
 				value={selected?.label ?? placeholder}
+				person={selected?.person}
 				isOpen={open}
 				isDisabled={isDisabled}
 				tone={selected?.tone}
@@ -98,6 +99,7 @@ export const NativePicker = <T extends string>({
 							key={option.value}
 							label={option.label}
 							icon={option.icon}
+							person={option.person}
 							isSelected={value === option.value}
 							isDisabled={option.isDisabled}
 							tone={option.tone}

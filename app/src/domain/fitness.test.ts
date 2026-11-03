@@ -1,11 +1,18 @@
 import { describe, expect, test } from "bun:test";
 import {
 	fitnessAverage,
+	fitnessUnitLabel,
 	formatFitnessValue,
 	parseFitnessValue,
 } from "./fitness";
 
 describe("fitness results", () => {
+	test("pass/fail results describe an outcome without a best ranking", (): void => {
+		expect(formatFitnessValue("pass_fail", 1)).toBe("Passed");
+		expect(formatFitnessValue("pass_fail", 0)).toBe("Not passed");
+		expect(formatFitnessValue("pass_fail", undefined)).toBe("—");
+		expect(fitnessUnitLabel("pass_fail")).toBe("Pass/fail");
+	});
 	test("time entry is validated and preserves hundredths", () => {
 		expect(parseFitnessValue("time", "1:24.50")).toBe(84.5);
 		expect(formatFitnessValue("time", 84.5)).toBe("1:24.50");
@@ -27,7 +34,7 @@ describe("fitness results", () => {
 		expect(fitnessAverage("time", { count: 2, total: 181 })).toBe("1:30.50");
 		expect(fitnessAverage("count", { count: 2, total: 7 })).toBe("3.5");
 		expect(fitnessAverage("pass_fail", { count: 3, total: 2 })).toBe(
-			"67% pass",
+			"67% passed",
 		);
 		expect(fitnessAverage("count", { count: 0, total: 0 })).toBe("—");
 		expect(formatFitnessValue("count", undefined)).toBe("—");

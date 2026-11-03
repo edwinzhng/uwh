@@ -1,9 +1,15 @@
-import { type ReactElement, useState } from "react";
-import { Linking } from "react-native";
-import { nativeFeatureAvailable } from "../platform/native-feature";
+import { useIsFocused } from "expo-router";
+import { lazy, type ReactElement, Suspense, useEffect, useState } from "react";
+import { AppState, TurboModuleRegistry, View } from "react-native";
+import { youtubeThumbnail } from "../domain/resources";
+import { videoEmbedUrl } from "../domain/video-embed";
 import { Button } from "./button";
+import { LoadingContent } from "./loading-content";
+import { MediaPoster } from "./media-poster";
 import { Stack } from "./stack";
 import { Text } from "./text";
+
+const NativeVideoEmbed = lazy(() => import("./native-video-embed"));
 
 export const ExternalVideo = ({
 	url,
@@ -12,39 +18,65 @@ export const ExternalVideo = ({
 	url: string;
 	label: string;
 }): ReactElement => {
+	const focused = useIsFocused();
+	const [requested, setRequested] = useState<string>();
 	const [error, setError] = useState<string>();
-	const [busy, setBusy] = useState(false);
-	const hasBrowser = nativeFeatureAvailable("ExpoWebBrowser");
-	const open = async (): Promise<void> => {
-		if (busy) return;
-		setBusy(true);
-		setError(undefined);
-		try {
-			if (hasBrowser) {
-				const { openBrowserAsync } = await import("expo-web-browser");
-				await openBrowserAsync(url);
-			} else await Linking.openURL(url);
-		} catch {
-			setError("Could not open this video. Try again.");
-		} finally {
-			setBusy(false);
-		}
+	const embed = videoEmbedUrl(url);
+	const available = Boolean(TurboModuleRegistry.get("RNCWebViewModule"));
+	useEffect((): (() => void) => {
+		const subscription = AppState.addEventListener("change", (state): void => {
+			if (state !== "active") setRequested(undefined);
+		});
+		return (): void => subscription.remove();
+	}, []);
+	useEffect((): void => {
+		if (!focused) setRequested(undefined);
+	}, [focused]);
+	if (!embed) return <Text tone="secondary">Video unavailable.</Text>;
+	if (!available)
+		return (
+			<Text tone="secondary">Embedded video needs an updated app build.</Text>
+		);
+	const fail = (): void => {
+		setRequested(undefined);
+		setError("Could not load this video. Try again.");
 	};
 	return (
 		<Stack gap="xs">
-			<Button
-				label={`Watch ${label}`}
-				isLoading={busy}
-				onPress={(): void => {
-					void open();
-				}}
-			/>
-			<Text variant="caption" tone="secondary">
-				{hasBrowser
-					? "Opens in the in-app browser. Close it to return to feedback."
-					: "Opens in your browser. Return to the app for feedback."}
-			</Text>
-			{error ? <Text tone="danger">{error}</Text> : undefined}
+			{focused && requested === embed ? (
+				<View style={{ width: "100%", aspectRatio: 16 / 9 }}>
+					<Suspense fallback={<LoadingContent />}>
+						<NativeVideoEmbed
+							key={embed}
+							embed={embed}
+							label={label}
+							onError={fail}
+						/>
+					</Suspense>
+				</View>
+			) : (
+				<MediaPoster
+					uri={youtubeThumbnail(url)}
+					label={`Play ${label}`}
+					onPress={(): void => {
+						setError(undefined);
+						setRequested(embed);
+					}}
+				/>
+			)}
+			{error ? (
+				<Stack gap="xs">
+					<Text tone="danger">{error}</Text>
+					<Button
+						label="Retry video"
+						compact
+						onPress={(): void => {
+							setError(undefined);
+							setRequested(embed);
+						}}
+					/>
+				</Stack>
+			) : undefined}
 		</Stack>
 	);
 };

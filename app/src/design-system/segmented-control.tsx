@@ -104,11 +104,7 @@ export const SegmentedControl = <T extends string>({
 								y: control.segmentInset,
 							}}
 							value={selectedValue}
-							color={
-								theme.mode === "dark"
-									? theme.background.selected
-									: theme.background.primary
-							}
+							color={theme.background.selected}
 							radius={icons ? radius.round : corners.control}
 							borderColor={icons ? theme.border : undefined}
 						/>

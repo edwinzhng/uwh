@@ -1,9 +1,17 @@
-import { type ReactElement, type ReactNode, useId, useState } from "react";
+import {
+	type ReactElement,
+	type ReactNode,
+	type Ref,
+	useId,
+	useState,
+} from "react";
 import { Pressable, View } from "react-native";
 import { Icon } from "./icon";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, geometry, space } from "./tokens";
+
+export type DisclosureTrigger = View;
 
 export const Disclosure = ({
 	title,
@@ -13,6 +21,7 @@ export const Disclosure = ({
 	isDisabled = false,
 	isOpen,
 	onOpenChange,
+	triggerRef,
 }: {
 	title: string;
 	summary?: string;
@@ -21,6 +30,7 @@ export const Disclosure = ({
 	isDisabled?: boolean;
 	isOpen?: boolean;
 	onOpenChange?: (open: boolean) => void;
+	triggerRef?: Ref<DisclosureTrigger>;
 }): ReactElement => {
 	const theme = useTheme();
 	const id = useId();
@@ -28,16 +38,13 @@ export const Disclosure = ({
 	const [focused, setFocused] = useState(false);
 	const open = isOpen ?? expanded;
 	return (
-		<View
-			style={{
-				borderBottomWidth: geometry.border,
-				borderBottomColor: theme.border,
-			}}
-		>
+		<View>
 			<Pressable
+				ref={triggerRef}
 				accessibilityRole="button"
 				accessibilityLabel={title}
 				accessibilityState={{ expanded: open, disabled: isDisabled }}
+				aria-expanded={open}
 				aria-controls={id}
 				disabled={isDisabled}
 				onFocus={(): void => setFocused(true)}

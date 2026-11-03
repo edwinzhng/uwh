@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { useAtom, useSetAtom } from "jotai";
-import type { ReactElement } from "react";
-import { useBackend } from "../backend/context";
+import { type ReactElement, useState } from "react";
 import { previewAccounts } from "../demo/app-data";
 import {
 	previewAccountIdAtom,
@@ -23,13 +22,11 @@ import {
 	themePreferenceAtom,
 } from "../design-system";
 import { AccountSecurity } from "./account-security";
-import { NotificationSettings } from "./notification-settings";
-import { useTask } from "./use-task";
+import { SignOutConfirmation } from "./sign-out-confirmation";
 export const AccountSettingsContent = (): ReactElement => {
 	const { source } = useApp();
-	const backend = useBackend();
 	const router = useRouter();
-	const task = useTask();
+	const [signOutOpen, setSignOutOpen] = useState(false);
 	const [theme, setTheme] = useAtom(themePreferenceAtom);
 	const [reduceMotion, setReduceMotion] = useAtom(reduceMotionAtom);
 	const [haptics, setHaptics] = useAtom(hapticsEnabledAtom);
@@ -47,6 +44,7 @@ export const AccountSettingsContent = (): ReactElement => {
 							options={previewAccounts.map((entry) => ({
 								value: entry.id,
 								label: entry.name,
+								person: { id: entry.personId, name: entry.name },
 							}))}
 							onValueChange={(value): void => {
 								if (value) selectAccount(value);
@@ -75,27 +73,34 @@ export const AccountSettingsContent = (): ReactElement => {
 						<Button
 							label="Sign out"
 							variant="secondary"
-							isLoading={task.busy}
-							onPress={(): void => {
-								void task.run(async (): Promise<void> => {
-									await backend.signOut?.();
-								});
-							}}
+							onPress={(): void => setSignOutOpen(true)}
 						/>
 					</Row>
 				</>
 			) : undefined}
-			<NotificationSettings />
-			<Button
-				label="Club terms"
-				variant="ghost"
-				onPress={(): void => router.navigate("/terms")}
-			/>
-			{task.error ? (
-				<Text variant="small" tone="danger">
-					{task.error}
-				</Text>
+			{signOutOpen ? (
+				<SignOutConfirmation onClose={(): void => setSignOutOpen(false)} />
 			) : undefined}
+			<Button
+				label="Notification settings"
+				variant="secondary"
+				onPress={(): void =>
+					router.push({
+						pathname: "/account-settings",
+						params: { section: "notifications" },
+					})
+				}
+			/>
+			<Button
+				label="Linked profiles"
+				variant="secondary"
+				onPress={(): void =>
+					router.push({
+						pathname: "/account-settings",
+						params: { section: "household" },
+					})
+				}
+			/>
 		</Stack>
 	);
 };

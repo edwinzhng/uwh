@@ -119,7 +119,11 @@ export const TournamentOptions = ({
 									member.programs.length > 0 &&
 									!roster.some((entry) => entry.personId === member.id),
 							)
-							.map((member) => ({ value: member.id, label: member.name }))}
+							.map((member) => ({
+								value: member.id,
+								label: member.name,
+								person: { id: member.id, name: member.name },
+							}))}
 						onValueChange={(personId): void => {
 							if (personId)
 								onChange({

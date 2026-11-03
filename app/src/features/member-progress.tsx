@@ -1,13 +1,13 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { Row, Stack, Surface, Text } from "../design-system";
+import { Disclosure, Row, Stack, Surface, Text } from "../design-system";
 import { canCoachMember } from "../domain/app-rules";
 import type { Member } from "../domain/app-types";
 import { goalCategoryLabel } from "../domain/goals";
 import { GoalCheckIn } from "./goal-check-in";
 import { GoalEditor } from "./goal-editor";
 import { GoalRequest } from "./goal-request";
-import { PersonalFitness } from "./personal-fitness";
+import { SessionPerformance } from "./session-performance";
 
 export const MemberProgress = ({
 	member,
@@ -39,7 +39,9 @@ export const MemberProgress = ({
 						</Text>
 					)}
 					{member.goalDetails?.remarks ? (
-						<Text variant="small">{member.goalDetails.remarks}</Text>
+						<Disclosure title="Coaching remarks">
+							<Text variant="small">{member.goalDetails.remarks}</Text>
+						</Disclosure>
 					) : undefined}
 					{member.goal ? (
 						<GoalCheckIn key={member.id} member={member} />
@@ -47,7 +49,7 @@ export const MemberProgress = ({
 					<GoalRequest member={member} />
 				</Stack>
 			</Surface>
-			<PersonalFitness member={member} />
+			<SessionPerformance member={member} visibleKind="self" />
 		</Stack>
 	);
 };

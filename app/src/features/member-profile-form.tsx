@@ -223,6 +223,7 @@ export const MemberProfileForm = ({
 						{!photoOnly ? (
 							<MemberProfileFields
 								input={input}
+								canEditCapNumber={profile.canEditCapNumber}
 								isDisabled={task.busy}
 								onChange={(field, value): void =>
 									setInput((current) => ({ ...current, [field]: value }))

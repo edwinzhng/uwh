@@ -52,9 +52,25 @@ test("household primary actions stay outside the scrolling form body", async ():
 test("program coach removal only changes the draft until Save", async (): Promise<void> => {
 	const source = await featureSource("program-coaching-editor");
 	expect(source).not.toContain("ConfirmButton");
-	expect(source).toContain("change(selected.filter((entry) => entry !== id))");
+	const toggleStart = source.indexOf("onToggle={");
+	const toggleEnd = source.indexOf("\n\t\t\t\t/>", toggleStart);
+	const toggle = source.slice(toggleStart, toggleEnd);
+	const draftChange = source.slice(
+		source.indexOf("const change ="),
+		source.indexOf("const save ="),
+	);
+	expect(toggleStart).toBeGreaterThan(source.indexOf("<MultiSelect"));
+	expect(toggle).toContain("change(");
+	expect(toggle).toContain("? [...selected, id]");
+	expect(toggle).toContain(": selected.filter((entry) => entry !== id)");
+	expect(toggle).not.toContain("state.save");
+	expect(draftChange).toContain("setDraft(");
+	expect(draftChange).not.toContain("state.save");
+	expect(source.match(/state\.save\(/g)).toHaveLength(1);
 	expect(source).toContain("state.save(draft)");
-	expect(source).toContain("Additions and removals apply when you save");
+	expect(source.replace(/\s+/g, " ")).toContain(
+		"Additions and removals apply when you save",
+	);
 });
 
 test("queued invitations close without a redundant success form or delivery claim", async (): Promise<void> => {

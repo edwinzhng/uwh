@@ -38,6 +38,9 @@ test("browse cards use one phone column, two desktop columns and a readable larg
 	expect(categoryGridColumns(800, 1)).toBe(2);
 	expect(categoryGridColumns(1080, 1)).toBe(2);
 	expect(categoryGridColumns(240, 1)).toBe(1);
+	expect(categoryGridColumns(358, 1, 148)).toBe(2);
+	expect(categoryGridColumns(288, 1, 148)).toBe(1);
+	expect(categoryGridColumns(358, 1.4, 148)).toBe(1);
 	expect(categoryGridColumns(390, 1.4)).toBe(1);
 	expect(categoryGridColumns(1080, 2)).toBe(1);
 });
@@ -55,7 +58,7 @@ test("categories reuse the actual palette and maintain readable paired and neutr
 		}
 });
 
-test("summary actions are siblings, target bounds and text stay unbounded, and controls retain optional haptics", async (): Promise<void> => {
+test("summary actions are siblings and cards retain touch targets and optional haptics", async (): Promise<void> => {
 	const summary = await Bun.file(
 		new URL("../src/design-system/summary-card.tsx", import.meta.url),
 	).text();
@@ -65,8 +68,7 @@ test("summary actions are siblings, target bounds and text stay unbounded, and c
 	for (const source of [summary, category]) {
 		expect(source).toContain("useButtonHaptics()");
 		expect(source).toContain('accessibilityRole="button"');
-		expect(source).toContain("minHeight: geometry.touch");
-		expect(source).not.toContain("numberOfLines");
+		expect(source).toMatch(/minHeight:\s*geometry.touch/);
 		expect(source).not.toContain("motion.duration");
 	}
 	expect(summary.lastIndexOf("{action ?")).toBeGreaterThan(

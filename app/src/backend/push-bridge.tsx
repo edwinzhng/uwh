@@ -3,6 +3,7 @@ import type { DevicePushToken } from "expo-notifications";
 import { type Href, useRouter } from "expo-router";
 import { type ReactElement, useEffect, useRef } from "react";
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { useApp } from "../demo/app-state";
 import {
 	installationId,
@@ -10,6 +11,7 @@ import {
 	registerNativePush,
 	watchNativePush,
 } from "./native-push";
+import { trackPushLifecycle } from "./push-lifecycle";
 import { createPushRegistrationController } from "./push-registration";
 
 export const PushBridge = (): ReactElement | undefined => {
@@ -29,12 +31,21 @@ export const PushBridge = (): ReactElement | undefined => {
 				await register(value);
 			},
 			unregister: async (): Promise<void> => {
-				await unregister({ installationId: await installationId() });
+				const id = await installationId();
+				if (lifecycle.active)
+					await unregister({
+						installationId: id,
+						expectedUserId: account.id as Id<"users">,
+					});
 			},
 		});
 		const onRefresh = (token?: DevicePushToken): void => {
 			void registration.refresh(token).catch((): void => {});
 		};
+		const stopRegistration = trackPushLifecycle(
+			registration.stop,
+			registration.resume,
+		);
 		onRefresh();
 		void watchNativePush((path): void => {
 			if (lifecycle.active) latestRouter.current.push(path as Href);
@@ -46,7 +57,7 @@ export const PushBridge = (): ReactElement | undefined => {
 			.catch((): void => {});
 		return (): void => {
 			lifecycle.active = false;
-			registration.stop();
+			stopRegistration();
 			lifecycle.stop();
 		};
 	}, [register, unregister, account.id]);

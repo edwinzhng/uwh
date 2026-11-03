@@ -160,7 +160,11 @@ export const EquipmentLoanForm = ({
 							isDisabled={task.busy}
 							options={data.members
 								.filter((member) => !member.archived && !member.mergedInto)
-								.map((member) => ({ value: member.id, label: member.name }))}
+								.map((member) => ({
+									value: member.id,
+									label: member.name,
+									person: { id: member.id, name: member.name },
+								}))}
 						/>
 					) : (
 						<>
@@ -203,6 +207,7 @@ export const EquipmentLoanForm = ({
 										...service.guests.map((guest) => ({
 											value: guest.id,
 											label: guest.name,
+											person: { name: guest.name },
 										})),
 									]}
 								/>

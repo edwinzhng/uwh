@@ -90,6 +90,7 @@ export const GuardianInviteForm = ({
 						options={candidates.map((candidate) => ({
 							value: candidate.id,
 							label: candidate.name,
+							person: { id: candidate.personId, name: candidate.name },
 						}))}
 						onValueChange={setAccountId}
 						isDisabled={task.busy}

@@ -7,11 +7,13 @@ export const materials = {
 	light: {
 		...sharedMaterials.light,
 		floating: "rgba(250,250,244,0.76)",
+		header: "rgba(255,255,255,0.56)",
 		selection: "rgba(227,235,200,0.78)",
 	},
 	dark: {
 		...sharedMaterials.dark,
 		floating: "rgba(28,37,28,0.78)",
+		header: "rgba(25,30,37,0.42)",
 		selection: "rgba(216,255,99,0.12)",
 	},
 };

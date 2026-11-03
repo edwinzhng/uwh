@@ -19,7 +19,7 @@ export const SessionRatingSection = ({
 	onEdit: (entry: SessionPerformanceEntry) => void;
 	report: SessionPerformanceService["report"];
 }): ReactElement => (
-	<Surface elevation="none">
+	<Surface variant="plain">
 		<Stack gap="sm">
 			<SectionHeading
 				size="small"

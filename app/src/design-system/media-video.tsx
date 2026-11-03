@@ -17,13 +17,15 @@ const VideoPlayer = lazy(() =>
 export const MediaVideo = ({
 	uri,
 	label,
+	autoPlay = false,
 }: {
 	uri: string;
 	label: string;
+	autoPlay?: boolean;
 }): ReactElement => {
 	return nativeFeatureAvailable("ExpoVideo") ? (
 		<Suspense fallback={<Text variant="caption">Loading video…</Text>}>
-			<VideoPlayer uri={uri} label={label} />
+			<VideoPlayer uri={uri} label={label} autoPlay={autoPlay} />
 		</Suspense>
 	) : (
 		<UnavailableVideo />

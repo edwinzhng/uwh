@@ -1,32 +1,57 @@
 import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { Badge, Row, Stack, SummaryCard, Text } from "../design-system";
 import {
-	canRegister,
-	eventResponse,
-	formatDate,
-	formatTime,
-} from "../domain/app-rules";
+	Avatar,
+	Badge,
+	formatTimeLocation,
+	Row,
+	Stack,
+	SummaryCard,
+	Surface,
+	Text,
+} from "../design-system";
+import { canRegister, eventResponse, formatDate } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
+import { eventTimeRange } from "../domain/event-card-presentation";
+import { signupState } from "../domain/event-time";
 import { householdMembers } from "../domain/home";
 import { venueName } from "../domain/venue";
+import { ResponseControl } from "./response-control";
+import { SignupWindow } from "./signup-window";
+import { useEventNow } from "./use-event-now";
 
 export const HomePractice = ({
 	event,
+	responseNeeded = false,
 }: {
 	event?: ClubEvent;
+	responseNeeded?: boolean;
 }): ReactElement => {
 	const router = useRouter();
 	const { data, account } = useApp();
+	const now = useEventNow(event);
+	const open = event && !event.cancelled && signupState(event, now) === "open";
 	const people = householdMembers(data, account).filter(
 		(person) => event && canRegister(person, event),
 	);
 	return (
 		<SummaryCard
-			title="Next practice"
+			title={event?.title ?? "Next practice"}
+			titleVariant="h3"
+			icon="calendar"
 			tone={event ? "brand" : "default"}
 			category="sky"
+			borderStyle={
+				event &&
+				people.length &&
+				people.every(
+					(person) =>
+						eventResponse(data, event.id, person.id).response === "unanswered",
+				)
+					? "dashed"
+					: "solid"
+			}
 			onPress={
 				event
 					? (): void =>
@@ -35,43 +60,59 @@ export const HomePractice = ({
 			}
 			accessibilityLabel={
 				event
-					? `Next practice. ${event.title}. ${formatDate(event.date)}. ${formatTime(event.start)} to ${formatTime(event.end)}. ${venueName(event.venue)}. Open practice`
+					? `${responseNeeded && open ? "Response needed" : "Next practice"}. ${event.title}. ${formatDate(event.date)}. ${formatTimeLocation(eventTimeRange(event.start, event.end), venueName(event.venue))}. Open practice`
 					: undefined
+			}
+			action={
+				event && people.length ? (
+					<Stack gap="md">
+						{open ? <SignupWindow event={event} /> : undefined}
+						{people.map((person) => (
+							<Surface key={person.id} variant="subtle" padding="sm">
+								<Stack gap="xs">
+									<Row justify="between" gap="xs" wrap>
+										<Row gap="xs">
+											<Avatar name={person.name} personId={person.id} compact />
+											<Text variant="small" weight="medium">
+												{person.name}
+											</Text>
+										</Row>
+										{!event.parts?.length || !open ? (
+											<ResponseControl
+												event={event}
+												personId={person.id}
+												quick
+												hideLabel
+											/>
+										) : undefined}
+									</Row>
+									{event.parts?.length && open ? (
+										<ResponseControl
+											event={event}
+											personId={person.id}
+											quick
+											hideLabel
+										/>
+									) : undefined}
+								</Stack>
+							</Surface>
+						))}
+					</Stack>
+				) : undefined
 			}
 		>
 			{event ? (
 				<Stack gap="xs">
-					<Text variant="h1" tone="onBrand">
-						{event.title}
+					{responseNeeded && open ? (
+						<Badge label="Response needed" kind="neutral" />
+					) : undefined}
+					<Text tone="primary">{formatDate(event.date)}</Text>
+					<Text variant="caption" tone="primary">
+						{formatTimeLocation(
+							eventTimeRange(event.start, event.end),
+							venueName(event.venue),
+						)}
 					</Text>
-					<Text tone="onBrand">{formatDate(event.date)}</Text>
-					<Badge
-						label={`${formatTime(event.start)}–${formatTime(event.end)}`}
-					/>
-					<Text variant="caption" tone="onBrand">
-						{venueName(event.venue)}
-					</Text>
-					{people.map((person) => {
-						const response = eventResponse(data, event.id, person.id).response;
-						return (
-							<Row key={person.id} justify="between" wrap>
-								<Text variant="caption" weight="semibold" tone="onBrand">
-									{person.id === account.personId ? "You" : person.name}
-								</Text>
-								<Badge
-									label={
-										response === "going"
-											? "✓ Going"
-											: response === "unavailable"
-												? "Not going"
-												: response === "waiting"
-													? "Waitlisted"
-													: "Not answered"
-									}
-								/>
-							</Row>
-						);
-					})}
 				</Stack>
 			) : (
 				<Text tone="secondary">No upcoming practices.</Text>

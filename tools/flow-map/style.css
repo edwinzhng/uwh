@@ -1,0 +1,265 @@
+:root {
+	font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	color: #182018;
+	background: #f7f8f5;
+	color-scheme: light;
+}
+* {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+}
+button,
+select {
+	font: inherit;
+	color: inherit;
+	min-height: 44px;
+}
+button,
+summary,
+a,
+select {
+	touch-action: manipulation;
+}
+button,
+a,
+summary,
+select {
+	outline-offset: 4px;
+}
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible,
+select:focus-visible {
+	outline: 2px solid #306342;
+}
+aside {
+	position: fixed;
+	inset: 0 auto 0 0;
+	width: 240px;
+	padding: 32px 24px;
+	border-right: 1px solid #dce1d8;
+	overflow: auto;
+	background: #eef1e9;
+}
+.brand {
+	display: block;
+	font-size: 18px;
+	font-weight: 650;
+	color: inherit;
+	text-decoration: none;
+	margin-bottom: 28px;
+}
+nav {
+	display: grid;
+	gap: 4px;
+}
+nav a {
+	color: #465044;
+	text-decoration: none;
+	font-size: 14px;
+	padding: 9px 0;
+	line-height: 20px;
+}
+nav a:hover {
+	color: #111811;
+	text-decoration: underline;
+}
+main {
+	margin-left: 240px;
+	max-width: 1500px;
+	padding: 24px 48px 64px;
+}
+header {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	align-items: center;
+	flex-wrap: wrap;
+	padding-bottom: 24px;
+	border-bottom: 1px solid #dce1d8;
+}
+.filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+.filters button {
+	border: 0;
+	background: transparent;
+	padding: 8px 12px;
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 14px;
+}
+.filters [aria-pressed="true"] {
+	background: #182018;
+	color: #d8ff63;
+}
+.view {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	font-size: 14px;
+	color: #465044;
+}
+select {
+	border: 1px solid #c8d0c3;
+	border-radius: 8px;
+	background: transparent;
+	padding: 6px 10px;
+}
+section {
+	padding: 40px 0 20px;
+	border-bottom: 1px solid #dce1d8;
+	scroll-margin-top: 24px;
+}
+h1 {
+	font-size: 32px;
+	letter-spacing: -0.8px;
+	line-height: 36px;
+	margin: 0 0 28px;
+}
+h2 {
+	font-size: 18px;
+	line-height: 24px;
+	margin: 0 0 10px;
+	font-weight: 600;
+}
+.persona {
+	margin-bottom: 28px;
+}
+details {
+	border-bottom: 1px solid #e5e8e0;
+}
+details:last-child {
+	border-bottom: 0;
+}
+summary {
+	padding: 12px 26px 12px 0;
+	font-size: 16px;
+	line-height: 26px;
+	cursor: pointer;
+	list-style: none;
+	position: relative;
+	overflow-wrap: anywhere;
+}
+summary::-webkit-details-marker {
+	display: none;
+}
+summary::after {
+	content: "+";
+	position: absolute;
+	right: 2px;
+	top: 12px;
+	color: #64715e;
+}
+details[open] > summary::after {
+	content: "−";
+}
+.screens {
+	display: flex;
+	gap: 20px;
+	overflow-x: auto;
+	padding: 12px 0 24px;
+	overscroll-behavior-x: contain;
+}
+figure {
+	margin: 0;
+	flex: 0 0 min(280px, 85vw);
+	min-width: 0;
+}
+figcaption {
+	font-size: 14px;
+	color: #465044;
+	margin: 0 0 10px;
+}
+.frame {
+	width: 100%;
+	aspect-ratio: 390 / 844;
+	border: 1px solid #c8d0c3;
+	border-radius: 8px;
+	overflow: hidden;
+	position: relative;
+	background: white;
+}
+.frame img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+.frame iframe {
+	position: absolute;
+	inset: 0;
+	border: 0;
+	transform-origin: top left;
+	background: white;
+}
+figure button {
+	font-size: 14px;
+	border: 1px solid #c8d0c3;
+	border-radius: 24px;
+	background: transparent;
+	margin-top: 8px;
+	padding: 4px 14px;
+	cursor: pointer;
+}
+body[data-viewport="desktop"] figure {
+	flex-basis: min(760px, 85vw);
+}
+body[data-viewport="desktop"] .frame {
+	aspect-ratio: 1280 / 900;
+}
+footer {
+	font-size: 14px;
+	line-height: 22px;
+	color: #687362;
+	margin-top: 32px;
+	max-width: 760px;
+}
+[hidden] {
+	display: none !important;
+}
+@media (max-width: 900px) {
+	aside {
+		position: static;
+		width: auto;
+		padding: 20px;
+		border-right: 0;
+		border-bottom: 1px solid #dce1d8;
+	}
+	.brand {
+		margin-bottom: 12px;
+	}
+	nav {
+		display: flex;
+		overflow-x: auto;
+		gap: 20px;
+	}
+	nav a {
+		white-space: nowrap;
+	}
+	main {
+		margin: 0;
+		padding: 20px;
+	}
+	section {
+		padding-top: 32px;
+	}
+	header {
+		gap: 12px;
+	}
+	.filters button {
+		padding-inline: 10px;
+	}
+	h1 {
+		margin-bottom: 24px;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	* {
+		scroll-behavior: auto;
+	}
+}

@@ -12,14 +12,13 @@ import { geometry } from "./tokens";
 type Props = {
 	name: string;
 	personId?: string;
-	description: string;
+	description?: string;
 	isSelected: boolean;
 	onPress: () => void;
 };
 export const ProfileOption = ({
 	name,
 	personId,
-	description,
 	isSelected,
 	onPress,
 }: Props): ReactElement => {
@@ -41,7 +40,7 @@ export const ProfileOption = ({
 				justifyContent: "center",
 				paddingHorizontal: interactiveRow.paddingHorizontal,
 				paddingVertical: interactiveRow.paddingVertical,
-				marginHorizontal: interactiveRow.gutter,
+				marginHorizontal: 0,
 				borderRadius: interactiveRow.borderRadius,
 				borderWidth: geometry.border,
 				borderColor: isSelected ? theme.controlBorder : theme.border,
@@ -57,11 +56,10 @@ export const ProfileOption = ({
 			})}
 		>
 			<Row gap="sm">
-				<Avatar name={name} personId={personId} />
+				<Avatar name={name} personId={personId} compact />
 				<Stack gap="none" grow>
-					<Text variant="label">{name}</Text>
-					<Text variant="caption" tone="secondary">
-						{description}
+					<Text variant="small" weight="medium">
+						{name}
 					</Text>
 				</Stack>
 				{isSelected ? <Icon name="check" /> : undefined}

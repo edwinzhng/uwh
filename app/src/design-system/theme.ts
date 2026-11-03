@@ -1,4 +1,6 @@
 import { atom, useAtomValue } from "jotai";
+import { useContext } from "react";
+import { ThemeScopeContext } from "./theme-scope-context";
 import { darkTheme, lightTheme, type Theme } from "./tokens";
 
 export type ThemePreference = "system" | "light" | "dark";
@@ -14,4 +16,8 @@ const resolvedThemeAtom = atom((get): Theme => {
 		: lightTheme;
 });
 
-export const useTheme = (): Theme => useAtomValue(resolvedThemeAtom);
+export const useTheme = (): Theme => {
+	const scope = useContext(ThemeScopeContext);
+	const theme = useAtomValue(resolvedThemeAtom);
+	return scope ?? theme;
+};

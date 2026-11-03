@@ -23,3 +23,16 @@ export const orderRankings = (
 					) ||
 				left.name.localeCompare(right.name),
 		);
+
+export const nextRankingPlayer = (
+	players: readonly PlayerRanking[],
+	queue: readonly string[],
+	completed: readonly string[],
+): PlayerRanking | undefined =>
+	queue
+		.filter((id) => !completed.includes(id))
+		.flatMap((id) => {
+			const player = players.find((entry) => entry.personId === id);
+			return player ? [player] : [];
+		})
+		.at(0);

@@ -49,6 +49,7 @@ export const resourceTables = {
 		authorId: v.optional(v.id("users")),
 		archived: v.boolean(),
 		revision: v.number(),
+		createdAt: v.optional(v.number()),
 		updatedAt: v.number(),
 	})
 		.index("by_club", ["clubId"])

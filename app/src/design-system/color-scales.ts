@@ -1,8 +1,6 @@
-import {
-	type ColorScale,
-	type SemanticColorScales,
-	darkColorScales as sharedDark,
-	lightColorScales as sharedLight,
+import type {
+	ColorScale,
+	SemanticColorScales,
 } from "@calgarycrocs/design-system/tokens";
 import { type RainbowHue, rainbowPalette } from "./rainbow-palette";
 
@@ -23,7 +21,7 @@ const rainbowScale = (hue: RainbowHue, mode: "light" | "dark"): ColorScale => {
 };
 
 export const lightColorScales = {
-	pending: sharedLight.pending,
+	pending: rainbowScale("blue", "light"),
 	accent: {
 		subtle: "#D8FF63",
 		muted: "#D8FF63",
@@ -39,7 +37,7 @@ export const lightColorScales = {
 } satisfies SemanticColorScales;
 
 export const darkColorScales = {
-	pending: sharedDark.pending,
+	pending: rainbowScale("blue", "dark"),
 	accent: {
 		subtle: "#313E1B",
 		muted: "#313E1B",

@@ -1,5 +1,14 @@
 import { type ReactElement, useEffect, useState } from "react";
-import { Avatar, Button, Dialog, Row, Stack, Text } from "../design-system";
+import {
+	Button,
+	Dialog,
+	Divider,
+	EditableAvatar,
+	Row,
+	Stack,
+	Surface,
+	Text,
+} from "../design-system";
 import type { Conversation } from "../domain/app-types";
 import {
 	type ChatAppearance,
@@ -115,7 +124,8 @@ export const ChatAppearanceForm = ({
 						}}
 					/>
 					<Button
-						label={source ? "Use photo" : "Save picture"}
+						label={source ? "Use photo" : "Save"}
+						accessibilityLabel={source ? "Use photo" : "Save chat picture"}
 						isLoading={task.busy}
 						isDisabled={!source && sameChatAppearance(input, snapshot)}
 						onPress={submit}
@@ -133,64 +143,62 @@ export const ChatAppearanceForm = ({
 					/>
 				) : (
 					<>
-						<Row wrap justify="center">
-							<Avatar
+						<Row justify="center" gap="md">
+							<EditableAvatar
 								name={thread.title}
 								icon={input.avatarIcon ?? "users"}
 								uri={photo.uri}
-								large
+								label={
+									input.avatarImageId
+										? "Change chat photo"
+										: "Choose chat photo"
+								}
+								isDisabled={task.busy}
+								onPress={(): void => {
+									void task.run(async (): Promise<void> => {
+										const next = await pickPhotoSource();
+										if (next) {
+											setCrop(defaultPhotoCrop);
+											setSource(next);
+										}
+									});
+								}}
 							/>
-							<Stack gap="xs">
-								<Text variant="h4">{thread.title}</Text>
+							<Stack grow gap="xxs">
+								<Text variant="h4" lines={2}>
+									{thread.title}
+								</Text>
+								<Text variant="caption" tone="secondary">
+									Tap picture to choose a photo
+								</Text>
 							</Stack>
 						</Row>
-						<Button
-							label={input.avatarImageId ? "Change photo" : "Choose photo"}
-							prefix="image"
-							variant="secondary"
-							isDisabled={task.busy}
-							onPress={(): void => {
-								void task.run(async (): Promise<void> => {
-									const next = await pickPhotoSource();
-									if (next) {
-										setCrop(defaultPhotoCrop);
-										setSource(next);
-									}
-								});
-							}}
-						/>
-						<Text variant="caption" tone="secondary" align="center">
-							Choose an icon
-						</Text>
-						<Stack gap="xs">
-							{[chatIcons.slice(0, 4), chatIcons.slice(4)].map((icons) => (
-								<Row key={icons.at(0)} justify="center" gap="xs">
-									{icons.map((icon) => (
-										<Button
-											key={icon}
-											icon={icon}
-											label={iconLabels[icon]}
-											variant="ghost"
-											isSelected={input.avatarIcon === icon}
-											isDisabled={task.busy}
-											onPress={(): void => {
-												task.clear();
-												setInput({ avatarIcon: icon });
-											}}
-										/>
-									))}
-								</Row>
-							))}
-						</Stack>
-						<Button
-							label="Use default picture"
-							variant="ghost"
-							isDisabled={task.busy}
-							onPress={(): void => {
-								task.clear();
-								setInput({});
-							}}
-						/>
+						<Divider label="Or choose an icon" />
+						<Surface variant="subtle" padding="sm">
+							<Stack gap="xs">
+								{[chatIcons.slice(0, 4), chatIcons.slice(4)].map((icons) => (
+									<Row key={icons.at(0)} justify="center" gap="xs">
+										{icons.map((icon) => (
+											<Button
+												key={icon}
+												icon={icon}
+												label={iconLabels[icon]}
+												variant="selection"
+												isSelected={
+													!input.avatarImageId &&
+													(input.avatarIcon ?? "users") === icon
+												}
+												isDisabled={task.busy}
+												onPress={(): void => {
+													task.clear();
+													setInput({ avatarIcon: icon });
+												}}
+											/>
+										))}
+									</Row>
+								))}
+							</Stack>
+						</Surface>
 						{photo.failed ? (
 							<Button
 								label="Retry photo"

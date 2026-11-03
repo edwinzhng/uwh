@@ -207,9 +207,9 @@ try {
 		eventId,
 		revision: 0,
 		requestId: crypto.randomUUID(),
-		objective: "Support the receiver",
+		body: "Support the receiver",
 		notes: "Private coaching note must stay private",
-		drills: [],
+		media: [],
 	});
 	await waitTopic(coach.client, "sessionPlan");
 	assert(

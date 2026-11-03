@@ -7,6 +7,7 @@ const profile: MemberProfile = {
 	name: "Fictional member",
 	revision: 2,
 	canEdit: true,
+	canEditCapNumber: false,
 	contact: { email: "private@example.test", phone: "" },
 };
 

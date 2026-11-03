@@ -1,22 +1,15 @@
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import {
-	ActionMenu,
 	Button,
 	Dialog,
-	EmptyState,
 	LoadingContent,
-	Row,
-	SectionHeading,
+	MultiSelect,
 	Stack,
-	Surface,
 	Text,
 } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import { maxPracticeCoaches } from "../domain/coaching-hours";
-import { CoachAssignmentPicker } from "./coach-assignment-picker";
-import { ConfirmationDialog } from "./confirmation-dialog";
-import { EventCoachAssignment } from "./event-coach-assignment";
 import {
 	type EventCoachControls,
 	useLiveEventCoaches,
@@ -26,124 +19,45 @@ import {
 const EventCoachList = ({
 	event,
 	controls,
-	heading = true,
 }: {
 	event: ClubEvent;
 	controls: EventCoachControls;
-	heading?: boolean;
-}): ReactElement => {
-	const [resetting, setResetting] = useState(false);
-	const available = controls.coaches.filter(
-		(coach) =>
-			!controls.assignments.some((entry) => entry.coachId === coach.coachId),
-	);
-	return (
-		<Stack gap="sm">
-			<Row justify="between">
-				{heading ? (
-					<SectionHeading>Coaches</SectionHeading>
-				) : (
-					<Text variant="small" tone="secondary">
-						Up to {maxPracticeCoaches} coaches · linked to coaching hours
-					</Text>
-				)}
-				{!controls.loading && !controls.usingWeekly && !event.cancelled ? (
-					<ActionMenu
-						label="Coaching options"
-						accessibilityLabel={`Coaching options for ${event.title}`}
-						icon="more"
-						isDisabled={controls.busy}
-						groups={[
-							{
-								id: "defaults",
-								items: [
-									{
-										id: "weekly",
-										label: "Restore program defaults",
-										icon: "calendar",
-										onSelect: (): void => setResetting(true),
-									},
-								],
-							},
-						]}
-					/>
-				) : undefined}
-			</Row>
-			<Surface>
-				<Stack>
-					{controls.loading ? (
-						<LoadingContent />
-					) : (
-						<>
-							<Text variant="small" tone="secondary">
-								{controls.usingWeekly
-									? "Program defaults · hours not yet recorded"
-									: controls.assignments.length > 0
-										? "Saved for this practice"
-										: "No coaches recorded"}
-							</Text>
-							{controls.assignments.map((assignment) => (
-								<EventCoachAssignment
-									key={assignment.coachId}
-									event={event}
-									assignment={assignment}
-									controls={controls}
-								/>
-							))}
-							{controls.usingWeekly &&
-							controls.assignments.length > 0 &&
-							!event.cancelled ? (
-								<Row>
-									<Button
-										label="Record hours"
-										variant="secondary"
-										isLoading={controls.busy}
-										onPress={(): void => {
-											void controls.confirm();
-										}}
-									/>
-								</Row>
-							) : undefined}
-							{!controls.assignments.length ? (
-								<EmptyState
-									title="No coaches assigned"
-									description="Assign a coach to this practice."
-								/>
-							) : undefined}
-							{available.length > 0 && !event.cancelled ? (
-								<CoachAssignmentPicker
-									coaches={available}
-									backupCoachIds={controls.backupCoachIds}
-									isDisabled={
-										controls.busy ||
-										controls.assignments.length >= maxPracticeCoaches
-									}
-									onAdd={(coachId) =>
-										controls.change({ coachId, assigned: true })
-									}
-								/>
-							) : undefined}
-						</>
-					)}
-					{controls.error ? (
-						<Text tone="danger">{controls.error}</Text>
-					) : undefined}
-				</Stack>
-			</Surface>
-			{resetting ? (
-				<ConfirmationDialog
-					title="Restore program coaches?"
-					description="Remove this practice’s recorded coach assignments and hours, then restore the program defaults. Record the hours again after checking the coaches."
-					confirmLabel="Restore program defaults"
-					danger
-					isDisabled={controls.busy || event.cancelled}
-					onConfirm={controls.useWeekly}
-					onClose={(): void => setResetting(false)}
-				/>
-			) : undefined}
-		</Stack>
-	);
-};
+}): ReactElement => (
+	<Stack gap="sm">
+		{controls.loading ? (
+			<LoadingContent />
+		) : (
+			<MultiSelect
+				label="Coaches"
+				placeholder="Choose coaches"
+				values={controls.assignments.map((entry) => entry.coachId)}
+				options={[
+					...controls.coaches,
+					...controls.assignments.filter(
+						(assignment) =>
+							!controls.coaches.some(
+								(coach) => coach.coachId === assignment.coachId,
+							),
+					),
+				].map((coach) => ({
+					value: coach.coachId,
+					label: coach.name,
+					person: { id: coach.personId },
+					isDisabled: !controls.coaches.some(
+						(entry) => entry.coachId === coach.coachId,
+					),
+				}))}
+				maxSelections={maxPracticeCoaches}
+				isDisabled={event.cancelled}
+				isBusy={controls.busy}
+				onToggle={(coachId, assigned): void => {
+					void controls.change({ coachId, assigned });
+				}}
+			/>
+		)}
+		{controls.error ? <Text tone="danger">{controls.error}</Text> : undefined}
+	</Stack>
+);
 type PresentationProps = {
 	event: ClubEvent;
 	partId?: string;
@@ -166,6 +80,7 @@ const CoachPresentation = ({
 			<Button
 				label={`Coaches${controls.loading ? "" : ` · ${controls.assignments.length}`}`}
 				prefix="users"
+				compact
 				variant="secondary"
 				onPress={(): void => changeOpen(true)}
 			/>
@@ -177,7 +92,7 @@ const CoachPresentation = ({
 					isDismissDisabled={controls.busy}
 					onOpenChange={changeOpen}
 				>
-					<EventCoachList event={event} controls={controls} heading={false} />
+					<EventCoachList event={event} controls={controls} />
 				</Dialog>
 			) : undefined}
 		</>

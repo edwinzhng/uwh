@@ -9,50 +9,70 @@ export const AvatarStack = ({
 	people,
 	name,
 	icon = "users",
+	imageUri,
+	avatarIcon,
 }: {
 	people: readonly { personId?: string; name: string }[];
 	name: string;
 	icon?: IconName;
+	imageUri?: string;
+	avatarIcon?: IconName;
 }): ReactElement => {
 	const theme = useTheme();
-	const pair = people.slice(0, 2);
+	const visible = people.slice(0, 3);
+	const size = geometry.compactAvatar + geometry.border * 2;
+	const offset = geometry.touch - size;
 	return (
 		<View
 			style={{
-				width: pair.length > 1 ? geometry.touch : geometry.avatar,
-				height: pair.length > 1 ? geometry.touch : geometry.avatar,
+				width: geometry.touch,
+				height: geometry.touch,
+				alignItems: "center",
+				justifyContent: "center",
 				flexShrink: 0,
 			}}
 		>
-			{pair.length > 1 ? (
-				pair.map((person, index) => (
+			{visible.length > 1 ? (
+				visible.map((person, index) => (
 					<View
 						key={person.personId ?? person.name}
 						style={{
 							position: "absolute",
-							...(index === 0 ? { top: 0, right: 0 } : { left: 0, bottom: 0 }),
+							top:
+								visible.length === 3 && index < 2
+									? 0
+									: index === 0
+										? 0
+										: offset,
+							right:
+								visible.length === 3
+									? index === 0
+										? 0
+										: index === 1
+											? offset
+											: offset / 2
+									: index * offset,
 							borderWidth: geometry.border,
 							borderColor: theme.background.canvas,
 							borderRadius: corners.pill,
 						}}
 					>
-						<Avatar
-							mini={index === 0}
-							compact={index !== 0}
-							name={person.name}
-							personId={person.personId}
-						/>
+						<Avatar compact name={person.name} personId={person.personId} />
 					</View>
 				))
-			) : pair.length ? (
+			) : visible.length ? (
 				<Avatar
-					name={pair.at(0)?.name ?? name}
-					personId={pair.at(0)?.personId}
+					compact
+					name={visible.at(0)?.name ?? name}
+					personId={visible.at(0)?.personId}
+					uri={imageUri}
+					icon={avatarIcon}
 				/>
 			) : (
 				<View
 					style={{
-						flex: 1,
+						width: geometry.compactAvatar,
+						height: geometry.compactAvatar,
 						borderRadius: corners.pill,
 						backgroundColor: theme.background.secondary,
 						alignItems: "center",

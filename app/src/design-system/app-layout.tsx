@@ -1,6 +1,6 @@
 import { Stack as RouterStack, useIsFocused, useSegments } from "expo-router";
 import { HeaderHeightContext } from "expo-router/react-navigation";
-import { type ReactElement, type ReactNode, useContext } from "react";
+import { type ReactElement, type ReactNode, useContext, useState } from "react";
 import {
 	KeyboardAvoidingView,
 	Platform,
@@ -12,6 +12,7 @@ import {
 	useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { chatSidebarWidth, useChatSidebar } from "./chat-workspace";
+import { CompactPageHeading } from "./compact-page-heading";
 import { nativeTabsAvailable } from "./native-navigation";
 import { nativeHeaderRoute } from "./native-navigation-model";
 import { PageReveal } from "./page-reveal";
@@ -32,6 +33,7 @@ type Props = {
 	profile?: ReactNode;
 	accessory?: ReactNode;
 	toolbarLeading?: ReactNode;
+	toolbarCenter?: ReactNode;
 	action?: ReactNode;
 	actionPlacement?: "responsive" | "inline";
 	titleAccessory?: ReactNode;
@@ -43,6 +45,7 @@ type Props = {
 	presentation?: "page" | "workspace";
 	transition?: "fade" | "instant";
 	primaryDestination?: boolean;
+	headerLayout?: "current" | "compact" | "integrated" | "content";
 };
 export const AppLayout = ({
 	children,
@@ -53,6 +56,7 @@ export const AppLayout = ({
 	accessory,
 	action,
 	toolbarLeading,
+	toolbarCenter,
 	actionPlacement = "responsive",
 	titleAccessory,
 	workspaceTitle,
@@ -63,6 +67,7 @@ export const AppLayout = ({
 	presentation = "page",
 	transition = "fade",
 	primaryDestination = false,
+	headerLayout = "current",
 }: Props): ReactElement => {
 	const chatSidebar = useChatSidebar();
 	const focused = useIsFocused();
@@ -78,9 +83,23 @@ export const AppLayout = ({
 	const keyboard = useKeyboardVisible();
 	const workspace = presentation === "workspace";
 	const compactRoot = primaryDestination && !nativeHeader;
-	const headingAction = compactRoot ? undefined : action;
+	const denseHeader =
+		headerLayout !== "current" &&
+		!nativeHeader &&
+		!workspace &&
+		!primaryDestination;
+	const integratedHeader = denseHeader && headerLayout === "integrated";
+	const glassBack = back ? (
+		<ToolbarGroup label="Back navigation">{back}</ToolbarGroup>
+	) : undefined;
+	const toolbarBack =
+		denseHeader && headerLayout !== "compact" ? glassBack : undefined;
+	const [toolbarHeight, setToolbarHeight] = useState(
+		geometry.touch + space.xs * 2,
+	);
+	const headingAction = compactRoot || integratedHeader ? undefined : action;
 	const pageControls =
-		compactRoot && action ? (
+		(compactRoot || integratedHeader) && action ? (
 			<View
 				accessibilityRole="toolbar"
 				accessibilityLabel={`${title ?? "Page"} actions`}
@@ -93,7 +112,14 @@ export const AppLayout = ({
 				}}
 			>
 				{tabs ? (
-					<View style={{ flex: 1, minWidth: 0 }}>{tabs}</View>
+					<View
+						style={{
+							flex: 1,
+							minWidth: integratedHeader ? geometry.touch * 4 : 0,
+						}}
+					>
+						{tabs}
+					</View>
 				) : undefined}
 				<View style={{ marginLeft: "auto", flexShrink: 1, maxWidth: "100%" }}>
 					{action}
@@ -104,120 +130,145 @@ export const AppLayout = ({
 		);
 	const pagePadding = wide ? space.xxl : space.lg;
 	const floatingToolbar = !nativeHeader && (!workspace || primaryDestination);
-	const toolbarClearance = floatingToolbar ? geometry.touch + space.xs * 2 : 0;
-	const heading =
-		nativeHeader && workspaceTitle ? undefined : nativeHeader ? (
-			title || subtitle || titleAccessory || headingAction ? (
-				<Stack gap="xs">
-					{title ? (
-						<Text variant={workspace ? "h3" : "h1"}>{title}</Text>
+	const toolbarClearance = floatingToolbar
+		? denseHeader
+			? toolbarHeight
+			: geometry.touch + space.xs * 2
+		: 0;
+	const heading = denseHeader ? (
+		integratedHeader ? (
+			subtitle || titleAccessory ? (
+				<Row wrap gap="xs">
+					{subtitle ? (
+						<Text variant="small" tone="secondary">
+							{subtitle}
+						</Text>
 					) : undefined}
-					<Row justify="between" align="center" wrap>
+					{titleAccessory}
+				</Row>
+			) : undefined
+		) : (
+			<CompactPageHeading
+				title={title}
+				subtitle={subtitle}
+				back={headerLayout === "compact" ? glassBack : undefined}
+				action={headingAction}
+				accessory={titleAccessory}
+				large={headerLayout === "content"}
+			/>
+		)
+	) : nativeHeader && workspaceTitle ? undefined : nativeHeader ? (
+		title || subtitle || titleAccessory || headingAction ? (
+			<Stack gap="xs">
+				{title ? (
+					<Text variant={workspace ? "h3" : "h1"}>{title}</Text>
+				) : undefined}
+				<Row justify="between" align="center" wrap>
+					{subtitle ? (
+						<Text variant="small" tone="secondary">
+							{subtitle}
+						</Text>
+					) : undefined}
+					{titleAccessory}
+					{headingAction}
+				</Row>
+			</Stack>
+		) : undefined
+	) : compactRoot ? (
+		back || subtitle || titleAccessory ? (
+			<Stack gap="xs">
+				{back}
+				{subtitle ? <Text variant="label">{subtitle}</Text> : undefined}
+				{titleAccessory}
+			</Stack>
+		) : undefined
+	) : workspace ? (
+		<View
+			style={{
+				flexDirection: "row",
+				alignItems: "center",
+				gap: space.xs,
+				paddingHorizontal: space.md,
+				paddingVertical: space.xs,
+			}}
+		>
+			{back}
+			<View style={{ flex: 1, minWidth: 0, gap: space.xxs }}>
+				{workspaceTitle ?? (
+					<>
+						{title ? (
+							<Text variant="h3" lines={1}>
+								{title}
+							</Text>
+						) : undefined}
+						{subtitle ? (
+							<Text variant="caption" tone="secondary" lines={1}>
+								{subtitle}
+							</Text>
+						) : undefined}
+					</>
+				)}
+			</View>
+			{headingAction}
+		</View>
+	) : back || title ? (
+		<View style={{ gap: space.sm }}>
+			{back ? (
+				<View
+					style={{
+						alignSelf: "flex-start",
+					}}
+				>
+					{back}
+				</View>
+			) : undefined}
+			{title ? (
+				<View
+					style={{
+						flexDirection: "row",
+						flexWrap: "wrap",
+						alignItems: "center",
+						justifyContent: "space-between",
+						gap: space.sm,
+					}}
+				>
+					<View
+						style={{
+							flexGrow: 1,
+							flexShrink: 1,
+							flexBasis: actionPlacement === "inline" ? 0 : "auto",
+							minWidth: actionPlacement === "inline" ? geometry.touch * 2 : 0,
+							maxWidth: "100%",
+							gap: space.xxs,
+						}}
+					>
+						<Row align="center" gap="xs" wrap>
+							<Stack grow>
+								<Text variant="h1">{title}</Text>
+							</Stack>
+							{titleAccessory}
+						</Row>
 						{subtitle ? (
 							<Text variant="small" tone="secondary">
 								{subtitle}
 							</Text>
 						) : undefined}
-						{titleAccessory}
-						{headingAction}
-					</Row>
-				</Stack>
-			) : undefined
-		) : compactRoot ? (
-			back || subtitle || titleAccessory ? (
-				<Stack gap="xs">
-					{back}
-					{subtitle ? <Text variant="label">{subtitle}</Text> : undefined}
-					{titleAccessory}
-				</Stack>
-			) : undefined
-		) : workspace ? (
-			<View
-				style={{
-					flexDirection: "row",
-					alignItems: "center",
-					gap: space.xs,
-					paddingHorizontal: space.md,
-					paddingVertical: space.xs,
-				}}
-			>
-				{back}
-				<View style={{ flex: 1, minWidth: 0, gap: space.xxs }}>
-					{workspaceTitle ?? (
-						<>
-							{title ? (
-								<Text variant="h3" lines={1}>
-									{title}
-								</Text>
-							) : undefined}
-							{subtitle ? (
-								<Text variant="caption" tone="secondary" lines={1}>
-									{subtitle}
-								</Text>
-							) : undefined}
-						</>
-					)}
-				</View>
-				{headingAction}
-			</View>
-		) : back || title ? (
-			<View style={{ gap: space.sm }}>
-				{back ? (
-					<View
-						style={{
-							alignSelf: "flex-start",
-						}}
-					>
-						{back}
 					</View>
-				) : undefined}
-				{title ? (
-					<View
-						style={{
-							flexDirection: "row",
-							flexWrap: "wrap",
-							alignItems: "center",
-							justifyContent: "space-between",
-							gap: space.sm,
-						}}
-					>
+					{headingAction ? (
 						<View
 							style={{
-								flexGrow: 1,
 								flexShrink: 1,
-								flexBasis: actionPlacement === "inline" ? 0 : "auto",
-								minWidth: actionPlacement === "inline" ? geometry.touch * 2 : 0,
 								maxWidth: "100%",
-								gap: space.xxs,
+								marginLeft: "auto",
 							}}
 						>
-							<Row align="center" gap="xs" wrap>
-								<Stack grow>
-									<Text variant="h1">{title}</Text>
-								</Stack>
-								{titleAccessory}
-							</Row>
-							{subtitle ? (
-								<Text variant="small" tone="secondary">
-									{subtitle}
-								</Text>
-							) : undefined}
+							{headingAction}
 						</View>
-						{headingAction ? (
-							<View
-								style={{
-									flexShrink: 1,
-									maxWidth: "100%",
-									marginLeft: "auto",
-								}}
-							>
-								{headingAction}
-							</View>
-						) : undefined}
-					</View>
-				) : undefined}
-			</View>
-		) : undefined;
+					) : undefined}
+				</View>
+			) : undefined}
+		</View>
+	) : undefined;
 	return (
 		<SafeAreaView
 			edges={nativeHeader ? ["left", "right"] : ["top", "left", "right"]}
@@ -230,10 +281,16 @@ export const AppLayout = ({
 				<RouterStack.Screen
 					options={{
 						title,
-						headerTitle: workspaceTitle
-							? (): ReactNode => workspaceTitle
-							: undefined,
-						headerTitleAlign: workspaceTitle ? "left" : undefined,
+						headerTitle: toolbarCenter
+							? (): ReactNode => toolbarCenter
+							: workspaceTitle
+								? (): ReactNode => workspaceTitle
+								: undefined,
+						headerTitleAlign: toolbarCenter
+							? "center"
+							: workspaceTitle
+								? "left"
+								: undefined,
 						headerLeft: toolbarLeading
 							? (): ReactNode => toolbarLeading
 							: undefined,
@@ -265,6 +322,12 @@ export const AppLayout = ({
 				<View style={{ flex: 1, minWidth: 0 }}>
 					{floatingToolbar ? (
 						<View
+							onLayout={
+								denseHeader
+									? (event): void =>
+											setToolbarHeight(event.nativeEvent.layout.height)
+									: undefined
+							}
 							pointerEvents="box-none"
 							style={{
 								position: "absolute",
@@ -272,7 +335,8 @@ export const AppLayout = ({
 								left: 0,
 								right: 0,
 								zIndex: layer.sticky,
-								paddingHorizontal: space.md,
+								paddingHorizontal:
+									width < 360 && toolbarCenter ? space.xs : space.md,
 								paddingVertical: space.xs,
 								flexDirection: "row",
 								alignItems: "center",
@@ -280,11 +344,46 @@ export const AppLayout = ({
 								justifyContent: "flex-end",
 							}}
 						>
-							{toolbarLeading ? (
-								<View style={{ marginRight: "auto", flexShrink: 1 }}>
-									{toolbarLeading}
+							{toolbarLeading || toolbarBack || integratedHeader ? (
+								<View
+									style={{
+										marginRight: "auto",
+										flexShrink: 1,
+										flexGrow: integratedHeader ? 1 : undefined,
+										minWidth: 0,
+									}}
+								>
+									<View
+										style={{
+											flexDirection: "row",
+											alignItems: "center",
+											gap: space.xs,
+											minWidth: 0,
+										}}
+									>
+										{toolbarLeading}
+										{toolbarBack}
+										{integratedHeader ? (
+											<View style={{ flex: 1, minWidth: 0 }}>
+												<Text variant="h4" headingLevel={1} lines={2}>
+													{title}
+												</Text>
+											</View>
+										) : undefined}
+									</View>
 								</View>
 							) : undefined}
+							<View
+								pointerEvents="box-none"
+								style={{
+									position: "absolute",
+									left: 0,
+									right: 0,
+									alignItems: "center",
+								}}
+							>
+								{toolbarCenter}
+							</View>
 							<ToolbarGroup>
 								{accessory}
 								{profile}
@@ -322,7 +421,13 @@ export const AppLayout = ({
 									paddingHorizontal: wide ? space.lg : space.md,
 									paddingTop:
 										(workspace && heading ? 0 : toolbarClearance) +
-										(workspace ? space.sm : wide ? pagePadding : space.md),
+										(denseHeader
+											? space.xs
+											: workspace
+												? space.sm
+												: wide
+													? pagePadding
+													: space.md),
 									paddingBottom:
 										(floatingAction ? geometry.touch + space.md : 0) +
 										(nativeNavigation
@@ -340,7 +445,7 @@ export const AppLayout = ({
 										width: "100%",
 										maxWidth: geometry.content,
 										alignSelf: "center",
-										gap: compactRoot ? space.md : space.xl,
+										gap: compactRoot || denseHeader ? space.md : space.xl,
 									}}
 								>
 									{!workspace ? heading : undefined}
@@ -408,10 +513,11 @@ export const AppLayout = ({
 							</View>
 						) : undefined}
 					</PageReveal>
-					{floatingAction && !keyboard ? (
+					{floatingAction ? (
 						<View
 							pointerEvents="box-none"
 							style={{
+								display: keyboard ? "none" : "flex",
 								position: "absolute",
 								left: space.md,
 								right: space.md,

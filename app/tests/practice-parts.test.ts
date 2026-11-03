@@ -42,7 +42,12 @@ const event: ClubEvent = {
 	],
 };
 const data: AppData = { ...initialAppData, events: [event], responses: [] };
-const parent: Account = { ...primaryAccount, admin: false, coachPrograms: [] };
+const parent: Account = {
+	...primaryAccount,
+	children: ["sam", "mila"],
+	admin: false,
+	coachPrograms: [],
+};
 const coach: Account = { ...primaryAccount, admin: false };
 
 test("partial RSVPs isolate family profiles and part rosters", (): void => {

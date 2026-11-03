@@ -33,7 +33,15 @@ export const HomeFeedback = ({
 			title="Feedback"
 			icon="message"
 			category="violet"
-			metadata={`${recorded ? "Recorded " : ""}${formatDate(date)}`}
+			metadata={[
+				author,
+				highlight.kind === "rating"
+					? `${highlight.entry.rating}/10`
+					: undefined,
+				`${recorded ? "Recorded " : ""}${formatDate(date)}`,
+			]
+				.filter(Boolean)
+				.join(" · ")}
 			onPress={(): void =>
 				router.push({
 					pathname: "/account",
@@ -48,21 +56,15 @@ export const HomeFeedback = ({
 		>
 			<Stack gap="xs">
 				{highlight.kind === "note" ? (
-					<>
-						<Text>{highlight.entry.body}</Text>
-						<Text variant="caption" tone="secondary">
-							{author ? `${author} · Coach note` : "Coach note"}
-						</Text>
-					</>
+					<Text lines={3}>{highlight.entry.body}</Text>
 				) : (
 					<>
-						<Text variant="label">{highlight.entry.eventTitle}</Text>
-						<Text>
+						<Text variant="label" lines={2}>
+							{highlight.entry.eventTitle}
+						</Text>
+						<Text lines={3}>
 							{highlight.entry.comments ||
 								`${highlight.entry.rating}/10 session rating`}
-						</Text>
-						<Text variant="caption" tone="secondary">
-							{highlight.entry.authorName} · {highlight.entry.rating}/10
 						</Text>
 					</>
 				)}

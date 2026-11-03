@@ -51,7 +51,7 @@ export const CoachingPractices = (): ReactElement => {
 				Assign coaches to a specific practice, or set program defaults below.
 			</Text>
 			{practices.length ? (
-				<Surface padding="xs">
+				<Surface>
 					<List>
 						{practices.map((event) => (
 							<ListItem

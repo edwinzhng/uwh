@@ -2,11 +2,11 @@ import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import {
 	Button,
-	Checkbox,
 	Dialog,
 	EmptyState,
 	Field,
 	List,
+	PersonChoice,
 	Row,
 	Select,
 	Stack,
@@ -99,10 +99,11 @@ export const EventEligibility = ({
 					</Row>
 					<List>
 						{matchingPlayers.map((player) => (
-							<Checkbox
+							<PersonChoice
 								isDisabled={busy}
 								key={player.id}
-								label={player.name}
+								name={player.name}
+								personId={player.id}
 								checked={value?.includes(player.id) ?? false}
 								onChange={(checked): void =>
 									onChange(

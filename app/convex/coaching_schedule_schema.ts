@@ -21,6 +21,21 @@ export const coachingScheduleValue = {
 	revision: v.number(),
 };
 export const coachingScheduleTables = {
+	coachingScheduleHistory: defineTable({
+		clubId: v.id("clubs"),
+		validUntil: v.number(),
+		...coachingScheduleValue,
+		coaches: v.array(
+			v.object({
+				coachId: v.string(),
+				personId: v.string(),
+				name: v.string(),
+				programIds: v.array(v.string()),
+			}),
+		),
+	})
+		.index("by_club", ["clubId"])
+		.index("by_club_until", ["clubId", "validUntil"]),
 	coachingSchedules: defineTable({
 		clubId: v.id("clubs"),
 		...coachingScheduleValue,

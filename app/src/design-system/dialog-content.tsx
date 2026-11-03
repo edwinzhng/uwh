@@ -39,7 +39,6 @@ import {
 import { GlassBackdrop } from "./glass-backdrop";
 import { previewGlassColors, useGlassPreview } from "./glass-preview-context";
 import { IconButton } from "./icon-button";
-import { LiquidPanelBackdrop } from "./liquid-panel-backdrop";
 import { LoadingScope } from "./loading-scope";
 import { materialColors } from "./materials";
 import { ModalListBoundary } from "./modal-list-boundary";
@@ -262,10 +261,8 @@ export const DialogContent = ({
 						{
 							padding: contentInset,
 							paddingBottom: hideHeader ? space.xs : space.sm,
-							paddingLeft:
-								intent === "lineup" ? 0 : Math.max(contentInset, insets.left),
-							paddingRight:
-								intent === "lineup" ? 0 : Math.max(contentInset, insets.right),
+							paddingLeft: Math.max(contentInset, insets.left),
+							paddingRight: Math.max(contentInset, insets.right),
 							paddingTop: isSheet ? space.sm : contentInset,
 							flexShrink: 0,
 							minHeight: hideHeader ? geometry.touch : undefined,
@@ -274,6 +271,9 @@ export const DialogContent = ({
 						dragTouchStyle,
 					]}
 				>
+					{scrollable && !hideHeader ? (
+						<GlassBackdrop material="floating" showRim={false} softEdge />
+					) : undefined}
 					{isSheet && !preview ? (
 						<View
 							accessible={false}
@@ -412,7 +412,8 @@ export const DialogContent = ({
 													borderRadius: lineupLandscape ? 0 : corners.overlay,
 													borderBottomLeftRadius: isSheet ? 0 : undefined,
 													borderBottomRightRadius: isSheet ? 0 : undefined,
-													boxShadow: colors.overlayShadow,
+													boxShadow:
+														intent === "lineup" ? "none" : colors.overlayShadow,
 												},
 												panelStyle,
 											]}
@@ -424,22 +425,27 @@ export const DialogContent = ({
 														radius={edgeToEdge ? undefined : corners.overlay}
 													/>
 												) : intent === "lineup" ? (
-													<LiquidPanelBackdrop />
+													<GlassBackdrop
+														material="floating"
+														showRim={false}
+														radius={lineupLandscape ? 0 : corners.overlay}
+													/>
 												) : undefined}
-												{intent !== "lineup" ? header : undefined}
+												{!scrollable ? header : undefined}
 												{scrollable ? (
 													<ScrollArea
 														key={focusKey}
+														edgeFades={false}
+														stickyHeaderIndices={header ? [0] : undefined}
 														keyboardShouldPersistTaps="handled"
 														style={{
 															flexGrow: 0,
 															flexShrink: 1,
 															minHeight: 0,
 														}}
-														contentContainerStyle={bodyPadding}
 													>
-														{intent === "lineup" ? header : undefined}
-														{children}
+														{header}
+														<View style={bodyPadding}>{children}</View>
 													</ScrollArea>
 												) : (
 													<View
@@ -452,7 +458,6 @@ export const DialogContent = ({
 															},
 														]}
 													>
-														{intent === "lineup" ? header : undefined}
 														{children}
 													</View>
 												)}

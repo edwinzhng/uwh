@@ -1,31 +1,23 @@
 import { type ReactElement, useState } from "react";
-import { Pressable, Text } from "react-native";
-import { Icon, type IconName } from "./icon";
+import { Pressable, Text, View } from "react-native";
+import { Avatar } from "./avatar";
+import { Icon } from "./icon";
 import { InteractionHighlight } from "./interaction-highlight";
 import { interactiveRow } from "./interactive-row-layout";
-import type { StatusTone } from "./picker-props";
+import type { PopupRowProps } from "./popup-row-props";
 import { useTheme } from "./theme";
 import { font, geometry, space, typography } from "./tokens";
-
-type Props = {
-	label: string;
-	icon?: IconName;
-	isSelected?: boolean;
-	isChecked?: boolean;
-	isDisabled?: boolean;
-	tone?: "default" | StatusTone;
-	onSelect: () => void;
-};
 
 export const PopupRow = ({
 	label,
 	icon,
+	person,
 	isSelected,
 	isChecked,
 	isDisabled,
 	tone = "default",
 	onSelect,
-}: Props): ReactElement => {
+}: PopupRowProps): ReactElement => {
 	const theme = useTheme();
 	const [focused, setFocused] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -58,7 +50,7 @@ export const PopupRow = ({
 				gap: space.xs,
 				paddingHorizontal: interactiveRow.paddingHorizontal,
 				paddingVertical: interactiveRow.paddingVertical,
-				marginHorizontal: interactiveRow.gutter,
+				marginHorizontal: 0,
 				borderRadius: interactiveRow.borderRadius,
 				backgroundColor: "transparent",
 				opacity: isDisabled ? geometry.disabledOpacity : 1,
@@ -81,7 +73,9 @@ export const PopupRow = ({
 						}
 						radius={interactiveRow.borderRadius}
 					/>
-					{icon ? (
+					{person ? (
+						<Avatar name={person.name ?? label} personId={person.id} compact />
+					) : icon ? (
 						<Icon name={icon} tone={tone === "default" ? "secondary" : tone} />
 					) : undefined}
 					<Text
@@ -98,8 +92,20 @@ export const PopupRow = ({
 					>
 						{label}
 					</Text>
-					{isSelected ? (
-						<Icon name="check" tone={tone === "default" ? "primary" : tone} />
+					{isChecked !== undefined || isSelected !== undefined ? (
+						<View style={{ width: geometry.icon, alignItems: "center" }}>
+							{isChecked !== undefined ? (
+								<Icon
+									name={isChecked ? "checkboxChecked" : "stop"}
+									tone={tone === "default" ? "primary" : tone}
+								/>
+							) : isSelected ? (
+								<Icon
+									name="check"
+									tone={tone === "default" ? "primary" : tone}
+								/>
+							) : undefined}
+						</View>
 					) : undefined}
 				</>
 			)}

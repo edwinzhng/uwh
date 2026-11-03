@@ -5,20 +5,16 @@ import {
 	ActionMenu,
 	Badge,
 	Button,
-	Grid,
 	PoolBoardColumns,
 	PoolBoardGroup,
 	PoolBoardSection,
 	Row,
-	SegmentedControl,
-	Select,
 	Stack,
 	Text,
 } from "../design-system";
 import { lineupNeedsReview } from "../domain/app-rules";
 import type { TeamPlan } from "../domain/app-types";
 import {
-	formationOptions,
 	formationPositions,
 	type LineupEdit,
 	type LineupSide,
@@ -46,7 +42,6 @@ import {
 	type LineupPositionTarget,
 } from "./lineup-position-picker";
 import { TeamPool } from "./team-pool";
-import { TeamSide } from "./team-side";
 import { useFormTask } from "./use-form-task";
 import { useLineupDraft } from "./use-lineup-draft";
 
@@ -87,7 +82,6 @@ export const LineupEditor = ({
 	const disabled = busy || conflicted || stale;
 	const preview = planWithSnapshot(base, snapshot);
 	const people = lineupPeople(snapshot);
-	const [view, setView] = useState<"pool" | "list">("pool");
 	const [toolsOpen, setToolsOpen] = useState(false);
 	const [coachesOpen, setCoachesOpen] = useState(false);
 	const event = data.events.find((entry) => entry.id === plan.eventId);
@@ -200,43 +194,10 @@ export const LineupEditor = ({
 		: ["combined" as const];
 	return (
 		<Stack gap="sm">
-			<Row justify="end" wrap>
-				{event ? (
-					<EventCoaches
-						event={event}
-						partId={plan.partId}
-						presentation="button"
-						onOpenChange={setCoachesOpen}
-					/>
-				) : undefined}
-				{changed ? (
-					<Button
-						label="Save changes"
-						isLoading={task.busy}
-						isDisabled={disabled}
-						onPress={(): void => {
-							if (base.published) setConfirmSave(true);
-							else void save();
-						}}
-					/>
-				) : !base.published ? (
-					<Button
-						label="Publish"
-						isDisabled={disabled}
-						onPress={(): void => setPublishRevision(base.revision ?? 0)}
-					/>
-				) : undefined}
-			</Row>
 			<Row justify="between" wrap>
 				<Row gap="xs" wrap>
 					<Badge
-						label={
-							changed
-								? "Unsaved changes"
-								: base.published
-									? "Published"
-									: "Draft"
-						}
+						label={changed ? "Unsaved" : base.published ? "Published" : "Draft"}
 						kind={changed ? "pending" : base.published ? "success" : "neutral"}
 					/>
 					{base.excludedPersonIds?.length ? (
@@ -245,17 +206,35 @@ export const LineupEditor = ({
 						</Text>
 					) : undefined}
 				</Row>
-				<Row gap="xs">
-					<SegmentedControl
-						label="Lineup view"
-						hideLabel
-						value={view}
-						onValueChange={setView}
-						options={[
-							{ value: "pool", label: "Pool" },
-							{ value: "list", label: "List" },
-						]}
-					/>
+				<Row gap="xs" wrap>
+					{event ? (
+						<EventCoaches
+							event={event}
+							partId={plan.partId}
+							presentation="button"
+							onOpenChange={setCoachesOpen}
+						/>
+					) : undefined}
+					{changed ? (
+						<Button
+							label="Save"
+							accessibilityLabel="Save changes"
+							compact
+							isLoading={task.busy}
+							isDisabled={disabled}
+							onPress={(): void => {
+								if (base.published) setConfirmSave(true);
+								else void save();
+							}}
+						/>
+					) : !base.published ? (
+						<Button
+							label="Publish"
+							compact
+							isDisabled={disabled}
+							onPress={(): void => setPublishRevision(base.revision ?? 0)}
+						/>
+					) : undefined}
 					<ActionMenu
 						label="Lineup options"
 						icon="more"
@@ -334,31 +313,6 @@ export const LineupEditor = ({
 					Attendance or player details changed. Regenerate teams.
 				</Text>
 			) : undefined}
-			{view === "list" ? (
-				<Grid gap="sm">
-					{(["black", "white"] as const).map((team) => (
-						<Stack key={team} grow>
-							<Select
-								label={team === "black" ? "Black formation" : "White formation"}
-								value={
-									team === "black"
-										? snapshot.blackFormation
-										: snapshot.whiteFormation
-								}
-								options={formationOptions.map((option) => ({
-									value: option.value,
-									label: option.value,
-								}))}
-								isDisabled={disabled}
-								onValueChange={(formation): void => {
-									if (formation)
-										void stage({ kind: "formation", side: team, formation });
-								}}
-							/>
-						</Stack>
-					))}
-				</Grid>
-			) : undefined}
 			{toolsOpen ? (
 				<LineupPlayerTools
 					plan={base}
@@ -410,111 +364,78 @@ export const LineupEditor = ({
 						}
 					>
 						<PoolBoardColumns>
-							{(["black", "white"] as const).map((team) =>
-								view === "pool" ? (
-									<TeamPool
-										key={team}
-										plan={preview}
-										side={team}
-										group={group}
-										onCaptainChange={
-											disabled
-												? undefined
-												: (personId): void => {
-														void stage({
-															kind: "captain",
-															side: team,
-															personId,
-															group,
-														});
-													}
-										}
-										onFormationChange={
-											disabled
-												? undefined
-												: (formation): void => {
-														void stage({
-															kind: "formation",
-															side: team,
-															formation,
-														});
-													}
-										}
-										selectedPersonId={personId}
-										onManageRotation={
-											disabled
-												? undefined
-												: (slot, label): void => {
-														task.clear();
-														setRotation({ side: team, slot, label, group });
-													}
-										}
-										onAdd={
-											disabled
-												? undefined
-												: (id, slot): void => {
-														void stage({
-															kind: "add",
-															personId: id,
-															side: team,
-															slot,
-															ageGroup:
-																group === "combined" ? undefined : group,
-														});
-													}
-										}
-										onSwap={
-											disabled
-												? undefined
-												: (id, otherId): void => {
-														void stage({ kind: "swap", personId: id, otherId });
-													}
-										}
-										onPlace={
-											disabled
-												? undefined
-												: (id, slot): void => {
-														void stage({
-															kind: "place",
-															side: team,
-															personId: id,
-															slot,
-														});
-													}
-										}
-									/>
-								) : (
-									<TeamSide
-										onAddPlayer={
-											disabled
-												? undefined
-												: (): void =>
-														setRotation({
-															side: team,
-															slot: 0,
-															label: "Position",
-															group,
-														})
-										}
-										key={team}
-										plan={preview}
-										side={team}
-										group={group}
-										onCaptainChange={
-											disabled
-												? undefined
-												: (personId): void => {
-														void stage({
-															kind: "captain",
-															side: team,
-															personId,
-															group,
-														});
-													}
-										}
-									/>
-								),
-							)}
+							{(["black", "white"] as const).map((team) => (
+								<TeamPool
+									key={team}
+									plan={preview}
+									side={team}
+									group={group}
+									onCaptainChange={
+										disabled
+											? undefined
+											: (personId): void => {
+													void stage({
+														kind: "captain",
+														side: team,
+														personId,
+														group,
+													});
+												}
+									}
+									onFormationChange={
+										disabled
+											? undefined
+											: (formation): void => {
+													void stage({
+														kind: "formation",
+														side: team,
+														formation,
+													});
+												}
+									}
+									selectedPersonId={personId}
+									onManageRotation={
+										disabled
+											? undefined
+											: (slot, label): void => {
+													task.clear();
+													setRotation({ side: team, slot, label, group });
+												}
+									}
+									onAdd={
+										disabled
+											? undefined
+											: (id, slot): void => {
+													void stage({
+														kind: "add",
+														personId: id,
+														side: team,
+														slot,
+														ageGroup: group === "combined" ? undefined : group,
+													});
+												}
+									}
+									onSwap={
+										disabled
+											? undefined
+											: (id, otherId): void => {
+													void stage({ kind: "swap", personId: id, otherId });
+												}
+									}
+									onPlace={
+										disabled
+											? undefined
+											: (id, slot): void => {
+													void stage({
+														kind: "place",
+														side: team,
+														personId: id,
+														slot,
+													});
+												}
+									}
+								/>
+							))}
 						</PoolBoardColumns>
 					</PoolBoardSection>
 				))}

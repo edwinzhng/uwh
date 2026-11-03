@@ -50,9 +50,7 @@ try {
 	});
 	const eventId = `${id}-0`;
 	const target = { eventId };
-	await owner.client.mutation(api.club.apply, {
-		action: { type: "save-plan", eventId, body: "Legacy coach-only notes" },
-	});
+
 	assert.equal(
 		await guardian.client.query(api.session_plans.shared, target),
 		null,
@@ -64,7 +62,7 @@ try {
 			kind: "document",
 			audience,
 			personIds: [],
-			url: `https://example.test/${audience}`,
+			url: `https://example.test/${audience}.pdf`,
 			key: crypto.randomUUID(),
 			revision: 0,
 		});
@@ -74,40 +72,24 @@ try {
 		...target,
 		revision: 0,
 		requestId: crypto.randomUUID(),
-		objective: "Support the receiver",
-		body: "**Session plan**\nWarm up, then *small-sided games*.",
-		goals: "Game FOCUS\n- Sub on the fly\n- Balance the load",
+		body: "**Session plan**\nWarm up, then *small-sided games*.\nGame FOCUS\n- Sub on the fly\n- Balance the load",
 		notes: "Do not expose internal coaching notes",
-		drills: [
+		media: [
 			{
-				id: "passing",
-				title: "Passing lanes",
-				minutes: 10,
-				instructions: "Pass and move into support",
-				media: [
-					{
-						id: "staff",
-						label: "Secret coaching-only reference",
-						source: "resource",
-						resourceId: privateId,
-					},
-					{
-						id: "public",
-						label: "Shared drill reference",
-						source: "resource",
-						resourceId: publicId,
-					},
-				],
+				id: "staff",
+				label: "Secret coaching-only reference",
+				source: "resource",
+				resourceId: privateId,
+			},
+			{
+				id: "public",
+				label: "Shared reference",
+				source: "resource",
+				resourceId: publicId,
 			},
 		],
 	} as const;
-	const saveCommand = {
-		...command,
-		drills: command.drills.map((drill) => ({
-			...drill,
-			media: [...drill.media],
-		})),
-	};
+	const saveCommand = { ...command, media: [...command.media] };
 	await owner.client.mutation(api.session_plans.save, saveCommand);
 	assert.equal(
 		await player.client.query(api.session_plans.shared, target),
@@ -139,11 +121,9 @@ try {
 		const shared = await actor.client.query(api.session_plans.shared, target);
 		assert(shared);
 		assert.equal(shared.revision, 2);
-		assert.equal(shared.objective, command.objective);
 		assert.equal(shared.body, command.body);
-		assert.equal(shared.goals, command.goals);
 		assert(!("notes" in shared));
-		assert.equal(shared.drills.at(0)?.media.length, 1);
+		assert.equal(shared.media.length, 1);
 		assert(!JSON.stringify(shared).includes(privateId));
 		assert(!JSON.stringify(shared).includes("Secret coaching"));
 		assert(!JSON.stringify(shared).includes(command.notes));
@@ -156,7 +136,7 @@ try {
 		api.session_plans.shared,
 		target,
 	);
-	assert.equal(coachShared?.drills.at(0)?.media.length, 2);
+	assert.equal(coachShared?.media.length, 2);
 	assert(coachShared && !("notes" in coachShared));
 	assert.equal(
 		(await owner.client.query(api.session_plans.state, target)).notes,
@@ -229,7 +209,7 @@ try {
 		...saveCommand,
 		revision: 4,
 		requestId: crypto.randomUUID(),
-		objective: "A revised shared objective",
+		body: "A revised shared plan",
 	});
 	assert.equal(
 		await player.client.query(api.session_plans.shared, target),

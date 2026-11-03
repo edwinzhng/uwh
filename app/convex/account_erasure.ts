@@ -155,6 +155,7 @@ export const eraseAccount = async (
 				"playerCoaching",
 				"coachingHours",
 				"coachingSchedules",
+				"coachingScheduleHistory",
 				"coachingEventOverrides",
 				"fitnessTests",
 				"sessionSeries",
@@ -276,6 +277,16 @@ export const eraseAccount = async (
 						});
 					await ctx.db.delete(result._id);
 				}
+			for (const row of await ctx.db
+				.query("coachingScheduleHistory")
+				.withIndex("by_club", (q) => q.eq("clubId", membership.clubId))
+				.collect()) {
+				const coaches = row.coaches.filter(
+					(coach) => coach.coachId !== userId && !personIds.has(coach.personId),
+				);
+				if (coaches.length !== row.coaches.length)
+					await ctx.db.patch(row._id, { coaches });
+			}
 			for (const table of ["seasonLedger", "importRuns"] as const)
 				for (const row of await ctx.db
 					.query(table)

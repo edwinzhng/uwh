@@ -3,6 +3,7 @@ import {
 	memberMergeLimits,
 } from "../src/domain/member-merge";
 import { previewResourceMemberMerge } from "../src/domain/resource-member-merge";
+import { resourceTimestamps } from "../src/domain/resources";
 import type { QueryCtx } from "./_generated/server";
 import type {
 	MemberMergeContext,
@@ -49,7 +50,7 @@ export const planResourceMemberMerge = async (
 					await mutation.db.patch(row._id, {
 						personIds: update.personIds,
 						revision: row.revision + 1,
-						updatedAt: Date.now(),
+						...resourceTimestamps(row, Date.now()),
 					});
 			}
 		},

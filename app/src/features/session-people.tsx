@@ -56,7 +56,7 @@ export const SessionPeople = ({
 							<Text variant="label" tone="secondary">
 								{group.label}
 							</Text>
-							<Surface padding="sm">
+							<Surface>
 								<Stack gap="sm">
 									{group.members.map((member, index) => {
 										const response = eventResponse(data, event.id, member.id);

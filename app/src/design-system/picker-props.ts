@@ -3,10 +3,13 @@ import type { IconName } from "./icon";
 
 export type StatusTone = "success" | "warning" | "danger" | "pending";
 
+export type ChoicePerson = { id?: string; name?: string };
+
 export type ChoiceOption<T extends string> = {
 	value: T;
 	label: string;
 	icon?: IconName;
+	person?: ChoicePerson;
 	isDisabled?: boolean;
 	tone?: StatusTone;
 };

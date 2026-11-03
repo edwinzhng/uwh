@@ -1,14 +1,15 @@
 import { type ReactElement, useState } from "react";
 import {
-	Checkbox,
 	Field,
 	InfiniteScroll,
 	List,
+	PersonChoice,
 	Stack,
 	Text,
 } from "../design-system";
 import { groupLimits } from "../domain/group-conversation";
 import type { RecipientDirectory } from "../domain/message-recipients";
+import { recipientPersonId } from "../domain/message-recipients";
 
 export const ConversationRecipients = ({
 	directory,
@@ -49,9 +50,10 @@ export const ConversationRecipients = ({
 			) : undefined}
 			<List>
 				{matches.slice(0, limit).map((recipient) => (
-					<Checkbox
+					<PersonChoice
 						key={recipient.id}
-						label={recipient.name}
+						name={recipient.name}
+						personId={recipientPersonId(recipient.id)}
 						checked={selected.includes(recipient.id)}
 						isDisabled={
 							disabled ||

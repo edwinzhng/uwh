@@ -33,6 +33,27 @@ export const browserInstallationId = (): string | undefined =>
 	typeof window === "undefined"
 		? undefined
 		: (window.localStorage.getItem(installationKey) ?? undefined);
+export const watchBrowserNotifications = (
+	refresh: () => void,
+): (() => void) => {
+	const active = (): void => {
+		if (document.visibilityState === "visible") refresh();
+	};
+	const storage = (event: StorageEvent): void => {
+		if (!event.key || event.key === enabledKey || event.key === installationKey)
+			active();
+	};
+	window.addEventListener("online", active);
+	window.addEventListener("storage", storage);
+	document.addEventListener("visibilitychange", active);
+	navigator.serviceWorker?.addEventListener("controllerchange", active);
+	return (): void => {
+		window.removeEventListener("online", active);
+		window.removeEventListener("storage", storage);
+		document.removeEventListener("visibilitychange", active);
+		navigator.serviceWorker?.removeEventListener("controllerchange", active);
+	};
+};
 export const registerBrowserNotifications = async (
 	publicKey: string,
 ): Promise<BrowserNotificationRegistration> => {

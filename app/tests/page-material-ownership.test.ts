@@ -16,7 +16,7 @@ test("one background lives above routes, authentication and loading", async (): 
 	expect(background).toContain('materialVariation("app-background")');
 	expect(background).not.toContain("useId");
 	expect(background).not.toContain("seed={pathname}");
-	expect(background).not.toContain("LinearGradient");
+	expect(background).toContain("LinearGradient");
 });
 
 test("navigation scenes reveal the shared background on native and web", async (): Promise<void> => {

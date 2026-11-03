@@ -5,13 +5,12 @@ import {
 	accountSections,
 } from "../src/domain/account-navigation";
 
-test("one phone profile menu reaches every section without a second tab row", (): void => {
+test("profile navigation separates fitness, goals and feedback without a separate video tab", (): void => {
 	expect(accountSections.map((section) => section.value)).toEqual([
 		"membership",
-		"progress",
-		"coach",
-		"self",
-		"videos",
+		"fitness",
+		"goals",
+		"feedback",
 		"attendance",
 	]);
 	for (const section of accountSections) {
@@ -20,12 +19,19 @@ test("one phone profile menu reaches every section without a second tab row", ()
 	}
 });
 
-test("profile navigation keeps existing deep links and clears stale feedback context", (): void => {
-	expect(accountSection("feedback", "videos")).toBe("videos");
-	expect(accountSection("feedback", "invalid")).toBe("coach");
+test("legacy progress reaches fitness and reflection links reach goals while feedback videos stay under feedback", (): void => {
+	expect(accountSection("progress")).toBe("fitness");
+	expect(accountSection("feedback", "self")).toBe("goals");
+	expect(accountSection("feedback", "videos")).toBe("feedback");
+	expect(accountSection("feedback", "coach")).toBe("feedback");
+	expect(accountSection("feedback", "invalid")).toBe("feedback");
 	expect(accountSection("invalid")).toBe("membership");
 	expect(accountSectionParams("attendance")).toEqual({
 		tab: "attendance",
+		feedback: undefined,
+	});
+	expect(accountSectionParams("feedback")).toEqual({
+		tab: "feedback",
 		feedback: undefined,
 	});
 });

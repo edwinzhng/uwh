@@ -116,8 +116,8 @@ try {
 		paginationOpts: { cursor: null, numItems: 25 },
 	});
 	assert(
-		!before.page.some((practice) => practice.eventId === eventId),
-		"Program defaults must not invent completed coaching hours.",
+		before.page.some((practice) => practice.eventId === eventId),
+		"Completed practices automatically count their program defaults.",
 	);
 	await assert.rejects(
 		outsider.query(api.coaching_schedule.eventState, { eventId }),
@@ -154,7 +154,7 @@ try {
 	assert.equal(restored.usingWeekly, true);
 	assert.deepEqual(
 		restored.assignments.map((entry) => entry.coachId),
-		[coachAccount.id],
+		[workspace.account.id],
 	);
 	await owner.mutation(api.coaching_schedule.confirmEvent, { eventId });
 	await owner.mutation(api.coaching_schedule.save, {
@@ -167,7 +167,7 @@ try {
 	assert.equal(confirmed.usingWeekly, false);
 	assert.deepEqual(
 		confirmed.assignments.map((entry) => entry.coachId),
-		[coachAccount.id],
+		[workspace.account.id],
 	);
 	const after = await owner.query(api.coaching_hours.seasonPractices, {
 		seasonId: "2026-2027",
@@ -176,10 +176,10 @@ try {
 	assert.equal(
 		after.page.find((practice) => practice.eventId === eventId)?.coaches.at(0)
 			?.coachId,
-		coachAccount.id,
+		workspace.account.id,
 	);
 	console.log(
-		"Program coach checks passed: scoped staff access, active-club coach validation, backups stay optional, program inheritance, explicit empty overrides, unchanged confirmed history, stale revisions and cross-club isolation.",
+		"Program coach checks passed: scoped staff access, active-club coach validation, backups stay optional, program inheritance, explicit empty overrides, automatic completed hours and preserved historical defaults, stale revisions and cross-club isolation.",
 	);
 } finally {
 	await verification.close();

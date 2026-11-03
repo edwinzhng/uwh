@@ -17,10 +17,7 @@ export const SegmentOption = ({
 	const theme = useTheme();
 	const [focused, setFocused] = useState(false);
 	const [hovered, setHovered] = useState(false);
-	const selectedBackground =
-		theme.mode === "dark"
-			? theme.background.selected
-			: theme.background.primary;
+	const selectedBackground = theme.background.selected;
 	const foreground = isSelected ? theme.text.primary : theme.text.secondary;
 	return (
 		<Pressable

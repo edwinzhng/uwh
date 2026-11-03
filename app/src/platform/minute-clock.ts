@@ -1,19 +1,28 @@
+import { startMinuteTimer } from "../shared/minute-timer";
 import { createSharedSubscription } from "../shared/shared-subscription";
 import { appIsActive, subscribeAppActivity } from "./app-activity";
 
 export const currentMinute = (): number =>
 	Math.floor(Date.now() / 60000) * 60000;
 export const subscribeMinute = createSharedSubscription((notify) => {
-	const state: { timer?: ReturnType<typeof setInterval> } = {};
+	const state: { stop?: () => void } = {};
 	const sync = (): void => {
-		if (state.timer !== undefined) clearInterval(state.timer);
-		state.timer = appIsActive() ? setInterval(notify, 60000) : undefined;
+		state.stop?.();
+		state.stop = appIsActive()
+			? startMinuteTimer(notify, {
+					now: Date.now,
+					schedule: (callback, delay): (() => void) => {
+						const timer = setTimeout(callback, delay);
+						return (): void => clearTimeout(timer);
+					},
+				})
+			: undefined;
 		notify();
 	};
 	const unsubscribe = subscribeAppActivity(sync);
 	sync();
 	return (): void => {
-		if (state.timer !== undefined) clearInterval(state.timer);
+		state.stop?.();
 		unsubscribe();
 	};
 });

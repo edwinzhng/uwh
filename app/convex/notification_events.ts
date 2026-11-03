@@ -2,6 +2,10 @@ import type { AppData } from "../src/domain/app-types";
 import { practicePartKey } from "../src/domain/practice-parts";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
+import {
+	changedNotificationEvent,
+	createdNotificationEvents,
+} from "./notification_event_changes";
 import { enqueue } from "./notifications";
 
 export const notifyChanges = async (
@@ -11,37 +15,24 @@ export const notifyChanges = async (
 	previous: AppData,
 	next: AppData,
 ): Promise<void> => {
-	const newEvents = next.events.filter(
-		(event) =>
-			!event.cancelled &&
-			(event.opensAt ?? 0) > Date.now() &&
-			!previous.events.some((entry) => entry.id === event.id),
-	);
-	for (const program of new Set(newEvents.map((event) => event.program))) {
-		const event = newEvents.find((entry) => entry.program === program);
-		if (event)
-			await enqueue(ctx, {
-				clubId,
-				actorId,
-				kind: "events",
-				topic: "event",
-				entityId: event.id,
-				eventPhase: "created",
-				key: `${clubId}:new-event:${event.id}`,
-			});
-	}
+	for (const event of createdNotificationEvents(
+		previous.events,
+		next.events,
+		Date.now(),
+	))
+		await enqueue(ctx, {
+			clubId,
+			actorId,
+			kind: "events",
+			topic: "event",
+			entityId: event.id,
+			eventPhase: "created",
+			key: `${clubId}:new-event:${event.id}`,
+		});
+
 	const changedEvents = next.events.filter((event) => {
 		const before = previous.events.find((entry) => entry.id === event.id);
-		return (
-			before &&
-			!before.cancelled &&
-			(event.cancelled ||
-				event.date !== before.date ||
-				event.start !== before.start ||
-				event.end !== before.end ||
-				event.title !== before.title ||
-				event.venue !== before.venue)
-		);
+		return Boolean(before && changedNotificationEvent(before, event));
 	});
 	for (const eventPhase of ["changed", "cancelled"] as const) {
 		const events = changedEvents.filter(

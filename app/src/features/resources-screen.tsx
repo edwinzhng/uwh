@@ -7,21 +7,18 @@ import {
 } from "../backend/use-resources";
 import { useApp } from "../demo/app-state";
 import {
-	Badge,
 	Button,
+	Disclosure,
 	EmptyState,
 	Field,
 	Grid,
 	InfiniteScroll,
 	List,
-	ListItem,
 	LoadingContent,
 	Row,
 	Select,
 	Stack,
-	Surface,
 	Tabs,
-	Text,
 } from "../design-system";
 import {
 	type Resource,
@@ -32,7 +29,7 @@ import {
 import { ClubShell } from "./club-shell";
 import { ResourceDetails } from "./resource-details";
 import { ResourceEditor } from "./resource-editor";
-import { ResourceThumbnail } from "./resource-thumbnail";
+import { ResourceListRow } from "./resource-list-row";
 import { useReviewFlow } from "./use-review-flow";
 import { useSearchTerm } from "./use-search-term";
 
@@ -48,7 +45,7 @@ const ResourceWorkspace = ({
 	id,
 }: PageProps & { state: ResourceState }): ReactElement => {
 	const router = useRouter();
-	const { account, data } = useApp();
+	const { account } = useApp();
 	const canManage = account.admin || account.coachPrograms.length > 0;
 	const review = useReviewFlow();
 	const params = useLocalSearchParams<{ new?: string }>();
@@ -61,25 +58,23 @@ const ResourceWorkspace = ({
 	);
 	const activeEditor =
 		editor ?? (canManage && params.new === "video" ? "new" : undefined);
-	const person = filters.personId
-		? data.members.find((member) => member.id === filters.personId)
-		: undefined;
 	const open = (resourceId?: string): void =>
 		router.setParams({ id: resourceId });
 	return (
 		<ClubShell
+			presentation={id ? "workspace" : "page"}
 			title={
 				id
 					? (state.detail?.resource.title ?? "Resource")
 					: filters.kind === "video"
-						? "Videos & feedback"
+						? "Videos"
 						: filters.kind === "document"
-							? "Documents"
-							: "Resources"
+							? "Files"
+							: "Files"
 			}
 			back={
 				<Button
-					label={id ? "Resources" : "Club"}
+					label={id ? "Files" : "Club"}
 					prefix="arrowLeft"
 					variant="ghost"
 					onPress={(): void => {
@@ -102,7 +97,7 @@ const ResourceWorkspace = ({
 					<Tabs
 						page
 						hideLabel
-						label="Resources"
+						label="Files"
 						value={filters.kind}
 						onValueChange={(kind: "all" | ResourceKind): void =>
 							onFiltersChange({ ...filters, kind, category: "all" })
@@ -132,130 +127,98 @@ const ResourceWorkspace = ({
 					<Grid gap="sm">
 						<Stack>
 							<Field
-								label="Search resources"
+								label="Search files"
 								value={filters.search}
 								onValueChange={(search): void =>
 									onFiltersChange({ ...filters, search })
 								}
-								placeholder="Title, notes or player name"
+								placeholder="Search files"
 								maxLength={120}
 							/>
 						</Stack>
-						<Select
-							label="Show"
-							value={filters.archived ? "archived" : "active"}
-							options={[
-								{ value: "active", label: "Active" },
-								{ value: "archived", label: "Archived" },
-							]}
-							onValueChange={(value): void => {
-								if (value)
-									onFiltersChange({
-										...filters,
-										archived: value === "archived",
-									});
-							}}
-						/>
-						{filters.kind !== "video" ? (
+						<Disclosure
+							title="Filter files"
+							summary={
+								[
+									filters.archived ? "Archived" : undefined,
+									filters.category && filters.category !== "all"
+										? resourceCategories.find(
+												(entry) => entry.value === filters.category,
+											)?.label
+										: undefined,
+								]
+									.filter(Boolean)
+									.join(" · ") || undefined
+							}
+							defaultOpen={Boolean(
+								filters.archived ||
+									(filters.category && filters.category !== "all"),
+							)}
+						>
 							<Select
-								label="Document category"
-								value={filters.category ?? "all"}
+								label="Show"
+								value={filters.archived ? "archived" : "active"}
 								options={[
-									{ value: "all", label: "All categories" },
-									...resourceCategories,
+									{ value: "active", label: "Active" },
+									{ value: "archived", label: "Archived" },
 								]}
-								onValueChange={(category): void => {
-									if (category) onFiltersChange({ ...filters, category });
+								onValueChange={(value): void => {
+									if (value)
+										onFiltersChange({
+											...filters,
+											archived: value === "archived",
+										});
 								}}
 							/>
-						) : undefined}
-					</Grid>
-					{person ? (
-						<Row justify="between">
-							<Text variant="small">Tagged: {person.name}</Text>
-							<Button
-								label="Show all players"
-								variant="ghost"
-								compact
-								onPress={(): void => {
-									onFiltersChange({ ...filters, personId: undefined });
-									router.setParams({ person: undefined });
-								}}
-							/>
-						</Row>
-					) : undefined}
-					<Surface padding="xs">
-						<List>
-							{state.items.map((resource) => (
-								<ListItem
-									key={resource.id}
-									title={resource.title}
-									titleAccessory={
-										<Badge
-											label={resource.kind === "video" ? "Video" : "Document"}
-										/>
-									}
-									description={[
-										resource.kind === "document"
-											? resourceCategories.find(
-													(category) =>
-														category.value === (resource.category ?? "other"),
-												)?.label
-											: resource.sessionNumber
-												? `Session ${resource.sessionNumber}`
-												: undefined,
-										resource.description,
-										resource.audience === "coaches"
-											? "Coaches and admins"
-											: resource.audience === "programs"
-												? "Selected programs and staff"
-												: resource.audience === "players"
-													? "Tagged players, guardians and staff"
-													: "Club",
-									]
-										.filter(Boolean)
-										.join(" · ")}
-									descriptionLines={2}
-									icon={resource.kind === "video" ? "image" : "list"}
-									trailing={
-										resource.kind === "video" &&
-										(resource.thumbnailFileId || resource.url) ? (
-											<ResourceThumbnail
-												state={state}
-												resource={resource}
-												compact
-											/>
-										) : undefined
-									}
-									onPress={(): void => open(resource.id)}
-								/>
-							))}
-							{state.loading ? (
-								<LoadingContent />
-							) : !state.items.length ? (
-								<EmptyState
-									title={
-										filters.search
-											? state.loadMore
-												? "No matches in this batch"
-												: "No matching resources"
-											: filters.archived
-												? "No archived resources"
-												: "No resources"
-									}
-									description={
-										filters.search
-											? state.loadMore
-												? "Searching the library…"
-												: "Try another title, note or player name."
-											: canManage
-												? "Add a document or video for your club."
-												: undefined
-									}
+							{filters.kind !== "video" ? (
+								<Select
+									label="Document category"
+									value={filters.category ?? "all"}
+									options={[
+										{ value: "all", label: "All categories" },
+										...resourceCategories,
+									]}
+									onValueChange={(category): void => {
+										if (category) onFiltersChange({ ...filters, category });
+									}}
 								/>
 							) : undefined}
-						</List>
-					</Surface>
+						</Disclosure>
+					</Grid>
+					<List gap="xs">
+						{state.items.map((resource) => (
+							<ResourceListRow
+								key={resource.id}
+								resource={resource}
+								state={state}
+								onOpen={(): void => open(resource.id)}
+							/>
+						))}
+						{state.loading ? (
+							<LoadingContent />
+						) : !state.items.length ? (
+							<EmptyState
+								title={
+									filters.search
+										? state.loadMore
+											? "No matches in this batch"
+											: "No matching files"
+										: filters.archived
+											? "No archived files"
+											: "No files"
+								}
+								description={
+									filters.search
+										? state.loadMore
+											? "Searching the library…"
+											: "Try another search."
+										: canManage
+											? "Add a document or video for your club."
+											: undefined
+								}
+							/>
+						) : undefined}
+					</List>
 					{state.loadMore || state.loadingMore ? (
 						<Row justify="center">
 							<InfiniteScroll
@@ -272,7 +235,6 @@ const ResourceWorkspace = ({
 				<ResourceEditor
 					previous={activeEditor === "new" ? undefined : activeEditor}
 					initialKind={filters.kind === "all" ? undefined : filters.kind}
-					initialPersonId={filters.personId}
 					state={state}
 					onClose={(): void => {
 						setEditor(undefined);
@@ -315,7 +277,6 @@ export const ResourcesScreen = (): ReactElement => {
 	const router = useRouter();
 	const params = useLocalSearchParams<{
 		id?: string;
-		person?: string;
 		kind?: string;
 	}>();
 	const { source } = useApp();
@@ -333,7 +294,6 @@ export const ResourcesScreen = (): ReactElement => {
 			params.kind === "video" || params.kind === "document"
 				? params.kind
 				: filters.kind,
-		personId: params.person,
 	};
 	const changeFilters = (next: ResourceFilters): void => {
 		setFilters(next);

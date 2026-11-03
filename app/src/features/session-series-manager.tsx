@@ -151,6 +151,7 @@ export const SessionSeriesManager = ({
 							options={people.map((person) => ({
 								value: person.id,
 								label: person.name,
+								person: { id: person.id, name: person.name },
 							}))}
 							onValueChange={(value): void => {
 								if (value) setPersonId(value);

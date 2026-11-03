@@ -91,7 +91,7 @@ export const ProgramsScreen = (): ReactElement => {
 						/>
 					) : undefined}
 				</Row>
-				<Surface padding="xs">
+				<Surface variant="plain">
 					<List>
 						{programs.map((program) => (
 							<ListItem

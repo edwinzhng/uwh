@@ -8,7 +8,7 @@
 - Location: Practice → Coaching; Tools: Coach assignments, durations, session plan and teams
 - Location: Practice → Attendance; Tools: Attendance correction and last-minute addition/cancellation flags
 
-- All new queries and writes require the Coach role and are scoped to the signed-in club. Admin-only accounts cannot read private coaching records. Event creation/editing remains admin-only. Players see explicitly published lineups and feedback; private ratings, fitness results and coaching reports remain coach-only.
+- Private ratings, plans, fitness results and coaching reports require the Coach role within the signed-in club; program membership is not a general coaching boundary. Files and coaching assignments/hours explicitly allow Coach or Admin. Cap changes require a coach sharing a player’s program; announcements allow Admin or the matching program coach. Event creation/editing remains admin-only. Players see only authorized personal records and explicitly published lineups and feedback.
 
 - Up to three official coaches can be assigned to a practice. The lineup’s top-right Coaches control edits the same assignments used by coaching hours. Durations follow the actual practice or selected practice parts; supported manual durations are 60, 90, 120, 150 and 180 minutes. Coaches can change or remove assignments. Season totals count completed, non-cancelled practices and exclude social events. Totals are shown after all bounded pages have loaded, so partial history is never presented as a complete season total.
 

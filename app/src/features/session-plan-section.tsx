@@ -8,6 +8,7 @@ import { useApp } from "../demo/app-state";
 import {
 	Badge,
 	Button,
+	Disclosure,
 	EmptyState,
 	LoadingContent,
 	Row,
@@ -57,7 +58,7 @@ const PlanContent = ({
 					</Row>
 				}
 			>
-				Session plan
+				Plan
 			</SectionHeading>
 			{service.loading || !plan ? (
 				<LoadingContent />
@@ -70,21 +71,24 @@ const PlanContent = ({
 								: "Private draft"
 						}
 					/>
-					<SessionPlanDetails plan={plan} />
-					{plan.notes ? (
-						<Surface header={<Text variant="h4">Private coaching notes</Text>}>
-							<Text>{plan.notes}</Text>
+					{plan.body || plan.media.length ? (
+						<Surface>
+							<SessionPlanDetails plan={plan} />
 						</Surface>
 					) : undefined}
-					{!plan.body &&
-					!plan.goals &&
-					!plan.objective &&
-					!plan.notes &&
-					!plan.drills.length ? (
+					{plan.notes ? (
+						<Disclosure
+							title="Private coaching notes"
+							summary="Visible to coaching staff only"
+						>
+							<Text>{plan.notes}</Text>
+						</Disclosure>
+					) : undefined}
+					{!plan.body && !plan.notes && !plan.media.length ? (
 						<Surface>
 							<EmptyState
-								title="No session plan yet"
-								description="Write a plan and goals for this session."
+								title="No plan yet"
+								description="Write the practice plan."
 							/>
 						</Surface>
 					) : undefined}

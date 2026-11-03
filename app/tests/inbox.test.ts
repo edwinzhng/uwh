@@ -52,7 +52,10 @@ const withFeedback = {
 	},
 } satisfies InboxContext;
 describe("durable inbox authorization", (): void => {
-	test("coaching feedback routes to Feedback while goal updates retain Progress", (): void => {
+	test("coaching feedback routes to Feedback while legacy goal targets open Goals", (): void => {
+		expect(
+			inboxRoute({ kind: "feedback", personId: player.id, tab: "progress" }),
+		).toEqual({ pathname: "/member", params: { id: player.id, tab: "goals" } });
 		const target = inboxContent(feedback, withFeedback)?.target;
 		if (!target) throw new Error("Feedback target required");
 		expect(inboxRoute(target)).toEqual({

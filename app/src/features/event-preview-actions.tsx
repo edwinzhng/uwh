@@ -2,32 +2,23 @@ import { useQuery } from "convex/react";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { AppContext, useActivePerson, useApp } from "../demo/app-state";
-import {
-	Button,
-	Dialog,
-	EmptyState,
-	LoadingContent,
-	Stack,
-	Tabs,
-} from "../design-system";
+import { Button, Dialog, EmptyState, LoadingContent } from "../design-system";
+import { eventResponse } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
+import { publishedEventLineups } from "../domain/event-lineups";
+import { eventResponsePresentation } from "../domain/event-response-presentation";
 import { practiceEvent } from "../domain/event-types";
 import { TeamPool } from "./team-pool";
 
 const EventPreviewContent = ({ event }: { event: ClubEvent }): ReactElement => {
 	const { data } = useApp();
 	const person = useActivePerson();
-	const plans = data.teams.filter(
-		(plan) => plan.eventId === event.id && plan.published,
-	);
-	const [selected, setSelected] = useState(
-		plans.find((plan) => !plan.partId)
-			? "all"
-			: (event.parts?.at(0)?.id ?? "all"),
-	);
-	const plan = plans.find(
-		(plan) => plan.partId === (selected === "all" ? undefined : selected),
-	);
+	const plan = publishedEventLineups(
+		event,
+		data.teams,
+		person.id,
+		eventResponse(data, event.id, person.id),
+	).at(0);
 	const side =
 		plan && [...plan.black, ...(plan.blackBench ?? [])].includes(person.id)
 			? "black"
@@ -38,38 +29,13 @@ const EventPreviewContent = ({ event }: { event: ClubEvent }): ReactElement => {
 		? (plan.assignments?.find((entry) => entry.personId === person.id)
 				?.ageGroup ?? "adult")
 		: "combined";
-	return (
-		<Stack>
-			{event.parts?.length ? (
-				<Tabs
-					label="Practice section"
-					hideLabel
-					value={selected}
-					options={[
-						...(plans.some((plan) => !plan.partId)
-							? [{ value: "all", label: "All" }]
-							: []),
-						...event.parts.map((part) => ({
-							value: part.id,
-							label: part.title,
-						})),
-					]}
-					onValueChange={setSelected}
-				/>
-			) : undefined}
-			{plan && side ? (
-				<TeamPool plan={plan} side={side} group={group} />
-			) : (
-				<EmptyState
-					title={plan ? "You’re not in this lineup" : "Teams not published"}
-					description={
-						plan
-							? `No team has been assigned to ${person.name} for this session.`
-							: "Your team will appear here once the coach publishes it."
-					}
-				/>
-			)}
-		</Stack>
+	return plan && side ? (
+		<TeamPool plan={plan} side={side} group={group} />
+	) : (
+		<EmptyState
+			title="Lineup unavailable"
+			description="Your team will appear here once the coach publishes it."
+		/>
 	);
 };
 const LiveEventPreview = ({ eventId }: { eventId: string }): ReactElement => {
@@ -94,25 +60,28 @@ const LiveEventPreview = ({ eventId }: { eventId: string }): ReactElement => {
 		</AppContext.Provider>
 	);
 };
-export const EventPreviewActions = ({
+const EventPreviewActionContent = ({
 	event,
+	available,
 }: {
 	event: ClubEvent;
+	available: boolean;
 }): ReactElement | undefined => {
 	const { source } = useApp();
+	const person = useActivePerson();
 	const [open, setOpen] = useState(false);
-	if (!practiceEvent(event)) return undefined;
+	if (!available) return undefined;
 	return (
 		<>
 			<Button
-				label="My team"
-				accessibilityLabel={`My team for ${event.title}`}
-				variant="ghost"
+				label="Lineup"
+				accessibilityLabel={`Lineup for ${person.name} · ${event.title}`}
+				variant="secondary"
 				compact
 				onPress={(): void => setOpen(true)}
 			/>
 			<Dialog
-				title="My team"
+				title="Lineup"
 				isOpen={open}
 				onOpenChange={setOpen}
 				intent="detail"
@@ -126,5 +95,48 @@ export const EventPreviewActions = ({
 				) : undefined}
 			</Dialog>
 		</>
+	);
+};
+const LiveEventPreviewAction = ({
+	event,
+}: {
+	event: ClubEvent;
+}): ReactElement => {
+	const person = useActivePerson();
+	const available = useQuery(api.lineup.available, {
+		eventId: event.id,
+		personId: person.id,
+	});
+	return (
+		<EventPreviewActionContent event={event} available={available === true} />
+	);
+};
+export const EventPreviewActions = ({
+	event,
+}: {
+	event: ClubEvent;
+}): ReactElement | undefined => {
+	const { source, data } = useApp();
+	const person = useActivePerson();
+	if (
+		!practiceEvent(event) ||
+		event.cancelled ||
+		!eventResponsePresentation(eventResponse(data, event.id, person.id)).lineup
+	)
+		return undefined;
+	return source === "convex" ? (
+		<LiveEventPreviewAction event={event} />
+	) : (
+		<EventPreviewActionContent
+			event={event}
+			available={
+				publishedEventLineups(
+					event,
+					data.teams,
+					person.id,
+					eventResponse(data, event.id, person.id),
+				).length > 0
+			}
+		/>
 	);
 };

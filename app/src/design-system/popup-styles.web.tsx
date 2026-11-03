@@ -92,7 +92,7 @@ ${(["success", "warning", "danger", "pending"] as const).map((tone): string => `
 .club-moving-highlight { position:absolute; left:0; top:0; pointer-events:none; opacity:0; z-index:-1; }
 .club-hover-surface[data-shared-hover] .club-popup-item[data-highlighted]:not([data-checked])::before { opacity:0; }
 .club-hover-surface[data-shared-hover] .club-popup-item { isolation:auto; }
-.club-popup-indicator { display:flex; align-items:center; margin-left:auto; }
+.club-popup-indicator { display:flex; align-items:center; justify-content:center; min-width:${geometry.icon}px; margin-left:auto; }
 .club-popup-group-label { padding:${interactiveRow.paddingVertical}px ${interactiveRow.paddingHorizontal}px; font-family:${font.medium}; font-size:${typography.caption.fontSize}px; color:${theme.text.secondary}; }
 .club-popup-separator { height:${geometry.border}px; background:${theme.border}; margin:${space.xxs}px; }
 .club-popup-empty { padding:${space.sm}px ${interactiveRow.paddingHorizontal}px; color:${theme.text.secondary}; }
@@ -107,7 +107,7 @@ ${(["success", "warning", "danger", "pending"] as const).map((tone): string => `
 .club-reaction-quick { border-radius:${corners.pill}px; width:max-content; max-width:calc(100vw - ${space.sm * 2}px); }
 .club-quick-reactions { display:flex; align-items:center; }
 .club-quick-reaction { box-sizing:border-box; width:${geometry.touch}px; height:${geometry.touch}px; display:flex; align-items:center; justify-content:center; padding:0; border:0; border-radius:${corners.pill}px; background:transparent; color:${theme.text.primary}; cursor:pointer; }
-.club-quick-reaction span { display:block; pointer-events:none; font-size:${typography.h1.fontSize}px; line-height:${geometry.touch}px; transition:transform ${canAnimate ? motion.duration.fast : 0}ms cubic-bezier(${motion.easing.out.join(",")}); }
+.club-quick-reaction span { display:block; pointer-events:none; font-size:${typography.h1.fontSize}px; line-height:${geometry.touch}px; }
 .club-quick-reaction[aria-pressed="true"] { background:${theme.colorScales.accent.muted}; }
 .club-quick-reaction:focus-visible { outline:${geometry.focus}px solid ${theme.focus}; outline-offset:-${geometry.focus}px; }
 .club-quick-reaction:disabled { opacity:${geometry.disabledOpacity}; cursor:default; }
@@ -116,8 +116,6 @@ ${(["success", "warning", "danger", "pending"] as const).map((tone): string => `
 @media (hover:hover) and (pointer:fine) {
  .club-message-reaction-trigger { opacity:0; pointer-events:none; }
  .club-message-row:hover .club-message-reaction-trigger, .club-message-row:focus-within .club-message-reaction-trigger, .club-message-reaction-trigger[data-popup-open] { opacity:1; pointer-events:auto; }
- .club-quick-reaction:hover:not(:disabled), .club-quick-reaction:focus-visible { background:${theme.background.hover}; }
- .club-quick-reaction:hover:not(:disabled) span, .club-quick-reaction:focus-visible span { transform:${canAnimate ? `translateY(-${space.xxs}px) scale(1.15)` : "none"}; }
 }
 .club-message-context { outline:none; }
 .club-message-context:focus-visible { outline:${geometry.focus}px solid ${theme.focus}; outline-offset:-${geometry.focus}px; border-radius:${corners.item}px; }

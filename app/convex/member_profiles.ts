@@ -1,7 +1,9 @@
 import { ConvexError, v } from "convex/values";
 import {
+	canEditMemberCapNumber,
 	canEditMemberProfile,
 	type MemberProfile,
+	memberCapNumberError,
 	memberProfileError,
 	memberProfileProjection,
 	normalizeMemberProfile,
@@ -120,6 +122,12 @@ export const save = mutation({
 			throw new ConvexError(
 				"Profile changed in another session. Close and reopen to review the latest details.",
 			);
+		if (
+			fields.capNumber !== previous?.capNumber &&
+			!canEditMemberCapNumber(actor, person.value)
+		)
+			throw new ConvexError("Only assigned coaches can change cap numbers.");
+
 		const photoId = fields.photoId
 			? ctx.db.normalizeId("memberProfilePhotos", fields.photoId)
 			: undefined;
@@ -177,5 +185,60 @@ export const save = mutation({
 				await ctx.db.delete(old._id);
 			}
 		}
+	},
+});
+
+export const saveCapNumber = mutation({
+	args: {
+		personId: v.string(),
+		revision: v.number(),
+		capNumber: v.string(),
+		key: v.string(),
+	},
+	handler: async (ctx, input): Promise<void> => {
+		const actor = await requireMember(ctx);
+		const person = await profilePerson(ctx, actor.clubId, input.personId);
+		if (!canEditMemberCapNumber(actor, person.value))
+			throw new ConvexError("Only assigned coaches can change cap numbers.");
+		const error = memberCapNumberError(input.capNumber);
+		if (error) throw new ConvexError(error);
+		if (input.key.length < 16 || input.key.length > 100)
+			throw new ConvexError("Reopen the cap number editor and try again.");
+		const capNumber = input.capNumber.trim()
+			? Number(input.capNumber.trim())
+			: undefined;
+		const payload = JSON.stringify({ capNumber });
+		const previous = await profileRecord(ctx, actor.clubId, input.personId);
+		if (previous?.lastKey === input.key) {
+			if (
+				previous.lastActorId !== actor.userId ||
+				previous.lastPayload !== payload
+			)
+				throw new ConvexError(
+					"This save key was already used for other details.",
+				);
+			return;
+		}
+		if ((previous?.revision ?? 0) !== input.revision)
+			throw new ConvexError(
+				"Profile changed in another session. Close and reopen to review the latest details.",
+			);
+		const next = {
+			capNumber,
+			revision: (previous?.revision ?? 0) + 1,
+			lastKey: input.key,
+			lastActorId: actor.userId,
+			lastPayload: payload,
+			updatedAt: Date.now(),
+		};
+		if (previous) await ctx.db.patch(previous._id, next);
+		else
+			await ctx.db.insert("memberProfiles", {
+				...next,
+				clubId: actor.clubId,
+				personId: input.personId,
+				email: "",
+				phone: "",
+			});
 	},
 });

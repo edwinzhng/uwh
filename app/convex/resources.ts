@@ -12,6 +12,7 @@ import {
 	resourceHouseholdPrograms,
 	resourceLimits,
 	resourceMatches,
+	resourceTimestamps,
 	resourceUrl,
 	sameResourceDraft,
 	validateResource,
@@ -128,6 +129,7 @@ const summary = async (
 		personNames: includePeople ? Object.fromEntries(people) : undefined,
 		archived: resource.archived,
 		revision: resource.revision,
+		createdAt: resource.createdAt,
 		updatedAt: resource.updatedAt,
 	};
 };
@@ -322,7 +324,7 @@ export const save = mutation({
 				draft.kind === "document" ? (draft.category ?? "other") : undefined,
 			voiceTranscript: draft.voiceTranscript?.trim() || undefined,
 			revision: (previous?.revision ?? 0) + 1,
-			updatedAt: Date.now(),
+			...resourceTimestamps(previous ?? undefined, Date.now()),
 		};
 		const resourceId =
 			previous?._id ??
@@ -372,7 +374,7 @@ export const archive = mutation({
 		await ctx.db.patch(args.id, {
 			archived: args.archived,
 			revision: resource.revision + 1,
-			updatedAt: Date.now(),
+			...resourceTimestamps(resource, Date.now()),
 		});
 	},
 });

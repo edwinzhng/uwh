@@ -3,6 +3,7 @@ import { initialAppData } from "../src/demo/app-data";
 import { reduceApp } from "../src/domain/app-reducer";
 import type { Account, AppAction, AppData } from "../src/domain/app-types";
 import { visibleAppData } from "../src/domain/app-visibility";
+import { registeredMemberCount } from "../src/domain/club-summary";
 import { clubDate, clubTimestamp, signupState } from "../src/domain/event-time";
 import { endMemberEnrollments } from "../src/domain/member-lifecycle";
 import { clubPrograms } from "../src/domain/programs";
@@ -20,7 +21,7 @@ import { appAction } from "./action_validator";
 import { loadData, saveData } from "./data";
 import { ensureGeneralChat } from "./general_chat";
 import { revokeRemovedHouseholdLinks } from "./household_cleanup";
-import { accountFor, getAuthUserId } from "./identity";
+import { accountFor, getAuthUserId, requireMember } from "./identity";
 import { rejectMergedAliasAction } from "./member_alias_guard";
 import { applyMessage } from "./message_commands";
 import { notifyChanges } from "./notification_events";
@@ -602,5 +603,33 @@ export const approveRequest = mutation({
 		}
 		await ctx.db.patch(request._id, { state: "approved" });
 		return null;
+	},
+});
+
+export const summary = query({
+	args: { seasonId: v.string() },
+	handler: async (ctx, { seasonId }): Promise<{ registered?: number }> => {
+		const actor = await requireMember(ctx);
+		const limit = 2000;
+		const [members, records] = await Promise.all([
+			ctx.db
+				.query("members")
+				.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+				.take(limit + 1),
+			ctx.db
+				.query("seasonRecords")
+				.withIndex("by_club_season_person", (q) =>
+					q.eq("clubId", actor.clubId).eq("seasonId", seasonId),
+				)
+				.take(limit + 1),
+		]);
+		if (members.length > limit || records.length > limit) return {};
+		return {
+			registered: registeredMemberCount(
+				members.map((row) => row.value),
+				seasonId,
+				records,
+			),
+		};
 	},
 });

@@ -82,6 +82,14 @@ const verify = async (): Promise<void> => {
 		coachPrograms: [],
 		admin: false,
 	});
+	const capAssignment = {
+		personId,
+		capNumber: "12",
+		revision: 0,
+		key: crypto.randomUUID(),
+	};
+	await owner.client.mutation(api.member_profiles.saveCapNumber, capAssignment);
+	await owner.client.mutation(api.member_profiles.saveCapNumber, capAssignment);
 	const initial = await self.client.query(api.member_profiles.read, {
 		personId,
 	});
@@ -101,6 +109,30 @@ const verify = async (): Promise<void> => {
 	});
 	for (const client of [anonymous, outsider.client])
 		await assert.rejects(client.query(api.member_profiles.read, { personId }));
+	for (const client of [
+		anonymous,
+		outsider.client,
+		self.client,
+		guardian.client,
+		admin.client,
+	])
+		await assert.rejects(
+			client.mutation(api.member_profiles.saveCapNumber, {
+				...capAssignment,
+				revision: initial.revision,
+				key: crypto.randomUUID(),
+				capNumber: "13",
+			}),
+		);
+	for (const client of [self.client, guardian.client])
+		for (const capNumber of ["13", ""])
+			await assert.rejects(
+				client.mutation(api.member_profiles.save, {
+					...draft,
+					capNumber,
+					key: crypto.randomUUID(),
+				}),
+			);
 	for (const client of [owner.client, admin.client, outsider.client])
 		await assert.rejects(client.mutation(api.member_profiles.save, draft));
 	for (const capNumber of ["0", "100", "2.5", "8junk"])
@@ -123,7 +155,7 @@ const verify = async (): Promise<void> => {
 	const saved = await guardian.client.query(api.member_profiles.read, {
 		personId,
 	});
-	assert.equal(saved.revision, 1);
+	assert.equal(saved.revision, initial.revision + 1);
 	assert.equal(saved.contact?.email, "player@example.test");
 	assert.equal(saved.capNumber, 12);
 	assert.equal(
@@ -259,7 +291,7 @@ const verify = async (): Promise<void> => {
 		key: crypto.randomUUID(),
 		email: "",
 		phone: "",
-		capNumber: "",
+		capNumber: current.capNumber?.toString() ?? "",
 		photoId: undefined,
 	});
 	assert.equal((await photoRequest(admin, { id: uploaded.id })).status, 404);
@@ -273,7 +305,26 @@ const verify = async (): Promise<void> => {
 		personId,
 	});
 	assert.deepEqual(cleared.contact, { email: "", phone: "" });
-	assert.equal(cleared.capNumber, undefined);
+	assert.equal(cleared.capNumber, 12);
+	await assert.rejects(
+		admin.client.mutation(api.member_profiles.saveCapNumber, {
+			personId,
+			revision: cleared.revision,
+			key: crypto.randomUUID(),
+			capNumber: "",
+		}),
+	);
+	await owner.client.mutation(api.member_profiles.saveCapNumber, {
+		personId,
+		revision: cleared.revision,
+		key: crypto.randomUUID(),
+		capNumber: "",
+	});
+	const capCleared = await self.client.query(api.member_profiles.read, {
+		personId,
+	});
+	assert.equal(capCleared.capNumber, undefined);
+	assert.deepEqual(capCleared.contact, cleared.contact);
 	assert.equal(
 		(await self.client.query(api.account.current, {}))?.name,
 		"Guardian Updated Name",

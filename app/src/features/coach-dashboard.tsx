@@ -40,7 +40,7 @@ export const CoachDashboard = ({
 			<CoachingHomeTasks />
 			<Stack gap="sm">
 				<SectionHeading icon="trophy">Coaching tools</SectionHeading>
-				<Surface padding="xs">
+				<Surface>
 					<Stack gap="none">
 						<ListItem
 							title="Player reviews"
@@ -61,7 +61,7 @@ export const CoachDashboard = ({
 							onPress={(): void => router.push("/coaching-hours")}
 						/>
 						<ListItem
-							title="Attendance reports"
+							title="Attendance"
 							icon="barChart"
 							onPress={(): void => router.push("/attendance-report")}
 						/>

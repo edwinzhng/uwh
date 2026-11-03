@@ -21,43 +21,25 @@ import { previewAccountAtom, previewDataAtom } from "./app-state";
 import { previewResources } from "./resource-state";
 
 const seed: SessionPlan = {
-	objective: "Find support before the first touch",
-	notes:
-		"Rotate partners between drills. Keep the first round at a comfortable pace.",
+	body: "Warm up together, then practise short passes in groups of three. Move into an open lane after each pass.\n\nPlay three on two and rotate after each turnover. Finish with a game, keeping substitutions moving and sharing the workload.",
+	notes: "Keep rotations short and check in with new players.",
 	revision: 0,
-	drills: [
+	media: [
 		{
-			id: "passing-warmup",
-			title: "Passing lanes",
-			minutes: 10,
-			instructions:
-				"Work in threes. Move into an open passing lane before calling for the puck.",
-			media: [
-				{
-					id: "passing-reference",
-					label: "Practice resources",
-					source: "resource",
-					resourceId: "practice-resources",
-				},
-			],
+			id: "passing-reference",
+			label: "Practice resources",
+			source: "resource",
+			resourceId: "practice-resources",
 		},
 		{
-			id: "support-drill",
-			title: "Support under pressure",
-			minutes: 15,
-			instructions:
-				"Play three on two. Stop after each turnover and identify the available support option.",
-			media: [
-				{
-					id: "support-replay",
-					label: "Demo uploaded video",
-					source: "resource",
-					resourceId: "demo-uploaded-video",
-				},
-			],
+			id: "support-replay",
+			label: "Demo uploaded video",
+			source: "resource",
+			resourceId: "demo-uploaded-video",
 		},
 	],
 };
+
 export const previewSessionPlansAtom = atom<Record<string, SessionPlan>>({
 	[practicePartKey("club-thu")]: {
 		...seed,
@@ -132,33 +114,28 @@ export const previewSessionPlanCommandAtom = atom(
 		const key = practicePartKey(command.eventId, command.partId);
 		const plans = get(previewSessionPlansAtom);
 		const next = nextSessionPlan(
-			plans[key] ?? emptySessionPlan(data.plans[key]),
+			plans[key] ?? emptySessionPlan(),
 			command,
 			Date.now(),
 		);
 		const resources = get(previewResources);
 		if (
-			next.drills.some((drill) =>
-				drill.media.some(
-					(media) =>
-						media.source === "resource" &&
-						!resources.some(
-							(resource) =>
-								resource.id === media.resourceId &&
-								!resource.archived &&
-								canReadResource(
-									{
-										...account,
-										clubId: "preview",
-										programIds: resourceHouseholdPrograms(
-											account,
-											data.members,
-										),
-									},
-									resource,
-								),
-						),
-				),
+			next.media.some(
+				(media) =>
+					media.source === "resource" &&
+					!resources.some(
+						(resource) =>
+							resource.id === media.resourceId &&
+							!resource.archived &&
+							canReadResource(
+								{
+									...account,
+									clubId: "preview",
+									programIds: resourceHouseholdPrograms(account, data.members),
+								},
+								resource,
+							),
+					),
 			)
 		)
 			throw new Error("A selected resource is unavailable.");
@@ -200,17 +177,15 @@ export const previewSessionPlanPublicationAtom = atom(
 		const next = publishSessionPlan(plan, command, Date.now());
 		if (
 			command.published &&
-			next.drills.some((drill) =>
-				drill.media.some(
-					(media) =>
-						media.source === "resource" &&
-						!get(previewResources).some(
-							(resource) =>
-								resource.id === media.resourceId &&
-								!resource.archived &&
-								canReadResource({ ...actor, clubId: "preview" }, resource),
-						),
-				),
+			next.media.some(
+				(media) =>
+					media.source === "resource" &&
+					!get(previewResources).some(
+						(resource) =>
+							resource.id === media.resourceId &&
+							!resource.archived &&
+							canReadResource({ ...actor, clubId: "preview" }, resource),
+					),
 			)
 		)
 			throw new Error("A selected resource is unavailable.");

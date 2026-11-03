@@ -88,6 +88,7 @@ export const DeleteAccountAction = (): ReactElement | undefined => {
 								options={user.transferTargets.map((target) => ({
 									value: target.id,
 									label: target.name,
+									person: { name: target.name },
 								}))}
 							/>
 							{!user.transferTargets.length ? (

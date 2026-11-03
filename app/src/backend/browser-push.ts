@@ -17,6 +17,9 @@ export const browserNotificationStatus = (): {
 	reason: "Browser notifications are available on the web app.",
 });
 export const browserInstallationId = (): string | undefined => undefined;
+export const watchBrowserNotifications =
+	(_refresh: () => void): (() => void) =>
+	(): void => {};
 export const registerBrowserNotifications = async (
 	_publicKey: string,
 ): Promise<BrowserNotificationRegistration> => {

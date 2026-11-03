@@ -31,12 +31,14 @@ export const HomeFitness = (): ReactElement => {
 						variant="metric"
 						icon={featureIdentity.fitness.icon}
 						category={featureIdentity.fitness.category}
-						metadata={latest ? formatDate(latest.date) : undefined}
+						metadata={
+							latest ? `${person.name} · ${formatDate(latest.date)}` : undefined
+						}
 						onPress={(): void => {
 							if (result) selectSeason(result.seasonId);
 							router.push({
-								pathname: "/fitness",
-								params: { person: person.id },
+								pathname: "/account",
+								params: { tab: "fitness" },
 							});
 						}}
 						accessibilityLabel={`Fitness tests for ${person.name}. ${row && latest ? `${row.test.name}. ${formatFitnessValue(row.test.unit, latest.value)}${row.test.unit === "distance" ? " metres" : ""}. ${formatDate(latest.date)}.` : "No swim results yet."} Open swim test results`}
@@ -50,9 +52,8 @@ export const HomeFitness = (): ReactElement => {
 									</Text>
 									<FitnessChangeIndicator row={row} />
 								</Row>
-								<Text variant="label">{row.test.name}</Text>
-								<Text variant="caption" tone="secondary">
-									{person.name} · Latest result
+								<Text variant="overline" weight="medium">
+									{row.test.name}
 								</Text>
 							</Stack>
 						) : (

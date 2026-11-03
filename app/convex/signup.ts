@@ -1,7 +1,11 @@
 import { v } from "convex/values";
 import { addDays } from "../src/domain/app-rules";
 import type { ClubEvent } from "../src/domain/app-types";
-import { clubTimestamp, signupState } from "../src/domain/event-time";
+import {
+	clubTimestamp,
+	futureSignupOpening,
+	signupState,
+} from "../src/domain/event-time";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, type MutationCtx } from "./_generated/server";
@@ -33,6 +37,8 @@ export const scheduleSignup = async (
 	clubId: Id<"clubs">,
 	event: ClubEvent,
 ): Promise<void> => {
+	const now = Date.now();
+	const opensAt = futureSignupOpening(event, now);
 	if (!event.cancelled) {
 		if (event.programRsvp && event.closesAt !== undefined) {
 			const reminderAt = clubTimestamp(
@@ -40,7 +46,7 @@ export const scheduleSignup = async (
 				event.start,
 				event.timeZone,
 			);
-			if (reminderAt > Date.now() && reminderAt < event.closesAt)
+			if (reminderAt > now && reminderAt < event.closesAt)
 				await enqueue(
 					ctx,
 					{
@@ -54,7 +60,7 @@ export const scheduleSignup = async (
 					Math.max(reminderAt, event.opensAt ?? 0),
 				);
 		}
-		if (event.opensAt !== undefined && (event.closesAt ?? 0) > Date.now())
+		if (opensAt !== undefined)
 			await enqueue(
 				ctx,
 				{
@@ -62,12 +68,12 @@ export const scheduleSignup = async (
 					kind: "events",
 					entityId: event.id,
 					eventPhase: "open",
-					eventTimestamp: event.opensAt,
-					key: `${clubId}:${event.id}:open:${event.opensAt}`,
+					eventTimestamp: opensAt,
+					key: `${clubId}:${event.id}:open:${opensAt}`,
 				},
-				event.opensAt,
+				opensAt,
 			);
-		if (event.closesAt !== undefined && event.closesAt - 1800000 > Date.now())
+		if (event.closesAt !== undefined && event.closesAt - 1800000 > now)
 			await enqueue(
 				ctx,
 				{
@@ -82,7 +88,7 @@ export const scheduleSignup = async (
 			);
 	}
 	for (const timestamp of [event.opensAt, event.closesAt]) {
-		if (timestamp !== undefined && timestamp > Date.now())
+		if (timestamp !== undefined && timestamp > now)
 			await ctx.scheduler.runAt(timestamp, internal.signup.refresh, {
 				clubId,
 				eventId: event.id,

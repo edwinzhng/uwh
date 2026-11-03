@@ -1,90 +1,72 @@
 import { type ReactElement, type ReactNode, useState } from "react";
 import { Pressable, View } from "react-native";
-import { CardBackground } from "./card-background";
-import { FeatureIcon } from "./feature-icon";
+import { CardAtmosphere } from "./card-atmosphere";
+import { CardContentContext } from "./card-content-context";
+import { DashedBorder } from "./dashed-border";
 import { useButtonHaptics } from "./haptics";
 import { Icon, type IconName } from "./icon";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import {
 	type CategoryColor,
-	categoryPalette,
 	corners,
 	geometry,
 	space,
+	unmarkedCardColors,
 } from "./tokens";
 
 export const SummaryCard = ({
 	title,
+	titleVariant = "overline",
 	icon,
-	category = "sky",
 	variant = "default",
-	tone = "default",
 	metadata,
 	children,
 	onPress,
 	accessibilityLabel,
 	action,
+	borderStyle = "solid",
 }: {
 	title: string;
+	titleVariant?: "overline" | "h3";
 	icon?: IconName;
 	category?: CategoryColor;
-	variant?: "default" | "metric";
+	variant?: "default" | "metric" | "section";
 	tone?: "default" | "brand" | "recognition";
 	metadata?: string;
 	children: ReactNode;
 	onPress?: () => void;
 	accessibilityLabel?: string;
 	action?: ReactNode;
+	borderStyle?: "solid" | "dashed";
 }): ReactElement => {
 	const theme = useTheme();
 	const haptic = useButtonHaptics();
 	const [focused, setFocused] = useState(false);
 	const [pressed, setPressed] = useState(false);
-	const [hovered, setHovered] = useState(false);
-	const color =
-		tone === "brand" ? theme.brand : categoryPalette[theme.mode][category];
+	const section = variant === "section";
+	const unmarked = borderStyle === "dashed" && !section;
+	const unmarkedColors = unmarkedCardColors[theme.mode];
+	const background = unmarked
+		? unmarkedColors.background
+		: theme.background.card;
+	const interactiveBackground = pressed ? theme.background.pressed : background;
 	const content = (
-		<View
-			style={{
-				flexDirection: variant === "metric" ? "row" : "column",
-				gap: space.md,
-				minWidth: 0,
-			}}
-		>
-			{variant === "metric" && icon ? (
-				<FeatureIcon name={icon} category={category} large />
-			) : undefined}
-			<View
-				style={{
-					flex: variant === "metric" ? 1 : undefined,
-					minWidth: 0,
-					gap: space.sm,
-				}}
-			>
+		<CardContentContext value={!section}>
+			<View style={{ gap: space.xs, minWidth: 0 }}>
 				<View
-					style={{
-						flexDirection: "row",
-						alignItems: "center",
-						gap: space.xs,
-					}}
+					style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}
 				>
-					{variant === "default" && icon ? (
-						<Icon name={icon} color={color.foreground} />
+					{icon ? (
+						<Icon name={icon} size="sm" color={theme.text.secondary} />
 					) : undefined}
 					<View style={{ flex: 1, minWidth: 0 }}>
-						<Text variant="h3" tone={tone === "brand" ? "onBrand" : "primary"}>
+						<Text variant={section ? "h3" : titleVariant} weight="semibold">
 							{title}
 						</Text>
 					</View>
 					{onPress ? (
-						<Icon
-							name="chevron"
-							size="sm"
-							color={
-								tone === "brand" ? theme.brand.foreground : theme.text.secondary
-							}
-						/>
+						<Icon name="chevron" size="sm" color={theme.text.secondary} />
 					) : undefined}
 				</View>
 				{children}
@@ -94,78 +76,78 @@ export const SummaryCard = ({
 					</Text>
 				) : undefined}
 			</View>
-		</View>
+		</CardContentContext>
 	);
 	return (
 		<View
 			style={{
-				borderWidth: geometry.border,
-				borderColor: tone === "brand" ? "transparent" : theme.border,
-				borderRadius: corners.panel,
 				minWidth: 0,
+				borderRadius: corners.panel,
 				outlineWidth: focused ? geometry.focus : 0,
 				outlineColor: theme.focus,
 				outlineOffset: geometry.focus,
 			}}
 		>
-			<CardBackground
-				color={
-					tone === "brand"
-						? pressed
-							? theme.accent.pressed
-							: hovered
-								? theme.accent.hover
-								: theme.brand.background
-						: pressed
-							? theme.background.pressed
-							: hovered
-								? theme.background.hover
-								: tone === "recognition"
-									? categoryPalette[theme.mode].amber.background
-									: theme.background.card
-				}
-			/>
-			{onPress ? (
-				<Pressable
-					accessibilityRole="button"
-					accessibilityLabel={accessibilityLabel ?? title}
-					onPress={(): void => {
-						haptic();
-						onPress();
-					}}
-					onFocus={(): void => setFocused(true)}
-					onBlur={(): void => {
-						setFocused(false);
-						setPressed(false);
-					}}
-					onPressIn={(): void => setPressed(true)}
-					onPressOut={(): void => setPressed(false)}
-					onHoverIn={(): void => setHovered(true)}
-					onHoverOut={(): void => setHovered(false)}
-					style={{
-						padding: space.lg,
-						borderRadius: corners.panel,
-						minHeight: geometry.touch,
-						minWidth: 0,
-						backgroundColor: "transparent",
-					}}
-				>
-					{content}
-				</Pressable>
-			) : (
-				<View style={{ padding: space.lg }}>{content}</View>
-			)}
-			{action ? (
-				<View
-					style={{
-						paddingHorizontal: space.lg,
-						paddingBottom: space.lg,
-						alignItems: "flex-start",
-					}}
-				>
-					{action}
-				</View>
-			) : undefined}
+			<View
+				style={{
+					minWidth: 0,
+					overflow: section ? "visible" : "hidden",
+					borderRadius: corners.panel,
+					borderWidth: section ? 0 : geometry.border,
+					borderColor: unmarked ? "transparent" : theme.border,
+					backgroundColor: section ? "transparent" : background,
+				}}
+			>
+				{onPress ? (
+					<Pressable
+						accessibilityRole="button"
+						accessibilityLabel={accessibilityLabel ?? title}
+						onPress={(): void => {
+							haptic();
+							onPress();
+						}}
+						onFocus={(): void => setFocused(true)}
+						onBlur={(): void => {
+							setFocused(false);
+							setPressed(false);
+						}}
+						onPressIn={(): void => setPressed(true)}
+						onPressOut={(): void => setPressed(false)}
+						style={{
+							padding: section ? 0 : space.md,
+							minHeight: geometry.touch,
+							minWidth: 0,
+							backgroundColor: section ? "transparent" : interactiveBackground,
+						}}
+					>
+						{!section && !unmarked ? <CardAtmosphere /> : undefined}
+						{content}
+					</Pressable>
+				) : (
+					<View
+						style={{
+							padding: section ? 0 : space.md,
+							backgroundColor: section ? "transparent" : background,
+						}}
+					>
+						{!section && !unmarked ? <CardAtmosphere /> : undefined}
+						{content}
+					</View>
+				)}
+				{action ? (
+					<View
+						style={{
+							padding: space.md,
+							gap: space.sm,
+							borderTopWidth: geometry.border,
+							borderTopColor: theme.border,
+						}}
+					>
+						{action}
+					</View>
+				) : undefined}
+				{unmarked ? <DashedBorder color={unmarkedColors.border} /> : undefined}
+			</View>
 		</View>
 	);
 };

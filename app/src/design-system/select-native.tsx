@@ -13,7 +13,9 @@ export const Select = <T extends string>(
 ): ReactElement => {
 	const inDialog = usePickerSizing();
 	const [availableWidth, setAvailableWidth] = useState<number>();
-	if (!NativeMenuView || props.listFooter) return <NativePicker {...props} />;
+	const hasPeople = props.options.some((option) => option.person);
+	if (!NativeMenuView || props.listFooter || hasPeople)
+		return <NativePicker {...props} />;
 	const {
 		label,
 		value,

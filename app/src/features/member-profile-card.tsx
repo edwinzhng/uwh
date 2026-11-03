@@ -1,17 +1,10 @@
 import type { ReactElement } from "react";
 import type { MemberProfileState } from "../backend/use-member-profile";
 import { useApp } from "../demo/app-state";
-import {
-	Avatar,
-	Button,
-	Grid,
-	Row,
-	Stack,
-	Surface,
-	Text,
-} from "../design-system";
+import { Avatar, Button, Row, Stack, Surface, Text } from "../design-system";
 import type { Member } from "../domain/app-types";
 import { programName } from "../domain/programs";
+import { MemberCapNumberEditor } from "./member-cap-number-editor";
 import { MemberProfileEditor } from "./member-profile-editor";
 import { usePhotoUri } from "./use-photo-uri";
 
@@ -25,72 +18,49 @@ export const MemberProfileCard = ({
 	const profile = state.profile;
 	const { data } = useApp();
 	const photo = usePhotoUri(profile?.photoId, state.photos);
+	const detail = [
+		profile?.capNumber ? `Cap ${profile.capNumber}` : undefined,
+		...member.programs.map((id) => programName(data, id)),
+		member.position,
+	]
+		.filter(Boolean)
+		.join(" · ");
 	return (
-		<Surface header={<Text variant="h4">Profile</Text>}>
-			<Stack>
-				<Row align="center" justify="between">
-					<Stack grow>
-						<Row align="center" gap="sm">
-							<Avatar name={member.name} uri={photo.uri} />
-							<Stack gap="xxs" grow>
-								<Text variant="h4">{profile?.name ?? member.name}</Text>
-								<Text variant="small" tone="secondary">
-									{profile?.capNumber
-										? `Cap ${profile.capNumber}`
-										: "No cap number"}
-								</Text>
-							</Stack>
-						</Row>
+		<Surface>
+			<Stack gap="sm">
+				<Row gap="sm">
+					<Avatar name={member.name} personId={member.id} uri={photo.uri} />
+					<Stack grow gap="xxs">
+						<Text variant="h4">{profile?.name ?? member.name}</Text>
+						{detail ? (
+							<Text variant="small" tone="secondary">
+								{detail}
+							</Text>
+						) : undefined}
 					</Stack>
-					<MemberProfileEditor state={state} />
 				</Row>
-				<Row>
-					<MemberProfileEditor state={state} photoOnly />
-				</Row>
+				{profile?.canEdit || profile?.canEditCapNumber ? (
+					<Row wrap gap="xs">
+						<MemberProfileEditor state={state} />
+						<MemberCapNumberEditor state={state} />
+					</Row>
+				) : undefined}
+				{profile?.contact?.phone ? (
+					<Text
+						variant="caption"
+						tone="secondary"
+						accessibilityLabel={`Private phone: ${profile.contact.phone}`}
+					>
+						{profile.contact.phone}
+					</Text>
+				) : undefined}
 				{photo.failed ? (
 					<Button
 						label="Retry profile photo"
 						variant="ghost"
+						compact
 						onPress={photo.retry}
 					/>
-				) : undefined}
-				<Grid gap="md">
-					<Stack gap="xxs">
-						<Text variant="caption" tone="secondary">
-							Programs
-						</Text>
-						<Text>
-							{member.programs.map((id) => programName(data, id)).join(" · ") ||
-								"No programs assigned"}
-						</Text>
-					</Stack>
-					<Stack gap="xxs">
-						<Text variant="caption" tone="secondary">
-							Playing position
-						</Text>
-						<Text>{member.position || "Not set"}</Text>
-					</Stack>
-				</Grid>
-				{profile?.contact ? (
-					<Stack gap="sm">
-						<Text variant="caption" tone="secondary">
-							Private contact details
-						</Text>
-						<Grid gap="md">
-							<Stack gap="xxs">
-								<Text variant="caption" tone="secondary">
-									Email
-								</Text>
-								<Text>{profile.contact.email || "Not set"}</Text>
-							</Stack>
-							<Stack gap="xxs">
-								<Text variant="caption" tone="secondary">
-									Phone
-								</Text>
-								<Text>{profile.contact.phone || "Not set"}</Text>
-							</Stack>
-						</Grid>
-					</Stack>
 				) : undefined}
 				{state.loading ? (
 					<Text variant="caption" tone="secondary">

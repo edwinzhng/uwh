@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { type ReactElement, useRef } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
-import { PracticeBanner } from "../design-system";
+import { formatTimeLocation, PracticeBanner } from "../design-system";
 import {
 	type ChatPractice,
 	chatProgramId,
@@ -37,7 +37,7 @@ const PracticeLink = ({
 		<PracticeBanner
 			label={start <= now ? "Practice in progress" : "Next practice"}
 			title={event.title}
-			detail={`${date} · ${eventTimeRange(event.start, event.end)} · ${venueName(event.venue)}`}
+			detail={`${date} · ${formatTimeLocation(eventTimeRange(event.start, event.end), venueName(event.venue))}`}
 			attendance={`${attending} attending`}
 			onPress={(): void =>
 				router.push({ pathname: "/session", params: { event: event.id } })

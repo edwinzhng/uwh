@@ -1,7 +1,14 @@
 import { type ReactElement, useState } from "react";
 import { useBackend } from "../backend/context";
 import { useApp } from "../demo/app-state";
-import { Button, Dialog, Stack, Text, Toggle } from "../design-system";
+import {
+	Button,
+	Dialog,
+	PersonChoice,
+	Stack,
+	Text,
+	Toggle,
+} from "../design-system";
 import type { Account } from "../domain/app-types";
 import { useFormTask } from "./use-form-task";
 
@@ -54,12 +61,13 @@ export const AccountAccessEditor = ({
 				{data.members
 					.filter((member) => member.id !== account.personId)
 					.map((member) => (
-						<Toggle
+						<PersonChoice
 							key={member.id}
-							label={member.name}
-							value={children.includes(member.id)}
+							name={member.name}
+							personId={member.id}
+							checked={children.includes(member.id)}
 							isDisabled={task.busy}
-							onValueChange={(value): void =>
+							onChange={(value): void =>
 								setChildren((ids) =>
 									value
 										? [...ids, member.id]

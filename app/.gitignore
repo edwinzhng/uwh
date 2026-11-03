@@ -7,3 +7,4 @@ android/
 .env.local
 .convex/
 .env.auth.local
+public/pdfjs/
