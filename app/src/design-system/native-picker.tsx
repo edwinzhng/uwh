@@ -1,6 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { TextInput, View } from "react-native";
 import { Button } from "./button";
+import { ContextTrigger } from "./context-trigger";
 import { Dialog } from "./dialog";
 import { matchesQuery } from "./matches-query";
 import type { PickerProps } from "./picker-props";
@@ -12,6 +13,7 @@ import { useTheme } from "./theme";
 import { control, corners, font, geometry } from "./tokens";
 
 export const NativePicker = <T extends string>({
+	appearance = "field",
 	label,
 	value,
 	options,
@@ -21,11 +23,13 @@ export const NativePicker = <T extends string>({
 	searchable = false,
 	hideLabel = false,
 	compact = false,
+	listFooter,
 }: PickerProps<T> & { searchable?: boolean }): ReactElement => {
 	const theme = useTheme();
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState("");
 	const selected = options.find((option) => option.value === value);
+	const Trigger = appearance === "context" ? ContextTrigger : PickerTrigger;
 	const visible = options.filter(
 		(option) => !searchable || matchesQuery(option.label, query),
 	);
@@ -40,7 +44,7 @@ export const NativePicker = <T extends string>({
 					{label}
 				</Text>
 			) : undefined}
-			<PickerTrigger
+			<Trigger
 				label={label}
 				compact={compact}
 				value={selected?.label ?? placeholder}
@@ -49,7 +53,12 @@ export const NativePicker = <T extends string>({
 				tone={selected?.tone}
 				onPress={(): void => changeOpen(true)}
 			/>
-			<Dialog title={label} isOpen={open} onOpenChange={changeOpen}>
+			<Dialog
+				title={label}
+				isOpen={open}
+				onOpenChange={changeOpen}
+				footer={false}
+			>
 				{searchable ? (
 					<TextInput
 						autoFocus
@@ -106,6 +115,7 @@ export const NativePicker = <T extends string>({
 						</Text>
 					) : undefined}
 				</View>
+				{listFooter}
 			</Dialog>
 		</Stack>
 	);

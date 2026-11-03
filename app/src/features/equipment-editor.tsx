@@ -1,5 +1,5 @@
 import { type ReactElement, useState } from "react";
-import { newId, useApp } from "../demo/app-state";
+import { newId, useApp, useAppStatus } from "../demo/app-state";
 import { Button, Dialog, Field, Select, Stack } from "../design-system";
 import type { Equipment } from "../domain/app-types";
 import { equipmentStock } from "../domain/equipment";
@@ -11,7 +11,8 @@ export const EquipmentEditor = ({
 	item?: Equipment;
 	onClose: () => void;
 }): ReactElement => {
-	const { data, dispatch, busy } = useApp();
+	const { data, dispatch } = useApp();
+	const { busy } = useAppStatus();
 	const [id] = useState(() => item?.id ?? newId());
 	const [name, setName] = useState(item?.name ?? "");
 	const [size, setSize] = useState(item?.size ?? "");
@@ -44,6 +45,8 @@ export const EquipmentEditor = ({
 	};
 	return (
 		<Dialog
+			intent="form"
+			isDismissDisabled={busy}
 			title={item ? "Edit item" : "New item"}
 			isOpen
 			onOpenChange={(open): void => {

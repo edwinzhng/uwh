@@ -27,6 +27,10 @@ export const SeasonLedgerForm = ({
 	onClose: () => void;
 }): ReactElement => {
 	const { data } = useApp();
+	const personName = memberName(data, record.personId);
+	const seasonName =
+		data.seasons.find((season) => season.id === record.seasonId)?.name ??
+		record.seasonId;
 	const [revision] = useState(record.revision);
 	const [amount, setAmount] = useState(
 		String(
@@ -53,14 +57,15 @@ export const SeasonLedgerForm = ({
 	};
 	return (
 		<Dialog
-			title={
+			intent="form"
+			isDismissDisabled={busy}
+			title={`${
 				kind === "dues"
 					? "Set season dues"
 					: kind === "refund"
 						? "Record refund"
 						: "Record payment"
-			}
-			staffRole="admin"
+			} · ${personName}`}
 			isOpen
 			onOpenChange={(open): void => {
 				if (!open && !busy) onClose();
@@ -104,6 +109,9 @@ export const SeasonLedgerForm = ({
 			}
 		>
 			<Stack>
+				<Text variant="small" tone="secondary">
+					{seasonName}
+				</Text>
 				{error ? (
 					<Text tone="danger" variant="small">
 						{error}
@@ -113,17 +121,20 @@ export const SeasonLedgerForm = ({
 					label={kind === "dues" ? "Total dues (CAD)" : "Amount (CAD)"}
 					inputMode="decimal"
 					value={amount}
+					isDisabled={busy}
 					onValueChange={setAmount}
 				/>
 				<Field
 					label="Note"
 					value={note}
+					isDisabled={busy}
 					onValueChange={setNote}
 					placeholder="Reason or payment reference"
 				/>
 				<DatePicker
 					label="Date"
 					value={date}
+					isDisabled={busy}
 					onValueChange={(value): void => {
 						if (value) setDate(value);
 					}}

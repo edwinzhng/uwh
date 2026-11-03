@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { type ReactElement, useEffect } from "react";
 import { View } from "react-native";
 import Animated, {
@@ -8,7 +9,7 @@ import Animated, {
 	withTiming,
 } from "react-native-reanimated";
 import { useTheme } from "./theme";
-import { corners, geometry, motion } from "./tokens";
+import { corners, geometry, motion, progressColors } from "./tokens";
 import { useMotion } from "./use-motion";
 
 type Props = { label: string; value: number; max: number };
@@ -45,12 +46,19 @@ export const Progress = ({ label, value, max }: Props): ReactElement => {
 				style={[
 					{
 						height: "100%",
-						backgroundColor: theme.text.primary,
 						borderRadius: corners.pill,
+						overflow: "hidden",
 					},
 					progressStyle,
 				]}
-			/>
+			>
+				<LinearGradient
+					colors={progressColors}
+					start={{ x: 0, y: 0 }}
+					end={{ x: 1, y: 0 }}
+					style={{ flex: 1 }}
+				/>
+			</Animated.View>
 		</View>
 	);
 };

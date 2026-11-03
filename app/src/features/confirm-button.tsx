@@ -7,6 +7,7 @@ import {
 
 export const ConfirmButton = ({
 	label,
+	icon,
 	variant,
 	isDisabled,
 	validationError,
@@ -17,18 +18,30 @@ export const ConfirmButton = ({
 	onConfirm,
 }: ConfirmationProps & {
 	label: string;
+	icon?: ComponentProps<typeof Button>["icon"];
 	variant?: ComponentProps<typeof Button>["variant"];
 }): ReactElement => {
 	const [open, setOpen] = useState(false);
 	return (
 		<>
-			<Button
-				label={label}
-				variant={variant}
-				isDisabled={isDisabled}
-				validationError={validationError}
-				onPress={(): void => setOpen(true)}
-			/>
+			{icon ? (
+				<Button
+					label={label}
+					icon={icon}
+					variant={variant}
+					isDisabled={isDisabled}
+					validationError={validationError}
+					onPress={(): void => setOpen(true)}
+				/>
+			) : (
+				<Button
+					label={label}
+					variant={variant}
+					isDisabled={isDisabled}
+					validationError={validationError}
+					onPress={(): void => setOpen(true)}
+				/>
+			)}
 			{open ? (
 				<ConfirmationDialog
 					title={title}

@@ -1,22 +1,28 @@
 import { type ReactElement, type ReactNode, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Avatar } from "./avatar";
+import { FeatureIcon } from "./feature-icon";
 import { Icon, type IconName } from "./icon";
+import { interactiveRow, listRowSpacing } from "./interactive-row-layout";
 import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
-import { corners, geometry, space } from "./tokens";
+import { geometry } from "./tokens";
 
 type Props = {
 	title: string;
+	titleLines?: 1 | 2 | 3;
 	titleAccessory?: ReactNode;
+	emphasis?: "default" | "strong" | "subtle";
 	description?: string;
 	descriptionItalic?: boolean;
 	descriptionLines?: 1 | 2 | 3;
 	accessibilityLabel?: string;
 	icon?: IconName;
 	avatar?: string;
+	avatarId?: string;
+	leading?: ReactNode;
 	trailing?: ReactNode;
 	onPress?: () => void;
 	selected?: boolean;
@@ -25,13 +31,17 @@ type Props = {
 };
 export const ListItem = ({
 	title,
+	titleLines,
 	titleAccessory,
+	emphasis = "default",
 	description,
 	descriptionItalic,
 	descriptionLines,
 	accessibilityLabel,
 	icon,
 	avatar,
+	avatarId,
+	leading,
 	trailing,
 	onPress,
 	selected = false,
@@ -41,21 +51,38 @@ export const ListItem = ({
 	const theme = useTheme();
 	const [hovered, setHovered] = useState(false);
 	const [focused, setFocused] = useState(false);
+	const spacing = listRowSpacing({
+		interactive: Boolean(onPress),
+		flush,
+		cardRow,
+		hasLeading: Boolean(leading || avatar || icon),
+	});
+	const titleWeight =
+		emphasis === "strong"
+			? "semibold"
+			: emphasis === "subtle"
+				? "regular"
+				: undefined;
 	const content = (
 		<Row>
-			{avatar ? (
-				<Avatar name={avatar} />
-			) : icon ? (
-				<Icon name={icon} tone="secondary" />
-			) : undefined}
+			{leading ??
+				(avatar ? (
+					<Avatar name={avatar} personId={avatarId} />
+				) : icon ? (
+					<FeatureIcon name={icon} />
+				) : undefined)}
 			<Stack gap="none" grow>
 				{titleAccessory ? (
 					<Row gap="xs" wrap>
-						<Text variant="label">{title}</Text>
+						<Text variant="label" lines={titleLines} weight={titleWeight}>
+							{title}
+						</Text>
 						{titleAccessory}
 					</Row>
 				) : (
-					<Text variant="label">{title}</Text>
+					<Text variant="label" lines={titleLines} weight={titleWeight}>
+						{title}
+					</Text>
 				)}
 				{description ? (
 					<Text
@@ -84,12 +111,10 @@ export const ListItem = ({
 			onFocus={(): void => setFocused(true)}
 			onBlur={(): void => setFocused(false)}
 			style={({ pressed }) => ({
-				paddingVertical: avatar ? space.xs : space.xxs,
-				paddingHorizontal: cardRow ? space.md : flush ? space.none : space.sm,
-				marginHorizontal: cardRow ? -space.md : 0,
-				minHeight: geometry.listRow,
+				...spacing,
+				minHeight: interactiveRow.minHeight,
 				justifyContent: "center",
-				borderRadius: cardRow ? 0 : corners.panel,
+				borderRadius: interactiveRow.borderRadius,
 				backgroundColor: selected
 					? theme.background.secondary
 					: hovered || pressed
@@ -97,19 +122,12 @@ export const ListItem = ({
 						: "transparent",
 				outlineWidth: focused ? geometry.focus : 0,
 				outlineColor: theme.focus,
+				outlineOffset: interactiveRow.focusOffset,
 			})}
 		>
 			{content}
 		</Pressable>
 	) : (
-		<View
-			style={{
-				paddingVertical: avatar ? space.xs : space.xxs,
-				paddingHorizontal: cardRow ? space.md : flush ? space.none : space.sm,
-				marginHorizontal: cardRow ? -space.md : 0,
-			}}
-		>
-			{content}
-		</View>
+		<View style={spacing}>{content}</View>
 	);
 };

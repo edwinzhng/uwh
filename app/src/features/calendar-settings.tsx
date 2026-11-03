@@ -1,119 +1,121 @@
-import { type ReactElement, useMemo, useState } from "react";
-import { Linking } from "react-native";
-import { useActivePerson, useApp } from "../demo/app-state";
+import type { ReactElement } from "react";
+import { useApp } from "../demo/app-state";
 import {
 	Button,
-	Checkbox,
-	FileDownload,
+	ContentRow,
 	List,
+	ListItem,
 	Stack,
 	Text,
 } from "../design-system";
 import { canManagePerson } from "../domain/app-rules";
+import { isHostedCalendarOrigin } from "../domain/calendar-links";
 import {
-	personalCalendarEvents,
-	reconcileCalendar,
-	renderCalendar,
-} from "../domain/calendar-export";
+	type CalendarView,
+	calendarScopeLabel,
+} from "../domain/calendar-workflow";
+import { CalendarDownload } from "./calendar-download";
+import { calendarOrigin } from "./calendar-origin";
+import { CalendarPeople } from "./calendar-people";
+import { CalendarSubscriptionChoice } from "./calendar-subscription-choice";
 import { CalendarSubscriptions } from "./calendar-subscriptions";
-import { HouseholdCalendarDownload } from "./household-calendar-download";
 
-export const CalendarSettings = (): ReactElement => {
+export const CalendarSettings = ({
+	view,
+	selected,
+	busy,
+	onViewChange,
+	onPeopleSave,
+	onBack,
+	onBusyChange,
+}: {
+	view: CalendarView;
+	selected: string[];
+	busy: boolean;
+	onViewChange: (view: CalendarView) => void;
+	onPeopleSave: (ids: string[]) => void;
+	onBack: () => void;
+	onBusyChange: (busy: boolean) => void;
+}): ReactElement => {
 	const { data, account, source } = useApp();
-	const active = useActivePerson();
-	const [selected, setSelected] = useState<string[]>([active.id]);
-	const [error, setError] = useState<string>();
 	const people = data.members.filter((person) =>
 		canManagePerson(account, person.id),
 	);
 	const chosen = people.filter((person) => selected.includes(person.id));
-	const snapshot = useMemo(
-		() =>
-			renderCalendar(
-				data.clubName,
-				chosen.flatMap((person) =>
-					reconcileCalendar(
-						[],
-						personalCalendarEvents(
-							data.events,
-							data.responses,
-							person.id,
-							person.programs,
-							false,
-						).map((event) => ({
-							...event,
-							title: `${event.title} · ${person.name}`,
-						})),
-						data.clubName,
-						person.id,
-						Date.now(),
-					),
-				),
-			),
-		[chosen, data],
-	);
+	const subscriptionsAvailable =
+		source === "convex" && isHostedCalendarOrigin(calendarOrigin);
 	return (
 		<Stack gap="md">
-			<Stack gap="xs">
-				<Text variant="label">Household members</Text>
-				<List>
-					{people.map((person) => (
-						<Checkbox
-							key={person.id}
-							label={`${person.name}${person.id === account.personId ? " · You" : ""}`}
-							checked={selected.includes(person.id)}
-							onChange={(checked): void =>
-								setSelected((current) =>
-									checked
-										? [...current, person.id]
-										: current.filter((id) => id !== person.id),
-								)
-							}
-						/>
-					))}
-				</List>
-			</Stack>
-			{source === "convex" && chosen.length ? (
-				<CalendarSubscriptions people={chosen} />
+			{view !== "choose" ? (
+				<Button
+					label="Back"
+					prefix="arrowLeft"
+					variant="ghost"
+					isDisabled={busy}
+					onPress={onBack}
+				/>
 			) : undefined}
-			{chosen.length ? (
-				source === "convex" ? (
-					<HouseholdCalendarDownload
-						personIds={chosen.map((person) => person.id)}
-						onError={setError}
-					/>
-				) : (
-					<FileDownload
-						label="Download .ics"
-						filename="club-calendar.ics"
-						contents={snapshot}
-						onError={setError}
-					/>
-				)
+			{view === "people" ? (
+				<CalendarPeople
+					people={people}
+					selected={selected}
+					onSave={onPeopleSave}
+				/>
 			) : (
-				<Text variant="small" tone="secondary">
-					Select at least one person.
-				</Text>
-			)}
-			{chosen.length ? (
-				<Stack gap="xs">
-					<Button
-						label="Import a one-time copy"
-						prefix="calendar"
-						variant="secondary"
-						onPress={(): void => {
-							void Linking.openURL(
-								"https://calendar.google.com/calendar/u/0/r/settings/export",
-							).catch(() => setError("Could not open Google Calendar."));
-						}}
+				<>
+					<ContentRow
+						title={calendarScopeLabel(chosen)}
+						description={
+							chosen.length === 1 ? "Selected schedule" : "Selected schedules"
+						}
+						control={
+							people.length > 1 || !chosen.length ? (
+								<Button
+									label="Change"
+									variant="ghost"
+									isDisabled={busy}
+									onPress={(): void => onViewChange("people")}
+								/>
+							) : undefined
+						}
 					/>
-					<Text variant="caption" tone="secondary">
-						Download the calendar, then import the .ics file in Google Calendar
-						on a computer. Imported events do not update automatically.
+					<Text variant="small" tone="secondary">
+						Only sessions marked Yes are included. If you choose individual
+						sections, only those times are added.
 					</Text>
-				</Stack>
-			) : undefined}
-			{error ? <Text tone="danger">{error}</Text> : undefined}
+					{!chosen.length ? (
+						<Text variant="small" tone="secondary">
+							Choose whose schedule to add.
+						</Text>
+					) : view === "choose" ? (
+						<List>
+							{subscriptionsAvailable ? (
+								<CalendarSubscriptionChoice
+									people={chosen}
+									onBusyChange={onBusyChange}
+									onPrepared={(): void => onViewChange("subscribe")}
+								/>
+							) : undefined}
+							<ListItem
+								title="Download a copy"
+								description="Save a one-time .ics file to your calendar."
+								icon="download"
+								onPress={(): void => {
+									if (!busy) onViewChange("download");
+								}}
+							/>
+						</List>
+					) : view === "subscribe" && subscriptionsAvailable ? (
+						<CalendarSubscriptions
+							people={chosen}
+							onBusyChange={onBusyChange}
+							onCreateLink={(): void => onViewChange("choose")}
+						/>
+					) : view === "download" ? (
+						<CalendarDownload people={chosen} />
+					) : undefined}
+				</>
+			)}
 		</Stack>
 	);
 };

@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
-import { newId, useApp } from "../demo/app-state";
+import { newId, useApp, useAppStatus } from "../demo/app-state";
 import {
 	Badge,
 	Button,
@@ -25,7 +25,8 @@ import { PublicScheduleSettings } from "./public-schedule-settings";
 import { SeasonSettings } from "./season-settings";
 
 export const SettingsScreen = (): ReactElement => {
-	const { data, account, dispatch, busy, source } = useApp();
+	const { data, account, dispatch, source } = useApp();
+	const { busy } = useAppStatus();
 	const router = useRouter();
 	const [venues, setVenues] = useState((data.venues ?? []).join("\n"));
 	const [name, setName] = useState(data.clubName);
@@ -54,7 +55,6 @@ export const SettingsScreen = (): ReactElement => {
 	};
 	return (
 		<ClubShell
-			staffRole={account.admin ? "admin" : undefined}
 			title="Club settings"
 			back={
 				<Row>
@@ -95,7 +95,7 @@ export const SettingsScreen = (): ReactElement => {
 								</Text>
 								<Toggle
 									label="Session reminders"
-									description="Push delivery isn’t enabled yet"
+									description="Send opening and closing reminders to eligible members"
 									value={reminders}
 									onValueChange={setReminders}
 								/>
@@ -173,15 +173,28 @@ export const SettingsScreen = (): ReactElement => {
 						</Surface>
 					</Stack>
 					<AccessPanel />
+					<Surface>
+						<Row justify="between" wrap>
+							<Text variant="h4">Club terms</Text>
+							<Button
+								label="Manage club terms"
+								variant="secondary"
+								onPress={(): void => router.navigate("/terms")}
+							/>
+						</Row>
+					</Surface>
 					<SeasonSettings />
 					{source === "convex" ? <PublicScheduleSettings /> : undefined}
 				</Stack>
 			)}
 			<Dialog
-				staffRole="admin"
+				intent="form"
+				isDismissDisabled={busy}
 				title="New tracker"
 				isOpen={add}
-				onOpenChange={setAdd}
+				onOpenChange={(value): void => {
+					if (!busy) setAdd(value);
+				}}
 				footer={
 					<Button
 						label="Add tracker"

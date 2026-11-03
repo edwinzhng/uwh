@@ -8,6 +8,7 @@
 			"!.expo",
 			"!node_modules",
 			"!convex/_generated",
+			"!public/push-worker.js",
 			"!.convex"
 		]
 	}

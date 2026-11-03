@@ -1,9 +1,9 @@
-import type { ReactElement, ReactNode } from "react";
+import { Stack as RouterStack, useIsFocused, useSegments } from "expo-router";
+import { HeaderHeightContext } from "expo-router/react-navigation";
+import { type ReactElement, type ReactNode, useContext } from "react";
 import {
-	type ImageSourcePropType,
 	KeyboardAvoidingView,
 	Platform,
-	ScrollView,
 	useWindowDimensions,
 	View,
 } from "react-native";
@@ -11,63 +11,156 @@ import {
 	SafeAreaView,
 	useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { BrandIdentity } from "./brand-identity";
-import { GlassPanel } from "./glass-panel";
-import type { NavigationItem } from "./navigation-control";
+import { chatSidebarWidth, useChatSidebar } from "./chat-workspace";
+import { nativeTabsAvailable } from "./native-navigation";
+import { nativeHeaderRoute } from "./native-navigation-model";
 import { PageReveal } from "./page-reveal";
+import { PageTitle } from "./page-title";
+import { PaginationScrollView as ScrollView } from "./pagination-scroll-view";
 import { Row } from "./row";
-import { SidebarNavigation } from "./sidebar-navigation";
 import { Stack } from "./stack";
 import { Text } from "./text";
-import { useTheme } from "./theme";
 import { geometry, layer, space } from "./tokens";
+import { ToolbarGroup } from "./toolbar-group";
 import { useKeyboardVisible } from "./use-keyboard-visible";
-import { WaterBackground } from "./water-background";
 
 type Props = {
 	children: ReactNode;
 	title?: string;
 	tabs?: ReactNode;
 	subtitle?: string;
-	brand: string;
-	brandLogo?: ImageSourcePropType;
-	onBrandPress?: () => void;
-	navigation: NavigationItem[];
 	profile?: ReactNode;
 	accessory?: ReactNode;
+	toolbarLeading?: ReactNode;
 	action?: ReactNode;
+	actionPlacement?: "responsive" | "inline";
 	titleAccessory?: ReactNode;
+	workspaceTitle?: ReactNode;
 	back?: ReactNode;
 	footer?: ReactNode;
+	floatingAction?: ReactNode;
 	scrollable?: boolean;
-	persistentNavigation?: boolean;
+	presentation?: "page" | "workspace";
+	transition?: "fade" | "instant";
+	primaryDestination?: boolean;
 };
 export const AppLayout = ({
 	children,
 	title,
 	tabs,
 	subtitle,
-	brand,
-	brandLogo,
-	onBrandPress,
-	navigation,
 	profile,
 	accessory,
 	action,
+	toolbarLeading,
+	actionPlacement = "responsive",
 	titleAccessory,
+	workspaceTitle,
 	back,
 	footer,
+	floatingAction,
 	scrollable = true,
-	persistentNavigation = false,
+	presentation = "page",
+	transition = "fade",
+	primaryDestination = false,
 }: Props): ReactElement => {
-	const theme = useTheme();
+	const chatSidebar = useChatSidebar();
+	const focused = useIsFocused();
+	const visible = Platform.OS !== "web" || focused;
 	const { width } = useWindowDimensions();
 	const insets = useSafeAreaInsets();
-	const wide = width >= geometry.wide;
+	const segments = useSegments();
+	const nativeNavigation = nativeTabsAvailable();
+	const nativeHeader =
+		Platform.OS !== "web" && nativeHeaderRoute(segments.at(0) ?? "");
+	const headerHeight = useContext(HeaderHeightContext) ?? 0;
+	const wide = width >= geometry.wide && !nativeNavigation;
 	const keyboard = useKeyboardVisible();
+	const workspace = presentation === "workspace";
+	const compactRoot = primaryDestination && !nativeHeader;
+	const headingAction = compactRoot ? undefined : action;
+	const pageControls =
+		compactRoot && action ? (
+			<View
+				accessibilityRole="toolbar"
+				accessibilityLabel={`${title ?? "Page"} actions`}
+				style={{
+					flexDirection: "row",
+					flexWrap: "wrap",
+					alignItems: "center",
+					justifyContent: "space-between",
+					gap: space.xs,
+				}}
+			>
+				{tabs ? (
+					<View style={{ flex: 1, minWidth: 0 }}>{tabs}</View>
+				) : undefined}
+				<View style={{ marginLeft: "auto", flexShrink: 1, maxWidth: "100%" }}>
+					{action}
+				</View>
+			</View>
+		) : (
+			tabs
+		);
 	const pagePadding = wide ? space.xxl : space.lg;
+	const floatingToolbar = !nativeHeader && (!workspace || primaryDestination);
+	const toolbarClearance = floatingToolbar ? geometry.touch + space.xs * 2 : 0;
 	const heading =
-		back || title ? (
+		nativeHeader && workspaceTitle ? undefined : nativeHeader ? (
+			title || subtitle || titleAccessory || headingAction ? (
+				<Stack gap="xs">
+					{title ? (
+						<Text variant={workspace ? "h3" : "h1"}>{title}</Text>
+					) : undefined}
+					<Row justify="between" align="center" wrap>
+						{subtitle ? (
+							<Text variant="small" tone="secondary">
+								{subtitle}
+							</Text>
+						) : undefined}
+						{titleAccessory}
+						{headingAction}
+					</Row>
+				</Stack>
+			) : undefined
+		) : compactRoot ? (
+			back || subtitle || titleAccessory ? (
+				<Stack gap="xs">
+					{back}
+					{subtitle ? <Text variant="label">{subtitle}</Text> : undefined}
+					{titleAccessory}
+				</Stack>
+			) : undefined
+		) : workspace ? (
+			<View
+				style={{
+					flexDirection: "row",
+					alignItems: "center",
+					gap: space.xs,
+					paddingHorizontal: space.md,
+					paddingVertical: space.xs,
+				}}
+			>
+				{back}
+				<View style={{ flex: 1, minWidth: 0, gap: space.xxs }}>
+					{workspaceTitle ?? (
+						<>
+							{title ? (
+								<Text variant="h3" lines={1}>
+									{title}
+								</Text>
+							) : undefined}
+							{subtitle ? (
+								<Text variant="caption" tone="secondary" lines={1}>
+									{subtitle}
+								</Text>
+							) : undefined}
+						</>
+					)}
+				</View>
+				{headingAction}
+			</View>
+		) : back || title ? (
 			<View style={{ gap: space.sm }}>
 				{back ? (
 					<View
@@ -81,8 +174,9 @@ export const AppLayout = ({
 				{title ? (
 					<View
 						style={{
-							flexDirection: wide ? "row" : "column",
-							alignItems: wide ? "flex-start" : "stretch",
+							flexDirection: "row",
+							flexWrap: "wrap",
+							alignItems: "center",
 							justifyContent: "space-between",
 							gap: space.sm,
 						}}
@@ -90,14 +184,15 @@ export const AppLayout = ({
 						<View
 							style={{
 								flexGrow: 1,
-								flexShrink: wide ? 1 : 0,
-								flexBasis: wide ? geometry.popupWidth : "auto",
-								minWidth: 0,
+								flexShrink: 1,
+								flexBasis: actionPlacement === "inline" ? 0 : "auto",
+								minWidth: actionPlacement === "inline" ? geometry.touch * 2 : 0,
+								maxWidth: "100%",
 								gap: space.xxs,
 							}}
 						>
 							<Row align="center" gap="xs" wrap>
-								<Stack>
+								<Stack grow>
 									<Text variant="h1">{title}</Text>
 								</Stack>
 								{titleAccessory}
@@ -108,9 +203,15 @@ export const AppLayout = ({
 								</Text>
 							) : undefined}
 						</View>
-						{action ? (
-							<View style={{ alignSelf: wide ? "auto" : "flex-start" }}>
-								{action}
+						{headingAction ? (
+							<View
+								style={{
+									flexShrink: 1,
+									maxWidth: "100%",
+									marginLeft: "auto",
+								}}
+							>
+								{headingAction}
 							</View>
 						) : undefined}
 					</View>
@@ -119,93 +220,119 @@ export const AppLayout = ({
 		) : undefined;
 	return (
 		<SafeAreaView
-			edges={["top", "left", "right"]}
-			style={{ flex: 1, backgroundColor: theme.background.primary }}
+			edges={nativeHeader ? ["left", "right"] : ["top", "left", "right"]}
+			pointerEvents={visible ? "auto" : "none"}
+			accessibilityElementsHidden={!visible}
+			importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
+			style={{ flex: 1, opacity: visible ? 1 : 0 }}
 		>
+			{nativeHeader && title ? (
+				<RouterStack.Screen
+					options={{
+						title,
+						headerTitle: workspaceTitle
+							? (): ReactNode => workspaceTitle
+							: undefined,
+						headerTitleAlign: workspaceTitle ? "left" : undefined,
+						headerLeft: toolbarLeading
+							? (): ReactNode => toolbarLeading
+							: undefined,
+						headerRight: (): ReactNode =>
+							workspaceTitle ? (
+								action
+							) : (
+								<ToolbarGroup nativeHeader>
+									{accessory}
+									{profile}
+								</ToolbarGroup>
+							),
+					}}
+				/>
+			) : undefined}
 			<KeyboardAvoidingView
 				behavior={Platform.OS === "ios" ? "padding" : undefined}
 				enabled={Platform.OS !== "web"}
+				keyboardVerticalOffset={0}
 				style={{ flex: 1, flexDirection: "row" }}
 			>
-				{wide && persistentNavigation ? (
-					<View style={{ width: geometry.popupWidth }} />
-				) : wide ? (
+				{wide ? (
 					<View
-						nativeID="club-navigation-surface"
 						style={{
-							width: geometry.popupWidth,
-							backgroundColor: "transparent",
-							padding: space.sm,
-							borderRightWidth: geometry.border,
-							borderRightColor: theme.border,
+							width: geometry.popupWidth + (chatSidebar ? chatSidebarWidth : 0),
 						}}
-					>
-						<WaterBackground />
-
-						<Stack gap="xl">
-							<BrandIdentity
-								name={brand}
-								logo={brandLogo}
-								onPress={onBrandPress}
-							/>
-							<SidebarNavigation navigation={navigation} />
-						</Stack>
-					</View>
+					/>
 				) : undefined}
 				<View style={{ flex: 1, minWidth: 0 }}>
-					{!wide ? (
-						<>
-							<View
-								style={{
-									position: "absolute",
-									left: space.md,
-									top: space.md,
-									zIndex: layer.sticky,
-								}}
-							>
-								<GlassPanel
-									interactive
-									shape="panel"
-									material="floating"
-									padding="none"
-								>
-									{accessory}
-								</GlassPanel>
-							</View>
-							<View
-								style={{
-									position: "absolute",
-									right: space.md,
-									top: space.md,
-									zIndex: layer.sticky,
-									maxWidth: "70%",
-								}}
-							>
-								<GlassPanel
-									interactive
-									shape="panel"
-									material="floating"
-									padding="none"
-								>
-									{profile}
-								</GlassPanel>
-							</View>
-						</>
+					{floatingToolbar ? (
+						<View
+							pointerEvents="box-none"
+							style={{
+								position: "absolute",
+								top: 0,
+								left: 0,
+								right: 0,
+								zIndex: layer.sticky,
+								paddingHorizontal: space.md,
+								paddingVertical: space.xs,
+								flexDirection: "row",
+								alignItems: "center",
+								gap: space.xs,
+								justifyContent: "flex-end",
+							}}
+						>
+							{toolbarLeading ? (
+								<View style={{ marginRight: "auto", flexShrink: 1 }}>
+									{toolbarLeading}
+								</View>
+							) : undefined}
+							<ToolbarGroup>
+								{accessory}
+								{profile}
+							</ToolbarGroup>
+						</View>
 					) : undefined}
-					<PageReveal fill gap="none">
+					<PageReveal
+						fill
+						gap="none"
+						enabled={transition !== "instant" && !nativeHeader}
+					>
+						{compactRoot && title ? <PageTitle title={title} /> : undefined}
+						{workspace && heading ? (
+							<View
+								style={{
+									paddingTop: nativeHeader ? headerHeight : toolbarClearance,
+									paddingHorizontal: nativeHeader ? space.md : 0,
+								}}
+							>
+								{heading}
+							</View>
+						) : undefined}
 						{scrollable ? (
 							<ScrollView
+								contentInsetAdjustmentBehavior={
+									workspace
+										? "never"
+										: nativeNavigation || nativeHeader
+											? "automatic"
+											: undefined
+								}
 								keyboardShouldPersistTaps="handled"
 								keyboardDismissMode="on-drag"
 								contentContainerStyle={{
 									paddingHorizontal: wide ? space.lg : space.md,
-									paddingTop: wide
-										? pagePadding
-										: geometry.touch + space.sm + space.lg + pagePadding,
+									paddingTop:
+										(workspace && heading ? 0 : toolbarClearance) +
+										(workspace ? space.sm : wide ? pagePadding : space.md),
 									paddingBottom:
-										wide || footer || keyboard
-											? pagePadding
-											: geometry.tab + pagePadding + space.sm + insets.bottom,
+										(floatingAction ? geometry.touch + space.md : 0) +
+										(nativeNavigation
+											? pagePadding + (nativeHeader ? insets.bottom : 0)
+											: wide || footer || keyboard
+												? pagePadding
+												: geometry.tab +
+													pagePadding +
+													space.sm +
+													insets.bottom),
 								}}
 							>
 								<View
@@ -213,11 +340,11 @@ export const AppLayout = ({
 										width: "100%",
 										maxWidth: geometry.content,
 										alignSelf: "center",
-										gap: space.xl,
+										gap: compactRoot ? space.md : space.xl,
 									}}
 								>
-									{heading}
-									{tabs}
+									{!workspace ? heading : undefined}
+									{pageControls}
 									{children}
 								</View>
 							</ScrollView>
@@ -227,18 +354,25 @@ export const AppLayout = ({
 									flex: 1,
 									minHeight: 0,
 									width: "100%",
-									maxWidth: geometry.content,
+									maxWidth: workspace ? undefined : geometry.content,
 									alignSelf: "center",
-									paddingHorizontal: wide ? space.lg : space.md,
-									paddingTop: wide
-										? pagePadding
-										: geometry.touch + space.sm + space.lg + pagePadding,
-									paddingBottom: pagePadding,
-									gap: space.md,
+									paddingHorizontal: workspace
+										? space.none
+										: wide
+											? space.lg
+											: space.md,
+									paddingTop:
+										(workspace && heading ? 0 : toolbarClearance) +
+										(nativeHeader && (!workspace || workspaceTitle)
+											? headerHeight
+											: 0) +
+										(workspace ? space.none : wide ? pagePadding : space.md),
+									paddingBottom: workspace ? space.none : pagePadding,
+									gap: workspace ? space.none : space.md,
 								}}
 							>
-								{heading}
-								{tabs}
+								{!workspace ? heading : undefined}
+								{pageControls}
 								{children}
 							</View>
 						)}
@@ -246,19 +380,26 @@ export const AppLayout = ({
 						{footer ? (
 							<View
 								style={{
-									paddingHorizontal: wide ? space.lg : space.md,
-									paddingTop: space.xs,
-									paddingBottom:
-										keyboard || wide
-											? space.xs
-											: geometry.tab + space.lg + insets.bottom,
+									paddingHorizontal: workspace
+										? space.xs
+										: wide
+											? space.lg
+											: space.md,
+									paddingTop: workspace ? space.xs : space.md,
+									paddingBottom: workspace
+										? Math.max(space.xs, insets.bottom)
+										: nativeNavigation
+											? Math.max(space.md, insets.bottom)
+											: keyboard || wide
+												? space.xs
+												: geometry.tab + space.lg + insets.bottom,
 									backgroundColor: "transparent",
 								}}
 							>
 								<View
 									style={{
 										width: "100%",
-										maxWidth: geometry.content,
+										maxWidth: workspace ? undefined : geometry.content,
 										alignSelf: "center",
 									}}
 								>
@@ -267,6 +408,23 @@ export const AppLayout = ({
 							</View>
 						) : undefined}
 					</PageReveal>
+					{floatingAction && !keyboard ? (
+						<View
+							pointerEvents="box-none"
+							style={{
+								position: "absolute",
+								left: space.md,
+								right: space.md,
+								bottom:
+									nativeNavigation || wide
+										? space.md + (nativeHeader ? insets.bottom : 0)
+										: geometry.tab + space.lg + insets.bottom,
+								alignItems: "flex-end",
+							}}
+						>
+							{floatingAction}
+						</View>
+					) : undefined}
 				</View>
 			</KeyboardAvoidingView>
 		</SafeAreaView>

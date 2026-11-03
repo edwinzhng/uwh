@@ -1,99 +1,32 @@
-import { type ReactElement, useState } from "react";
+import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import {
-	Dialog,
-	EmptyState,
-	List,
-	ListItem,
-	Stack,
-	Text,
-} from "../design-system";
-import { formatDate } from "../domain/app-rules";
+import { List } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import { HouseholdEventCard } from "./household-event-card";
 
 export const ScheduleEvents = ({
 	events,
+	past = false,
 }: {
 	events: ClubEvent[];
+	past?: boolean;
 }): ReactElement => {
 	const { data } = useApp();
-	const [attendeeEvent, setAttendeeEvent] = useState<ClubEvent>();
-	const attendeeIds = new Set(
-		data.responses
-			.filter(
-				(entry) =>
-					entry.eventId === attendeeEvent?.id && entry.response === "going",
-			)
-			.map((entry) => entry.personId),
-	);
-	const attendees = data.members
-		.filter((member) => attendeeIds.has(member.id))
-		.slice()
-		.sort((a, b) => a.name.localeCompare(b.name));
-	const dates = [...new Set(events.map((event) => event.date))];
 	return (
-		<Stack gap="xl">
-			<Dialog
-				isOpen={Boolean(attendeeEvent)}
-				onOpenChange={(open): void => {
-					if (!open) setAttendeeEvent(undefined);
-				}}
-				title={`${attendeeEvent?.kind === "tournament" ? "Interested players" : "Attendees"}${attendeeEvent ? ` · ${attendeeEvent.title}` : ""}`}
-			>
-				<List>
-					{attendees.map((member) => (
-						<ListItem
-							key={member.id}
-							title={member.name}
-							avatar={member.name}
-						/>
-					))}
-					{!attendees.length ? (
-						<EmptyState
-							title={
-								attendeeEvent?.kind === "tournament"
-									? "No interest yet"
-									: "No attendees yet"
-							}
-							description={
-								attendeeEvent?.kind === "tournament"
-									? "Players will appear here when they select Interested."
-									: "Players will appear here when they register."
-							}
-						/>
-					) : undefined}
-				</List>
-			</Dialog>
-			<Stack gap="xl">
-				{dates.map((date) => (
-					<Stack key={date} gap="xs">
-						<Text variant="label">{formatDate(date)}</Text>
-						{events
-							.filter((event) => event.date === date)
-							.map((event) => {
-								const going = data.responses.filter(
-									(entry) =>
-										entry.eventId === event.id && entry.response === "going",
-								).length;
-								return (
-									<HouseholdEventCard
-										key={event.id}
-										event={event}
-										attendanceCount={going}
-										onAttendance={(): void => setAttendeeEvent(event)}
-									/>
-								);
-							})}
-					</Stack>
-				))}
-			</Stack>
-			{!events.length ? (
-				<EmptyState
-					title="No events"
-					description="No events match this view. Check another tab or event type."
+		<List gap="sm">
+			{events.map((event) => (
+				<HouseholdEventCard
+					key={event.id}
+					event={event}
+					past={past}
+					attendanceCount={
+						data.responses.filter(
+							(entry) =>
+								entry.eventId === event.id && entry.response === "going",
+						).length
+					}
 				/>
-			) : undefined}
-		</Stack>
+			))}
+		</List>
 	);
 };

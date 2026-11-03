@@ -1,5 +1,4 @@
 import { useMutation, useQuery } from "convex/react";
-import * as Clipboard from "expo-clipboard";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { friendlyError } from "../backend/errors";
@@ -12,6 +11,7 @@ import {
 	Text,
 	Toggle,
 } from "../design-system";
+import * as Clipboard from "../platform/clipboard";
 
 export const PublicScheduleSettings = (): ReactElement => {
 	const settings = useQuery(api.public_schedule.settings, {});

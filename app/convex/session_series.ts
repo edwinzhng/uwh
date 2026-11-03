@@ -3,6 +3,8 @@ import { canRegister, validDate } from "../src/domain/app-rules";
 import type { ClubEvent } from "../src/domain/app-types";
 import { clubDate, clubTimestamp } from "../src/domain/event-time";
 import {
+	currentSeriesEnrollment,
+	reconcileSeriesEligibility,
 	type SessionSeries,
 	seriesHasSpace,
 	syncSeriesResponses,
@@ -67,12 +69,48 @@ export const synchronizeSeries = async (
 		)
 	).flat();
 	const club = await ctx.db.get(clubId);
-	const next = syncSeriesResponses(
+	const people = await Promise.all(
+		[...new Set(series.enrollments.map((entry) => entry.personId))].map(
+			(personId) =>
+				ctx.db
+					.query("members")
+					.withIndex("by_club_and_key", (q) =>
+						q.eq("clubId", clubId).eq("value.id", personId),
+					)
+					.unique(),
+		),
+	);
+	const members = people.flatMap((person) => (person ? [person.value] : []));
+	const today = clubDate(undefined, club?.timeZone);
+	const now = Date.now();
+	const reconciled = reconcileSeriesEligibility(
 		series,
 		events,
+		members,
+		today,
+		now,
+	);
+	if (
+		JSON.stringify(reconciled.enrollments) !==
+		JSON.stringify(series.enrollments)
+	) {
+		const row = await ctx.db
+			.query("sessionSeries")
+			.withIndex("by_key", (q) => q.eq("clubId", clubId).eq("id", series.id))
+			.unique();
+		if (row)
+			await ctx.db.patch(row._id, { enrollments: reconciled.enrollments });
+	}
+	const next = syncSeriesResponses(
+		reconciled,
+		events,
 		rows.map((row) => row.value),
-		clubDate(undefined, club?.timeZone),
-		Date.now(),
+		today,
+		now,
+		people
+			.filter((person) => person?.value.archived || person?.value.mergedInto)
+			.flatMap((person) => (person ? [person.value.id] : [])),
+		members,
 	);
 	for (const response of next) {
 		const row = rows.find(
@@ -167,8 +205,9 @@ export const configure = mutation({
 	handler: async (ctx, args): Promise<void> => {
 		const actor = await requireMember(ctx);
 		if (!actor.admin) throw new Error("Administrator access required.");
-		if (!args.title.trim() || args.title.length > 100)
-			throw new Error("Enter a series title under 100 characters.");
+		if (!args.title.trim()) throw new Error("Add a series title");
+		if (args.title.length > 100)
+			throw new Error("Keep the series title to 100 characters");
 		if (
 			args.capacity !== undefined &&
 			(!Number.isInteger(args.capacity) ||
@@ -259,6 +298,7 @@ export const enroll = mutation({
 			.unique();
 		if (
 			!person ||
+			person.value.mergedInto ||
 			events.some(
 				(event) =>
 					event.date >= args.start &&
@@ -268,10 +308,7 @@ export const enroll = mutation({
 			)
 		)
 			throw new Error("This player is not eligible for the series.");
-		const current = series.enrollments.find(
-			(entry) =>
-				entry.personId === args.personId && (!entry.end || entry.end > today),
-		);
+		const current = currentSeriesEnrollment(series, args.personId, today);
 		if (current?.state === "committed")
 			throw new Error(
 				"This player is already committed. End the existing commitment first.",
@@ -332,6 +369,16 @@ export const end = mutation({
 			throw new Error("You cannot manage this player.");
 		const series = await seriesFor(ctx, actor.clubId, args.seriesId);
 		const club = await ctx.db.get(actor.clubId);
+		const person = await ctx.db
+			.query("members")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", actor.clubId).eq("value.id", args.personId),
+			)
+			.unique();
+		if (!person || person.value.mergedInto)
+			throw new Error(
+				"This profile was merged or is unavailable. Reopen the current roster.",
+			);
 		if (
 			!validDate(args.date) ||
 			args.date < clubDate(undefined, club?.timeZone)
@@ -388,18 +435,21 @@ export const absence = mutation({
 			!row?.value.seriesExpected
 		)
 			throw new Error("No current series commitment for this session.");
-		if (
-			args.unavailable &&
-			(!args.reason?.trim() || args.reason.trim().length > 500)
-		)
-			throw new Error("Add a reason for not going (up to 500 characters).");
+		if (args.unavailable && !args.reason?.trim())
+			throw new Error("Add a reason for not going");
+		if (args.unavailable && (args.reason?.trim().length ?? 0) > 500)
+			throw new Error("Keep the reason to 500 characters");
 		const person = await ctx.db
 			.query("members")
 			.withIndex("by_club_and_key", (q) =>
 				q.eq("clubId", actor.clubId).eq("value.id", args.personId),
 			)
 			.unique();
-		if (!person || !canRegister(person.value, event.value))
+		if (
+			!person ||
+			person.value.mergedInto ||
+			!canRegister(person.value, event.value)
+		)
 			throw new Error("This player is no longer eligible for this session.");
 		await ctx.db.patch(row._id, {
 			value: {
@@ -407,6 +457,7 @@ export const absence = mutation({
 				response: args.unavailable ? "unavailable" : "going",
 				absenceReason: args.unavailable ? args.reason?.trim() : undefined,
 				partIds: undefined,
+				declinedPartIds: undefined,
 			},
 		});
 	},
@@ -437,7 +488,11 @@ export const guest = mutation({
 				q.eq("clubId", actor.clubId).eq("value.id", args.personId),
 			)
 			.unique();
-		if (!person || !canRegister(person.value, event.value))
+		if (
+			!person ||
+			person.value.mergedInto ||
+			!canRegister(person.value, event.value)
+		)
 			throw new Error("Choose an eligible player.");
 		const rows = await ctx.db
 			.query("responses")

@@ -68,6 +68,28 @@ test("paused actor cannot select recipients", () => {
 	).toEqual([]);
 });
 
+test("archived and merged profile identities cannot appear as roster or fallback account recipients", (): void => {
+	const result = recipientDirectory(
+		accounts,
+		players.map((player) =>
+			player.id === "b"
+				? { ...player, archived: true }
+				: player.id === "c"
+					? { ...player, archived: true, mergedInto: "d" }
+					: player,
+		),
+		"self",
+		[],
+		false,
+	);
+	expect(result.recipients.map((recipient) => recipient.id)).toEqual([
+		"person:d",
+	]);
+	expect(result.recipients.some((recipient) => recipient.id === "parent")).toBe(
+		false,
+	);
+});
+
 test("connected accounts with no matching roster profile remain messageable", () => {
 	const result = recipientDirectory(
 		[

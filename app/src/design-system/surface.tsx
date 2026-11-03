@@ -1,7 +1,10 @@
 import type { ReactElement, ReactNode } from "react";
 import { View } from "react-native";
+import { CardBackground } from "./card-background";
 import { useTheme } from "./theme";
 import {
+	type CategoryColor,
+	categoryPalette,
 	corners,
 	type ElevationToken,
 	elevation,
@@ -18,6 +21,7 @@ type Props = {
 	elevation?: ElevationToken;
 	padding?: SpaceToken;
 	borderTone?: "neutral" | "success" | "warning" | "danger";
+	tone?: CategoryColor;
 };
 export const Surface = ({
 	children,
@@ -27,6 +31,7 @@ export const Surface = ({
 	elevation: level = "none",
 	padding,
 	borderTone = "neutral",
+	tone,
 }: Props): ReactElement => {
 	const theme = useTheme();
 	const contentPadding =
@@ -40,21 +45,26 @@ export const Surface = ({
 	return (
 		<View
 			style={{
-				backgroundColor:
-					variant === "subtle"
-						? theme.background.secondary
-						: theme.background.primary,
 				borderColor:
 					borderTone === "neutral"
 						? theme.border
 						: theme.colorScales[borderTone].border,
 				borderWidth: geometry.border,
-				borderRadius: level === "overlay" ? corners.overlay : corners.panel,
+				borderRadius: corners.panel,
 				padding: header === undefined ? contentPadding : 0,
 				...elevation[level],
 				overflow: "hidden",
 			}}
 		>
+			<CardBackground
+				color={
+					tone
+						? categoryPalette[theme.mode][tone].background
+						: variant === "subtle"
+							? theme.background.secondary
+							: theme.background.card
+				}
+			/>
 			{header === undefined ? (
 				children
 			) : (

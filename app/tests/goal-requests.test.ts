@@ -53,3 +53,32 @@ test("coach approval applies only the reviewed request", () => {
 	);
 	expect(declined?.pendingGoal).toBeUndefined();
 });
+
+test("approving a new goal resets completed check-ins while declining preserves progress", (): void => {
+	const completed = {
+		...initialAppData,
+		members: initialAppData.members.map((member) =>
+			member.id === "sam" ? { ...member, steps: 6 } : member,
+		),
+	};
+	const requested = reduceApp(completed, player, request);
+	const review = {
+		type: "review-goal",
+		personId: "sam",
+		goal: request.goal,
+		approve: true,
+	} as const;
+	const approved = reduceApp(requested, primaryAccount, review).members.find(
+		(member) => member.id === "sam",
+	);
+	expect(approved?.goal).toBe(request.goal);
+	expect(approved?.steps).toBe(0);
+	const declined = reduceApp(requested, primaryAccount, {
+		...review,
+		approve: false,
+	}).members.find((member) => member.id === "sam");
+	expect(declined?.goal).toBe(
+		completed.members.find((member) => member.id === "sam")?.goal,
+	);
+	expect(declined?.steps).toBe(6);
+});

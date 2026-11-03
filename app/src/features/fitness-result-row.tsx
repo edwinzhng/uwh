@@ -14,6 +14,7 @@ export const FitnessResultRow = ({
 	onChange,
 	stats,
 	disabled,
+	compact = false,
 }: {
 	name: string;
 	unit: FitnessUnit;
@@ -21,22 +22,25 @@ export const FitnessResultRow = ({
 	onChange: (entry: FitnessEntry) => void;
 	stats?: FitnessSummary;
 	disabled: boolean;
+	compact?: boolean;
 }): ReactElement => (
 	<Stack gap="sm">
-		<Stack gap="xxs">
-			<Text variant="label">{name}</Text>
-			{stats ? (
-				<Text variant="caption" tone="secondary">
-					Best {formatFitnessValue(unit, stats.best)} ·{" "}
-					{fitnessAverage(unit, stats)}
-					{unit !== "pass_fail" ? " average" : ""}
-				</Text>
-			) : undefined}
-		</Stack>
+		{!compact ? (
+			<Stack gap="xxs">
+				<Text variant="label">{name}</Text>
+				{stats ? (
+					<Text variant="caption" tone="secondary">
+						Best {formatFitnessValue(unit, stats.best)} ·{" "}
+						{fitnessAverage(unit, stats)}
+						{unit !== "pass_fail" ? " average" : ""}
+					</Text>
+				) : undefined}
+			</Stack>
+		) : undefined}
 		<Grid>
 			{unit === "pass_fail" ? (
 				<Select
-					label={`${name} result`}
+					label={compact ? "Result" : `${name} result`}
 					value={entry.value}
 					options={[
 						{ value: "", label: "Not recorded" },
@@ -50,16 +54,24 @@ export const FitnessResultRow = ({
 				/>
 			) : (
 				<Field
-					label={`${name} result`}
+					label={compact ? "Result" : `${name} result`}
 					value={entry.value}
 					onValueChange={(value): void => onChange({ ...entry, value })}
-					placeholder={unit === "time" ? "m:ss" : "Count"}
-					inputMode={unit === "count" ? "numeric" : "text"}
+					placeholder={
+						unit === "time" ? "m:ss" : unit === "distance" ? "Metres" : "Count"
+					}
+					inputMode={
+						unit === "count"
+							? "numeric"
+							: unit === "distance"
+								? "decimal"
+								: "text"
+					}
 					isDisabled={disabled}
 				/>
 			)}
 			<Field
-				label={`${name} notes`}
+				label={compact ? "Notes (optional)" : `${name} notes`}
 				value={entry.notes}
 				onValueChange={(notes): void => onChange({ ...entry, notes })}
 				maxLength={1000}

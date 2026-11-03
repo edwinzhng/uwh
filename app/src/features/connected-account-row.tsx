@@ -49,6 +49,8 @@ export const ConnectedAccountRow = ({
 				}
 			/>
 			<Dialog
+				intent="confirmation"
+				isDismissDisabled={task.busy}
 				title={`Disconnect ${name}?`}
 				isOpen={open}
 				onOpenChange={(value): void => {

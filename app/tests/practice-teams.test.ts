@@ -4,6 +4,7 @@ import { reduceApp } from "../src/domain/app-reducer";
 import { eventAttendees, lineupNeedsReview } from "../src/domain/app-rules";
 import type { AppData, TeamPlan } from "../src/domain/app-types";
 import { visibleAppData } from "../src/domain/app-visibility";
+import { lineupSnapshot, validateLineup } from "../src/domain/lineup";
 
 const fixture = (): AppData => ({
 	...initialAppData,
@@ -140,6 +141,12 @@ test("manual team and position changes apply only to their part", (): void => {
 		personId,
 	});
 	expect(planFor(moved, "hockey").white).toContain(personId);
+	expect(
+		validateLineup(
+			planFor(moved, "hockey"),
+			lineupSnapshot(planFor(moved, "hockey")),
+		),
+	).toBeUndefined();
 	expect(planFor(moved, "training")).toEqual(planFor(data, "training"));
 	const assigned = reduceApp(moved, primaryAccount, {
 		type: "assign-position",
@@ -154,6 +161,19 @@ test("manual team and position changes apply only to their part", (): void => {
 		)?.position,
 	).toBe("FULL_BACK");
 	expect(planFor(assigned, "training")).toEqual(planFor(data, "training"));
+	const published = reduceApp(assigned, primaryAccount, {
+		type: "publish-teams",
+		eventId: "club-thu",
+		partId: "hockey",
+		expectedRevision: planFor(assigned, "hockey").revision,
+	});
+	expect(planFor(published, "hockey").published).toBe(true);
+	expect(
+		validateLineup(
+			planFor(published, "hockey"),
+			lineupSnapshot(planFor(published, "hockey")),
+		),
+	).toBeUndefined();
 });
 
 test("changing practice parts unpublishes lineups and hides removed parts", (): void => {

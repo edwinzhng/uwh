@@ -1,11 +1,17 @@
 export const inviteLifetime = 7 * 24 * 60 * 60 * 1000;
 export const inviteCooldown = 60 * 1000;
 
-export const inviteEmail = (value: string): string => {
+export const inviteEmailError = (value: string): string | undefined => {
 	const email = value.trim().toLowerCase();
-	if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-		throw new Error("Enter a valid email.");
-	return email;
+	return email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+		? "Enter a valid email."
+		: undefined;
+};
+
+export const inviteEmail = (value: string): string => {
+	const error = inviteEmailError(value);
+	if (error) throw new Error(error);
+	return value.trim().toLowerCase();
 };
 
 export const inviteUrl = (

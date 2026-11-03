@@ -3,3 +3,5 @@
 Temporary compatibility replacement for Expo Router's transitive `decode-uri-component`, affected by GHSA-vcc3-ghjq-m6fr with no patched npm release available at this review.
 
 Valid components use the native decoder, including plus-to-space conversion. Malformed encodings remain literal rather than entering the dependency's recursive recovery algorithm. This deliberately avoids partial decoding of invalid UTF-8. Keep the regression test through an eventual upstream replacement.
+
+The package entry is the bundled `index.cjs`, generated from `index.ts` with `bun run build`. This lets Expo’s Node-based static renderer load the compatibility package without attempting unsupported TypeScript stripping inside node_modules. Rebuild the artifact when changing the TypeScript source.

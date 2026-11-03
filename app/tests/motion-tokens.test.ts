@@ -6,22 +6,14 @@ import {
 	motionEasings,
 } from "../../packages/design-system/src/motion";
 
-test("public motion exports include finite schedule stagger timings", (): void => {
-	expect(motionEffects.scheduleStaggerStep).toBe(70);
-	expect(motionEffects.scheduleStaggerLimit).toBe(210);
-	for (const index of [0, 1, 2, 3]) {
-		expect(
-			Number.isFinite(
-				Math.min(
-					index * motionEffects.scheduleStaggerStep,
-					motionEffects.scheduleStaggerLimit,
-				),
-			),
-		).toBe(true);
+test("shared decorative motion timings remain finite and positive", (): void => {
+	for (const duration of Object.values(motionEffects)) {
+		expect(Number.isFinite(duration)).toBe(true);
+		expect(duration).toBeGreaterThan(0);
 	}
 });
 
-test("motion contract matches Rec's shared durations and easing curves", (): void => {
+test("motion contract preserves the shared duration scale and easing curves", (): void => {
 	expect(motionDurations).toEqual({
 		instant: 0,
 		fast: 150,

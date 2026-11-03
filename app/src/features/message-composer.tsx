@@ -1,13 +1,27 @@
 import { type ReactElement, useRef, useState } from "react";
 import { newId, useApp } from "../demo/app-state";
-import { Button, Field, IconButton, Row, Stack, Text } from "../design-system";
+import {
+	Button,
+	Dialog,
+	EmojiPicker,
+	Field,
+	IconButton,
+	MessageComposerSurface,
+	RichMessageEditor,
+	Row,
+	Stack,
+	Text,
+} from "../design-system";
 import type { Message } from "../domain/app-types";
+import { hasVisibleMessageContent } from "../domain/message-content";
 import { imageLimits } from "../domain/messaging";
+import { ChatPollComposer } from "./chat-poll-composer";
+import { MessageComposerMenu } from "./message-composer-menu";
 import { MessagePhoto } from "./message-photo";
 import { MessageQuote } from "./message-quote";
-import { useDictation } from "./use-dictation";
 import { useDraft } from "./use-draft";
 import { usePhotoDraft } from "./use-photo-draft";
+import { useReviewFlow } from "./use-review-flow";
 
 export const MessageComposer = ({
 	threadId,
@@ -21,26 +35,36 @@ export const MessageComposer = ({
 	onClearReply: () => void;
 }): ReactElement => {
 	const { account, dispatch, source } = useApp();
+	const [emojiOpen, setEmojiOpen] = useState(false);
+	const pendingEmoji = useRef<string | undefined>(undefined);
+	const [emojiSearch, setEmojiSearch] = useState("");
+	const [insertRequest, setInsertRequest] = useState<{
+		id: string;
+		text: string;
+	}>();
+	const [pollOpen, setPollOpen] = useState(useReviewFlow() === "poll-create");
 	const [draft, setDraft] = useDraft(
 		`message:${source}:${account.id}:${threadId}`,
 	);
-	const dictation = useDictation(draft, setDraft);
-	const dictating = dictation.phase !== "idle";
 	const working = useRef(false);
 	const photos = usePhotoDraft(threadId);
 	const [sending, setSending] = useState(false);
+	const [composing, setComposing] = useState(false);
+	const [sendAttempted, setSendAttempted] = useState(false);
+	const sendError =
+		draft.length > 5000
+			? "Use 5,000 characters or fewer"
+			: !hasVisibleMessageContent(draft) && !photos.photos.length
+				? "Add a message or photo"
+				: undefined;
+	const [editorResetKey, setEditorResetKey] = useState<string>();
+	const [formatError, setFormatError] = useState<string>();
 	const attempt = useRef<{ id: string; payload: string } | undefined>(
 		undefined,
 	);
 	const send = async (): Promise<void> => {
-		if (
-			working.current ||
-			dictating ||
-			photos.pending ||
-			draft.length > 5000 ||
-			(!draft.trim() && !photos.photos.length)
-		)
-			return;
+		setSendAttempted(true);
+		if (working.current || composing || photos.pending || sendError) return;
 		working.current = true;
 		setSending(true);
 		const payload = JSON.stringify({ draft, photos: photos.photos, replyToId });
@@ -62,6 +86,9 @@ export const MessageComposer = ({
 			})
 		) {
 			setDraft("");
+			setSendAttempted(false);
+			setEditorResetKey(newId());
+			setFormatError(undefined);
 			photos.clear();
 			attempt.current = undefined;
 			onClearReply();
@@ -87,35 +114,103 @@ export const MessageComposer = ({
 					<MessageQuote message={reply} />
 				</Stack>
 			) : undefined}
-			<Field
-				label={`Message as ${account.name}`}
-				value={draft}
-				onValueChange={setDraft}
-				placeholder="Write a message…"
-				multiline
-				rows={2}
-				onSubmit={(): void => {
-					void send();
-				}}
-				isDisabled={sending || dictating}
-				maxLength={5000}
-				focusKey={replyToId}
-				error={
-					draft.length > 5000
-						? "Keep messages under 5,000 characters."
-						: undefined
+			<MessageComposerSurface
+				leading={
+					<MessageComposerMenu
+						disabled={sending || composing || photos.pending}
+						photoDisabled={photos.photos.length >= imageLimits.perMessage}
+						onPhoto={(): void => {
+							void photos.pick();
+						}}
+						onFile={(): void => {
+							void photos.pickFile();
+						}}
+						onPoll={(): void => setPollOpen(true)}
+					/>
 				}
-			/>
-			{dictating || dictation.error ? (
-				<Text variant="caption" tone={dictation.error ? "danger" : "secondary"}>
-					{dictation.error ??
-						(dictation.phase === "starting"
-							? "Connecting microphone…"
-							: dictation.phase === "stopping"
-								? "Finishing…"
-								: "Listening… Tap stop when done.")}
+				accessory={
+					<Button
+						label="Add emoji"
+						icon="smile"
+						variant="ghost"
+						isDisabled={sending || composing}
+						onPress={(): void => {
+							setEmojiSearch("");
+							setEmojiOpen(true);
+						}}
+					/>
+				}
+				trailing={
+					<Button
+						label="Send"
+						icon="arrowRight"
+						round
+						isLoading={sending}
+						isDisabled={photos.pending || composing}
+						validationError={sendError}
+						onInvalid={(): void => setSendAttempted(true)}
+						onPress={(): void => {
+							void send();
+						}}
+					/>
+				}
+			>
+				<Stack grow>
+					<RichMessageEditor
+						embedded
+						label={`Message as ${account.name}`}
+						value={draft}
+						onValueChange={setDraft}
+						placeholder="Write a message…"
+						onSubmit={(): void => {
+							void send();
+						}}
+						isDisabled={sending}
+						maxLength={5000}
+						focusKey={replyToId}
+						resetKey={editorResetKey}
+						insertRequest={insertRequest}
+						onError={setFormatError}
+						onCompositionChange={setComposing}
+					/>
+				</Stack>
+			</MessageComposerSurface>
+			{sendAttempted && sendError ? (
+				<Text variant="caption" tone="danger">
+					{sendError}
 				</Text>
 			) : undefined}
+			<ChatPollComposer open={pollOpen} onOpenChange={setPollOpen} />
+			<Dialog
+				title="Emoji"
+				intent="picker"
+				isOpen={emojiOpen}
+				onOpenChange={setEmojiOpen}
+				onAfterClose={(): void => {
+					const text = pendingEmoji.current;
+					pendingEmoji.current = undefined;
+					if (text) setInsertRequest({ id: newId(), text });
+				}}
+				footer={false}
+			>
+				<Stack gap="sm">
+					<Field
+						label="Find emoji"
+						placeholder="Search emoji"
+						value={emojiSearch}
+						onValueChange={setEmojiSearch}
+					/>
+					{emojiOpen ? (
+						<EmojiPicker
+							search={emojiSearch}
+							onSelect={(text): void => {
+								pendingEmoji.current = text;
+								setEmojiOpen(false);
+							}}
+						/>
+					) : undefined}
+				</Stack>
+			</Dialog>
 			{photos.photos.length ? (
 				<Row wrap align="start">
 					{photos.photos.map((image) => (
@@ -135,46 +230,11 @@ export const MessageComposer = ({
 					{photos.error}
 				</Text>
 			) : undefined}
-			<Row justify="between" gap="xs" wrap>
-				<Row gap="xxs">
-					<Button
-						label="Photo"
-						prefix="image"
-						variant="ghost"
-						isLoading={photos.pending}
-						isDisabled={
-							sending || photos.photos.length >= imageLimits.perMessage
-						}
-						onPress={(): void => {
-							void photos.pick();
-						}}
-					/>
-					<Button
-						label={dictating ? "Stop dictation" : "Dictate message"}
-						icon={dictating ? "stop" : "microphone"}
-						variant={dictating ? "danger" : "ghost"}
-						isDisabled={sending || dictation.phase === "stopping"}
-						isSelected={dictating}
-						onPress={dictating ? dictation.stop : dictation.start}
-					/>
-				</Row>
-				<Button
-					label="Send"
-					prefix="arrowRight"
-					isLoading={sending}
-					validationError={
-						photos.pending ||
-						dictating ||
-						draft.length > 5000 ||
-						(!draft.trim() && !photos.photos.length)
-							? "Check the required fields"
-							: undefined
-					}
-					onPress={(): void => {
-						void send();
-					}}
-				/>
-			</Row>
+			{formatError && !(sendAttempted && sendError === formatError) ? (
+				<Text variant="caption" tone="danger">
+					{formatError}
+				</Text>
+			) : undefined}
 		</Stack>
 	);
 };

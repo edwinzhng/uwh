@@ -1,6 +1,7 @@
 import Constants from "expo-constants";
 import { randomUUID } from "expo-crypto";
 import { requireOptionalNativeModule } from "expo-modules-core";
+import type { DevicePushToken } from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import { AppState, Linking, Platform } from "react-native";
 import { notificationPath } from "../domain/push-routing";
@@ -25,6 +26,7 @@ export const installationId = async (): Promise<string> => {
 };
 export const registerNativePush = async (
 	request: boolean,
+	devicePushToken?: DevicePushToken,
 ): Promise<Registration | undefined> => {
 	if (!nativePushAvailable) {
 		if (request)
@@ -49,7 +51,10 @@ export const registerNativePush = async (
 	}
 	if (!request && (await SecureStore.getItemAsync(enabledKey)) !== "true")
 		return undefined;
-	const token = await notifications.getExpoPushTokenAsync({ projectId });
+	const token = await notifications.getExpoPushTokenAsync({
+		projectId,
+		devicePushToken,
+	});
 	return {
 		installationId: await installationId(),
 		token: token.data,
@@ -65,7 +70,7 @@ export const disableNativePush = async (): Promise<void> => {
 };
 export const watchNativePush = async (
 	navigate: (path: string) => void,
-	refresh: () => void,
+	refresh: (token?: DevicePushToken) => void,
 ): Promise<() => void> => {
 	if (!available) return (): void => {};
 	const notifications = await import("expo-notifications");

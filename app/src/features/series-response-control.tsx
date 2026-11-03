@@ -6,6 +6,7 @@ import { previewDataAtom, useApp } from "../demo/app-state";
 import { Button, Dialog, Field, Select, Stack, Text } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import { clubTimestamp } from "../domain/event-time";
+import { QuickResponseButtons } from "./quick-response-buttons";
 import { useFormTask } from "./use-form-task";
 
 type Props = {
@@ -13,6 +14,9 @@ type Props = {
 	personId: string;
 	unavailable: boolean;
 	hideLabel?: boolean;
+	quick?: boolean;
+	dialogOnly?: boolean;
+	onClose?: () => void;
 };
 type AbsenceChange = {
 	eventId: string;
@@ -25,6 +29,9 @@ const Control = ({
 	personId,
 	unavailable,
 	hideLabel,
+	quick = false,
+	dialogOnly = false,
+	onClose,
 	save,
 }: Props & { save: (args: AbsenceChange) => Promise<void> }): ReactElement => {
 	const { data } = useApp();
@@ -32,7 +39,11 @@ const Control = ({
 	const current = data.responses.find(
 		(entry) => entry.eventId === event.id && entry.personId === personId,
 	);
-	const [open, setOpen] = useState(false);
+	const [open, setOpen] = useState(dialogOnly);
+	const close = (): void => {
+		setOpen(false);
+		onClose?.();
+	};
 	const [reason, setReason] = useState(current?.absenceReason ?? "");
 	const scheduled =
 		event.opensAt !== undefined &&
@@ -43,46 +54,75 @@ const Control = ({
 		event.cancelled ||
 		clubTimestamp(event.date, event.end, event.timeZone ?? data.timeZone) <=
 			Date.now();
+	const choose = (value?: string): void => {
+		if (task.busy || locked || scheduled) return;
+		if (value === "unavailable") {
+			task.clear();
+			setReason(current?.absenceReason ?? "");
+			setOpen(true);
+		} else if (value === "expected" && unavailable)
+			void task.run(
+				async (): Promise<void> =>
+					save({ eventId: event.id, personId, unavailable: false }),
+			);
+	};
 	return (
 		<Stack gap="xs">
-			<Select
-				compact={hideLabel}
-				hideLabel={hideLabel}
-				label={`${data.members.find((person) => person.id === personId)?.name ?? "Player"} · Attendance`}
-				value={
-					scheduled ? "scheduled" : unavailable ? "unavailable" : "expected"
-				}
-				isDisabled={task.busy || locked || scheduled}
-				options={[
-					...(scheduled
-						? [
-								{
-									value: "scheduled",
-									label: "Invited when registration opens",
-									isDisabled: true,
-								},
-							]
-						: []),
-					{ value: "expected", label: "Going", tone: "success" },
-					{ value: "unavailable", label: "Not going", tone: "danger" },
-				]}
-				onValueChange={(value): void => {
-					if (value === "unavailable") {
-						task.clear();
-						setReason(current?.absenceReason ?? "");
-						setOpen(true);
-					} else if (value === "expected")
-						void task.run(
-							async (): Promise<void> =>
-								save({ eventId: event.id, personId, unavailable: false }),
-						);
-				}}
-			/>
+			{dialogOnly ? undefined : quick && (scheduled || locked) ? (
+				<Text variant="caption" tone="secondary">
+					{scheduled
+						? "Invited when registration opens"
+						: event.cancelled
+							? "Cancelled"
+							: "Closed"}
+				</Text>
+			) : quick ? (
+				<QuickResponseButtons
+					name={
+						data.members.find((person) => person.id === personId)?.name ??
+						"Player"
+					}
+					response={unavailable ? "unavailable" : "going"}
+					disabled={task.busy || locked || scheduled}
+					onRespond={(going): void =>
+						choose(going ? "expected" : "unavailable")
+					}
+				/>
+			) : (
+				<Select
+					compact={hideLabel}
+					hideLabel={hideLabel}
+					label={`${data.members.find((person) => person.id === personId)?.name ?? "Player"} · Attendance`}
+					value={
+						scheduled ? "scheduled" : unavailable ? "unavailable" : "expected"
+					}
+					isDisabled={task.busy || locked || scheduled}
+					options={[
+						...(scheduled
+							? [
+									{
+										value: "scheduled",
+										label: "Invited when registration opens",
+										isDisabled: true,
+									},
+								]
+							: []),
+						{ value: "expected", label: "Going", tone: "success" },
+						{ value: "unavailable", label: "Not going", tone: "danger" },
+					]}
+					onValueChange={choose}
+				/>
+			)}
 			<Dialog
+				intent="form"
+				isDismissDisabled={task.busy}
 				title="Not going"
 				isOpen={open}
 				onOpenChange={(value): void => {
-					if (!task.busy) setOpen(value);
+					if (!task.busy) {
+						if (!value) close();
+						else setOpen(value);
+					}
 				}}
 				footer={
 					<Button
@@ -91,9 +131,11 @@ const Control = ({
 						onPress={(): void => {
 							void task.submit(
 								() =>
-									!reason.trim() || reason.trim().length > 500
-										? "Add a reason (up to 500 characters)."
-										: undefined,
+									!reason.trim()
+										? "Add a reason"
+										: reason.trim().length > 500
+											? "Keep the reason to 500 characters"
+											: undefined,
 								async (): Promise<void> => {
 									await save({
 										eventId: event.id,
@@ -101,7 +143,7 @@ const Control = ({
 										unavailable: true,
 										reason: reason.trim(),
 									});
-									setOpen(false);
+									close();
 								},
 							);
 						}}
@@ -133,6 +175,9 @@ const LiveControl = (props: Props): ReactElement => {
 			personId={props.personId}
 			unavailable={props.unavailable}
 			hideLabel={props.hideLabel}
+			quick={props.quick}
+			dialogOnly={props.dialogOnly}
+			onClose={props.onClose}
 			save={async (args): Promise<void> => {
 				await save(args);
 			}}
@@ -147,6 +192,9 @@ const PreviewControl = (props: Props): ReactElement => {
 			personId={props.personId}
 			unavailable={props.unavailable}
 			hideLabel={props.hideLabel}
+			quick={props.quick}
+			dialogOnly={props.dialogOnly}
+			onClose={props.onClose}
 			save={async (args): Promise<void> => {
 				setData((data) => ({
 					...data,
@@ -157,6 +205,8 @@ const PreviewControl = (props: Props): ReactElement => {
 									...response,
 									response: args.unavailable ? "unavailable" : "going",
 									absenceReason: args.unavailable ? args.reason : undefined,
+									partIds: undefined,
+									declinedPartIds: undefined,
 								}
 							: response,
 					),
@@ -172,6 +222,9 @@ export const SeriesResponseControl = (props: Props): ReactElement =>
 			personId={props.personId}
 			unavailable={props.unavailable}
 			hideLabel={props.hideLabel}
+			quick={props.quick}
+			dialogOnly={props.dialogOnly}
+			onClose={props.onClose}
 		/>
 	) : (
 		<PreviewControl
@@ -179,5 +232,8 @@ export const SeriesResponseControl = (props: Props): ReactElement =>
 			personId={props.personId}
 			unavailable={props.unavailable}
 			hideLabel={props.hideLabel}
+			quick={props.quick}
+			dialogOnly={props.dialogOnly}
+			onClose={props.onClose}
 		/>
 	);

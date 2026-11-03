@@ -1,19 +1,19 @@
 import { useSetAtom } from "jotai";
 import { type ReactElement, useState } from "react";
-import { newId, useApp } from "../demo/app-state";
+import { newId, useApp, useAppStatus } from "../demo/app-state";
 import {
 	Button,
 	DatePicker,
 	Dialog,
+	Disclosure,
 	Field,
 	Grid,
 	Row,
 	Select,
 	Stack,
-	Surface,
 	Text,
 } from "../design-system";
-import { validateEvent } from "../domain/app-rules";
+import { formatDate, formatTime, validateEvent } from "../domain/app-rules";
 import type { ClubEvent, EventDraft } from "../domain/app-types";
 import { toggleEventParts } from "../domain/event-part-draft";
 import {
@@ -23,6 +23,7 @@ import {
 } from "../domain/event-recurrence";
 import { clubDate } from "../domain/event-time";
 import { practiceEvent } from "../domain/event-types";
+import { clubPrograms, programOptions } from "../domain/programs";
 import { EventOptions } from "./event-options";
 import { EventPartsEditor } from "./event-parts-editor";
 import { EventTimeFields } from "./event-time-fields";
@@ -42,7 +43,8 @@ export const EventEditor = ({
 	initialDate?: string;
 	event?: ClubEvent;
 }): ReactElement => {
-	const { data, dispatch, busy, source } = useApp();
+	const { data, dispatch, source } = useApp();
+	const { busy } = useAppStatus();
 	const setPreviewSeries = useSetAtom(previewSessionSeries);
 	const [creationId] = useState(newId);
 	const initialEventDate = initialDate ?? clubDate(undefined, data.timeZone);
@@ -58,6 +60,9 @@ export const EventEditor = ({
 						end: "21:00",
 						venue: data.venues?.at(0) ?? "",
 						program: "club",
+						programRsvp: clubPrograms(data).find(
+							(program) => program.id === "club",
+						)?.rsvp,
 						kind: "training",
 						capacity: undefined,
 						repeat: "once",
@@ -77,6 +82,7 @@ export const EventEditor = ({
 	const task = useFormTask();
 	const [error, setError] = useState<string>();
 	const [confirm, setConfirm] = useState(false);
+	const [registrationOpen, setRegistrationOpen] = useState(false);
 	const [scope, setScope] = useState<"single" | "series" | "following">(
 		"single",
 	);
@@ -161,16 +167,71 @@ export const EventEditor = ({
 			},
 		);
 	};
+	const reviewContent = (
+		<Stack>
+			<Text variant="label">{draft.title}</Text>
+			<Text>
+				{formatDate(draft.date)} · {formatTime(draft.start)}–
+				{formatTime(draft.end)}
+			</Text>
+			{draft.venue ? <Text tone="secondary">{draft.venue}</Text> : undefined}
+			{scope !== "single" ? (
+				<Text variant="caption" tone="secondary">
+					{prepared.rebuild
+						? `Updates the recurrence from ${draft.date}.`
+						: "Updates the selected events while keeping their dates and cancelled practices."}{" "}
+					Existing RSVPs and individual edits are kept.
+				</Text>
+			) : undefined}
+			{removed > 0 ? (
+				<Text variant="small" tone="warning">
+					{removed} registrations will be removed because those players are no
+					longer eligible.
+				</Text>
+			) : undefined}
+			{resetParts > 0 ? (
+				<Text variant="small" tone="warning">
+					{resetParts} partial registrations will reset to Not responded.
+				</Text>
+			) : undefined}
+			{error || task.error ? (
+				<Text variant="small" tone="danger">
+					{error ?? task.error}
+				</Text>
+			) : undefined}
+		</Stack>
+	);
 	return (
-		<>
-			<Dialog
-				staffRole="admin"
-				title={event ? "Edit event" : "New event"}
-				isOpen={open}
-				onOpenChange={(value): void => {
-					if (!value && !busy) onClose();
-				}}
-				footer={
+		<Dialog
+			intent="form"
+			isDismissDisabled={busy || task.busy}
+			title={confirm ? "Save changes" : event ? "Edit event" : "New event"}
+			focusKey={confirm ? "review" : "edit"}
+			isOpen={open}
+			onOpenChange={(value): void => {
+				if (!value && !busy && !task.busy) {
+					if (confirm) setConfirm(false);
+					else onClose();
+				}
+			}}
+			footer={
+				confirm ? (
+					<Row>
+						<Button
+							label="Back"
+							variant="ghost"
+							isDisabled={busy || task.busy}
+							onPress={(): void => setConfirm(false)}
+						/>
+						<Button
+							label="Save changes"
+							isLoading={busy || task.busy}
+							onPress={(): void => {
+								void save();
+							}}
+						/>
+					</Row>
+				) : (
 					<Button
 						label={event ? "Save" : "Create event"}
 						isLoading={busy || task.busy}
@@ -187,8 +248,12 @@ export const EventEditor = ({
 							}
 						}}
 					/>
-				}
-			>
+				)
+			}
+		>
+			{confirm ? (
+				reviewContent
+			) : (
 				<Stack>
 					{event?.seriesId ? (
 						<Select
@@ -217,7 +282,7 @@ export const EventEditor = ({
 							}}
 						/>
 					) : undefined}
-					<Surface header={<Text variant="h4">Event details</Text>}>
+					<Stack gap="sm">
 						<Stack gap="sm">
 							<Select
 								label="Event type"
@@ -251,6 +316,26 @@ export const EventEditor = ({
 								onValueChange={(title): void => setDraft({ ...draft, title })}
 							/>
 							<Grid gap="md">
+								<Select
+									label="Program"
+									value={draft.program}
+									options={[
+										{ value: "all", label: "All players" },
+										...programOptions(data),
+									]}
+									onValueChange={(programId): void => {
+										if (!programId) return;
+										const program = clubPrograms(data).find(
+											(entry) => entry.id === programId,
+										);
+										setDraft({
+											...draft,
+											program: programId,
+											programRsvp: program?.rsvp,
+											eligiblePersonIds: undefined,
+										});
+									}}
+								/>
 								<Select
 									label="Season"
 									value={draft.seasonId}
@@ -340,7 +425,7 @@ export const EventEditor = ({
 								</Grid>
 							) : undefined}
 						</Stack>
-					</Surface>
+					</Stack>
 					{!event || scope !== "single" ? (
 						<RecurrencePreview
 							draft={draft}
@@ -355,7 +440,7 @@ export const EventEditor = ({
 					) : (
 						<EventTimeFields draft={draft} onChange={setDraft} />
 					)}
-					<Surface header={<Text variant="h4">Location</Text>}>
+					<Stack gap="sm">
 						<Stack gap="sm">
 							{practiceEvent(draft) && !data.venues?.length ? (
 								<Text variant="caption" tone="secondary">
@@ -388,66 +473,27 @@ export const EventEditor = ({
 								/>
 							)}
 						</Stack>
-					</Surface>
-					<Surface header={<Text variant="h4">Registration</Text>}>
-						<EventOptions draft={draft} onChange={setDraft} />
-					</Surface>
+					</Stack>
+					<Disclosure
+						title="Registration & details"
+						summary={`${draft.capacity === undefined ? "No capacity limit" : `${draft.capacity} places`}${draft.programRsvp ? " · Program defaults" : ""}`}
+						isOpen={registrationOpen || Boolean(error || task.error)}
+						onOpenChange={setRegistrationOpen}
+						isDisabled={busy || task.busy}
+					>
+						<EventOptions
+							draft={draft}
+							onChange={setDraft}
+							busy={busy || task.busy}
+						/>
+					</Disclosure>
 					{error || task.error ? (
 						<Text variant="small" tone="danger">
 							{error ?? task.error}
 						</Text>
 					) : undefined}
 				</Stack>
-			</Dialog>
-			<Dialog
-				staffRole="admin"
-				title="Save changes"
-				isOpen={confirm && open}
-				onOpenChange={setConfirm}
-				footer={
-					<Row>
-						<Button
-							label="Back"
-							variant="ghost"
-							onPress={(): void => setConfirm(false)}
-						/>
-						<Button
-							label="Save changes"
-							isLoading={busy || task.busy}
-							onPress={(): void => {
-								void save();
-							}}
-						/>
-					</Row>
-				}
-			>
-				<Stack>
-					{scope !== "single" ? (
-						<Text variant="caption" tone="secondary">
-							{prepared.rebuild
-								? `Updates the recurrence from ${draft.date}.`
-								: "Updates the selected events while keeping their dates and cancelled practices."}{" "}
-							Existing RSVPs and individual edits are kept.
-						</Text>
-					) : undefined}
-					{removed > 0 ? (
-						<Text variant="small" tone="warning">
-							{removed} registrations will be removed because those players are
-							no longer eligible.
-						</Text>
-					) : undefined}
-					{resetParts > 0 ? (
-						<Text variant="small" tone="warning">
-							{resetParts} partial registrations will reset to Not responded.
-						</Text>
-					) : undefined}
-					{error || task.error ? (
-						<Text variant="small" tone="danger">
-							{error ?? task.error}
-						</Text>
-					) : undefined}
-				</Stack>
-			</Dialog>
-		</>
+			)}
+		</Dialog>
 	);
 };

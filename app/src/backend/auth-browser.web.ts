@@ -1,5 +1,5 @@
 export const callbackAddress = (
-	path: "auth-callback" | "connect-account",
+	path: "auth-callback" | "connect-account" | "email-sign-in",
 ): string => new URL(`/${path}`, window.location.origin).toString();
 
 export const openAuthBrowser = async (
@@ -15,4 +15,6 @@ export const currentAuthPath = (_fallback: string): string =>
 
 export const handlesAuthCode = (): boolean =>
 	typeof window !== "undefined" &&
-	window.location.pathname !== "/connect-account";
+	!["/connect-account", "/email-sign-in"].includes(
+		window.location.pathname.replace(/\/+$/, ""),
+	);

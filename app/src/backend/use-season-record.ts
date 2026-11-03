@@ -6,21 +6,27 @@ import { newId } from "../demo/app-state";
 import type { SeasonRecord } from "../domain/season-ledger";
 import { friendlyError } from "./errors";
 
-type Change = FunctionArgs<typeof api.season_records.change>["change"];
-export const useSeasonRecord = (
-	personId: string,
-	seasonId: string,
-): {
+export type SeasonRecordChange = FunctionArgs<
+	typeof api.season_records.change
+>["change"];
+export type SeasonRecordController = {
 	record?: SeasonRecord;
 	busy: boolean;
 	error?: string;
-	save: (change: Change, revision?: number) => Promise<boolean>;
-} => {
+	save: (change: SeasonRecordChange, revision?: number) => Promise<boolean>;
+};
+export const useSeasonRecord = (
+	personId: string,
+	seasonId: string,
+): SeasonRecordController => {
 	const record = useQuery(api.season_records.record, { personId, seasonId });
 	const update = useMutation(api.season_records.change);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string>();
-	const save = async (change: Change, revision?: number): Promise<boolean> => {
+	const save = async (
+		change: SeasonRecordChange,
+		revision?: number,
+	): Promise<boolean> => {
 		if (!record || busy) return false;
 		setBusy(true);
 		setError(undefined);

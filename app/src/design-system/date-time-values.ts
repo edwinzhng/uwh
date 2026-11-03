@@ -42,13 +42,7 @@ export const isDateAllowed = (
 
 export const formatDate = (value?: string): string => {
 	const date = dateFromValue(value);
-	return date
-		? new Intl.DateTimeFormat("en-CA", {
-				month: "short",
-				day: "numeric",
-				year: "numeric",
-			}).format(date)
-		: "Choose date";
+	return date ? displayDate(value ?? date) : "Choose date";
 };
 
 export const parseTime = (input: string): string | undefined => {
@@ -91,3 +85,5 @@ export const timeSuggestions = Array.from({ length: 96 }, (_, index) => {
 	const value = `${pad(Math.floor(index / 4))}:${pad((index % 4) * 15)}`;
 	return { value, label: formatTime(value) };
 });
+
+import { displayDate } from "../domain/date-display";

@@ -100,7 +100,10 @@ for (const result of [home, accountPage, membership]) {
 		),
 	);
 	assert(
-		result.data.loans.every((loan) => ["jamie", "sam"].includes(loan.personId)),
+		result.data.loans.every(
+			(loan) =>
+				loan.personId !== undefined && ["jamie", "sam"].includes(loan.personId),
+		),
 	);
 }
 console.log("Home/Account/Membership live household isolation checks passed.");

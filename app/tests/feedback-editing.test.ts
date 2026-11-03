@@ -3,6 +3,7 @@ import { initialAppData, primaryAccount } from "../src/demo/app-data";
 import { reduceApp } from "../src/domain/app-reducer";
 import type { AppData } from "../src/domain/app-types";
 import { visibleAppData } from "../src/domain/app-visibility";
+import { canReadFeedback, feedbackKind } from "../src/domain/feedback-access";
 
 const feedback: AppData["feedback"][number] = {
 	id: "new-feedback",
@@ -40,7 +41,7 @@ test("feedback can publish directly and retries do not duplicate it", (): void =
 test("club members can publish shoutouts but cannot create coaching notes", (): void => {
 	const published = reduceApp(initialAppData, parent, {
 		type: "save-feedback",
-		feedback,
+		feedback: { ...feedback, kind: "shoutout" },
 	});
 	expect(
 		published.feedback.find((entry) => entry.id === feedback.id)?.authorId,
@@ -51,6 +52,83 @@ test("club members can publish shoutouts but cannot create coaching notes", (): 
 			feedback: { ...feedback, visibility: "private" },
 		}),
 	).toThrow();
+	expect(() =>
+		reduceApp(initialAppData, parent, {
+			type: "save-feedback",
+			feedback: { ...feedback, kind: "coaching" },
+		}),
+	).toThrow();
+});
+
+test("legacy published coaching feedback is limited to coaches and its household", (): void => {
+	const published = reduceApp(initialAppData, primaryAccount, {
+		type: "save-feedback",
+		feedback,
+	});
+	const unrelated = { ...parent, personId: "taylor", children: [] };
+	const admin = { ...unrelated, admin: true };
+	const player = { ...unrelated, personId: feedback.personId };
+	const member = initialAppData.members.find(
+		(entry) => entry.id === feedback.personId,
+	);
+	expect(feedbackKind(feedback)).toBe("coaching");
+	expect(canReadFeedback(feedback, parent, member)).toBe(true);
+	expect(canReadFeedback(feedback, player, member)).toBe(true);
+	expect(canReadFeedback(feedback, primaryAccount, member)).toBe(true);
+	expect(canReadFeedback(feedback, unrelated, member)).toBe(false);
+	expect(canReadFeedback(feedback, admin, member)).toBe(false);
+	for (const account of [unrelated, admin])
+		expect(
+			visibleAppData(published, account).feedback.some(
+				(entry) => entry.id === feedback.id,
+			),
+		).toBe(false);
+	expect(canReadFeedback(feedback, parent, undefined)).toBe(false);
+});
+
+test("shoutouts are private to their recipient household without coach or admin overrides", (): void => {
+	const published = reduceApp(initialAppData, parent, {
+		type: "save-feedback",
+		feedback: { ...feedback, kind: "shoutout" },
+	});
+	const unrelated = { ...parent, personId: "taylor", children: [] };
+	expect(
+		visibleAppData(published, unrelated).feedback.map((entry) => entry.id),
+	).toEqual([]);
+	const recipient = initialAppData.members.find(
+		(entry) => entry.id === feedback.personId,
+	);
+	const shoutout = { ...feedback, kind: "shoutout" as const };
+	for (const actor of [parent, { ...unrelated, personId: feedback.personId }])
+		expect(canReadFeedback(shoutout, actor, recipient)).toBe(true);
+	for (const actor of [
+		unrelated,
+		{ ...unrelated, admin: true },
+		{ ...unrelated, coachPrograms: ["club", "youth"] },
+	])
+		expect(canReadFeedback(shoutout, actor, recipient)).toBe(false);
+
+	expect(() =>
+		reduceApp(initialAppData, primaryAccount, {
+			type: "save-feedback",
+			feedback: { ...feedback, kind: "shoutout", visibility: "draft" },
+		}),
+	).toThrow("Shoutouts must be sent to the recipient");
+});
+
+test("coaching drafts and published records cannot be retyped into public shoutouts", (): void => {
+	for (const visibility of ["draft", "published"] as const) {
+		const saved = reduceApp(initialAppData, primaryAccount, {
+			type: "save-feedback",
+			feedback: { ...feedback, visibility },
+		});
+		expect(() =>
+			reduceApp(saved, primaryAccount, {
+				type: "save-feedback",
+				feedback: { ...feedback, kind: "shoutout" },
+			}),
+		).toThrow("Keep coaching feedback and shoutouts separate");
+	}
 });
 
 test("drafts can be edited, published or deleted only by their coach", (): void => {
@@ -116,4 +194,35 @@ test("private notes cannot become a draft that leaks to a parent", (): void => {
 				feedback: { ...feedback, visibility },
 			}),
 		).toThrow("Keep private notes private");
+});
+
+test("only admins can remove published shoutouts, including when the caller is the author or recipient", (): void => {
+	const published = reduceApp(initialAppData, parent, {
+		type: "save-feedback",
+		feedback: { ...feedback, kind: "shoutout" },
+	});
+	const action = { type: "delete-feedback", id: feedback.id } as const;
+	const nonAdmins = [
+		parent,
+		{ ...parent, id: "recipient", personId: feedback.personId },
+		{ ...primaryAccount, id: "coach", admin: false },
+	];
+	for (const actor of nonAdmins) {
+		expect(() => reduceApp(published, actor, action)).toThrow();
+	}
+	expect(
+		reduceApp(published, primaryAccount, action).feedback.some(
+			(entry) => entry.id === feedback.id,
+		),
+	).toBe(false);
+});
+
+test("shared coach feedback records the actual coach name and never trusts a supplied author label", (): void => {
+	const next = reduceApp(initialAppData, primaryAccount, {
+		type: "save-feedback",
+		feedback: { ...feedback, authorName: "Forged coach" },
+	});
+	expect(
+		next.feedback.find((entry) => entry.id === feedback.id)?.authorName,
+	).toBe(primaryAccount.name);
 });

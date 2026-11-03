@@ -13,7 +13,9 @@ export const authRedirect = (destination: string, site: string): string => {
 	const target = new URL(destination, base);
 	const native =
 		target.protocol === "uwh-club:" &&
-		["auth-callback", "connect-account"].includes(target.hostname) &&
+		["auth-callback", "connect-account", "email-sign-in"].includes(
+			target.hostname,
+		) &&
 		(target.pathname === "" || target.pathname === "/");
 	if (
 		target.username ||
@@ -27,7 +29,9 @@ export const authRedirect = (destination: string, site: string): string => {
 export const signInReturnPath = (path: string): string => {
 	const target = new URL(path, "https://club.invalid");
 	return target.origin === "https://club.invalid" &&
-		!["/auth-callback", "/connect-account"].includes(target.pathname)
+		!["/auth-callback", "/connect-account", "/email-sign-in"].includes(
+			target.pathname,
+		)
 		? `${target.pathname}${target.search}`
 		: "/account";
 };

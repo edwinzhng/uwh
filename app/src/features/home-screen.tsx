@@ -1,78 +1,63 @@
-import { useRouter } from "expo-router";
-import { type ReactElement, useEffect, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { atom, useAtom } from "jotai";
+import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import {
-	Button,
-	EmptyState,
-	SectionHeading,
-	Stack,
-	StaggerGroup,
-} from "../design-system";
-import {
-	homeSchedule,
-	householdMembers,
-	relevantHouseholdEvent,
-} from "../domain/home";
+import { ContextPicker, GlassPanel, TabContent } from "../design-system";
+import { canCoach } from "../domain/app-rules";
+import { nextCoachingEvent } from "../domain/home";
 import { ClubShell } from "./club-shell";
-import { HomeCoaching } from "./home-coaching";
-import { HouseholdEventCard } from "./household-event-card";
-import { NoticeBanner } from "./notice-banner";
+import { CoachDashboard } from "./coach-dashboard";
+import { HomeSummary } from "./home-summary";
+import { useClubNow } from "./use-club-now";
+
+const homeWorkspaceAtom = atom<Record<string, "personal" | "coaching">>({});
 
 export const HomeScreen = (): ReactElement => {
 	const { data, account } = useApp();
 	const router = useRouter();
-	const [now, setNow] = useState(Date.now);
-	useEffect(() => {
-		const timer = setInterval((): void => setNow(Date.now()), 60000);
-		return (): void => clearInterval(timer);
-	}, []);
-	const people = householdMembers(data, account);
-	const schedule = homeSchedule(
-		data.events.filter((event) => relevantHouseholdEvent(event, people)),
-		now,
-		data.timeZone,
-	);
+	const params = useLocalSearchParams<{ view?: string }>();
+	const [workspaces, setWorkspaces] = useAtom(homeWorkspaceAtom);
+	const workspace =
+		canCoach(account) &&
+		(params.view === "coaching" ||
+			(params.view !== "personal" && workspaces[account.id] === "coaching"))
+			? "coaching"
+			: "personal";
+	const now = useClubNow();
+	const coaching = nextCoachingEvent(data, account, now);
 	return (
-		<ClubShell title="Home" subtitle={data.clubName}>
-			<NoticeBanner />
-			<HomeCoaching now={now} />
-			<Stack gap="sm">
-				<SectionHeading
-					size="small"
-					action={
-						<Button
-							label="Schedule"
-							variant="ghost"
-							onPress={(): void => router.navigate("/schedule")}
+		<ClubShell
+			title="Summary"
+			toolbarLeading={
+				canCoach(account) ? (
+					<GlassPanel padding="none" shape="pill" interactive>
+						<ContextPicker
+							label="Home workspace"
+							presentation="menu"
+							value={workspace}
+							options={[
+								{ value: "personal", label: "Player" },
+								{ value: "coaching", label: "Coach" },
+							]}
+							onValueChange={(value): void => {
+								setWorkspaces((current) => ({
+									...current,
+									[account.id]: value,
+								}));
+								router.setParams({ view: value });
+							}}
 						/>
-					}
-				>
-					{schedule.thisWeek ? "This week" : "Next session"}
-				</SectionHeading>
-				{schedule.events.length ? (
-					<StaggerGroup gap="sm">
-						{schedule.events.map((event) => (
-							<HouseholdEventCard key={event.id} event={event} />
-						))}
-					</StaggerGroup>
+					</GlassPanel>
+				) : undefined
+			}
+		>
+			<TabContent value={workspace}>
+				{workspace === "coaching" ? (
+					<CoachDashboard nextPractice={coaching} />
 				) : (
-					<EmptyState
-						title="No upcoming sessions"
-						description="Your household’s next sessions will appear here when they’re scheduled."
-					/>
+					<HomeSummary now={now} />
 				)}
-			</Stack>
-			{schedule.nextTournament ? (
-				<Stack gap="sm">
-					<SectionHeading size="small">Next tournament</SectionHeading>
-					<StaggerGroup gap="sm">
-						<HouseholdEventCard
-							key={schedule.nextTournament.id}
-							event={schedule.nextTournament}
-						/>
-					</StaggerGroup>
-				</Stack>
-			) : undefined}
+			</TabContent>
 		</ClubShell>
 	);
 };

@@ -1,4 +1,4 @@
-import { chartColors } from "@calgarycrocs/design-system/tokens";
+import { chartColors } from "./rainbow-palette";
 
 export const chartPalette = {
 	...chartColors,
@@ -7,7 +7,7 @@ export const chartPalette = {
 		chartColors.purple,
 		chartColors.indigo,
 		chartColors.amber,
-		chartColors.pink,
+		chartColors.orange,
 		chartColors.green,
 		chartColors.red,
 	],

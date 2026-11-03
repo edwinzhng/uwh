@@ -1,89 +1,72 @@
 import { useQuery } from "convex/react";
-import { useRouter } from "expo-router";
+import { useAtomValue } from "jotai";
 import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
-import {
-	Badge,
-	EmptyState,
-	List,
-	ListItem,
-	LoadingContent,
-	Surface,
-} from "../design-system";
-import { money } from "../domain/app-rules";
+import { useApp } from "../demo/app-state";
+import { previewSeasonLedgerAtom } from "../demo/season-ledger-state";
+import { Stack } from "../design-system";
 import type { Member } from "../domain/app-types";
+import {
+	defaultPreviewSeasonRecord,
+	seasonRecordKey,
+} from "../domain/preview-season-ledger";
+import { SeasonRosterContent } from "./season-roster-content";
 import { useSeason } from "./use-season";
-export const SeasonRoster = ({
-	members,
-	section,
-}: {
-	members: Member[];
-	section: string;
-}): ReactElement => {
+
+type Props = { members: Member[]; section: string };
+
+const LiveSeasonRosterPage = (props: Props): ReactElement => {
 	const [season] = useSeason();
-	const router = useRouter();
 	const records = useQuery(api.season_records.summary, {
 		seasonId: season,
-		personIds: members.map((member) => member.id),
+		personIds: props.members.map((member) => member.id),
 	});
 	return (
-		<Surface padding="xs">
-			<List>
-				{!records ? (
-					<LoadingContent />
-				) : (
-					members.map((member) => {
-						const record = records.find(
-							(record) => record.personId === member.id,
-						);
-						const due = (record?.due ?? 0) - (record?.paid ?? 0);
-						return (
-							<ListItem
-								key={member.id}
-								title={member.name}
-								avatar={member.name}
-								description={
-									record?.registration === "approved"
-										? "Approved"
-										: record?.registration === "submitted"
-											? "Awaiting review"
-											: "Missing registration"
-								}
-								trailing={
-									<Badge
-										label={
-											section === "registration"
-												? `CUGA: ${record?.cuga ? "Yes" : "No"}`
-												: due > 0
-													? `${money(due)} due`
-													: due < 0
-														? `${money(-due)} credit`
-														: "Settled"
-										}
-										kind={
-											due > 0 && section !== "registration"
-												? "warning"
-												: "neutral"
-										}
-									/>
-								}
-								onPress={(): void =>
-									router.push({
-										pathname: "/member",
-										params: { id: member.id, tab: "admin" },
-									})
-								}
-							/>
-						);
-					})
-				)}
-				{records && !members.length ? (
-					<EmptyState
-						title="No members found"
-						description="Try a different search or season."
-					/>
-				) : undefined}
-			</List>
-		</Surface>
+		<SeasonRosterContent
+			members={props.members}
+			section={props.section}
+			records={records}
+		/>
 	);
 };
+
+const LiveSeasonRoster = ({ members, section }: Props): ReactElement =>
+	members.length ? (
+		<Stack gap="sm">
+			{Array.from({ length: Math.ceil(members.length / 40) }, (_, index) =>
+				members.slice(index * 40, (index + 1) * 40),
+			).map((page) => (
+				<LiveSeasonRosterPage
+					key={page.at(0)?.id}
+					members={page}
+					section={section}
+				/>
+			))}
+		</Stack>
+	) : (
+		<SeasonRosterContent members={[]} section={section} records={[]} />
+	);
+
+const PreviewSeasonRoster = (props: Props): ReactElement => {
+	const [season] = useSeason();
+	const { data } = useApp();
+	const ledger = useAtomValue(previewSeasonLedgerAtom);
+	return (
+		<SeasonRosterContent
+			members={props.members}
+			section={props.section}
+			records={props.members.map(
+				(member) =>
+					ledger.records[seasonRecordKey(member.id, season)] ??
+					defaultPreviewSeasonRecord(data, member.id, season),
+			)}
+		/>
+	);
+};
+
+export const SeasonRoster = (props: Props): ReactElement =>
+	useApp().source === "convex" ? (
+		<LiveSeasonRoster members={props.members} section={props.section} />
+	) : (
+		<PreviewSeasonRoster members={props.members} section={props.section} />
+	);

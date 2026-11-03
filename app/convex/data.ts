@@ -1,5 +1,6 @@
-import type { AppData } from "../src/domain/app-types";
+import type { AppData, Loan } from "../src/domain/app-types";
 import { practicePartKey } from "../src/domain/practice-parts";
+import { defaultPrograms } from "../src/domain/programs";
 import { initialSeasons } from "../src/domain/seasons";
 import { defaultClubTimeZone } from "../src/domain/time-zones";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -348,6 +349,7 @@ export const loadData = async (
 			clubName: club.name,
 			venues: club.venues,
 			timeZone: club.timeZone ?? defaultClubTimeZone,
+			programs: club.programs ?? defaultPrograms(),
 			seasons: club.seasons ?? initialSeasons,
 			reminders: club.reminders,
 			members: members.map((row) => row.value),
@@ -429,6 +431,8 @@ export const saveData = async (
 			(data.timeZone ?? defaultClubTimeZone) ||
 		JSON.stringify(club.venues) !== JSON.stringify(data.venues) ||
 		club.reminders !== data.reminders ||
+		JSON.stringify(club.programs ?? defaultPrograms()) !==
+			JSON.stringify(data.programs ?? defaultPrograms()) ||
 		JSON.stringify(club.seasons ?? initialSeasons) !==
 			JSON.stringify(data.seasons)
 	)
@@ -438,6 +442,7 @@ export const saveData = async (
 			timeZone: data.timeZone ?? defaultClubTimeZone,
 			seasons: data.seasons,
 			reminders: data.reminders,
+			programs: data.programs ?? defaultPrograms(),
 		});
 
 	const membersChanges = changed(rows.members, data.members);
@@ -509,7 +514,7 @@ export const saveData = async (
 		await ctx.db.insert("equipment", { clubId, value });
 	for (const entry of equipmentChanges.updates)
 		await ctx.db.patch(entry.id, { value: entry.value });
-	const loansChanges = changed(rows.loans, data.loans);
+	const loansChanges = changed<Loan, Id<"loans">>(rows.loans, data.loans);
 	for (const value of loansChanges.inserts)
 		await ctx.db.insert("loans", { clubId, value });
 	for (const entry of loansChanges.updates)

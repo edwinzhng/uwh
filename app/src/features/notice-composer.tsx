@@ -1,97 +1,183 @@
 import { type ReactElement, useState } from "react";
-import { newId, useApp } from "../demo/app-state";
+import { useApp } from "../demo/app-state";
 import {
 	Button,
 	DatePicker,
+	Dialog,
 	Field,
-	Row,
+	Select,
 	Stack,
-	Surface,
 	Text,
 } from "../design-system";
-import { addDays, validDate } from "../domain/app-rules";
-import { defaultNoticeExpiry } from "../domain/notices";
+import type { Notice } from "../domain/app-types";
+import { addDays } from "../domain/calendar-dates";
+import {
+	canManageNotice,
+	defaultNoticeExpiry,
+	validateNoticeDraft,
+} from "../domain/notices";
+import { programName, programOptions } from "../domain/programs";
+import { ConfirmationDialog } from "./confirmation-dialog";
 import { useClubToday } from "./use-club-today";
 import { useFormTask } from "./use-form-task";
+import { useOperationKey } from "./use-operation-key";
 
 export const NoticeComposer = ({
-	onPublished,
+	notice,
+	onClose,
 }: {
-	onPublished?: () => void;
-}): ReactElement | undefined => {
-	const { account, dispatch } = useApp();
+	notice?: Notice;
+	onClose: () => void;
+}): ReactElement => {
+	const { account, data, dispatch, source, workspaceId } = useApp();
 	const today = useClubToday();
 	const task = useFormTask();
-	const [body, setBody] = useState("");
-	const [expiresAt, setExpiresAt] = useState(defaultNoticeExpiry(today));
-	const program = account.admin ? "all" : account.coachPrograms.at(0);
-	if (!program) return undefined;
+	const operationKey = useOperationKey();
+	const audiences = [
+		...(account.admin ? [{ value: "all", label: "Everyone" }] : []),
+		...programOptions(data).filter(
+			(option) => account.admin || account.coachPrograms.includes(option.value),
+		),
+	];
+	const [initial] = useState(() => ({
+		body: notice?.body ?? "",
+		expiresAt: notice ? notice.expiresAt : defaultNoticeExpiry(today),
+		program: notice?.program ?? audiences.at(0)?.value ?? "",
+		date: today,
+	}));
+	const [body, setBody] = useState(initial.body);
+	const [expiresAt, setExpiresAt] = useState(initial.expiresAt);
+	const [program, setProgram] = useState(initial.program);
+	const [discarding, setDiscarding] = useState(false);
+	const authorized = notice
+		? canManageNotice(account, notice)
+		: audiences.length > 0;
+	const changed =
+		body !== initial.body ||
+		expiresAt !== initial.expiresAt ||
+		program !== initial.program;
+	const requestClose = (): void => {
+		if (task.busy) return;
+		if (changed) setDiscarding(true);
+		else onClose();
+	};
 	const save = async (): Promise<void> => {
 		await task.submit(
 			() =>
-				!body.trim()
-					? "Write an announcement."
-					: !validDate(expiresAt) || expiresAt <= today
-						? "Choose an end date after today."
-						: undefined,
+				!authorized
+					? "You don’t have access to publish this announcement."
+					: !notice && !audiences.some((option) => option.value === program)
+						? "Choose an audience."
+						: validateNoticeDraft(
+								{ body, expiresAt },
+								today,
+								Boolean(notice && notice.expiresAt === undefined),
+							),
 			async (): Promise<void> => {
-				const saved = await dispatch({
-					type: "create-notice",
-					notice: {
-						id: newId(),
-						title: "Announcement",
-						body: body.trim(),
-						program,
-						date: today,
-						expiresAt,
-						acknowledgedBy: [],
-					},
-				});
+				const value = { body: body.trim(), expiresAt, program };
+				const saved = await dispatch(
+					notice
+						? {
+								type: "edit-notice",
+								noticeId: notice.id,
+								body: value.body,
+								expiresAt,
+								expectedBody: notice.body,
+								expectedExpiresAt: notice.expiresAt,
+							}
+						: {
+								type: "create-notice",
+								notice: {
+									id: `notice-${operationKey(JSON.stringify({ source, workspaceId, actorId: account.id, date: initial.date, ...value }))}`,
+									title: "Announcement",
+									...value,
+									date: initial.date,
+									acknowledgedBy: [],
+								},
+							},
+				);
 				if (!saved)
-					throw new Error("Could not publish this announcement. Try again.");
-				setBody("");
-				setExpiresAt(defaultNoticeExpiry(today));
-				onPublished?.();
+					throw new Error("Couldn’t save this announcement. Try again.");
+				onClose();
 			},
 		);
 	};
 	return (
-		<Surface header={<Text variant="h4">New announcement</Text>}>
-			<Stack>
-				<Field
-					label="Message"
-					placeholder="What does the club need to know?"
-					value={body}
-					onValueChange={setBody}
-					multiline
-					rows={4}
-					maxLength={500}
-					isDisabled={task.busy}
-				/>
-				<DatePicker
-					label="End date"
-					value={expiresAt}
-					min={addDays(today, 1)}
-					isDisabled={task.busy}
-					onValueChange={(value): void =>
-						setExpiresAt(value ?? defaultNoticeExpiry(today))
-					}
-				/>
-				<Text variant="caption" tone="secondary">
-					Announcements stay live for two weeks by default.
-				</Text>
-				{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
-				<Row>
+		<>
+			<Dialog
+				intent="form"
+				isDismissDisabled={task.busy}
+				title={notice ? "Edit announcement" : "New announcement"}
+				isOpen={!discarding}
+				onOpenChange={(open): void => {
+					if (!open) requestClose();
+				}}
+				footer={
 					<Button
-						label="Publish announcement"
-						staffRole={account.admin ? "admin" : "coach"}
+						label={notice ? "Save" : "Publish"}
 						isLoading={task.busy}
+						isDisabled={!authorized}
 						onPress={(): void => {
 							void save();
 						}}
 					/>
-				</Row>
-			</Stack>
-		</Surface>
+				}
+			>
+				<Stack>
+					{notice ? (
+						<Text variant="small" tone="secondary">
+							{programName(data, notice.program)}
+						</Text>
+					) : (
+						<Select
+							label="Audience"
+							value={program}
+							options={audiences}
+							isDisabled={task.busy}
+							onValueChange={(value): void => setProgram(value ?? "")}
+						/>
+					)}
+					<Field
+						label="Message"
+						placeholder="What does the club need to know?"
+						value={body}
+						onValueChange={setBody}
+						multiline
+						rows={4}
+						maxLength={500}
+						isDisabled={task.busy || !authorized}
+					/>
+					<DatePicker
+						label="End date"
+						value={expiresAt}
+						min={addDays(today, 1)}
+						isDisabled={task.busy || !authorized}
+						onValueChange={(value): void =>
+							setExpiresAt(
+								value ??
+									(notice ? initial.expiresAt : defaultNoticeExpiry(today)),
+							)
+						}
+					/>
+					{!authorized ? (
+						<Text tone="danger">
+							You don’t have access to publish this announcement.
+						</Text>
+					) : task.error ? (
+						<Text tone="danger">{task.error}</Text>
+					) : undefined}
+				</Stack>
+			</Dialog>
+			{discarding ? (
+				<ConfirmationDialog
+					title="Discard announcement changes?"
+					description="Your unsaved changes will be lost."
+					confirmLabel="Discard changes"
+					danger
+					onClose={(): void => setDiscarding(false)}
+					onConfirm={async (): Promise<void> => onClose()}
+				/>
+			) : undefined}
+		</>
 	);
 };

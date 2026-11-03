@@ -1,7 +1,12 @@
 import { useAtom } from "jotai";
 import type { ReactElement } from "react";
 import { previewDataAtom } from "../demo/app-state";
-import { defaultPlayerCoaching } from "../domain/player-coaching";
+import { lineupIncludesPerson } from "../domain/lineup";
+import {
+	balancingProfileChanged,
+	defaultPlayerCoaching,
+	validatePlayerCoaching,
+} from "../domain/player-coaching";
 import { PlayerCoachingDetails } from "./player-coaching-details";
 export const PlayerCoachingPreview = ({
 	personId,
@@ -18,10 +23,13 @@ export const PlayerCoachingPreview = ({
 			profile={profile}
 			busy={false}
 			save={async (value): Promise<boolean> => {
+				validatePlayerCoaching(value);
 				setData((current) => ({
 					...current,
 					teams: current.teams.map((plan) =>
-						plan.attendees.includes(personId)
+						profile &&
+						balancingProfileChanged(profile, value) &&
+						lineupIncludesPerson(plan, personId)
 							? { ...plan, published: false, coachingStale: true }
 							: plan,
 					),

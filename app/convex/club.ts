@@ -3,7 +3,9 @@ import { initialAppData } from "../src/demo/app-data";
 import { reduceApp } from "../src/domain/app-reducer";
 import type { Account, AppAction, AppData } from "../src/domain/app-types";
 import { visibleAppData } from "../src/domain/app-visibility";
-import { clubTimestamp, signupState } from "../src/domain/event-time";
+import { clubDate, clubTimestamp, signupState } from "../src/domain/event-time";
+import { endMemberEnrollments } from "../src/domain/member-lifecycle";
+import { clubPrograms } from "../src/domain/programs";
 import { defaultClubTimeZone } from "../src/domain/time-zones";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
@@ -16,13 +18,21 @@ import {
 import { actionData } from "./action_data";
 import { appAction } from "./action_validator";
 import { loadData, saveData } from "./data";
+import { ensureGeneralChat } from "./general_chat";
+import { revokeRemovedHouseholdLinks } from "./household_cleanup";
 import { accountFor, getAuthUserId } from "./identity";
+import { rejectMergedAliasAction } from "./member_alias_guard";
 import { applyMessage } from "./message_commands";
 import { notifyChanges } from "./notification_events";
 import { claimPendingMessages } from "./pending_messages";
+import {
+	programCommandWasApplied,
+	recordProgramCommand,
+} from "./program_commands";
 import { screenData } from "./screen_data";
-import { syncEditedSeries } from "./session_series";
+import { syncEditedSeries, synchronizeSeries } from "./session_series";
 import { scheduleSignup } from "./signup";
+import { requireAcceptedTerms } from "./terms_access";
 
 const membershipFor = async (
 	ctx: QueryCtx,
@@ -118,7 +128,14 @@ export const apply = mutation({
 	handler: async (ctx, { action }): Promise<string | null> => {
 		const membership = await membershipFor(ctx);
 		if (!membership) throw new Error("Sign in and join a club first.");
+		await requireAcceptedTerms(ctx, membership);
 		const account = accountFor(membership);
+		if (
+			action.type === "save-program" &&
+			(await programCommandWasApplied(ctx, membership, action))
+		)
+			return null;
+		await rejectMergedAliasAction(ctx, membership.clubId, action);
 		if (
 			action.type === "registration" ||
 			action.type === "payment" ||
@@ -176,8 +193,53 @@ export const apply = mutation({
 				signup: signupState(event, Date.now()),
 			})),
 		};
+		if (action.type === "delete-program") {
+			if (!membership.admin)
+				throw new Error("Only admins can change programs.");
+			const resources = await ctx.db
+				.query("resources")
+				.withIndex("by_club", (q) => q.eq("clubId", membership.clubId))
+				.take(5001);
+			if (
+				resources.length > 5000 ||
+				resources.some((resource) => resource.programIds?.includes(action.id))
+			)
+				throw new Error(
+					"This program may have shared resources. Archive it instead.",
+				);
+			const accounts = await ctx.db
+				.query("memberships")
+				.withIndex("by_club", (q) => q.eq("clubId", membership.clubId))
+				.collect();
+			if (accounts.some((entry) => entry.coachPrograms.includes(action.id)))
+				throw new Error(
+					"This program has coaching permissions. Archive it instead.",
+				);
+		}
 		const next = reduceApp(currentData, account, effectiveAction);
 		await saveData(ctx, membership.clubId, rows, next);
+		if (action.type === "set-member-archived") {
+			const series = await ctx.db
+				.query("sessionSeries")
+				.withIndex("by_club", (q) => q.eq("clubId", membership.clubId))
+				.collect();
+			const club = await ctx.db.get(membership.clubId);
+			for (const entry of series.filter((item) =>
+				item.enrollments.some(
+					(enrollment) => enrollment.personId === action.personId,
+				),
+			)) {
+				const updated = action.archived
+					? endMemberEnrollments(
+							entry,
+							action.personId,
+							clubDate(undefined, club?.timeZone),
+						)
+					: entry;
+				await ctx.db.patch(entry._id, { enrollments: updated.enrollments });
+				await synchronizeSeries(ctx, membership.clubId, updated);
+			}
+		}
 		if (
 			action.type === "create-event" &&
 			action.draft.committedRoster &&
@@ -201,7 +263,11 @@ export const apply = mutation({
 				});
 		}
 		await notifyChanges(ctx, membership.clubId, membership.userId, data, next);
-		if (action.type === "create-event" || action.type === "edit-event") {
+		if (
+			action.type === "create-event" ||
+			action.type === "edit-event" ||
+			action.type === "save-program"
+		) {
 			await syncEditedSeries(ctx, membership.clubId, data.events, next.events);
 			for (const event of next.events.filter(
 				(event) =>
@@ -211,6 +277,8 @@ export const apply = mutation({
 			))
 				await scheduleSignup(ctx, membership.clubId, event);
 		}
+		if (action.type === "save-program")
+			await recordProgramCommand(ctx, membership, action);
 		return null;
 	},
 });
@@ -406,6 +474,7 @@ export const setAccess = mutation({
 	handler: async (ctx, args): Promise<null> => {
 		const actor = await membershipFor(ctx);
 		if (!actor?.admin) throw new Error("Administrator access required.");
+		await requireAcceptedTerms(ctx, actor);
 		const memberships = await ctx.db
 			.query("memberships")
 			.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
@@ -422,44 +491,26 @@ export const setAccess = mutation({
 			!args.children.every(
 				(id) =>
 					id !== target.personId &&
-					data.members.some((entry) => entry.id === id),
+					data.members.some((entry) => entry.id === id && !entry.mergedInto),
 			)
 		)
 			throw new Error("Choose valid child profiles.");
-		if (!args.coachPrograms.every((id) => id === "club" || id === "youth"))
+		if (
+			!args.coachPrograms.every((id) =>
+				clubPrograms(data).some(
+					(program) => program.id === id && !program.archived,
+				),
+			)
+		)
 			throw new Error("Choose valid programs.");
 		await ctx.db.patch(target._id, {
 			children: [...new Set(args.children)],
 			coachPrograms: [...new Set(args.coachPrograms)],
 			admin: args.admin,
 		});
+		await revokeRemovedHouseholdLinks(ctx, target, args.children);
 		await claimPendingMessages(ctx, target._id);
-		const personalPrograms = data.members
-			.filter(
-				(entry) =>
-					entry.id === target.personId || args.children.includes(entry.id),
-			)
-			.flatMap((entry) => entry.programs);
-		const channels = await ctx.db
-			.query("conversations")
-			.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
-			.collect();
-		for (const channel of channels) {
-			if (channel.value.id !== "club" && channel.value.id !== "youth") continue;
-			const allowed =
-				channel.value.id === "club" ||
-				personalPrograms.includes(channel.value.id) ||
-				args.coachPrograms.includes(channel.value.id);
-			const others = channel.value.accountIds.filter(
-				(id) => id !== target.userId,
-			);
-			await ctx.db.patch(channel._id, {
-				value: {
-					...channel.value,
-					accountIds: allowed ? [...others, target.userId] : others,
-				},
-			});
-		}
+		await ensureGeneralChat(ctx, actor.clubId);
 		return null;
 	},
 });
@@ -481,6 +532,7 @@ export const approveRequest = mutation({
 			request.state !== "pending"
 		)
 			throw new Error("Request unavailable.");
+		await requireAcceptedTerms(ctx, membership);
 		if (
 			await ctx.db
 				.query("memberships")
@@ -493,12 +545,18 @@ export const approveRequest = mutation({
 		});
 		if (
 			![args.personId, ...args.children].every((id) =>
-				data.members.some((entry) => entry.id === id),
+				data.members.some((entry) => entry.id === id && !entry.mergedInto),
 			) ||
 			args.children.includes(args.personId)
 		)
 			throw new Error("Choose valid profiles.");
-		if (!args.coachPrograms.every((id) => id === "club" || id === "youth"))
+		if (
+			!args.coachPrograms.every((id) =>
+				clubPrograms(data).some(
+					(program) => program.id === id && !program.archived,
+				),
+			)
+		)
 			throw new Error("Choose valid programs.");
 		const existing = await ctx.db
 			.query("memberships")

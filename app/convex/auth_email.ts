@@ -1,7 +1,7 @@
 import { Email } from "@convex-dev/auth/providers/Email";
 import { generateRandomString } from "@oslojs/crypto/random";
-import { internal } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
+import { deliverAuthEmail } from "./auth_email_delivery";
 
 export const authEmail = (
 	purpose: "verify" | "reset",
@@ -30,37 +30,27 @@ export const authEmail = (
 			{ identifier, token },
 			ctx?: ActionCtx,
 		): Promise<void> => {
-			if (!ctx) throw new Error("Email delivery unavailable.");
-			const email = identifier.trim().toLowerCase();
-			if (process.env.AUTH_EMAIL_MODE === "local") {
-				await ctx.runMutation(internal.local_email.save, {
-					email,
-					purpose,
-					code: token,
-				});
-				return;
-			}
-			const key = process.env.AUTH_RESEND_KEY;
-			const from = process.env.AUTH_EMAIL_FROM;
-			if (!key || !from)
-				throw new Error("Email delivery isn’t configured yet.");
-			const response = await fetch("https://api.resend.com/emails", {
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${key}`,
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					from,
-					to: [email],
-					subject:
-						purpose === "verify"
-							? "Verify your UWH Club email"
-							: "Reset your UWH Club password",
-					text: `Your code is ${token}. It expires in 10 minutes. If you didn’t request this, ignore this email.`,
-				}),
+			await deliverAuthEmail(ctx, {
+				email: identifier.trim().toLowerCase(),
+				token,
+				purpose,
 			});
-			if (!response.ok)
-				throw new Error("Couldn’t send your code. Try again shortly.");
 		},
+	});
+
+export const authSignInEmail = (): ReturnType<typeof Email> =>
+	Email({
+		id: "email-link",
+		maxAge: 600,
+		authorize: undefined,
+		sendVerificationRequest: async (
+			{ identifier, token, url },
+			ctx?: ActionCtx,
+		): Promise<void> =>
+			deliverAuthEmail(ctx, {
+				email: identifier.trim().toLowerCase(),
+				token,
+				url,
+				purpose: "sign-in",
+			}),
 	});

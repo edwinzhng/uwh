@@ -1,0 +1,46 @@
+[
+	{ "name": "longtask", "duration": 196, "detail": {} },
+	{ "name": "longtask", "duration": 206, "detail": {} },
+	{ "name": "longtask", "duration": 67, "detail": {} },
+	{ "name": "longtask", "duration": 108, "detail": {} },
+	{
+		"name": "paint:Account. Current profile: Alex Rivera",
+		"duration": 15.200000002980232,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 40, "detail": {} },
+	{ "name": "event:click", "duration": 40, "detail": {} },
+	{ "name": "event:keydown", "duration": 24, "detail": {} },
+	{
+		"name": "paint:Account. Current profile: Alex Rivera",
+		"duration": 14.299999997019768,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 32, "detail": {} },
+	{ "name": "event:click", "duration": 32, "detail": {} },
+	{ "name": "event:keydown", "duration": 24, "detail": {} },
+	{
+		"name": "paint:Account. Current profile: Alex Rivera",
+		"duration": 15.900000005960464,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 32, "detail": {} },
+	{ "name": "event:click", "duration": 32, "detail": {} },
+	{ "name": "event:keydown", "duration": 24, "detail": {} },
+	{
+		"name": "paint:Account. Current profile: Alex Rivera",
+		"duration": 15.600000008940697,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 32, "detail": {} },
+	{ "name": "event:click", "duration": 32, "detail": {} },
+	{ "name": "event:keydown", "duration": 24, "detail": {} },
+	{
+		"name": "paint:Account. Current profile: Alex Rivera",
+		"duration": 15,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 32, "detail": {} },
+	{ "name": "event:click", "duration": 32, "detail": {} },
+	{ "name": "event:keydown", "duration": 24, "detail": {} }
+]

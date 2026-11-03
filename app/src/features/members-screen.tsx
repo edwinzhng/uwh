@@ -9,6 +9,7 @@ import {
 	List,
 	ListItem,
 	Row,
+	SegmentedControl,
 	Stack,
 	Surface,
 	TabContent,
@@ -19,24 +20,34 @@ import { ClubShell } from "./club-shell";
 import { DataPage } from "./data-page";
 import { InviteList } from "./invite-list";
 import { MemberEditor } from "./member-editor";
+import { PlayerRankings } from "./player-rankings";
 import { useSearchTerm } from "./use-search-term";
 
 export const MembersScreen = (): ReactElement => {
 	const { data, account, accounts } = useApp();
 	const active = useActivePerson();
 	const router = useRouter();
-	const params = useLocalSearchParams<{ tab?: string }>();
-	const tab = account.admin && params.tab === "invites" ? "invites" : "members";
+	const params = useLocalSearchParams<{ tab?: string; status?: string }>();
+	const staff = account.admin || account.coachPrograms.length > 0;
+	const archived = staff && params.status === "archived";
+	const tab =
+		account.coachPrograms.length > 0 && params.tab === "rankings"
+			? "rankings"
+			: account.admin && params.tab === "invites"
+				? "invites"
+				: "members";
 	const [search, setSearch] = useState("");
 	const term = useSearchTerm(search);
 	const [add, setAdd] = useState(false);
-	const members = data.members.filter((member) =>
-		member.name.toLowerCase().includes(search.toLowerCase()),
+	const members = data.members.filter(
+		(member) =>
+			Boolean(member.archived) === archived &&
+			member.name.toLowerCase().includes(search.toLowerCase()),
 	);
 	return (
 		<ClubShell
 			tabs={
-				account.admin ? (
+				staff ? (
 					<Tabs
 						page
 						label="Members"
@@ -45,7 +56,12 @@ export const MembersScreen = (): ReactElement => {
 						onValueChange={(tab): void => router.setParams({ tab })}
 						options={[
 							{ value: "members", label: "Members" },
-							{ value: "invites", label: "Invites" },
+							...(account.coachPrograms.length > 0
+								? [{ value: "rankings", label: "Rankings" }]
+								: []),
+							...(account.admin
+								? [{ value: "invites", label: "Invites" }]
+								: []),
 						]}
 					/>
 				) : undefined
@@ -55,7 +71,6 @@ export const MembersScreen = (): ReactElement => {
 				account.admin ? (
 					<Button
 						label="Invite member"
-						staffRole="admin"
 						prefix="plus"
 						onPress={(): void => setAdd(true)}
 					/>
@@ -63,7 +78,9 @@ export const MembersScreen = (): ReactElement => {
 			}
 		>
 			<TabContent value={tab}>
-				{tab === "invites" ? (
+				{tab === "rankings" ? (
+					<PlayerRankings />
+				) : tab === "invites" ? (
 					<InviteList />
 				) : (
 					<>
@@ -75,10 +92,22 @@ export const MembersScreen = (): ReactElement => {
 										: `${active.name.split(" ").at(0)}’s profile`
 								}
 								avatar={active.name}
+								avatarId={active.id}
 								onPress={(): void => router.push("/member")}
 							/>
 						</Surface>
 						<Stack gap="sm">
+							{staff ? (
+								<SegmentedControl
+									label="Roster"
+									value={archived ? "archived" : "active"}
+									onValueChange={(status): void => router.setParams({ status })}
+									options={[
+										{ value: "active", label: "Active" },
+										{ value: "archived", label: "Archived" },
+									]}
+								/>
+							) : undefined}
 							<Row justify="between" wrap>
 								<Stack grow>
 									<Field
@@ -92,7 +121,7 @@ export const MembersScreen = (): ReactElement => {
 							<DataPage
 								config={{
 									query: api.pages.members,
-									args: { search: term },
+									args: { search: term, archived },
 									preview: members.map((member) => ({
 										member,
 										roles: memberRoles(member, accounts),
@@ -102,12 +131,12 @@ export const MembersScreen = (): ReactElement => {
 								{(items) => (
 									<Surface padding="xs">
 										<List>
-											{items.map(({ member, roles }) => (
+											{items.map(({ member }) => (
 												<ListItem
 													key={member.id}
 													title={member.name}
 													avatar={member.name}
-													description={roles}
+													avatarId={member.id}
 													onPress={() =>
 														router.push({
 															pathname: "/member",
@@ -118,8 +147,16 @@ export const MembersScreen = (): ReactElement => {
 											))}
 											{!items.length ? (
 												<EmptyState
-													title="No members found"
-													description="Try another name or clear your search."
+													title={
+														archived
+															? "No archived members"
+															: "No members found"
+													}
+													description={
+														archived
+															? undefined
+															: "Try another name or clear your search."
+													}
 												/>
 											) : undefined}
 										</List>

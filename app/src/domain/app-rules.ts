@@ -8,6 +8,9 @@ import type {
 	Member,
 	TeamPlan,
 } from "./app-types";
+import { addDays, validDate } from "./calendar-dates";
+import { disabledConversation } from "./conversation-policy";
+import { displayDate } from "./date-display";
 import { occurrenceDates } from "./event-recurrence";
 import { clubTimestamp, signupState, signupWindow } from "./event-time";
 import {
@@ -15,22 +18,16 @@ import {
 	participatesInPart,
 	validatePracticeParts,
 } from "./practice-parts";
+import { applyProgramWindow, validateProgramRsvp } from "./program-rsvp";
 import { defaultSeasonId } from "./seasons";
 import { defaultClubTimeZone, validTimeZone } from "./time-zones";
 
-export const programs = [
-	{ value: "club", label: "Club" },
-	{ value: "youth", label: "Youth" },
-] as const;
 export const canManagePerson = (account: Account, personId: string): boolean =>
 	account.personId === personId || account.children.includes(personId);
 export const canCoach = (account: Account, _program?: string): boolean =>
 	account.coachPrograms.length > 0;
 export const canCoachMember = (account: Account, _member: Member): boolean =>
 	canCoach(account);
-export const canRegister = (member: Member, event: ClubEvent): boolean =>
-	member.programs.length > 0 &&
-	(!event.eligiblePersonIds || event.eligiblePersonIds.includes(member.id));
 export const memberRoles = (member: Member, accounts: Account[]): string => {
 	const account = accounts.find((entry) => entry.personId === member.id);
 	return (
@@ -48,9 +45,8 @@ export const canReadProgress = (account: Account, member: Member): boolean =>
 export const canReadThread = (
 	account: Account,
 	thread: Conversation,
-): boolean => thread.accountIds.includes(account.id);
-export const programLabel = (id: string): string =>
-	programs.find((program) => program.value === id)?.label ?? "Club";
+): boolean =>
+	!disabledConversation(thread.id) && thread.accountIds.includes(account.id);
 export const memberName = (data: AppData, id: string): string =>
 	data.members.find((member) => member.id === id)?.name ?? "Member";
 export const eventResponse = (
@@ -77,7 +73,10 @@ export const eventAttendees = (
 			)
 			.map((entry) => entry.personId),
 	);
-	return data.members.filter((member) => attending.has(member.id));
+	return data.members.filter(
+		(member) =>
+			!member.archived && !member.mergedInto && attending.has(member.id),
+	);
 };
 export const lineupNeedsReview = (data: AppData, plan: TeamPlan): boolean =>
 	Boolean(plan.coachingStale) ||
@@ -100,28 +99,28 @@ export const money = (cents: number): string =>
 		currency: "CAD",
 		maximumFractionDigits: cents % 100 ? 2 : 0,
 	}).format(cents / 100);
-export const formatDate = (date: string): string =>
-	new Intl.DateTimeFormat("en-CA", {
-		weekday: "short",
-		month: "short",
-		day: "numeric",
-		timeZone: "UTC",
-	}).format(new Date(`${date}T12:00:00Z`));
+export const formatDate = displayDate;
 export const formatTime = (time: string): string =>
 	new Intl.DateTimeFormat("en-US", {
 		hour: "numeric",
 		minute: "2-digit",
 		timeZone: "UTC",
 	}).format(new Date(`2026-01-01T${time}:00Z`));
-export const addDays = (date: string, days: number): string =>
-	new Date(Date.parse(`${date}T12:00:00Z`) + days * 86400000)
-		.toISOString()
-		.slice(0, 10);
-export const validDate = (date: string): boolean =>
-	/^\d{4}-\d{2}-\d{2}$/.test(date) &&
-	!Number.isNaN(Date.parse(`${date}T12:00:00Z`)) &&
-	new Date(`${date}T12:00:00Z`).toISOString().slice(0, 10) === date;
 export const validateEvent = (draft: EventDraft): string | undefined => {
+	if (draft.programRsvp) {
+		const error = validateProgramRsvp(draft.programRsvp);
+		if (error) return error;
+		if (
+			validDate(draft.date) &&
+			/^([01]\d|2[0-3]):[0-5]\d$/.test(draft.start) &&
+			clubTimestamp(
+				addDays(draft.date, -draft.programRsvp.closeDays),
+				draft.programRsvp.closeTime,
+				draft.timeZone,
+			) > clubTimestamp(draft.date, draft.start, draft.timeZone)
+		)
+			return "RSVP must close by the event start.";
+	}
 	if (!validTimeZone(draft.timeZone ?? defaultClubTimeZone))
 		return "Choose a valid timezone.";
 	const partsError = validatePracticeParts(draft);
@@ -235,6 +234,7 @@ export const createOccurrences = (id: string, draft: EventDraft): ClubEvent[] =>
 
 			venue: draft.venue.trim(),
 			program: draft.program,
+			programRsvp: draft.programRsvp,
 			kind: draft.kind,
 			repeatInterval: draft.repeatInterval,
 			repeatUntil: draft.repeatUntil,
@@ -251,17 +251,10 @@ export const createOccurrences = (id: string, draft: EventDraft): ClubEvent[] =>
 			signupCloses: draft.signupCloses ?? "start",
 			...window,
 		};
-		return { ...event, signup: signupState(event, Date.now()) };
+		return draft.programRsvp
+			? applyProgramWindow(event, { rsvp: draft.programRsvp }, Date.now())
+			: { ...event, signup: signupState(event, Date.now()) };
 	});
-export const applicableTrackers = (
-	data: AppData,
-	_member: Member,
-): AppData["trackers"] =>
-	data.trackers.map((tracker) =>
-		tracker.id === "membership"
-			? { ...tracker, name: "CUGA membership", kind: "check" }
-			: tracker,
-	);
 export const visibleNotices = (
 	data: AppData,
 	account: Account,
@@ -277,3 +270,6 @@ export const visibleNotices = (
 			account.admin || notice.program === "all" || programs.has(notice.program),
 	);
 };
+
+export { addDays, validDate } from "./calendar-dates";
+export { canRegister } from "./event-eligibility";

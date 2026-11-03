@@ -56,10 +56,7 @@ export const TournamentSummary = ({
 						))}
 					</List>
 				) : (
-					<EmptyState
-						title="No teams assigned yet"
-						description="The confirmed roster will appear here when the organizer assigns players to teams."
-					/>
+					<EmptyState title="No teams assigned" />
 				)}
 			</Stack>
 		</Surface>

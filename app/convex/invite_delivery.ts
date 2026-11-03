@@ -81,6 +81,8 @@ export const send = internalAction({
 				return;
 			}
 			const key = process.env.AUTH_RESEND_KEY;
+			if (process.env.OUTBOUND_DELIVERY_DISABLED === "true")
+				throw new Error("Outbound delivery disabled");
 			const from = process.env.AUTH_EMAIL_FROM;
 			if (!key || !from) throw new Error("Email unavailable");
 			const response = await fetch("https://api.resend.com/emails", {

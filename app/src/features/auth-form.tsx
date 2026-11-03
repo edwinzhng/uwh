@@ -1,5 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { useBackend } from "../backend/context";
+import { friendlyError } from "../backend/errors";
 import {
 	Button,
 	Field,
@@ -10,85 +11,117 @@ import {
 	Stack,
 	Text,
 } from "../design-system";
+import {
+	type AuthStep,
+	authBackStep,
+	authParameters,
+	authPresentation,
+	isResetCodeFailure,
+	validateAuthStep,
+} from "./auth-form-state";
+import { EmailLinkForm } from "./email-link-form";
 import { SocialSignIn } from "./social-sign-in";
 import { useFormTask } from "./use-form-task";
 
-type Step = "signIn" | "signUp" | "verify" | "reset" | "resetCode";
 export const AuthForm = ({
 	initialStep = "signIn",
 }: {
-	initialStep?: "signIn" | "signUp";
+	initialStep?: "signIn" | "signUp" | "reset";
 }): ReactElement => {
 	const backend = useBackend();
-	const [step, setStep] = useState<Step>(initialStep);
+	const [emailLink, setEmailLink] = useState(false);
+	const [step, setStep] = useState<AuthStep>(initialStep);
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [confirmation, setConfirmation] = useState("");
 	const [name, setName] = useState("");
 	const [code, setCode] = useState("");
 	const [sentAt, setSentAt] = useState(0);
 	const task = useFormTask();
 	const normalizedEmail = email.trim().toLowerCase();
+	const presentation = authPresentation[step];
+	const accountStep = step === "signIn" || step === "signUp";
+	const canResend =
+		step === "verify" || step === "resetCode" || step === "resetPassword";
+	const clearCredentials = (): void => {
+		setPassword("");
+		setConfirmation("");
+		setCode("");
+	};
+	const changeStep = (next: AuthStep): void => {
+		if (task.busy) return;
+		setStep(next);
+		if (next === "signIn" || next === "signUp" || next === "reset")
+			clearCredentials();
+		task.clear();
+	};
 	const submit = async (completedCode = code): Promise<void> => {
+		const fields = { email, password, confirmation, name, code: completedCode };
 		await task.submit(
-			(): string | undefined =>
-				!normalizedEmail.includes("@")
-					? "Enter a valid email address"
-					: verify && !/^\d{6}$/.test(completedCode)
-						? "Enter the 6-digit code"
-						: needsPassword &&
-								(step === "signIn" ? !password : password.length < 12)
-							? step === "signIn"
-								? "Enter your password"
-								: "Use at least 12 characters"
-							: step === "signUp" && !name.trim()
-								? "Enter your name"
-								: undefined,
+			(): string | undefined => validateAuthStep(step, fields),
 			async (): Promise<void> => {
-				if (!backend.authenticate) return;
-				const result = await backend.authenticate({
-					flow:
-						step === "verify"
-							? "email-verification"
-							: step === "resetCode"
-								? "reset-verification"
-								: step,
-					email: normalizedEmail,
-					password:
-						step === "signIn" || step === "signUp" ? password : undefined,
-					newPassword: step === "resetCode" ? password : undefined,
-					name: step === "signUp" ? name.trim() : undefined,
-					code:
-						step === "verify" || step === "resetCode"
-							? completedCode.trim()
-							: undefined,
-				});
-				setPassword("");
-				setCode("");
+				const parameters = authParameters(step, fields);
+				if (!parameters) {
+					setStep("resetPassword");
+					return;
+				}
+				if (!backend.authenticate)
+					throw new Error("Sign-in is available in the connected app.");
+				const result = await backend
+					.authenticate(parameters)
+					.catch((error: unknown): never => {
+						if (
+							step === "resetPassword" &&
+							isResetCodeFailure(friendlyError(error))
+						) {
+							setStep("resetCode");
+							throw new Error("Invalid or expired code. Request a new code.");
+						}
+						throw error;
+					});
+				if (step === "resetPassword" && !result)
+					throw new Error("Could not reset your password. Try again.");
+				clearCredentials();
 				if (step === "reset") {
 					setStep("resetCode");
 					setSentAt(Date.now());
-				} else if (!result && (step === "signIn" || step === "signUp")) {
+				} else if (!result && accountStep) {
 					setStep("verify");
 					setSentAt(Date.now());
 				}
 			},
 		);
 	};
-	const verify = step === "verify" || step === "resetCode";
-	const needsPassword =
-		step === "signIn" || step === "signUp" || step === "resetCode";
+	const resend = (): void => {
+		void task.run(async (): Promise<void> => {
+			if (Date.now() - sentAt < 60000)
+				throw new Error("Wait a minute to resend");
+			if (!backend.authenticate)
+				throw new Error("Sign-in is available in the connected app.");
+			await backend.authenticate({
+				flow: step === "verify" ? "email-verification" : "reset",
+				email: normalizedEmail,
+			});
+			setCode("");
+			setSentAt(Date.now());
+			if (step === "resetPassword") setStep("resetCode");
+		});
+	};
+	if (emailLink)
+		return (
+			<EmailLinkForm
+				initialEmail={email}
+				onBack={(): void => setEmailLink(false)}
+			/>
+		);
 	return (
 		<Stack gap="sm">
-			{step === "signIn" || step === "signUp" ? (
+			{accountStep ? (
 				<SegmentedControl
 					label="Account"
 					hideLabel
 					value={step}
-					onValueChange={(value): void => {
-						if (task.busy) return;
-						setStep(value);
-						task.clear();
-					}}
+					onValueChange={changeStep}
 					options={[
 						{ value: "signIn", label: "Sign in" },
 						{ value: "signUp", label: "Create account" },
@@ -97,14 +130,10 @@ export const AuthForm = ({
 			) : undefined}
 			<PageReveal key={step} replayOnFocus={false} gap="none">
 				<Stack gap="sm">
-					{step !== "signIn" && step !== "signUp" ? (
-						<Text variant="h4">
-							{step === "verify" ? "Verify email" : "Reset password"}
-						</Text>
+					{!accountStep ? (
+						<Text variant="h4">{presentation.title}</Text>
 					) : undefined}
-					{step === "signIn" || step === "signUp" ? (
-						<SocialSignIn disabled={task.busy} />
-					) : undefined}
+					{accountStep ? <SocialSignIn disabled={task.busy} /> : undefined}
 					{step === "signUp" ? (
 						<Field
 							labelTone="primary"
@@ -115,12 +144,14 @@ export const AuthForm = ({
 							isDisabled={task.busy}
 						/>
 					) : undefined}
-					{verify ? (
+					{presentation.code ? (
 						<Text variant="small">
 							{step === "verify"
 								? `Enter the code sent to ${normalizedEmail}.`
 								: `If ${normalizedEmail} has an account, a reset code is on its way.`}
 						</Text>
+					) : step === "resetPassword" ? (
+						<Text variant="small">Your code is checked when you save.</Text>
 					) : (
 						<Field
 							labelTone="primary"
@@ -132,7 +163,7 @@ export const AuthForm = ({
 							isDisabled={task.busy}
 						/>
 					)}
-					{verify ? (
+					{presentation.code ? (
 						<OtpInput
 							label="6-digit code"
 							value={code}
@@ -152,10 +183,10 @@ export const AuthForm = ({
 							autoFocus
 						/>
 					) : undefined}
-					{needsPassword ? (
+					{presentation.password ? (
 						<Field
 							labelTone="primary"
-							label={step === "resetCode" ? "New password" : "Password"}
+							label={step === "resetPassword" ? "New password" : "Password"}
 							secure
 							autoComplete={
 								step === "signIn" ? "current-password" : "new-password"
@@ -163,6 +194,17 @@ export const AuthForm = ({
 							value={password}
 							onValueChange={setPassword}
 							hint={step === "signIn" ? undefined : "At least 12 characters"}
+							isDisabled={task.busy}
+						/>
+					) : undefined}
+					{presentation.confirm ? (
+						<Field
+							labelTone="primary"
+							label="Confirm password"
+							secure
+							autoComplete="new-password"
+							value={confirmation}
+							onValueChange={setConfirmation}
 							isDisabled={task.busy}
 						/>
 					) : undefined}
@@ -174,70 +216,50 @@ export const AuthForm = ({
 					<Stack gap="lg">
 						<Stack>{undefined}</Stack>
 						<Button
-							label={
-								step === "signUp"
-									? "Create account"
-									: step === "signIn"
-										? "Sign in"
-										: step === "verify"
-											? "Verify email"
-											: step === "reset"
-												? "Send code"
-												: "Reset password"
-							}
+							label={presentation.submit}
 							isLoading={task.busy}
 							onPress={(): void => {
 								void submit();
 							}}
 						/>
 					</Stack>
-					<Row wrap>
-						{step === "signIn" ? (
+					{step === "signIn" ? (
+						<Row wrap>
+							<Button
+								label="Email me a sign-in link"
+								variant="secondary"
+								isDisabled={task.busy}
+								onPress={(): void => {
+									clearCredentials();
+									setEmailLink(true);
+								}}
+							/>
 							<Button
 								label="Forgot password?"
 								isDisabled={task.busy}
 								variant="ghost"
-								onPress={(): void => {
-									setStep("reset");
-									setPassword("");
-									task.clear();
-								}}
+								onPress={(): void => changeStep("reset")}
 							/>
-						) : undefined}
-						{verify ? (
+						</Row>
+					) : !accountStep ? (
+						<Row justify="between" wrap>
 							<Button
-								label="Resend code"
-								variant="ghost"
+								label="Back"
+								prefix="arrowLeft"
+								variant="secondary"
 								isDisabled={task.busy}
-								onPress={(): void => {
-									void task.run(async (): Promise<void> => {
-										if (Date.now() - sentAt < 60000)
-											throw new Error(
-												"Wait a minute before requesting another code.",
-											);
-										await backend.authenticate?.({
-											flow: step === "verify" ? "email-verification" : "reset",
-											email: normalizedEmail,
-										});
-										setSentAt(Date.now());
-									});
-								}}
+								onPress={(): void => changeStep(authBackStep(step))}
 							/>
-						) : undefined}
-						{step !== "signIn" && step !== "signUp" ? (
-							<Button
-								label="Back to sign in"
-								variant="ghost"
-								isDisabled={task.busy}
-								onPress={(): void => {
-									setStep("signIn");
-									setPassword("");
-									setCode("");
-									task.clear();
-								}}
-							/>
-						) : undefined}
-					</Row>
+							{canResend ? (
+								<Button
+									label="Resend code"
+									variant="secondary"
+									isDisabled={task.busy}
+									onPress={resend}
+								/>
+							) : undefined}
+						</Row>
+					) : undefined}
 				</Stack>
 			</PageReveal>
 		</Stack>

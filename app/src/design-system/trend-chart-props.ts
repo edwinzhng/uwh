@@ -5,5 +5,6 @@ export type TrendSeries = {
 };
 export type TrendChartProps = {
 	series: TrendSeries[];
+	maximum?: number;
 	formatValue?: (value: number) => string;
 };

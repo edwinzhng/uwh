@@ -1,8 +1,28 @@
 import { clubTimestamp } from "../src/domain/event-time";
+import { removeLineupPeople } from "../src/domain/lineup";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { loadData } from "./data";
+import { eraseDevelopment } from "./development_cleanup";
+import { eraseEquipmentLoans } from "./equipment_loans_cleanup";
+import { eraseHouseholdLinks } from "./household_cleanup";
+import { eraseInbox } from "./inbox_cleanup";
+import {
+	eraseMemberMerges,
+	mergedMemberHistoryIds,
+} from "./member_merge_cleanup";
+import { eraseMemberProfiles } from "./member_profile_cleanup";
+import { eraseChatAnnouncements } from "./message_announcements_cleanup";
 import { eraseMessage } from "./moderation";
+import { eraseCoachScores } from "./player_coaching";
+import { eraseProgramCommands } from "./program_commands";
+import { eraseResources } from "./resources_cleanup";
+import { eraseSessionCheckins } from "./session_checkins_cleanup";
+import { eraseSessionPerformance } from "./session_performance_cleanup";
+import { eraseSessionPlans } from "./session_plans_cleanup";
+import { eraseTerms } from "./terms_cleanup";
+import { eraseThreadTools } from "./thread_tools_cleanup";
+import { eraseWebPush } from "./web_push_cleanup";
 
 const removeSignInLimit = async (
 	ctx: MutationCtx,
@@ -32,6 +52,8 @@ export const eraseAccount = async (
 	transferTo?: Id<"users">,
 ): Promise<void> => {
 	const user = await ctx.db.get(userId);
+	await eraseEquipmentLoans(ctx, { userId, removeClub: false });
+	await eraseHouseholdLinks(ctx, { userId, removeClub: false });
 	const membership = await ctx.db
 		.query("memberships")
 		.withIndex("by_user", (q) => q.eq("userId", userId))
@@ -44,6 +66,27 @@ export const eraseAccount = async (
 			.collect();
 		const { rows } = await loadData(ctx, membership.clubId, true);
 		const removeClub = club?.ownerId === userId && members.length === 1;
+		if (removeClub)
+			await eraseEquipmentLoans(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: true,
+			});
+		await eraseTerms(ctx, { userId, clubId: membership.clubId, removeClub });
+		await eraseInbox(ctx, { userId, clubId: membership.clubId, removeClub });
+		await eraseWebPush(ctx, { userId, clubId: membership.clubId, removeClub });
+		await eraseChatAnnouncements(ctx, {
+			userId,
+			clubId: membership.clubId,
+			removeClub,
+		});
+		await eraseProgramCommands(ctx, {
+			userId,
+			clubId: membership.clubId,
+			removeClub,
+		});
+		await eraseSessionPlans(ctx, membership.clubId, userId, removeClub);
+		await eraseThreadTools(ctx, membership.clubId, userId, removeClub);
 		if (club?.ownerId === userId && !removeClub) {
 			const next = members.find(
 				(entry) =>
@@ -56,6 +99,41 @@ export const eraseAccount = async (
 			await ctx.db.patch(club._id, { ownerId: next.userId });
 		}
 		if (removeClub && club) {
+			await eraseHouseholdLinks(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: true,
+			});
+			await eraseMemberMerges(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: true,
+			});
+			await eraseMemberProfiles(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: true,
+			});
+			await eraseSessionCheckins(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: true,
+			});
+			await eraseSessionPerformance(ctx, {
+				clubId: membership.clubId,
+				userId,
+				removeClub: true,
+			});
+			await eraseDevelopment(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: true,
+			});
+			await eraseResources(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: true,
+			});
 			for (const collection of Object.values(rows))
 				for (const row of collection) await ctx.db.delete(row._id);
 			for (const table of [
@@ -76,6 +154,8 @@ export const eraseAccount = async (
 				"eventAttendanceFlags",
 				"playerCoaching",
 				"coachingHours",
+				"coachingSchedules",
+				"coachingEventOverrides",
 				"fitnessTests",
 				"sessionSeries",
 				"fitnessSessions",
@@ -100,17 +180,71 @@ export const eraseAccount = async (
 			}
 			await ctx.db.delete(club._id);
 		} else {
-			const personIds = new Set([
-				membership.personId,
-				...membership.children.filter(
-					(id) =>
-						!members.some(
-							(other) =>
-								other.userId !== userId &&
-								(other.personId === id || other.children.includes(id)),
+			await eraseCoachScores(ctx, membership.clubId, userId);
+			const personIds = new Set(
+				mergedMemberHistoryIds(
+					rows.members.map((row) => row.value),
+					[
+						membership.personId,
+						...membership.children.filter(
+							(id) =>
+								!members.some(
+									(other) =>
+										other.userId !== userId &&
+										(other.personId === id || other.children.includes(id)),
+								),
 						),
+					],
 				),
-			]);
+			);
+			await eraseMemberMerges(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: false,
+				personIds: [...personIds],
+			});
+			await eraseHouseholdLinks(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: false,
+				personIds: [...personIds],
+			});
+			await eraseMemberProfiles(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: false,
+				personIds: [...personIds],
+			});
+			await eraseEquipmentLoans(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: false,
+				personIds: [...personIds],
+			});
+			await eraseSessionCheckins(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: false,
+				personIds: [...personIds],
+			});
+			await eraseSessionPerformance(ctx, {
+				clubId: membership.clubId,
+				userId,
+				removeClub: false,
+				personIds: [...personIds],
+			});
+			await eraseDevelopment(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: false,
+				personIds: [...personIds],
+			});
+			await eraseResources(ctx, {
+				userId,
+				clubId: membership.clubId,
+				removeClub: false,
+				personIds: [...personIds],
+			});
 			for (const personId of personIds)
 				for (const table of [
 					"seasonRecords",
@@ -180,8 +314,8 @@ export const eraseAccount = async (
 			}
 
 			for (const collection of [rows.loans, rows.charges, rows.payments])
-				for (const row of collection.filter((row) =>
-					personIds.has(row.value.personId),
+				for (const row of collection.filter(
+					(row) => "personId" in row.value && personIds.has(row.value.personId),
 				))
 					await ctx.db.delete(row._id);
 			for (const row of rows.trackerValues.filter((row) =>
@@ -202,18 +336,7 @@ export const eraseAccount = async (
 			}
 			for (const row of rows.teams)
 				await ctx.db.patch(row._id, {
-					value: {
-						...row.value,
-						black: row.value.black.filter((id) => !personIds.has(id)),
-						white: row.value.white.filter((id) => !personIds.has(id)),
-						attendees: row.value.attendees.filter((id) => !personIds.has(id)),
-						excludedPersonIds: row.value.excludedPersonIds?.filter(
-							(id) => !personIds.has(id),
-						),
-						assignments: row.value.assignments?.filter(
-							(entry) => !personIds.has(entry.personId),
-						),
-					},
+					value: { ...row.value, ...removeLineupPeople(row.value, personIds) },
 				});
 			for (const row of rows.messages) {
 				if (row.value.accountId === userId) {
@@ -241,10 +364,77 @@ export const eraseAccount = async (
 						},
 					});
 			}
-			for (const row of rows.conversations.filter((row) =>
-				row.value.accountIds.includes(userId),
+			const eraseConversionReceipt = (row: Doc<"conversations">): boolean =>
+				Boolean(
+					row.groupCreatorId === userId ||
+						row.value.accountIds.includes(userId) ||
+						row.value.participantPersonIds?.some(
+							(id) => id === userId || personIds.has(id),
+						) ||
+						row.groupSourceRecipientIds?.some(
+							(id) =>
+								id === userId ||
+								(id.startsWith("person:") &&
+									personIds.has(id.slice("person:".length))),
+						),
+				);
+			for (const row of rows.conversations.filter(
+				(row) =>
+					row.value.accountIds.includes(userId) ||
+					row.groupCreatorId === userId ||
+					row.groupSourceRecipientIds?.some(
+						(id) =>
+							id === userId ||
+							(id.startsWith("person:") &&
+								personIds.has(id.slice("person:".length))),
+					) ||
+					row.groupCreation?.recipientIds.some(
+						(id) =>
+							id === userId ||
+							(id.startsWith("person:") &&
+								personIds.has(id.slice("person:".length))),
+					) ||
+					row.pendingPersonIds?.some((id) => personIds.has(id)) ||
+					(row.pendingPersonId && personIds.has(row.pendingPersonId)) ||
+					(row.recipientPersonId && personIds.has(row.recipientPersonId)) ||
+					row.value.participantPersonIds?.some(
+						(id) => id === userId || personIds.has(id),
+					),
 			))
 				await ctx.db.patch(row._id, {
+					groupCreatorId:
+						row.groupCreatorId === userId ? undefined : row.groupCreatorId,
+					groupSourceThreadId: eraseConversionReceipt(row)
+						? undefined
+						: row.groupSourceThreadId,
+					groupSourceRecipientIds: eraseConversionReceipt(row)
+						? undefined
+						: row.groupSourceRecipientIds,
+					groupCreation:
+						row.groupCreatorId === userId ||
+						row.groupCreation?.recipientIds.some(
+							(id) =>
+								id === userId ||
+								(id.startsWith("person:") &&
+									personIds.has(id.slice("person:".length))),
+						)
+							? undefined
+							: row.groupCreation,
+					pendingPersonId:
+						row.pendingPersonId && personIds.has(row.pendingPersonId)
+							? undefined
+							: row.pendingPersonId,
+					pendingPersonIds: row.pendingPersonIds?.filter(
+						(id) => !personIds.has(id),
+					),
+					recipientPersonId:
+						row.recipientPersonId && personIds.has(row.recipientPersonId)
+							? undefined
+							: row.recipientPersonId,
+					directKey:
+						row.recipientPersonId && personIds.has(row.recipientPersonId)
+							? undefined
+							: row.directKey,
 					value: {
 						...row.value,
 						title:
@@ -252,6 +442,9 @@ export const eraseAccount = async (
 								? row.value.title
 								: "Former member",
 						accountIds: row.value.accountIds.filter((id) => id !== userId),
+						participantPersonIds: row.value.participantPersonIds?.filter(
+							(id) => id !== userId && !personIds.has(id),
+						),
 					},
 				});
 			for (const row of rows.notices)
@@ -284,6 +477,7 @@ export const eraseAccount = async (
 								subjectId: undefined,
 								author: "Deleted account",
 								body: "",
+								source: undefined,
 								imageIds: [],
 							}
 						: {}),
@@ -291,11 +485,29 @@ export const eraseAccount = async (
 			}
 		}
 		await ctx.db.delete(membership._id);
+	} else {
+		await eraseInbox(ctx, { userId, removeClub: false });
+		await eraseWebPush(ctx, { userId, removeClub: false });
+		await eraseChatAnnouncements(ctx, { userId, removeClub: false });
+		await eraseTerms(ctx, { userId, removeClub: false });
+		await eraseProgramCommands(ctx, { userId, removeClub: false });
 	}
 	for (const image of await ctx.db
 		.query("images")
 		.withIndex("by_owner", (q) => q.eq("ownerId", userId))
 		.collect()) {
+		if (image.chatAvatar) {
+			const thread = await ctx.db
+				.query("conversations")
+				.withIndex("by_club_and_key", (q) =>
+					q.eq("clubId", image.clubId).eq("value.id", image.threadId),
+				)
+				.unique();
+			if (thread?.value.avatarImageId === image._id)
+				await ctx.db.patch(thread._id, {
+					value: { ...thread.value, avatarImageId: undefined },
+				});
+		}
 		await ctx.storage.delete(image.storageId);
 		await ctx.db.delete(image._id);
 	}

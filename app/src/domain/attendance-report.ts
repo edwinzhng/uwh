@@ -1,8 +1,10 @@
-import { canRegister } from "./app-rules";
 import type { ClubEvent, EventResponse, Member } from "./app-types";
+import {
+	attendancePercent,
+	availableAttendanceEvent,
+} from "./attendance-metrics";
 import type { Attendance } from "./club";
 import { effectiveAttendance } from "./effective-attendance";
-import { clubTimestamp } from "./event-time";
 
 export type AttendanceFlag = "addition" | "cancellation";
 export type ReportFlag = {
@@ -15,6 +17,7 @@ export type AttendanceReportRow = {
 	name: string;
 	attended?: number;
 	onTime?: number;
+	attendedCount: number;
 	recorded: number;
 	total: number;
 	additions: number;
@@ -40,14 +43,8 @@ export const attendanceReportRow = (
 			.filter((row) => row.personId === member.id)
 			.map((row) => [row.eventId, row.kind]),
 	);
-	const eligible = events.filter(
-		(event) =>
-			!event.cancelled &&
-			event.kind !== "social" &&
-			event.kind !== "meeting" &&
-			canRegister(member, event) &&
-			clubTimestamp(event.endDate ?? event.date, event.end, event.timeZone) <=
-				now,
+	const eligible = events.filter((event) =>
+		availableAttendanceEvent(member, event, now),
 	);
 	const eligibleIds = new Set(eligible.map((event) => event.id));
 	const cells = events.map((event) => ({
@@ -71,9 +68,8 @@ export const attendanceReportRow = (
 		name: member.name,
 		recorded: counted.length,
 		total: eligible.length,
-		attended: counted.length
-			? Math.round((attended / counted.length) * 100)
-			: undefined,
+		attended: attendancePercent(attended, eligible.length),
+		attendedCount: attended,
 		onTime: attended ? Math.round((present / attended) * 100) : undefined,
 		additions: cells.filter((cell) => cell.flag === "addition").length,
 		cancellations: cells.filter((cell) => cell.flag === "cancellation").length,
@@ -81,8 +77,9 @@ export const attendanceReportRow = (
 		points: months.flatMap((month) => {
 			const monthCells = eligible
 				.filter((event) => event.date.startsWith(month))
-				.map((event) => effectiveAttendance(event, statusByEvent.get(event.id)))
-				.filter((status) => status !== "unmarked");
+				.map((event) =>
+					effectiveAttendance(event, statusByEvent.get(event.id)),
+				);
 			return monthCells.length
 				? [
 						{

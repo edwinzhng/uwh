@@ -19,7 +19,7 @@ test("password failures use the same safe message for absent accounts and wrong 
 
 test("expected authentication failures explain the next step", (): void => {
 	expect(passwordErrorMessage(new Error("TooManyFailedAttempts"))).toContain(
-		"wait a few minutes",
+		"Try again later",
 	);
 	expect(passwordErrorMessage(new Error("Could not verify code"))).toContain(
 		"Request a new code",
@@ -29,13 +29,24 @@ test("expected authentication failures explain the next step", (): void => {
 	);
 });
 
+test("concise name and password limits remain explicitly allowlisted", (): void => {
+	for (const message of [
+		"Use 80 characters or fewer.",
+		"Use at least 12 characters.",
+		"Use 256 characters or fewer.",
+	]) {
+		expect(passwordErrorMessage(new Error(message))).toBe(message);
+		expect(friendlyError(new ConvexError(message))).toBe(message);
+	}
+});
+
 test("unexpected errors do not expose backend details", (): void => {
 	for (const message of [
 		"[CONVEX A(auth:signIn)] [Request ID: secret] Server Error",
 		"Uncaught Error: internal database detail\n at handler (auth.ts:42)",
 	]) {
 		expect(friendlyError(new Error(message))).toBe(
-			"Something went wrong. Please try again.",
+			"Something went wrong. Try again.",
 		);
 		expect(passwordErrorMessage(new Error(message))).toBeUndefined();
 	}

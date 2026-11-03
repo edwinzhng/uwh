@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { programRsvpValue } from "./program_schema";
 
 export const repeatValue = v.union(
 	v.literal("once"),
@@ -26,6 +27,7 @@ export const eventPartValue = v.object({
 	end: v.string(),
 });
 export const eventDraftValue = v.object({
+	programRsvp: v.optional(programRsvpValue),
 	committedRoster: v.optional(v.boolean()),
 	seriesWaitlist: v.optional(v.boolean()),
 	excludedDates: v.optional(v.array(v.string())),

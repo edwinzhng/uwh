@@ -7,8 +7,18 @@ import { previewSessionSeries } from "../demo/session-series-state";
 import type { ClubEvent } from "../domain/app-types";
 import { ResponseControlContent } from "./response-control-content";
 
-type Props = { event: ClubEvent; personId?: string; hideLabel?: boolean };
-const LiveResponse = ({ event, personId, hideLabel }: Props): ReactElement => {
+type Props = {
+	event: ClubEvent;
+	personId?: string;
+	hideLabel?: boolean;
+	quick?: boolean;
+};
+const LiveResponse = ({
+	event,
+	personId,
+	hideLabel,
+	quick,
+}: Props): ReactElement => {
 	const series = useQuery(
 		api.session_series.list,
 		event.seriesId ? {} : "skip",
@@ -21,6 +31,7 @@ const LiveResponse = ({ event, personId, hideLabel }: Props): ReactElement => {
 			event={event}
 			personId={personId}
 			hideLabel={hideLabel}
+			quick={quick}
 			committed={committed}
 			loading={Boolean(event.seriesId && !series)}
 		/>
@@ -30,6 +41,7 @@ const PreviewResponse = ({
 	event,
 	personId,
 	hideLabel,
+	quick,
 }: Props): ReactElement => {
 	const series = useAtomValue(previewSessionSeries);
 	return (
@@ -37,6 +49,7 @@ const PreviewResponse = ({
 			event={event}
 			personId={personId}
 			hideLabel={hideLabel}
+			quick={quick}
 			committed={series.some((entry) =>
 				entry.seriesIds.includes(event.seriesId ?? ""),
 			)}
@@ -47,9 +60,20 @@ export const ResponseControl = ({
 	event,
 	personId,
 	hideLabel,
+	quick,
 }: Props): ReactElement =>
 	useApp().source === "convex" ? (
-		<LiveResponse event={event} personId={personId} hideLabel={hideLabel} />
+		<LiveResponse
+			event={event}
+			personId={personId}
+			hideLabel={hideLabel}
+			quick={quick}
+		/>
 	) : (
-		<PreviewResponse event={event} personId={personId} hideLabel={hideLabel} />
+		<PreviewResponse
+			event={event}
+			personId={personId}
+			hideLabel={hideLabel}
+			quick={quick}
+		/>
 	);

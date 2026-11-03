@@ -1,16 +1,14 @@
-import { type ReactElement, startTransition, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { View } from "react-native";
-import { GlassPanel } from "./glass-panel";
+import { HoverSurface } from "./hover-surface";
 import { NavigationControl, type NavigationItem } from "./navigation-control";
-import { type SegmentFrame, SegmentIndicator } from "./segment-indicator";
-import { layer, space } from "./tokens";
+import { space } from "./tokens";
 
 export const SidebarNavigation = ({
 	navigation,
 }: {
 	navigation: NavigationItem[];
 }): ReactElement => {
-	const [frames, setFrames] = useState<Record<string, SegmentFrame>>({});
 	const [pending, setPending] = useState<{
 		from: string | undefined;
 		label: string;
@@ -18,48 +16,29 @@ export const SidebarNavigation = ({
 	const activeLabel = navigation.find((item) => item.selected)?.label;
 	const selected =
 		pending && pending.from === activeLabel ? pending.label : activeLabel;
-	const frame = selected ? frames[selected] : undefined;
 	const select = (item: NavigationItem): void => {
 		setPending({ from: activeLabel, label: item.label });
-		startTransition(item.onPress);
+		item.onPress();
 	};
 	return (
-		<GlassPanel padding="xs">
+		<HoverSurface selector='[role="tab"]'>
 			<View
 				accessibilityRole="tablist"
 				accessibilityLabel="Main navigation"
 				style={{ gap: space.xxs }}
 			>
-				{frame ? (
-					<SegmentIndicator frame={frame} appearance="glass" />
-				) : undefined}
 				{navigation.map((item) => (
-					<View
+					<NavigationControl
+						sharedHover
 						key={item.label}
-						onLayout={({ nativeEvent }): void => {
-							const { x, y, width, height } = nativeEvent.layout;
-							setFrames((current) =>
-								current[item.label]?.x === x &&
-								current[item.label]?.y === y &&
-								current[item.label]?.width === width &&
-								current[item.label]?.height === height
-									? current
-									: { ...current, [item.label]: { x, y, width, height } },
-							);
+						item={{
+							...item,
+							selected: item.label === selected,
+							onPress: (): void => select(item),
 						}}
-						style={{ zIndex: layer.selected }}
-					>
-						<NavigationControl
-							glass
-							item={{
-								...item,
-								selected: item.label === selected,
-								onPress: (): void => select(item),
-							}}
-						/>
-					</View>
+					/>
 				))}
 			</View>
-		</GlassPanel>
+		</HoverSurface>
 	);
 };

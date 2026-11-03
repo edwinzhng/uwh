@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useGlobalSearchParams, useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { useBackend } from "../backend/context";
@@ -13,8 +13,8 @@ import {
 import { AuthForm } from "./auth-form";
 import { useTask } from "./use-task";
 
-export const JoinInviteScreen = (): ReactElement => {
-	const { invite = "", revision: version = "" } = useLocalSearchParams<{
+const LiveJoinInviteScreen = (): ReactElement => {
+	const { invite = "", revision: version = "" } = useGlobalSearchParams<{
 		invite?: string;
 		revision?: string;
 	}>();
@@ -96,3 +96,12 @@ export const JoinInviteScreen = (): ReactElement => {
 		</AuthLayout>
 	);
 };
+
+export const JoinInviteScreen = (): ReactElement =>
+	useBackend().available ? (
+		<LiveJoinInviteScreen />
+	) : (
+		<AuthLayout title="Club invitation">
+			<Text>Open the invitation link from your club to continue.</Text>
+		</AuthLayout>
+	);

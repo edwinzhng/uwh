@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
 import { Badge, EmptyState, List, ListItem } from "../design-system";
+import { loanBorrowerDescription } from "../domain/equipment-loans";
 import { DataPage } from "./data-page";
 import { useSearchTerm } from "./use-search-term";
 export const EquipmentReturns = ({
@@ -12,9 +13,6 @@ export const EquipmentReturns = ({
 	const { data } = useApp();
 	const term = useSearchTerm(search);
 	const equipment = new Map(data.equipment.map((item) => [item.id, item.name]));
-	const people = new Map(
-		data.members.map((person) => [person.id, person.name]),
-	);
 	return (
 		<DataPage
 			config={{
@@ -27,7 +25,7 @@ export const EquipmentReturns = ({
 					.map((loan) => ({
 						id: loan.id,
 						item: equipment.get(loan.itemId) ?? "Equipment",
-						person: people.get(loan.personId) ?? "Former member",
+						person: loanBorrowerDescription(loan, data.members),
 					}))
 					.filter((item) =>
 						(item.item + item.person)
@@ -48,11 +46,9 @@ export const EquipmentReturns = ({
 					))}
 					{!items.length ? (
 						<EmptyState
-							title={term ? "No returns found" : "No returns yet"}
+							title={term ? "No matching returns" : "No returns"}
 							description={
-								term
-									? "Try another item or member name."
-									: "Returned equipment will appear here after a loan is marked returned."
+								term ? "Try another item or borrower name." : undefined
 							}
 						/>
 					) : undefined}

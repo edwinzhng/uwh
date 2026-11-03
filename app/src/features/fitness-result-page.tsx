@@ -1,7 +1,5 @@
-import { useMutation } from "convex/react";
 import { type ReactElement, useState } from "react";
-import { api } from "../../convex/_generated/api";
-import type { Doc } from "../../convex/_generated/dataModel";
+import { useFitnessActions } from "../backend/fitness-actions";
 import {
 	Button,
 	Divider,
@@ -12,27 +10,29 @@ import {
 	Text,
 } from "../design-system";
 import { formatFitnessValue } from "../domain/fitness";
+import type {
+	FitnessRosterRow,
+	FitnessSession,
+	FitnessTest,
+} from "../domain/fitness-model";
+import { fitnessEntriesError } from "../domain/fitness-model";
 import { type FitnessEntry, FitnessResultRow } from "./fitness-result-row";
-import { useFitnessTask } from "./use-fitness-task";
+import { useFormTask } from "./use-form-task";
 
-type ResultRow = {
-	personId: string;
-	name: string;
-	result: Doc<"fitnessResults"> | null;
-	stats: Doc<"fitnessStats"> | null;
-};
 export const FitnessResultPage = ({
 	test,
 	session,
 	rows,
 	onDirty,
 	onSaved,
+	disabled = false,
 }: {
-	test: Doc<"fitnessTests">;
-	session: Doc<"fitnessSessions">;
-	rows: ResultRow[];
+	test: FitnessTest;
+	session: FitnessSession;
+	rows: FitnessRosterRow[];
 	onDirty: (value: boolean) => void;
 	onSaved: () => void;
+	disabled?: boolean;
 }): ReactElement => {
 	const [revision] = useState(session.revision);
 	const [initial] = useState<FitnessEntry[]>(() =>
@@ -49,9 +49,18 @@ export const FitnessResultPage = ({
 		})),
 	);
 	const [entries, setEntries] = useState(initial);
-	const task = useFitnessTask();
-	const save = useMutation(api.fitness.saveResults);
+	const task = useFormTask();
+	const save = useFitnessActions().saveResults;
 	const dirty = JSON.stringify(entries) !== JSON.stringify(initial);
+	const submit = (): void => {
+		void task.submit(
+			() => fitnessEntriesError(test.unit, entries),
+			async (): Promise<void> => {
+				await save({ sessionId: session._id, revision, entries });
+				onSaved();
+			},
+		);
+	};
 	return (
 		<Stack>
 			<Row justify="between" wrap>
@@ -72,12 +81,7 @@ export const FitnessResultPage = ({
 							label="Save results"
 							isDisabled={!dirty || session.revision !== revision}
 							isLoading={task.busy}
-							onPress={(): void => {
-								void task.run(async () => {
-									await save({ sessionId: session._id, revision, entries });
-									onSaved();
-								});
-							}}
+							onPress={submit}
 						/>
 					</Row>
 				) : undefined}
@@ -101,7 +105,7 @@ export const FitnessResultPage = ({
 									unit={test.unit}
 									stats={row.stats ?? undefined}
 									entry={entry}
-									disabled={test.archived || task.busy}
+									disabled={disabled || test.archived || task.busy}
 									onChange={(changed): void => {
 										const next = entries.map((value) =>
 											value.personId === changed.personId ? changed : value,
@@ -128,12 +132,7 @@ export const FitnessResultPage = ({
 						label="Save results"
 						isDisabled={session.revision !== revision}
 						isLoading={task.busy}
-						onPress={(): void => {
-							void task.run(async () => {
-								await save({ sessionId: session._id, revision, entries });
-								onSaved();
-							});
-						}}
+						onPress={submit}
 					/>
 				</Row>
 			) : undefined}

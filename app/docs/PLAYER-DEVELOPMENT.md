@@ -1,0 +1,27 @@
+- Coaches open **Club → Player reviews** to see each active player's review completion, current goal and goal check-in count. Selecting a player opens their private coaching review. Archived players retain readable review history but cannot receive new reviews until restored. Invalid or removed player links return a usable empty state.
+
+- Each coach saves their own scalar skill rating from 1 to 100 and an optional observation. A draft belongs only to its author. Submitting includes the rating in the aggregate and shares the observation with other coaches. Saving a submitted review as a draft withdraws it from the aggregate without deleting its content. Other coaches never receive that draft or the author's individual submitted rating through these APIs.
+
+- The first saved review snapshots the current coach roster and the player's authoritative coaching revision. One submitted review is required from every coach in that snapshot. Each author has an independent optimistic revision, so separate coaches can work concurrently without overwriting each other. Finalization also checks the complete round revision to reject stale decisions.
+
+- Review participation currently means every active coaching account in the club. Weekly staffing and backup assignments do not grant or remove that responsibility. The reference dump excludes its designated backup coaches from review completion, but a per-weekday staffing backup is not a review-specific designation. Choosing an explicit required-reviewer subset remains a separate policy feature; this implementation does not silently change a round's denominator based on weekly assignments.
+
+- Finalization is explicit: the submitted mean, rounded to one decimal place, becomes the authoritative team-balancing rating. The shared `writePlayerCoaching` command increments the coaching revision and unpublishes affected teams with the existing stale-coaching flag. Review scoring does not change public player-profile fields or publish a ranking.
+
+- Reopening a finalized review starts a fresh round while retaining the current rating until a later finalization. Changes to the coach roster or authoritative player details make an open round stale; a coach explicitly starts a fresh round against the current roster and profile revision. Prior rounds are retained as private records. Individual draft and round version conflicts retain the current form contents and offer an explicit reload of the saved review.
+
+- The player opens **Account → Progress → Check in**, chooses a self-rating from 1 to 5 and optionally writes a reflection. This self-rating describes their experience with the current goal; it is separate from the private 1–100 coach skill rating.
+
+- Saving atomically records the date, goal snapshot, self-rating, optional note and resulting counter value, and increments the existing goal counter once. The request identifier makes concurrent or retried identical submissions idempotent. Stale goals and stale counts reject without clearing the form. Existing earlier counter-only check-ins have no fabricated dates. Coaches retain the existing quick counter correction and Undo behavior; correcting a counter does not erase a reflection.
+
+- Players and their linked guardians can read their own goal reflections. Coaches can read player reflections. Only the player can create a self-reflection. An admin permission alone does not grant reflection or coach-review access. Goals remain bounded to six check-ins, and a new agreed goal resets that counter through the existing goal workflow while prior reflections retain their original goal text.
+
+- `src/domain/development.ts` owns review validation, author/round version checks, aggregation and transition rules. `convex/development.ts` owns authenticated club lookup, indexed persistence and atomic finalization. `src/demo/development-state.ts` provides an isolated Jotai implementation of the same rules; the general app reducer does not carry review drafts.
+
+- `src/domain/goal-reflections.ts` owns reflection validation and replay comparison. `convex/goal_reflections.ts` owns the self/guardian/coach boundaries and atomic reflection/counter mutation. The preview uses its own reflection atom. The UI consumes these services through dedicated hooks and uses the shared form task runner to prevent overlapping submissions and preserve failed drafts.
+
+- Account erasure calls `eraseDevelopment`: it removes the deleted player's review/reflection data and the deleted coach's authored reviews, removes their identity from required-coach snapshots, and removes all module records when a club is deleted. Aggregated authoritative ratings for remaining players do not contain per-coach identities.
+
+- Run `bun test tests/development.test.ts tests/goal-reflections.test.ts` for pure domain behavior. Against the isolated local backend at `http://127.0.0.1:3210`, run `bun scripts/verify-development.ts` and `bun scripts/verify-goal-reflections.ts` with that explicit `EXPO_PUBLIC_CONVEX_URL`. Both scripts use fictional accounts through `createVerificationRun` and clean them up.
+
+- The live suites verify club and role isolation, private drafts, validation, revisions, submitted aggregates, concurrent finalization, authoritative rating revisions, stale teams, explicit reopen, coach/profile snapshot changes, reflection privacy, goal snapshots, stale goal/count rejection and a single atomic increment under duplicate replay.

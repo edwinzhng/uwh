@@ -61,6 +61,8 @@ export const AccountPasswordAction = ({
 				onPress={(): void => changeOpen(true)}
 			/>
 			<Dialog
+				intent="form"
+				isDismissDisabled={task.busy}
 				title="Change password"
 				isOpen={open}
 				onOpenChange={changeOpen}

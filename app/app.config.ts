@@ -1,5 +1,9 @@
 import type { ExpoConfig } from "expo/config";
 
+const projectId =
+	process.env.EXPO_PUBLIC_EAS_PROJECT_ID ??
+	"8670108c-8259-43e5-8799-f1d4078577e8";
+
 const config: ExpoConfig = {
 	name: "Calgary UWH",
 	slug: "calgary-uwh",
@@ -9,12 +13,20 @@ const config: ExpoConfig = {
 	icon: "./assets/app-icon.png",
 	extra: {
 		eas: {
-			projectId:
-				process.env.EXPO_PUBLIC_EAS_PROJECT_ID ??
-				"8670108c-8259-43e5-8799-f1d4078577e8",
+			projectId,
 		},
 	},
+	runtimeVersion: { policy: "fingerprint" },
+	updates: {
+		enabled: true,
+		url: `https://u.expo.dev/${projectId}`,
+		checkAutomatically: "ON_LOAD",
+		fallbackToCacheTimeout: 0,
+	},
 	userInterfaceStyle: "automatic",
+	experiments: {
+		baseUrl: process.env.EXPO_REVIEW_BASE_PATH ?? "",
+	},
 	ios: {
 		supportsTablet: true,
 		bundleIdentifier: "com.base69c3f808e02b5b2113ac2191.app",
@@ -27,9 +39,14 @@ const config: ExpoConfig = {
 	web: {
 		bundler: "metro",
 		output: "static",
-		favicon: "./assets/club-logo.png",
+		favicon: "./assets/app-icon.png",
 	},
 	plugins: [
+		"expo-video",
+		[
+			"expo-audio",
+			{ microphonePermission: "Record voice notes on club video clips." },
+		],
 		"expo-notifications",
 		[
 			"expo-speech-recognition",
@@ -51,7 +68,19 @@ const config: ExpoConfig = {
 		"expo-router",
 		"expo-font",
 		"expo-status-bar",
-		"expo-splash-screen",
+		[
+			"expo-splash-screen",
+			{
+				backgroundColor: "#080A0D",
+				image: "./assets/loading/loading-puck-dark.png",
+				imageWidth: 320,
+				resizeMode: "contain",
+				dark: {
+					backgroundColor: "#080A0D",
+					image: "./assets/loading/loading-puck-dark.png",
+				},
+			},
+		],
 	],
 };
 

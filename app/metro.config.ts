@@ -24,7 +24,19 @@ const resolveRequest: CustomResolver = (
 	);
 const config = {
 	...defaults,
+	maxWorkers: 2,
 	watchFolders: [...defaults.watchFolders, resolve(root, "../packages")],
-	resolver: { ...defaults.resolver, resolveRequest },
+	resolver: {
+		...defaults.resolver,
+		resolveRequest,
+		blockList: [
+			...(Array.isArray(defaults.resolver.blockList)
+				? defaults.resolver.blockList
+				: defaults.resolver.blockList
+					? [defaults.resolver.blockList]
+					: []),
+			/[/\\]app[/\\](?:\.convex|dist)[/\\].*/,
+		],
+	},
 };
 export default config;

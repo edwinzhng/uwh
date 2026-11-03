@@ -1,5 +1,7 @@
 import { canReadThread } from "./app-rules";
 import type { Account, AppAction, AppData } from "./app-types";
+import { reservedRoomId } from "./managed-rooms";
+import { hasVisibleMessageContent } from "./message-content";
 import { imageLimits, isDirectThread, isReactionEmoji } from "./messaging";
 
 export type MessageAction = Extract<
@@ -38,7 +40,7 @@ export const reduceMessages = (
 				throw new Error("Choose an available message in this conversation.");
 			if (action.body.length > 5000)
 				throw new Error("Keep messages under 5,000 characters.");
-			if (!action.body.trim() && !action.images?.length)
+			if (!hasVisibleMessageContent(action.body) && !action.images?.length)
 				throw new Error("Add a message or photo.");
 			if (
 				(action.images?.length ?? 0) > imageLimits.perMessage ||
@@ -53,6 +55,7 @@ export const reduceMessages = (
 					...data.messages,
 					{
 						id: action.id,
+						createdAt: Date.now(),
 						threadId: action.threadId,
 						body: action.body.trim().slice(0, 5000),
 						time: action.time,
@@ -93,6 +96,7 @@ export const reduceMessages = (
 									accountId: entry.accountId,
 									author: entry.author,
 									time: entry.time,
+									createdAt: entry.createdAt,
 									body: "",
 									deleted: true,
 								}
@@ -101,9 +105,10 @@ export const reduceMessages = (
 				};
 			}
 			if (message.deleted) throw new Error("Message was deleted.");
+			if (message.pollId) throw new Error("Polls cannot be edited");
 			if (
-				(!action.body.trim() && !message.images?.length) ||
-				action.body.length > 5000
+				action.body.length > 5000 ||
+				(!hasVisibleMessageContent(action.body) && !message.images?.length)
 			)
 				throw new Error("Add a message under 5,000 characters.");
 			if (message.body === action.body.trim()) return data;
@@ -155,6 +160,7 @@ export const reduceMessages = (
 		}
 		case "create-thread":
 			if (
+				reservedRoomId(action.id) ||
 				!action.title.trim() ||
 				!action.recipientId ||
 				action.recipientId === account.id

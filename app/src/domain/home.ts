@@ -1,7 +1,32 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { canManagePerson, canRegister } from "./app-rules";
+import { canCoach, canManagePerson, canRegister } from "./app-rules";
 import type { Account, AppData, ClubEvent, Member } from "./app-types";
 import { clubDate, clubTimestamp } from "./event-time";
+import { practiceEvent } from "./event-types";
+
+export const nextCoachingEvent = (
+	data: AppData,
+	account: Account,
+	now: number,
+): ClubEvent | undefined =>
+	!canCoach(account)
+		? undefined
+		: data.events
+				.filter(
+					(event) =>
+						!event.cancelled &&
+						practiceEvent(event) &&
+						clubTimestamp(
+							event.endDate ?? event.date,
+							event.end,
+							event.timeZone ?? data.timeZone,
+						) > now,
+				)
+				.slice()
+				.sort((first, second) =>
+					(first.date + first.start).localeCompare(second.date + second.start),
+				)
+				.at(0);
 
 export const householdMembers = (data: AppData, account: Account): Member[] =>
 	data.members.filter((member) => canManagePerson(account, member.id));

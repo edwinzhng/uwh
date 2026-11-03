@@ -59,7 +59,7 @@ const resolvePerson = async (
 			q.eq("clubId", clubId).eq("value.id", target),
 		)
 		.unique();
-	if (!person)
+	if (!person || person.value.mergedInto)
 		throw new Error(
 			`Member ${id} not found. Import members first or use their app ID.`,
 		);

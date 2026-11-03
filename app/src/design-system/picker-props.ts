@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { IconName } from "./icon";
 
 export type StatusTone = "success" | "warning" | "danger" | "pending";
@@ -11,6 +12,8 @@ export type ChoiceOption<T extends string> = {
 };
 
 export type PickerProps<T extends string> = {
+	listFooter?: ReactNode;
+	appearance?: "field" | "context";
 	hideLabel?: boolean;
 	compact?: boolean;
 	label: string;

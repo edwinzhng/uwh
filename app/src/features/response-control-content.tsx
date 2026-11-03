@@ -1,13 +1,16 @@
-import { type ReactElement, useRef, useState } from "react";
+import type { ReactElement } from "react";
 import { useActivePerson, useApp } from "../demo/app-state";
-import { Select, Stack } from "../design-system";
+import { Select, Stack, Text } from "../design-system";
 import { canRegister, eventResponse } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import type { Response } from "../domain/club";
 import { signupState } from "../domain/event-time";
+import { PartResponseControls } from "./part-response-controls";
+import { QuickResponseButtons } from "./quick-response-buttons";
 import { responseOptions } from "./response-options";
 import { SectionResponsePicker } from "./section-response-picker";
 import { SeriesResponseControl } from "./series-response-control";
+import { useFormTask } from "./use-form-task";
 
 export const ResponseControlContent = ({
 	event,
@@ -15,19 +18,20 @@ export const ResponseControlContent = ({
 	hideLabel = false,
 	committed = false,
 	loading = false,
+	quick = false,
 }: {
 	event: ClubEvent;
 	personId?: string;
 	hideLabel?: boolean;
 	committed?: boolean;
 	loading?: boolean;
+	quick?: boolean;
 }): ReactElement => {
 	const { data, dispatch } = useApp();
 	const activePerson = useActivePerson();
 	const person =
 		data.members.find((entry) => entry.id === personId) ?? activePerson;
-	const [pending, setPending] = useState(false);
-	const working = useRef(false);
+	const task = useFormTask();
 	const current = eventResponse(data, event.id, person.id);
 	const response = current.response;
 	const signup = signupState(event, Date.now());
@@ -47,28 +51,95 @@ export const ResponseControlContent = ({
 	const respond = async (
 		value: Response,
 		partIds?: string[],
+		declinedPartIds?: string[],
 	): Promise<void> => {
-		if (working.current || locked) return;
-		working.current = true;
-		setPending(true);
-		await dispatch({
-			type: "respond",
-			eventId: event.id,
-			personId: person.id,
-			response: value,
-			partIds,
+		if (locked) return;
+		await task.run(async (): Promise<void> => {
+			const saved = await dispatch({
+				type: "respond",
+				eventId: event.id,
+				personId: person.id,
+				response: value,
+				partIds,
+				declinedPartIds,
+			});
+			if (!saved) throw new Error("Could not save your response. Try again.");
 		});
-		working.current = false;
-		setPending(false);
 	};
+	if (person.archived)
+		return (
+			<Text variant="small" tone="secondary">
+				This profile is archived. Ask a club administrator to restore it before
+				signing up.
+			</Text>
+		);
+	if (quick && event.parts?.length && !locked && event.kind !== "tournament")
+		return (
+			<Stack gap="xxs">
+				<PartResponseControls
+					event={event}
+					current={current}
+					name={person.name}
+					disabled={task.busy}
+					full={full && response !== "going" && !current.seriesExpected}
+					onRespond={respond}
+				/>
+				{task.error ? (
+					<Text variant="caption" tone="danger">
+						{task.error}
+					</Text>
+				) : undefined}
+			</Stack>
+		);
 	if (current.seriesExpected)
 		return (
 			<SeriesResponseControl
+				quick={quick}
 				hideLabel={hideLabel}
 				event={event}
 				personId={person.id}
 				unavailable={current.response === "unavailable"}
 			/>
+		);
+	if (quick && event.kind !== "tournament")
+		if (locked)
+			return (
+				<Text variant="caption" tone="secondary">
+					{loading
+						? "Loading"
+						: event.cancelled
+							? "Cancelled"
+							: signup === "scheduled"
+								? "Not open yet"
+								: "Closed"}
+				</Text>
+			);
+	if (quick && event.kind !== "tournament")
+		return (
+			<Stack gap="xxs">
+				<QuickResponseButtons
+					name={person.name}
+					response={response}
+					full={full}
+					disabled={locked || task.busy}
+					onRespond={(going): void => {
+						if (
+							(going && response === "going") ||
+							(!going && response === "unavailable")
+						)
+							return;
+						void respond(
+							going ? "going" : "unavailable",
+							going ? current.partIds : undefined,
+						);
+					}}
+				/>
+				{task.error ? (
+					<Text variant="caption" tone="danger">
+						{task.error}
+					</Text>
+				) : undefined}
+			</Stack>
 		);
 	return (
 		<Stack gap="xs">
@@ -77,7 +148,7 @@ export const ResponseControlContent = ({
 				hideLabel={hideLabel}
 				label={`${person.name} · ${event.kind === "tournament" ? "Interest" : "Attendance"}`}
 				value={response}
-				isDisabled={locked || pending}
+				isDisabled={locked || task.busy}
 				options={
 					event.kind === "tournament"
 						? [
@@ -108,12 +179,13 @@ export const ResponseControlContent = ({
 					name={person.name}
 					parts={event.parts}
 					selected={current.partIds}
-					disabled={locked || pending}
+					disabled={locked || task.busy}
 					onChange={(ids): void => {
 						void respond("going", ids);
 					}}
 				/>
 			) : undefined}
+			{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
 		</Stack>
 	);
 };

@@ -1,23 +1,32 @@
-import { chartColors } from "@calgarycrocs/design-system/tokens";
-import { palette } from "./tokens";
+import { type RainbowHue, rainbowSurface } from "./rainbow-palette";
 
-export const avatarColors = (
-	name: string,
-): {
-	background: string;
-	foreground: string;
-} => {
-	const hash = Array.from(
-		name.trim().toLowerCase().replace(/\s+/g, " "),
-	).reduce(
+const avatarHues: readonly RainbowHue[] = [
+	"blue",
+	"violet",
+	"green",
+	"yellow",
+	"red",
+	"orange",
+	"indigo",
+];
+
+const avatarHash = (name: string): number =>
+	Array.from(name.trim().toLowerCase().replace(/\s+/g, " ")).reduce(
 		(value, character) =>
 			(Math.imul(value, 31) + character.charCodeAt(0)) >>> 0,
 		0,
 	);
-	return {
-		background:
-			Object.values(chartColors).at(hash % Object.values(chartColors).length) ??
-			chartColors.blue,
-		foreground: palette.white,
-	};
+
+export const avatarColors = (
+	name: string,
+	mode: "light" | "dark" = "light",
+): {
+	background: string;
+	foreground: string;
+} => {
+	const hash = avatarHash(name);
+	return rainbowSurface(
+		avatarHues.at(hash % avatarHues.length) ?? "blue",
+		mode,
+	);
 };

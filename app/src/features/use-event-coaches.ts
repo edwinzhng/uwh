@@ -1,20 +1,25 @@
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { atom, useAtom } from "jotai";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
+import { previewCoachingSchedule } from "../demo/coaching-schedule-state";
 import type { ClubEvent } from "../domain/app-types";
 import {
 	type CoachingAssignment,
+	type CoachOption,
+	canAssignPracticeCoach,
 	coachingPartIds,
 	coachingPartMinutes,
-	defaultCoachingDuration,
+	maxPracticeCoaches,
+	practiceCoachingDuration,
 	resolvedCoachingAssignment,
 	updatedCoachingPartIds,
 	validCoachingDuration,
 } from "../domain/coaching-hours";
+import { programCoachesFor } from "../domain/coaching-schedule";
+import { useTask } from "./use-task";
 
-export type CoachOption = { coachId: string; name: string; personId: string };
 export type CoachChange = {
 	coachId: string;
 	assigned: boolean;
@@ -23,10 +28,14 @@ export type CoachChange = {
 export type EventCoachControls = {
 	coaches: CoachOption[];
 	assignments: CoachingAssignment[];
+	usingWeekly: boolean;
+	backupCoachIds: string[];
 	loading: boolean;
 	busy: boolean;
 	error?: string;
 	change: (value: CoachChange) => Promise<boolean>;
+	confirm: () => Promise<boolean>;
+	useWeekly: () => Promise<boolean>;
 };
 export const previewCoachAssignments = atom<
 	Record<string, CoachingAssignment[]>
@@ -35,7 +44,7 @@ export const useLiveEventCoaches = (
 	eventId: string,
 	partId?: string,
 ): EventCoachControls => {
-	const assignments = useQuery(api.coaching_hours.eventCoaches, {
+	const state = useQuery(api.coaching_schedule.eventState, {
 		eventId,
 		partId,
 	});
@@ -49,33 +58,33 @@ export const useLiveEventCoaches = (
 		{ initialNumItems: 30 },
 	);
 	const save = useMutation(api.coaching_hours.setCoach);
-	const [busy, setBusy] = useState(false);
-	const [error, setError] = useState<string>();
+	const confirm = useMutation(api.coaching_schedule.confirmEvent);
+	const resetEvent = useMutation(api.coaching_schedule.useWeeklyForEvent);
+	const task = useTask();
 	useEffect(() => {
 		if (status === "CanLoadMore") loadMore(30);
 	}, [status, loadMore]);
-	const change = async (value: CoachChange): Promise<boolean> => {
-		setBusy(true);
-		setError(undefined);
-		try {
+	const change = (value: CoachChange): Promise<boolean> =>
+		task.run(async (): Promise<void> => {
 			await save({ eventId, partId, ...value });
-			return true;
-		} catch (error) {
-			setError(
-				error instanceof Error ? error.message : "Could not save coach hours.",
-			);
-			return false;
-		} finally {
-			setBusy(false);
-		}
-	};
+		});
 	return {
 		coaches,
-		assignments: assignments ?? [],
-		loading: !assignments || status !== "Exhausted",
-		busy,
-		error,
+		assignments: state?.assignments ?? [],
+		usingWeekly: state?.usingWeekly ?? false,
+		backupCoachIds: state?.backupCoachIds ?? [],
+		loading: !state || status !== "Exhausted",
+		busy: task.busy,
+		error: task.error,
 		change,
+		confirm: (): Promise<boolean> =>
+			task.run(async (): Promise<void> => {
+				await confirm({ eventId });
+			}),
+		useWeekly: (): Promise<boolean> =>
+			task.run(async (): Promise<void> => {
+				await resetEvent({ eventId });
+			}),
 	};
 };
 export const usePreviewEventCoaches = (
@@ -84,6 +93,7 @@ export const usePreviewEventCoaches = (
 ): EventCoachControls => {
 	const { accounts } = useApp();
 	const [stored, setStored] = useAtom(previewCoachAssignments);
+	const [schedule] = useAtom(previewCoachingSchedule);
 	const coaches = accounts
 		.filter((account) => account.coachPrograms.length > 0)
 		.map((account) => ({
@@ -91,7 +101,31 @@ export const usePreviewEventCoaches = (
 			personId: account.personId,
 			name: account.name,
 		}));
-	const allAssignments = stored[event.id] ?? [];
+	const usingWeekly =
+		Object.getOwnPropertyDescriptor(stored, event.id) === undefined;
+	const allAssignments: CoachingAssignment[] =
+		stored[event.id] ??
+		programCoachesFor(schedule, event.program).flatMap((id) => {
+			const coach = coaches.find(
+				(entry) =>
+					entry.coachId === id &&
+					accounts.some(
+						(account) =>
+							account.id === id &&
+							account.coachPrograms.includes(event.program),
+					),
+			);
+			return coach
+				? [
+						{
+							...coach,
+							durationMinutes: event.parts?.length
+								? coachingPartMinutes(event)
+								: practiceCoachingDuration(event),
+						},
+					]
+				: [];
+		});
 	const assignments = allAssignments
 		.filter(
 			(assignment) =>
@@ -100,6 +134,11 @@ export const usePreviewEventCoaches = (
 		.map((assignment) => resolvedCoachingAssignment(event, assignment, partId))
 		.filter((assignment) => assignment.durationMinutes > 0);
 	const change = async (value: CoachChange): Promise<boolean> => {
+		if (
+			value.assigned &&
+			!canAssignPracticeCoach(allAssignments, value.coachId)
+		)
+			return false;
 		const coach = coaches.find((coach) => coach.coachId === value.coachId);
 		const existing = allAssignments.find(
 			(entry) => entry.coachId === value.coachId,
@@ -115,19 +154,19 @@ export const usePreviewEventCoaches = (
 			? coachingPartMinutes(event, partIds)
 			: (value.durationMinutes ??
 				existing?.durationMinutes ??
-				defaultCoachingDuration(event.date));
+				practiceCoachingDuration(event));
 		if (
 			event.cancelled ||
-			(!event.parts?.length && !validCoachingDuration(durationMinutes)) ||
+			(!event.parts?.length &&
+				!validCoachingDuration(durationMinutes) &&
+				durationMinutes !== practiceCoachingDuration(event)) ||
 			(value.assigned && !coach)
 		)
 			return false;
 		setStored((current) => ({
 			...current,
 			[event.id]: [
-				...(current[event.id] ?? []).filter(
-					(entry) => entry.coachId !== value.coachId,
-				),
+				...allAssignments.filter((entry) => entry.coachId !== value.coachId),
 				...(assigned && coach
 					? [{ ...coach, durationMinutes, ...(partIds ? { partIds } : {}) }]
 					: []),
@@ -135,5 +174,28 @@ export const usePreviewEventCoaches = (
 		}));
 		return true;
 	};
-	return { coaches, assignments, loading: false, busy: false, change };
+	return {
+		coaches,
+		assignments,
+		usingWeekly,
+		backupCoachIds: schedule.backupCoachIds,
+		loading: false,
+		busy: false,
+		change,
+		confirm: async (): Promise<boolean> => {
+			if (event.cancelled || allAssignments.length > maxPracticeCoaches)
+				return false;
+			setStored((current) => ({ ...current, [event.id]: allAssignments }));
+			return true;
+		},
+		useWeekly: async (): Promise<boolean> => {
+			if (event.cancelled) return false;
+			setStored((current) =>
+				Object.fromEntries(
+					Object.entries(current).filter(([id]) => id !== event.id),
+				),
+			);
+			return true;
+		},
+	};
 };

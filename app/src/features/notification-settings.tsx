@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "convex/react";
 import { type ReactElement, useState } from "react";
+import { Platform } from "react-native";
 import { api } from "../../convex/_generated/api";
 import {
 	disableNativePush,
@@ -9,6 +10,7 @@ import {
 	registerNativePush,
 	setPushEnabled,
 } from "../backend/native-push";
+import { useApp } from "../demo/app-state";
 import {
 	actionToast,
 	Button,
@@ -19,9 +21,13 @@ import {
 	Text,
 	Toggle,
 } from "../design-system";
+import { notificationPreferenceOptions } from "../domain/notification-preferences";
+import { BrowserNotificationSettings } from "./browser-notification-settings";
+import { PreviewNotificationSettings } from "./preview-notification-settings";
 import { useTask } from "./use-task";
 
-export const NotificationSettings = (): ReactElement => {
+const LiveNotificationSettings = (): ReactElement => {
+	const { account } = useApp();
 	const settings = useQuery(api.notifications.settings, {});
 	const preferences = useMutation(api.notifications.preferences);
 	const register = useMutation(api.notifications.register);
@@ -35,40 +41,43 @@ export const NotificationSettings = (): ReactElement => {
 				<Stack>
 					{settings ? (
 						<Stack gap="none">
-							{(
-								[
-									{ key: "messages", label: "Messages" },
-									{ key: "events", label: "Registration reminders" },
-									{ key: "feedback", label: "Shoutouts" },
-								] as const
-							).map((item) => (
-								<Toggle
-									compact
-									key={item.key}
-									label={item.label}
-									value={settings.preferences[item.key]}
-									isDisabled={task.busy}
-									onValueChange={(value): void => {
-										void task.run(async (): Promise<void> => {
-											await preferences({
-												kind: item.key,
-												enabled: value,
+							{notificationPreferenceOptions
+								.filter(
+									(item) =>
+										!("staff" in item) ||
+										account.admin ||
+										account.coachPrograms.length > 0,
+								)
+								.map((item) => (
+									<Toggle
+										compact
+										key={item.key}
+										label={item.label}
+										value={settings.preferences[item.key]}
+										isDisabled={task.busy}
+										onValueChange={(value): void => {
+											void task.run(async (): Promise<void> => {
+												await preferences({
+													kind: item.key,
+													enabled: value,
+												});
+												actionToast("savedNotifications", "success", {
+													subject: item.label,
+													description: `${item.label} · ${value ? "On" : "Off"}`,
+												});
 											});
-											actionToast("savedNotifications", "success", {
-												subject: item.label,
-												description: `${item.label} alerts are now ${value ? "enabled" : "disabled"} for your account.`,
-											});
-										});
-									}}
-								/>
-							))}
+										}}
+									/>
+								))}
 							<Text variant="caption" tone="secondary">
 								{settings.devices} registered{" "}
 								{settings.devices === 1 ? "device" : "devices"}
 							</Text>
 						</Stack>
 					) : undefined}
-					{nativePushAvailable ? (
+					{Platform.OS === "web" ? (
+						<BrowserNotificationSettings />
+					) : nativePushAvailable ? (
 						<Row wrap>
 							<Button
 								label="Enable on this device"
@@ -128,3 +137,9 @@ export const NotificationSettings = (): ReactElement => {
 		</Stack>
 	);
 };
+export const NotificationSettings = (): ReactElement =>
+	useApp().source === "convex" ? (
+		<LiveNotificationSettings />
+	) : (
+		<PreviewNotificationSettings />
+	);

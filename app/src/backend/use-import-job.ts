@@ -6,31 +6,32 @@ import { newId } from "../demo/app-state";
 import type { ImportKind, ImportRow } from "../domain/import-data";
 import { friendlyError } from "./errors";
 
-type Batch = {
+export type ImportBatch = {
 	rows: ImportRow[];
 	key: string;
 	preview: FunctionReturnType<typeof api.imports.preview>;
 };
-type Input = {
+export type ImportJobInput = {
 	source: string;
 	kind: ImportKind;
 	seasonId: string;
 	rows: ImportRow[];
 };
-export const useImportJob = (): {
-	batches: Batch[];
+export type ImportJobController = {
+	batches: ImportBatch[];
 	busy: boolean;
 	completed: number;
 	error?: string;
 	done: boolean;
 	reset: () => void;
-	preview: (input: Input) => Promise<void>;
+	preview: (input: ImportJobInput) => Promise<void>;
 	commit: () => Promise<boolean>;
-} => {
+};
+export const useImportJob = (): ImportJobController => {
 	const client = useConvex();
 	const write = useMutation(api.imports.commit);
-	const [input, setInput] = useState<Input>();
-	const [batches, setBatches] = useState<Batch[]>([]);
+	const [input, setInput] = useState<ImportJobInput>();
+	const [batches, setBatches] = useState<ImportBatch[]>([]);
 	const [busy, setBusy] = useState(false);
 	const [completed, setCompleted] = useState(0);
 	const [error, setError] = useState<string>();
@@ -42,7 +43,7 @@ export const useImportJob = (): {
 		setDone(false);
 		setError(undefined);
 	};
-	const preview = async (input: Input): Promise<void> => {
+	const preview = async (input: ImportJobInput): Promise<void> => {
 		if (busy) return;
 		reset();
 		setBusy(true);
@@ -51,7 +52,7 @@ export const useImportJob = (): {
 			const keys = input.rows.map((row) => row.source_id?.trim());
 			if (new Set(keys).size !== keys.length)
 				throw new Error("Each row needs a unique source ID.");
-			const batches: Batch[] = [];
+			const batches: ImportBatch[] = [];
 			for (const index of Array.from(
 				{ length: Math.ceil(input.rows.length / 25) },
 				(_, index) => index,

@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
+import { useChatSafety } from "../backend/chat-safety";
 import { newId, useApp } from "../demo/app-state";
 import {
 	Button,
@@ -14,6 +15,12 @@ import {
 	Toggle,
 } from "../design-system";
 import type { Conversation } from "../domain/app-types";
+import {
+	canEditChatAppearance,
+	canRenameChat,
+} from "../domain/chat-appearance";
+import { ChatAppearanceEditor } from "./chat-appearance-editor";
+import { ChatNameEditor } from "./chat-name-editor";
 import { useFormTask } from "./use-form-task";
 import {
 	type ParticipantControls,
@@ -23,23 +30,24 @@ import {
 
 const ParticipantsContent = ({
 	controls,
+	thread,
+	onClose,
 }: {
 	controls: ParticipantControls;
+	onClose: () => void;
+	thread: Conversation;
 }): ReactElement => {
 	const { state } = controls;
 	const router = useRouter();
 	const task = useFormTask();
-	const [view, setView] = useState<"members" | "add">();
+	const [view, setView] = useState<"members" | "add" | "picture" | "name">(
+		"members",
+	);
+	const { account } = useApp();
+	const safety = useChatSafety();
 	const [selected, setSelected] = useState<string[]>([]);
 	const [search, setSearch] = useState("");
 	const [groupId, setGroupId] = useState(() => `group-${newId()}`);
-	const names = state?.members
-		.slice(0, 2)
-		.map((member) => member.name)
-		.join(", ");
-	const label = names
-		? `${names}${(state?.members.length ?? 0) > 2 ? ` +${(state?.members.length ?? 0) - 2}` : ""}`
-		: "View members";
 	const candidates =
 		state?.candidates.filter((candidate) =>
 			candidate.name.toLowerCase().includes(search.trim().toLowerCase()),
@@ -49,7 +57,7 @@ const ParticipantsContent = ({
 			() => (!selected.length ? "Choose at least one person." : undefined),
 			async (): Promise<void> => {
 				const id = await controls.add(selected, groupId);
-				setView(undefined);
+				onClose();
 				setSelected([]);
 				router.replace({ pathname: "/conversation", params: { id } });
 			},
@@ -57,18 +65,12 @@ const ParticipantsContent = ({
 	};
 	return (
 		<>
-			<Button
-				label={label}
-				prefix="users"
-				accessibilityLabel={`${state?.members.length ?? 0} conversation ${state?.members.length === 1 ? "member" : "members"}. View all members`}
-				variant="ghost"
-				onPress={(): void => setView("members")}
-			/>
 			<Dialog
+				intent="detail"
 				title="Conversation members"
 				isOpen={view === "members"}
 				onOpenChange={(open): void => {
-					if (!open) setView(undefined);
+					if (!open) onClose();
 				}}
 				footer={
 					state?.canAdd ? (
@@ -89,38 +91,52 @@ const ParticipantsContent = ({
 					<LoadingContent />
 				) : (
 					<Stack>
+						{canEditChatAppearance(thread, account) ? (
+							<Button
+								label="Chat picture"
+								prefix="image"
+								variant="secondary"
+								isDisabled={safety.status?.paused}
+								onPress={(): void => setView("picture")}
+							/>
+						) : undefined}
+						{canRenameChat(thread, account) ? (
+							<Button
+								label="Chat name"
+								prefix="edit"
+								variant="secondary"
+								onPress={(): void => setView("name")}
+							/>
+						) : undefined}
 						<List>
 							{state.members.map((member) => (
 								<ListItem
 									key={member.id}
 									title={member.name}
 									avatar={member.name}
+									avatarId={member.id}
 								/>
 							))}
 							{!state.members.length ? (
-								<EmptyState
-									title="No members available"
-									description="Member details will appear here when they are available."
-								/>
+								<EmptyState title="No members available" />
 							) : undefined}
 						</List>
-						{state.kind === "general" ? (
-							<Text tone="secondary">
-								Everyone in the club belongs to General automatically.
-							</Text>
-						) : state.kind === "event" ? (
-							<Text tone="secondary">
-								Membership follows this event’s eligible players and club staff.
-							</Text>
-						) : undefined}
 					</Stack>
 				)}
 			</Dialog>
+			{view === "name" ? (
+				<ChatNameEditor thread={thread} onClose={onClose} />
+			) : undefined}
+			{view === "picture" ? (
+				<ChatAppearanceEditor thread={thread} onClose={(): void => onClose()} />
+			) : undefined}
 			<Dialog
+				intent="picker"
+				isDismissDisabled={task.busy}
 				title={state?.kind === "direct" ? "Start a group" : "Add people"}
 				isOpen={view === "add"}
 				onOpenChange={(open): void => {
-					if (!open && !task.busy) setView(undefined);
+					if (!open && !task.busy) onClose();
 				}}
 				footer={
 					<Button
@@ -181,25 +197,63 @@ const ParticipantsContent = ({
 };
 const LiveParticipants = ({
 	thread,
+	onClose,
 }: {
 	thread: Conversation;
+	onClose: () => void;
 }): ReactElement => (
-	<ParticipantsContent controls={useLiveThreadParticipants(thread)} />
+	<ParticipantsContent
+		thread={thread}
+		onClose={onClose}
+		controls={useLiveThreadParticipants(thread)}
+	/>
 );
 const PreviewParticipants = ({
 	thread,
+	onClose,
 }: {
 	thread: Conversation;
+	onClose: () => void;
 }): ReactElement => (
-	<ParticipantsContent controls={usePreviewThreadParticipants(thread)} />
+	<ParticipantsContent
+		thread={thread}
+		onClose={onClose}
+		controls={usePreviewThreadParticipants(thread)}
+	/>
 );
+const ParticipantsDialog = ({
+	thread,
+	onClose,
+}: {
+	thread: Conversation;
+	onClose: () => void;
+}): ReactElement =>
+	useApp().source === "convex" ? (
+		<LiveParticipants thread={thread} onClose={onClose} />
+	) : (
+		<PreviewParticipants thread={thread} onClose={onClose} />
+	);
+
 export const ThreadParticipantsHeader = ({
 	thread,
 }: {
 	thread: Conversation;
-}): ReactElement =>
-	useApp().source === "convex" ? (
-		<LiveParticipants thread={thread} />
-	) : (
-		<PreviewParticipants thread={thread} />
+}): ReactElement => {
+	const [open, setOpen] = useState(false);
+	return (
+		<>
+			<Button
+				label="Conversation info"
+				icon="users"
+				variant="ghost"
+				onPress={(): void => setOpen(true)}
+			/>
+			{open ? (
+				<ParticipantsDialog
+					thread={thread}
+					onClose={(): void => setOpen(false)}
+				/>
+			) : undefined}
+		</>
 	);
+};

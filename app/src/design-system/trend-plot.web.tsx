@@ -9,13 +9,15 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
+import { chartEasing } from "./chart-animation";
 import { chartPalette } from "./chart-palette";
 import { useTheme } from "./theme";
-import { corners, font, geometry, space, typography } from "./tokens";
+import { corners, font, geometry, motion, space, typography } from "./tokens";
 import type { TrendChartProps } from "./trend-chart-props";
 import { useMotion } from "./use-motion";
 export const TrendChart = ({
 	series,
+	maximum,
 	formatValue = String,
 }: TrendChartProps): ReactElement => {
 	const theme = useTheme();
@@ -53,7 +55,11 @@ export const TrendChart = ({
 					accessibilityLayer
 					margin={{ top: space.sm, right: space.sm, bottom: 0, left: space.sm }}
 				>
-					<CartesianGrid vertical={false} stroke={theme.border} />
+					<CartesianGrid
+						vertical={false}
+						stroke={theme.border}
+						strokeLinecap="round"
+					/>
 					<XAxis
 						dataKey="date"
 						tickFormatter={(date: string): string => date.slice(5)}
@@ -63,6 +69,7 @@ export const TrendChart = ({
 						tick={{ fill: theme.text.secondary }}
 					/>
 					<YAxis
+						domain={maximum === undefined ? undefined : [0, maximum]}
 						tickFormatter={formatValue}
 						axisLine={false}
 						tickLine={false}
@@ -86,10 +93,14 @@ export const TrendChart = ({
 							dataKey={`series${index}`}
 							stroke={colors.at(index % colors.length)}
 							strokeWidth={geometry.focus}
+							strokeLinecap="round"
+							strokeLinejoin="round"
 							dot={{ r: space.xxs }}
 							activeDot={{ r: space.xxs }}
 							connectNulls={false}
 							isAnimationActive={animate}
+							animationDuration={motion.duration.slow}
+							animationEasing={chartEasing}
 						/>
 					))}
 				</LineChart>

@@ -1,6 +1,8 @@
 import { resolve, sep } from "node:path";
 
-const root = resolve(import.meta.dir, "../dist");
+const root = process.env.PREVIEW_DIRECTORY
+	? resolve(process.env.PREVIEW_DIRECTORY)
+	: resolve(import.meta.dir, "../dist");
 const resolveRequestPath = (url: string): string | undefined => {
 	try {
 		return resolve(root, `.${decodeURIComponent(new URL(url).pathname)}`);
@@ -37,5 +39,9 @@ if (!(await Bun.file(resolve(root, "index.html")).exists()))
 	throw new Error(
 		"Build the preview first with bun expo export --platform web.",
 	);
-const server = Bun.serve({ hostname: "127.0.0.1", port: 4173, fetch: serve });
+const server = Bun.serve({
+	hostname: "127.0.0.1",
+	port: Number(process.env.PREVIEW_PORT ?? 4173),
+	fetch: serve,
+});
 console.log(`UWH Club preview: ${server.url}`);

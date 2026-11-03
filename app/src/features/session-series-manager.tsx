@@ -4,27 +4,32 @@ import { useActivePerson, useApp } from "../demo/app-state";
 import {
 	Button,
 	DatePicker,
+	Disclosure,
 	EmptyState,
 	Field,
 	LoadingContent,
 	Row,
 	Select,
 	Stack,
-	Surface,
 	Text,
 } from "../design-system";
 import { canRegister, formatDate } from "../domain/app-rules";
 import { clubDate } from "../domain/event-time";
-import { seriesEvents } from "../domain/session-series";
-import { useFormTask } from "./use-form-task";
+import {
+	currentSeriesEnrollment,
+	seriesEvents,
+} from "../domain/session-series";
+import type { useFormTask } from "./use-form-task";
 import type { SeriesControls } from "./use-session-series";
 
 export const SessionSeriesManager = ({
 	seriesId,
 	controls,
+	task,
 }: {
 	seriesId: string;
 	controls: SeriesControls;
+	task: ReturnType<typeof useFormTask>;
 }): ReactElement => {
 	const { data, account } = useApp();
 	const active = useActivePerson();
@@ -51,7 +56,6 @@ export const SessionSeriesManager = ({
 		first && first.date > today ? first.date : today,
 	);
 	const [end, setEnd] = useState(today);
-	const task = useFormTask();
 	const people = data.members.filter(
 		(person) =>
 			(account.admin ||
@@ -59,9 +63,12 @@ export const SessionSeriesManager = ({
 				account.children.includes(person.id)) &&
 			(!first || canRegister(person, first)),
 	);
-	const current = series?.enrollments.find(
-		(entry) => entry.personId === personId && (!entry.end || entry.end > today),
-	);
+	const current = series
+		? currentSeriesEnrollment(series, personId, today)
+		: undefined;
+	const roster =
+		series?.enrollments.filter((entry) => !entry.end || entry.end > today) ??
+		[];
 	if (controls.loading) return <LoadingContent />;
 	return (
 		<Stack>
@@ -83,23 +90,28 @@ export const SessionSeriesManager = ({
 				</Text>
 			)}
 			{account.admin ? (
-				<Surface
-					header={
-						<Text variant="h4">
-							{series ? "Series settings" : "Set up committed roster"}
-						</Text>
+				<Disclosure
+					title={series ? "Series settings" : "Set up committed roster"}
+					summary={
+						series
+							? `${series.title} · ${capacity || "Unlimited"} places`
+							: undefined
 					}
+					defaultOpen={!series}
+					isDisabled={task.busy}
 				>
 					<Stack>
 						<Field
 							label="Series title"
 							value={title}
+							isDisabled={task.busy}
 							onValueChange={setTitle}
 						/>
 						<Field
 							label="Committed places (blank for unlimited)"
 							inputMode="numeric"
 							value={capacity}
+							isDisabled={task.busy}
 							onValueChange={setCapacity}
 						/>
 						<Button
@@ -127,14 +139,15 @@ export const SessionSeriesManager = ({
 							}}
 						/>
 					</Stack>
-				</Surface>
+				</Disclosure>
 			) : undefined}
 			{series ? (
-				<Surface header={<Text variant="h4">Commitment</Text>}>
+				<Disclosure title="Commitment" defaultOpen isDisabled={task.busy}>
 					<Stack>
 						<Select
 							label="Player"
 							value={personId}
+							isDisabled={task.busy}
 							options={people.map((person) => ({
 								value: person.id,
 								label: person.name,
@@ -173,6 +186,7 @@ export const SessionSeriesManager = ({
 								<DatePicker
 									label="End commitment from"
 									value={end}
+									isDisabled={task.busy}
 									onValueChange={(value): void => setEnd(value ?? "")}
 								/>
 								<Button
@@ -204,6 +218,7 @@ export const SessionSeriesManager = ({
 								<DatePicker
 									label="Join from"
 									value={start}
+									isDisabled={task.busy}
 									onValueChange={(value): void => setStart(value ?? "")}
 								/>
 								<Button
@@ -257,43 +272,50 @@ export const SessionSeriesManager = ({
 							</>
 						)}
 					</Stack>
-				</Surface>
+				</Disclosure>
 			) : undefined}
 			{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
 			{series ? (
-				<Surface header={<Text variant="h4">Roster</Text>}>
+				<Disclosure
+					title="Roster"
+					summary={`${roster.length} players`}
+					isDisabled={task.busy}
+				>
 					<Stack>
-						{series.enrollments
-							.filter((entry) => !entry.end || entry.end > today)
-							.map((entry) => (
-								<Row key={`${entry.personId}:${entry.start}`}>
-									<Text>
-										{data.members.find((person) => person.id === entry.personId)
-											?.name ?? "Player"}
-									</Text>
-									<Text tone="secondary">
-										{entry.state === "committed"
-											? "Committed"
-											: "Invitation pending"}
-									</Text>
-								</Row>
-							))}
-						{!series.enrollments.length ? (
+						{roster.map((entry) => (
+							<Row key={`${entry.personId}:${entry.start}`}>
+								<Text>
+									{data.members.find((person) => person.id === entry.personId)
+										?.name ?? "Player"}
+								</Text>
+								<Text tone="secondary">
+									{entry.state === "committed"
+										? "Committed"
+										: "Invitation pending"}
+								</Text>
+							</Row>
+						))}
+						{!roster.length ? (
 							<EmptyState
 								title="No commitments yet"
 								description="Invite players to commit to this series or let them join from a session."
 							/>
 						) : undefined}
 					</Stack>
-				</Surface>
+				</Disclosure>
 			) : undefined}
-			<Surface header={<Text variant="h4">Sessions</Text>}>
+			<Disclosure
+				title="Sessions"
+				summary={`${events.length} sessions`}
+				isDisabled={task.busy}
+			>
 				<Stack>
 					{events.map((event) => (
 						<Button
 							key={event.id}
 							label={`${formatDate(event.date)} · ${event.cancelled ? "Cancelled" : event.title}`}
 							variant="ghost"
+							isDisabled={task.busy}
 							onPress={(): void =>
 								router.push({
 									pathname: "/session",
@@ -303,13 +325,10 @@ export const SessionSeriesManager = ({
 						/>
 					))}
 					{!events.length ? (
-						<EmptyState
-							title="No sessions in this series"
-							description="Sessions will appear here when they are added to this series."
-						/>
+						<EmptyState title="No sessions in this series" />
 					) : undefined}
 				</Stack>
-			</Surface>
+			</Disclosure>
 		</Stack>
 	);
 };

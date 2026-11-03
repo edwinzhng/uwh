@@ -5,6 +5,7 @@ import { clubTimestamp } from "../src/domain/event-time";
 import {
 	homeSchedule,
 	householdMembers,
+	nextCoachingEvent,
 	relevantHouseholdEvent,
 } from "../src/domain/home";
 
@@ -25,6 +26,25 @@ const event = (
 	description: "",
 	cancelled: false,
 	...extra,
+});
+
+test("Home reuses the next valid coaching practice without selecting past or non-practice events", (): void => {
+	const now = clubTimestamp("2026-09-16", "12:00");
+	const data = {
+		...initialAppData,
+		events: [
+			event("later", "2026-09-19"),
+			event("ended", "2026-09-15"),
+			event("meeting", "2026-09-16", { kind: "meeting" }),
+			event("cancelled", "2026-09-16", { cancelled: true }),
+			event("next", "2026-09-17"),
+		],
+	};
+	expect(nextCoachingEvent(data, primaryAccount, now)?.id).toBe("next");
+	expect(
+		nextCoachingEvent(data, { ...primaryAccount, coachPrograms: [] }, now),
+	).toBeUndefined();
+	expect(data.events.at(0)?.id).toBe("later");
 });
 
 test("Home shows remaining sessions through Sunday and excludes ended or cancelled sessions", (): void => {

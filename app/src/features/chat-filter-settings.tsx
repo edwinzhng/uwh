@@ -33,10 +33,13 @@ export const ChatFilterSettings = (): ReactElement => {
 						}}
 					/>
 					<Dialog
+						intent="form"
+						isDismissDisabled={task.busy}
 						title="Blocked phrases"
-						staffRole="admin"
 						isOpen={open}
-						onOpenChange={setOpen}
+						onOpenChange={(value): void => {
+							if (!task.busy) setOpen(value);
+						}}
 						footer={
 							<Button
 								label="Save"

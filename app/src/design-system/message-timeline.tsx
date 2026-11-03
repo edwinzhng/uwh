@@ -4,8 +4,8 @@ import { Button } from "./button";
 import { EmptyState } from "./empty-state";
 import { LoadingContent } from "./loading-content";
 import { Stack } from "./stack";
-import { useTheme } from "./theme";
-import { corners, geometry, space } from "./tokens";
+import { geometry, space } from "./tokens";
+import { useMotion } from "./use-motion";
 
 type Props<T> = {
 	items: T[];
@@ -43,16 +43,12 @@ export const MessageTimeline = <T extends { id: string }>({
 			);
 		},
 	);
-	const theme = useTheme();
+	const canAnimate = useMotion();
 	return (
 		<View
 			style={{
 				flex: 1,
 				minHeight: 0,
-				borderRadius: corners.panel,
-				borderWidth: geometry.border,
-				borderColor: theme.border,
-				backgroundColor: theme.background.primary,
 				overflow: "hidden",
 			}}
 		>
@@ -63,6 +59,7 @@ export const MessageTimeline = <T extends { id: string }>({
 				keyExtractor={(item): string => item.id}
 				renderItem={({ item }): ReactElement => renderItem(item)}
 				style={{ flex: 1 }}
+				contentContainerStyle={{ paddingTop: items.length ? space.md : 0 }}
 				keyboardShouldPersistTaps="handled"
 				keyboardDismissMode="on-drag"
 				initialNumToRender={12}
@@ -73,8 +70,10 @@ export const MessageTimeline = <T extends { id: string }>({
 				onViewableItemsChanged={viewed.current}
 				onScroll={(event): void => {
 					const near = event.nativeEvent.contentOffset.y < geometry.tab;
-					atLatest.current = near;
-					setAway(!near);
+					if (atLatest.current !== near) {
+						atLatest.current = near;
+						setAway(!near);
+					}
 				}}
 				scrollEventThrottle={32}
 				onContentSizeChange={(): void => {
@@ -96,14 +95,9 @@ export const MessageTimeline = <T extends { id: string }>({
 					)
 				}
 				ListFooterComponent={
-					canLoadMore || loadingMore ? (
+					loadingMore ? (
 						<Stack padding="sm">
-							<Button
-								label="Older messages"
-								variant="ghost"
-								isLoading={loadingMore}
-								onPress={onLoadMore}
-							/>
+							<LoadingContent />
 						</Stack>
 					) : undefined
 				}
@@ -117,10 +111,12 @@ export const MessageTimeline = <T extends { id: string }>({
 					}}
 				>
 					<Button
-						label="Latest messages"
+						label="Jump to newest messages"
+						icon="arrowDown"
+						round
 						variant="secondary"
 						onPress={(): void =>
-							list.current?.scrollToOffset({ offset: 0, animated: true })
+							list.current?.scrollToOffset({ offset: 0, animated: canAnimate })
 						}
 					/>
 				</View>

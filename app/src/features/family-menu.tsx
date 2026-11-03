@@ -1,10 +1,11 @@
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { useSetAtom } from "jotai";
 import type { ReactElement } from "react";
 import { useBackend } from "../backend/context";
 import { selectedPersonAtom, useActivePerson, useApp } from "../demo/app-state";
 import { actionToast, PersonPicker } from "../design-system";
 import { canManagePerson } from "../domain/app-rules";
+import { isAccountDestination } from "../domain/page-navigation";
 
 export const FamilyMenu = (): ReactElement => {
 	const backend = useBackend();
@@ -12,8 +13,10 @@ export const FamilyMenu = (): ReactElement => {
 	const active = useActivePerson();
 	const select = useSetAtom(selectedPersonAtom);
 	const router = useRouter();
+	const pathname = usePathname();
 	return (
 		<PersonPicker
+			isSelected={isAccountDestination(pathname)}
 			value={active.id}
 			options={data.members
 				.filter((member) => canManagePerson(account, member.id))
@@ -25,12 +28,10 @@ export const FamilyMenu = (): ReactElement => {
 			onValueChange={(id): void => {
 				if (id !== active.id) {
 					select(id);
-					actionToast("switchedProfile", "success", {
-						subject: data.members.find((member) => member.id === id)?.name,
-					});
 				}
 			}}
 			account={{
+				onProfile: (): void => router.navigate("/account"),
 				onSignOut: backend.signOut
 					? (): void => {
 							void backend

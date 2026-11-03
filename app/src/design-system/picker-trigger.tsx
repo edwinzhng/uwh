@@ -1,6 +1,8 @@
 import { type ReactElement, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Icon, type IconName } from "./icon";
+import { type PickerLayoutKind, pickerTriggerWidth } from "./picker-layout";
+import { usePickerSizing } from "./picker-layout-context";
 import type { StatusTone } from "./picker-props";
 import { useTheme } from "./theme";
 import { control, corners, font, geometry } from "./tokens";
@@ -14,6 +16,7 @@ type Props = {
 	tone?: StatusTone;
 	onPress: () => void;
 	compact?: boolean;
+	kind?: PickerLayoutKind;
 };
 
 export const PickerTrigger = ({
@@ -25,8 +28,10 @@ export const PickerTrigger = ({
 	onPress,
 	tone,
 	compact = false,
+	kind = "field",
 }: Props): ReactElement => {
 	const theme = useTheme();
+	const inDialog = usePickerSizing();
 	const [focused, setFocused] = useState(false);
 	return (
 		<Pressable
@@ -40,7 +45,7 @@ export const PickerTrigger = ({
 			style={{
 				minHeight: geometry.touch,
 				justifyContent: "center",
-				width: compact ? geometry.compactPickerWidth : geometry.popupWidth,
+				width: pickerTriggerWidth({ inDialog, compact, kind }),
 				maxWidth: "100%",
 			}}
 		>
@@ -56,7 +61,9 @@ export const PickerTrigger = ({
 						? theme[tone].background
 						: theme.background.primary,
 					borderWidth: geometry.border,
-					borderColor: tone ? theme.colorScales[tone].border : theme.border,
+					borderColor: tone
+						? theme.colorScales[tone].border
+						: theme.controlBorder,
 					borderRadius: corners.control,
 					outlineWidth: focused ? geometry.focus : 0,
 					outlineColor: theme.focus,

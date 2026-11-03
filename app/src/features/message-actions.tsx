@@ -1,10 +1,11 @@
-import * as Clipboard from "expo-clipboard";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 import { useChatSafety } from "../backend/chat-safety";
+import { useThreadTools } from "../backend/thread-tools-context";
 import { useApp } from "../demo/app-state";
 import {
-	ActionMenu,
 	Button,
+	ContextActionMenu,
+	type ContextMenuControls,
 	Dialog,
 	Field,
 	type MenuGroup,
@@ -13,21 +14,31 @@ import {
 	Toggle,
 } from "../design-system";
 import type { Message } from "../domain/app-types";
+import { hasVisibleMessageContent } from "../domain/message-content";
+import * as Clipboard from "../platform/clipboard";
+import { ConfirmationDialog } from "./confirmation-dialog";
+import type { MessageReactionControls } from "./use-message-reaction";
 import { useTask } from "./use-task";
 
 export const MessageActions = ({
 	message,
 	onReply,
+	reaction,
+	children,
 }: {
 	message: Message;
 	onReply: () => void;
+	reaction: MessageReactionControls;
+	children: (controls: ContextMenuControls) => ReactNode;
 }): ReactElement => {
 	const { account, dispatch } = useApp();
 	const safety = useChatSafety();
+	const tools = useThreadTools();
 	const task = useTask();
 	const [reporting, setReporting] = useState(false);
 	const [reason, setReason] = useState("");
 	const [blockAuthor, setBlockAuthor] = useState(false);
+	const [blocking, setBlocking] = useState(false);
 	const [mode, setMode] = useState<"edit" | "delete">();
 	const [body, setBody] = useState(message.body);
 	const [busy, setBusy] = useState(false);
@@ -63,6 +74,7 @@ export const MessageActions = ({
 							{
 								id: "report",
 								label: "Report message",
+								icon: "shield" as const,
 								onSelect: (): void => {
 									setReporting(true);
 									setReason("");
@@ -73,10 +85,9 @@ export const MessageActions = ({
 							{
 								id: "block",
 								label: "Block account",
+								icon: "lock" as const,
 								onSelect: (): void => {
-									void task.run(async (): Promise<void> => {
-										await safety.block?.(message.accountId, true);
-									});
+									setBlocking(true);
 								},
 							},
 						],
@@ -86,7 +97,34 @@ export const MessageActions = ({
 		{
 			id: "message",
 			items: [
+				{
+					id: "reaction",
+					label: "Add reaction",
+					icon: "reaction",
+					onSelect: (): void => {
+						reaction.open();
+					},
+				},
 				{ id: "reply", label: "Reply", icon: "reply", onSelect: onReply },
+				...(tools?.canPin
+					? [
+							{
+								id: "pin",
+								icon: "pin" as const,
+								label: tools.pins.some((pin) => pin.id === message.id)
+									? "Unpin message"
+									: "Pin message",
+								onSelect: (): void => {
+									void task.run(() =>
+										tools.pin(
+											message.id,
+											!tools.pins.some((pin) => pin.id === message.id),
+										),
+									);
+								},
+							},
+						]
+					: []),
 				...(message.body
 					? [
 							{
@@ -106,15 +144,19 @@ export const MessageActions = ({
 					{
 						id: "own",
 						items: [
-							{
-								id: "edit",
-								label: "Edit",
-								icon: "edit" as const,
-								onSelect: (): void => {
-									setBody(message.body);
-									setMode("edit");
-								},
-							},
+							...(!message.pollId
+								? [
+										{
+											id: "edit",
+											label: "Edit",
+											icon: "edit" as const,
+											onSelect: (): void => {
+												setBody(message.body);
+												setMode("edit");
+											},
+										},
+									]
+								: []),
 							{
 								id: "delete",
 								label: "Delete",
@@ -129,7 +171,23 @@ export const MessageActions = ({
 	];
 	return (
 		<>
+			{blocking ? (
+				<ConfirmationDialog
+					title="Block account?"
+					description="Hide their messages and stop direct messages. You can unblock them in Settings."
+					confirmLabel="Block"
+					danger
+					onClose={(): void => setBlocking(false)}
+					onConfirm={async (): Promise<void> => {
+						if (!safety.block) throw new Error("Account unavailable");
+						await safety.block(message.accountId, true);
+					}}
+				/>
+			) : undefined}
+
 			<Dialog
+				intent="form"
+				isDismissDisabled={task.busy}
 				title="Report message"
 				isOpen={reporting}
 				onOpenChange={(open): void => {
@@ -139,9 +197,7 @@ export const MessageActions = ({
 					<Button
 						label="Send report"
 						isLoading={task.busy}
-						validationError={
-							!reason.trim() ? "Check the required fields" : undefined
-						}
+						validationError={!reason.trim() ? "Add a reason" : undefined}
 						onPress={(): void => {
 							void task.run(async (): Promise<void> => {
 								await safety.report?.(message.id, reason, blockAuthor);
@@ -181,20 +237,21 @@ export const MessageActions = ({
 					{task.error}
 				</Text>
 			) : undefined}
-			<Stack gap="xxs">
-				<ActionMenu
-					label="Message actions"
-					icon="more"
-					groups={groups}
-					isDisabled={busy}
-				/>
-				{copyState ? (
-					<Text variant="caption" tone="secondary">
-						{copyState}
-					</Text>
-				) : undefined}
-			</Stack>
+			<ContextActionMenu
+				label="Message actions"
+				groups={groups}
+				isDisabled={busy || task.busy || reaction.pending}
+			>
+				{children}
+			</ContextActionMenu>
+			{copyState ? (
+				<Text variant="caption" tone="secondary">
+					{copyState}
+				</Text>
+			) : undefined}
 			<Dialog
+				intent={mode === "edit" ? "form" : "confirmation"}
+				isDismissDisabled={busy}
 				isOpen={Boolean(mode)}
 				onOpenChange={(open): void => {
 					if (!open && !busy) setMode(undefined);
@@ -207,9 +264,12 @@ export const MessageActions = ({
 						isLoading={busy}
 						validationError={
 							mode === "edit" &&
-							((!body.trim() && !message.images?.length) || body.length > 5000)
-								? "Check the required fields"
-								: undefined
+							!hasVisibleMessageContent(body) &&
+							!message.images?.length
+								? "Write a message"
+								: body.length > 5000
+									? "Use 5,000 characters or fewer"
+									: undefined
 						}
 						onPress={(): void => {
 							void save();

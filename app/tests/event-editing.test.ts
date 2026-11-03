@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { afterEach, beforeEach, expect, setSystemTime, test } from "bun:test";
 import { initialAppData, primaryAccount } from "../src/demo/app-data";
 import { reduceApp } from "../src/domain/app-reducer";
 import { createOccurrences, eventResponse } from "../src/domain/app-rules";
@@ -26,7 +26,10 @@ const draft: EventDraft = {
 	signupOpens: "now",
 	signupCloses: "hour",
 };
-const events = createOccurrences("series", draft);
+const testNow = clubTimestamp("2026-10-01", "12:00");
+const events = createOccurrences("series", draft).map(
+	(event): ClubEvent => ({ ...event, opensAt: testNow, signup: "open" }),
+);
 const target = events.at(0);
 if (!target) throw new Error("Missing event");
 const data: AppData = {
@@ -41,6 +44,13 @@ const data: AppData = {
 		},
 	],
 };
+
+beforeEach((): void => {
+	setSystemTime(testNow);
+});
+afterEach((): void => {
+	setSystemTime();
+});
 
 test("recurrence supports weekdays, daily, fortnightly and clamped monthly dates", (): void => {
 	expect(

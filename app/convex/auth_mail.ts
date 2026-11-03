@@ -1,12 +1,14 @@
+import { localEmailAllowed } from "../src/domain/local-development-email";
 import type { MutationCtx } from "./_generated/server";
 
 export const requireLocalEmail = (email: string): void => {
 	if (
-		process.env.AUTH_EMAIL_MODE !== "local" ||
-		!/^http:\/\/(127\.0\.0\.1|localhost):/.test(
-			process.env.CONVEX_CLOUD_URL ?? "",
-		) ||
-		!email.endsWith("@example.test")
+		!localEmailAllowed({
+			email,
+			mode: process.env.AUTH_EMAIL_MODE,
+			backendUrl: process.env.CONVEX_CLOUD_URL,
+			allowedEmails: process.env.AUTH_LOCAL_EMAIL_ALLOWLIST,
+		})
 	)
 		throw new Error("Email delivery isn’t configured for this address.");
 };

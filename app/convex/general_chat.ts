@@ -1,47 +1,85 @@
-import { generalConversation } from "../src/domain/general-chat";
+import type { Account } from "../src/domain/app-types";
+import type { RoomData } from "../src/domain/managed-rooms";
+import {
+	activeRoomPrograms,
+	managedConversation,
+	managedRoom,
+	programRoomId,
+} from "../src/domain/managed-rooms";
+import { canonicalMemberAccount } from "../src/domain/member-merge-identity";
+import { initialSeasons } from "../src/domain/seasons";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { accountFor } from "./identity";
 import { resolveSessionThread } from "./session_discussion";
 
-const clubAccounts = async (
+export type ClubRoomContext = { data: RoomData; accounts: Account[] };
+export const clubRoomContext = async (
 	ctx: QueryCtx,
 	clubId: Id<"clubs">,
-): Promise<string[]> =>
-	(
-		await ctx.db
+): Promise<ClubRoomContext> => {
+	const [club, accounts, people] = await Promise.all([
+		ctx.db.get(clubId),
+		ctx.db
 			.query("memberships")
 			.withIndex("by_club", (q) => q.eq("clubId", clubId))
-			.collect()
-	).map((member) => member.userId);
+			.collect(),
+		ctx.db
+			.query("members")
+			.withIndex("by_club", (q) => q.eq("clubId", clubId))
+			.collect(),
+	]);
+	const members = people.map((person) => person.value);
+	return {
+		accounts: accounts.map((account) =>
+			canonicalMemberAccount(accountFor(account), members),
+		),
+		data: {
+			programs: club?.programs,
+			seasons: club?.seasons ?? initialSeasons,
+			timeZone: club?.timeZone,
+			members,
+		},
+	};
+};
 export const resolveClubThread = async (
 	ctx: QueryCtx,
 	thread: Doc<"conversations">,
-): Promise<Doc<"conversations">> =>
-	thread.value.id === "club"
-		? {
-				...thread,
-				value: generalConversation(
-					await clubAccounts(ctx, thread.clubId),
-					thread.value,
-				),
-			}
-		: resolveSessionThread(ctx, thread);
+	context?: ClubRoomContext,
+): Promise<Doc<"conversations">> => {
+	if (!managedRoom(thread.value.id)) return resolveSessionThread(ctx, thread);
+	const current = context ?? (await clubRoomContext(ctx, thread.clubId));
+	return {
+		...thread,
+		value: managedConversation(thread.value, current.accounts, current.data),
+	};
+};
 export const ensureGeneralChat = async (
 	ctx: MutationCtx,
 	clubId: Id<"clubs">,
 ): Promise<string> => {
-	const existing = await ctx.db
-		.query("conversations")
-		.withIndex("by_club_and_key", (q) =>
-			q.eq("clubId", clubId).eq("value.id", "club"),
-		)
-		.unique();
-	const value = generalConversation(
-		await clubAccounts(ctx, clubId),
-		existing?.value,
-	);
-	if (!existing) await ctx.db.insert("conversations", { clubId, value });
-	else if (JSON.stringify(existing.value) !== JSON.stringify(value))
-		await ctx.db.patch(existing._id, { value });
+	const [existing, context] = await Promise.all([
+		ctx.db
+			.query("conversations")
+			.withIndex("by_club", (q) => q.eq("clubId", clubId))
+			.collect(),
+		clubRoomContext(ctx, clubId),
+	]);
+	for (const id of [
+		"club",
+		...activeRoomPrograms(context.data).map((program) =>
+			programRoomId(program.id),
+		),
+	]) {
+		const row = existing.find((thread) => thread.value.id === id);
+		const value = managedConversation(
+			row?.value ?? { id, title: "", subtitle: "", accountIds: [] },
+			context.accounts,
+			context.data,
+		);
+		if (!row) await ctx.db.insert("conversations", { clubId, value });
+		else if (JSON.stringify(row.value) !== JSON.stringify(value))
+			await ctx.db.patch(row._id, { value });
+	}
 	return "club";
 };

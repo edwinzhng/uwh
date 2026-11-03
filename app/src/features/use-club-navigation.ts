@@ -1,6 +1,7 @@
 import { usePathname, useRouter } from "expo-router";
 import { useMessaging } from "../backend/messaging-context";
 import type { NavigationItem } from "../design-system";
+import { isAccountDestination } from "../domain/page-navigation";
 
 export const useClubNavigation = (): NavigationItem[] => {
 	const path = usePathname();
@@ -12,7 +13,7 @@ export const useClubNavigation = (): NavigationItem[] => {
 		{
 			label: "Home",
 			icon: "home",
-			selected: ["/", "/announcements"].includes(path),
+			selected: ["/", "/announcements", "/shoutouts"].includes(path),
 			onPress: (): void => router.navigate("/"),
 		},
 		{
@@ -22,7 +23,7 @@ export const useClubNavigation = (): NavigationItem[] => {
 			onPress: (): void => router.navigate("/schedule"),
 		},
 		{
-			label: "Messages",
+			label: "Chats",
 			icon: "message",
 			badge: unread,
 			selected: ["/messages", "/conversation"].includes(path),
@@ -30,15 +31,9 @@ export const useClubNavigation = (): NavigationItem[] => {
 		},
 		{
 			label: "Account",
+			showOnPhone: false,
 			icon: "users",
-			selected: [
-				"/account",
-				"/account-settings",
-				"/membership",
-				"/my-progress",
-				"/delete-account",
-				"/connect-account",
-			].includes(path),
+			selected: isAccountDestination(path),
 			onPress: (): void => router.navigate("/account"),
 		},
 		{
@@ -46,6 +41,10 @@ export const useClubNavigation = (): NavigationItem[] => {
 			icon: "shield",
 			selected: [
 				"/club",
+				"/programs",
+				"/program",
+				"/resources",
+				"/development",
 				"/members",
 				"/member",
 				"/progress",

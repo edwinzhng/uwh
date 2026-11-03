@@ -5,8 +5,10 @@ import type {
 	EventDraft,
 	EventResponse,
 } from "./app-types";
+import { canRegister } from "./event-eligibility";
 import { clubTimestamp, signupState, signupWindow } from "./event-time";
 import { aggregateAttendance } from "./practice-parts";
+import { applyProgramWindow } from "./program-rsvp";
 
 export const recurrenceChoices = [
 	{ value: "once", label: "Does not repeat" },
@@ -144,6 +146,8 @@ export const editedOccurrences = (
 
 			parts: draft.parts?.map((part) => ({ ...part })),
 			venue: draft.venue.trim(),
+			program: draft.program,
+			programRsvp: draft.programRsvp,
 			description: draft.description.trim(),
 			kind: draft.kind,
 			repeatInterval: draft.repeatInterval,
@@ -157,7 +161,9 @@ export const editedOccurrences = (
 			opensAt,
 			closesAt,
 		};
-		return { ...changed, signup: signupState(changed, now) };
+		return draft.programRsvp
+			? applyProgramWindow(changed, { rsvp: draft.programRsvp }, now)
+			: { ...changed, signup: signupState(changed, now) };
 	});
 };
 
@@ -179,10 +185,14 @@ export const eligibleResponses = (
 					response: "unanswered",
 					attendance: "unmarked",
 					partIds: undefined,
+					declinedPartIds: undefined,
 					partAttendance: undefined,
 				};
 			const updated = {
 				...response,
+				declinedPartIds: event.parts?.length
+					? response.declinedPartIds?.filter(partExists)
+					: undefined,
 				partAttendance: event.parts?.length
 					? response.partAttendance?.filter((part) => partExists(part.partId))
 					: undefined,
@@ -190,7 +200,9 @@ export const eligibleResponses = (
 			return { ...updated, attendance: aggregateAttendance(event, updated) };
 		});
 		const eligible = (personId: string): boolean =>
-			!event.eligiblePersonIds || event.eligiblePersonIds.includes(personId);
+			data.members.some(
+				(member) => member.id === personId && canRegister(member, event),
+			);
 		const registered = revised.filter(
 			(entry) =>
 				entry.eventId === id &&
@@ -211,9 +223,15 @@ export const eligibleResponses = (
 		return revised.map((entry) =>
 			entry.eventId !== id
 				? entry
-				: !eligible(entry.personId) &&
-						(entry.response === "going" || entry.response === "waiting")
-					? { ...entry, response: "unavailable" }
+				: !eligible(entry.personId)
+					? {
+							...entry,
+							response:
+								entry.response === "going" || entry.response === "waiting"
+									? "unavailable"
+									: entry.response,
+							seriesExpected: undefined,
+						}
 					: promoted.includes(entry.personId)
 						? { ...entry, response: "going" }
 						: entry,
@@ -234,7 +252,8 @@ export const eventDraft = (event: ClubEvent): EventDraft => ({
 	tournamentRoster: event.tournamentRoster,
 	parts: event.parts?.map((part) => ({ ...part })),
 	venue: event.venue,
-	program: "club",
+	program: event.program,
+	programRsvp: event.programRsvp,
 	kind: event.kind === "hockey" ? "training" : event.kind,
 	repeatInterval: event.repeatInterval,
 	repeatUntil: event.repeatUntil,

@@ -1,5 +1,5 @@
 import { type ReactElement, useState } from "react";
-import { useApp } from "../demo/app-state";
+import { useApp, useAppStatus } from "../demo/app-state";
 import {
 	Button,
 	DatePicker,
@@ -17,7 +17,8 @@ export const TrackerField = ({
 	member: Member;
 	tracker: Tracker;
 }): ReactElement => {
-	const { data, dispatch, busy } = useApp();
+	const { data, dispatch } = useApp();
+	const { busy } = useAppStatus();
 	const saved = data.trackerValues[`${tracker.id}:${member.id}`] ?? "";
 	const [draft, setDraft] = useState(saved);
 	const save = (value: string): void => {

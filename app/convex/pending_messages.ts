@@ -1,3 +1,4 @@
+import { disabledConversation } from "../src/domain/conversation-policy";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 
@@ -14,11 +15,12 @@ export const claimPendingMessages = async (
 		.collect();
 	for (const conversation of conversations.filter(
 		(thread) =>
-			(thread.pendingPersonId && people.has(thread.pendingPersonId)) ||
-			thread.pendingPersonIds?.some((id) => people.has(id)) ||
-			thread.value.accountIds.some(
-				(id) => !ctx.db.normalizeId("users", id) && people.has(id),
-			),
+			!disabledConversation(thread.value.id) &&
+			((thread.pendingPersonId && people.has(thread.pendingPersonId)) ||
+				thread.pendingPersonIds?.some((id) => people.has(id)) ||
+				thread.value.accountIds.some(
+					(id) => !ctx.db.normalizeId("users", id) && people.has(id),
+				)),
 	)) {
 		const alreadyIncluded = conversation.value.accountIds.includes(
 			member.userId,

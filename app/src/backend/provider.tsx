@@ -22,22 +22,33 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { Platform } from "react-native";
 import { api } from "../../convex/_generated/api";
 import {
 	AppContext,
 	type AppContextValue,
+	type AppStatus,
+	AppStatusContext,
 	PreviewProvider,
 	selectedPersonAtom,
 } from "../demo/app-state";
-import { AuthLayout, LoadingScreen, Text } from "../design-system";
+import {
+	AuthLayout,
+	LoadingHandoff,
+	LoadingScreen,
+	Text,
+} from "../design-system";
 import type { AppAction } from "../domain/app-types";
 import { AccountGate } from "../features/account-gate";
 import { AuthCallbackScreen } from "../features/auth-callback-screen";
 import { ConnectAccountScreen } from "../features/connect-account-screen";
 import { DeleteAccountScreen } from "../features/delete-account-screen";
+import { EmailSignInScreen } from "../features/email-sign-in-screen";
 import { JoinInviteScreen } from "../features/join-invite-screen";
 import { PublicScheduleScreen } from "../features/public-schedule-screen";
-import { handlesAuthCode } from "./auth-browser";
+import { TermsGate } from "../features/terms-gate";
+import { callbackAddress, handlesAuthCode } from "./auth-browser";
+import { BrowserPushBridge } from "./browser-push-bridge";
 import { ChatSafetyProvider } from "./chat-safety";
 import { type Backend, BackendContext } from "./context";
 import { friendlyError } from "./errors";
@@ -68,7 +79,11 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 		[token, removeImage],
 	);
 	const path = usePathname();
-	const params = useGlobalSearchParams<{ id?: string; event?: string }>();
+	const params = useGlobalSearchParams<{
+		id?: string;
+		event?: string;
+		person?: string;
+	}>();
 	const selected = useAtomValue(selectedPersonAtom);
 	const screen =
 		path === "/"
@@ -84,11 +99,13 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 					id:
 						screen === "session"
 							? (params.event ?? params.id)
-							: screen === "member" ||
-									screen === "membership" ||
-									screen === "account"
-								? (params.id ?? selected)
-								: undefined,
+							: screen === "fitness" || screen === "resources"
+								? params.person
+								: screen === "member" ||
+										screen === "membership" ||
+										screen === "account"
+									? (params.id ?? selected)
+									: undefined,
 				}
 			: "skip",
 	);
@@ -112,6 +129,10 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 		workspaceResult === undefined
 			? previous.current?.workspace
 			: workspaceResult;
+	const terms = useQuery(
+		api.terms.current,
+		isAuthenticated && workspace ? {} : "skip",
+	);
 	const deleteAccount = useAction(api.account_actions.deleteAccount);
 	const updateName = useMutation(api.account.updateName);
 	const signOutOthers = useMutation(api.account.signOutOthers);
@@ -145,6 +166,28 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 	const backend = useMemo<Backend>(
 		() => ({
 			social,
+			requestEmailSignIn: async (email): Promise<void> => {
+				await auth.signIn("email-link", {
+					email: email.trim().toLowerCase(),
+					redirectTo:
+						Platform.OS === "web"
+							? "/email-sign-in"
+							: callbackAddress("email-sign-in"),
+				});
+			},
+			completeEmailSignIn: async (code): Promise<void> => {
+				const result = await auth
+					.signIn("email-link", { code })
+					.catch((): never => {
+						throw new Error(
+							"This sign-in link is invalid or expired. Request a new email.",
+						);
+					});
+				if (!result.signingIn)
+					throw new Error(
+						"This sign-in link is invalid or expired. Request a new email.",
+					);
+			},
 			invites,
 			declineRequest: async (requestId): Promise<void> => {
 				await declineRequest({ requestId });
@@ -251,6 +294,10 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 		[apply],
 	);
 	const clearError = useCallback((): void => setError(undefined), []);
+	const status = useMemo<AppStatus>(
+		() => ({ busy: pending > 0, error, clearError }),
+		[pending, error, clearError],
+	);
 	const app = useMemo<AppContextValue | undefined>(
 		() =>
 			workspace
@@ -259,44 +306,59 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 						account: workspace.account,
 						accounts: workspace.accounts,
 						source: "convex",
+						workspaceId: workspace.clubId,
 						loading: workspaceResult === undefined,
-						busy: pending > 0,
-						error,
-						clearError,
 						dispatch,
 					}
 				: undefined,
-		[workspace, workspaceResult, pending, error, clearError, dispatch],
+		[workspace, workspaceResult, dispatch],
 	);
 	return (
 		<BackendContext.Provider value={backend}>
 			<ChatSafetyProvider
-				active={isAuthenticated && Boolean(workspace)}
+				active={
+					isAuthenticated && Boolean(workspace) && terms?.accepted === true
+				}
 				admin={workspace?.account.admin ?? false}
 			>
 				{path === "/calendar" ? (
 					<PublicScheduleScreen />
 				) : path === "/connect-account" ? (
 					<ConnectAccountScreen />
+				) : path === "/email-sign-in" ? (
+					<EmailSignInScreen />
 				) : path === "/auth-callback" ? (
 					<AuthCallbackScreen />
 				) : path === "/join" ? (
 					<JoinInviteScreen />
 				) : path === "/delete-account" ? (
 					<DeleteAccountScreen />
-				) : path === "/design-system" || path === "/otp-test" ? (
+				) : path === "/otp-test" ? (
 					<PreviewProvider>{children}</PreviewProvider>
-				) : isLoading ||
-					(isAuthenticated &&
-						(workspace === undefined || accountInfo === undefined)) ? (
-					<LoadingScreen />
-				) : app ? (
-					<AppContext.Provider value={app}>
-						<PushBridge />
-						{children}
-					</AppContext.Provider>
 				) : (
-					<AccountGate />
+					<LoadingHandoff
+						loading={
+							isLoading ||
+							(isAuthenticated &&
+								(workspace === undefined || accountInfo === undefined))
+						}
+					>
+						{(): ReactNode =>
+							app ? (
+								<AppContext.Provider value={app}>
+									<AppStatusContext value={status}>
+										<TermsGate>
+											<PushBridge />
+											<BrowserPushBridge />
+											{children}
+										</TermsGate>
+									</AppStatusContext>
+								</AppContext.Provider>
+							) : (
+								<AccountGate />
+							)
+						}
+					</LoadingHandoff>
 				)}
 			</ChatSafetyProvider>
 		</BackendContext.Provider>
@@ -308,6 +370,15 @@ export const BackendProvider = ({
 	children: ReactNode;
 }): ReactElement => {
 	const path = usePathname();
+	const params = useGlobalSearchParams<{
+		reviewAccount?: string;
+		reviewPerson?: string;
+		reviewScenario?: string;
+	}>();
+	const reviewMode = process.env.EXPO_PUBLIC_REVIEW_MODE === "true";
+	const [reviewReady, setReviewReady] = useState(!reviewMode);
+	useEffect((): void => setReviewReady(true), []);
+	if (!reviewReady) return <LoadingScreen />;
 	return client ? (
 		<ConvexAuthProvider
 			client={client}
@@ -316,10 +387,14 @@ export const BackendProvider = ({
 		>
 			<LiveBridge>{children}</LiveBridge>
 		</ConvexAuthProvider>
-	) : path === "/design-system" ||
-		path === "/otp-test" ||
-		process.env.EXPO_PUBLIC_DEMO_MODE === "true" ? (
-		<PreviewProvider>{children}</PreviewProvider>
+	) : path === "/otp-test" || process.env.EXPO_PUBLIC_DEMO_MODE === "true" ? (
+		<PreviewProvider
+			reviewAccount={reviewMode ? params.reviewAccount : undefined}
+			reviewPerson={reviewMode ? params.reviewPerson : undefined}
+			reviewScenario={reviewMode ? params.reviewScenario : undefined}
+		>
+			{children}
+		</PreviewProvider>
 	) : (
 		<AuthLayout title="UWH Club">
 			<Text>The account service isn’t configured for this build.</Text>

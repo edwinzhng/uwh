@@ -84,22 +84,6 @@ export const signupWindow = (
 			: start - closeHours * 3600000,
 	};
 };
-export const windowLabel = (
-	timestamp: number,
-	timeZone = defaultClubTimeZone,
-): string =>
-	new Intl.DateTimeFormat("en-CA", {
-		month: "short",
-		day: "numeric",
-		hour: "numeric",
-		minute: "2-digit",
-		timeZone:
-			canonicalTimeZone(timeZone) === defaultClubTimeZone &&
-			timestamp >= permanentAlbertaTime.instant
-				? permanentAlbertaTime.zone
-				: timeZone,
-	}).format(timestamp);
-
 export const eventDates = (
 	event: Pick<ClubEvent, "date" | "endDate">,
 ): string[] => {

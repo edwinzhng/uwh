@@ -73,8 +73,8 @@ export const updateName = mutation({
 	handler: async (ctx, { name }): Promise<void> => {
 		const userId = await getAuthUserId(ctx);
 		if (!userId) throw new Error("Sign in first.");
-		if (!name.trim() || name.length > 80)
-			throw new Error("Use a name under 80 characters.");
+		if (!name.trim()) throw new Error("Add a name");
+		if (name.length > 80) throw new Error("Keep the name to 80 characters");
 		await ctx.db.patch(userId, { name: name.trim() });
 		const membership = await ctx.db
 			.query("memberships")
@@ -175,15 +175,16 @@ export const updateHouseholdInfo = mutation({
 		)
 			throw new Error("You can only edit your household members.");
 		const trimmed = name.trim();
-		if (!trimmed || trimmed.length > 80)
-			throw new Error("Use a name under 80 characters.");
+		if (!trimmed) throw new Error("Add a name");
+		if (trimmed.length > 80) throw new Error("Keep the name to 80 characters");
 		const person = await ctx.db
 			.query("members")
 			.withIndex("by_club_and_key", (q) =>
 				q.eq("clubId", membership.clubId).eq("value.id", personId),
 			)
 			.unique();
-		if (!person) throw new Error("Member unavailable.");
+		if (!person || person.value.mergedInto)
+			throw new Error("Member unavailable. Reopen the canonical profile.");
 		await ctx.db.patch(person._id, {
 			value: { ...person.value, name: trimmed },
 		});

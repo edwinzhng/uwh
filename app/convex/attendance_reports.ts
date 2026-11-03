@@ -3,6 +3,11 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { canRegister } from "../src/domain/app-rules";
 import {
+	attendanceDashboard,
+	attendanceDay,
+	dashboardRow,
+} from "../src/domain/attendance-dashboard";
+import {
 	type AttendanceReportRow,
 	attendanceReportRow,
 } from "../src/domain/attendance-report";
@@ -23,6 +28,7 @@ const rangeEvents = async (
 	actor: Doc<"memberships">,
 	seasonId: string,
 	month?: string,
+	now = Date.now(),
 ): Promise<{ events: Doc<"events">[]; limited: boolean }> => {
 	const club = await ctx.db.get(actor.clubId);
 	const season = (club?.seasons ?? initialSeasons).find(
@@ -36,7 +42,7 @@ const rangeEvents = async (
 			month > season.end.slice(0, 7))
 	)
 		throw new Error("Choose a month in this season.");
-	const today = Temporal.PlainDate.from(clubDate(undefined, club?.timeZone))
+	const today = Temporal.PlainDate.from(clubDate(now, club?.timeZone))
 		.add({ days: 2 })
 		.toString();
 	const start = month ? `${month}-01` : "0000-01-01";
@@ -71,7 +77,7 @@ const rangeEvents = async (
 				value.kind !== "social" &&
 				value.kind !== "meeting" &&
 				clubTimestamp(value.endDate ?? value.date, value.end, value.timeZone) <=
-					Date.now(),
+					now,
 		)
 		.sort(
 			(a, b) =>
@@ -276,5 +282,77 @@ export const setFlag = mutation({
 				kind: args.kind,
 				clubId: actor.clubId,
 			});
+	},
+});
+
+export const dashboard = query({
+	args: {
+		seasonId: v.string(),
+		month: v.optional(v.string()),
+		programId: v.optional(v.string()),
+		weekday: v.optional(v.number()),
+		now: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		const actor = await coach(ctx);
+		const now = Math.min(args.now ?? Date.now(), Date.now());
+		if (
+			args.weekday !== undefined &&
+			(!Number.isInteger(args.weekday) || args.weekday < 0 || args.weekday > 6)
+		)
+			throw new Error("Choose a day of the week.");
+		const range = await rangeEvents(ctx, actor, args.seasonId, args.month, now);
+		const events = range.events
+			.map((row) => row.value)
+			.filter(
+				(event) =>
+					(!args.programId || event.program === args.programId) &&
+					(args.weekday === undefined || attendanceDay(event) === args.weekday),
+			);
+		const members = await ctx.db
+			.query("members")
+			.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+			.filter((q) =>
+				q.and(
+					q.neq(q.field("value.archived"), true),
+					q.eq(q.field("value.mergedInto"), undefined),
+				),
+			)
+			.take(1001);
+		if (range.limited || members.length > 1000)
+			return { limited: true, events: 0, ...attendanceDashboard([]) };
+		const perEvent = Math.max(
+			1,
+			Math.floor(10000 / Math.max(1, events.length)),
+		);
+		const responses = await Promise.all(
+			events.map((event) =>
+				ctx.db
+					.query("responses")
+					.withIndex("by_event", (q) =>
+						q.eq("clubId", actor.clubId).eq("value.eventId", event.id),
+					)
+					.take(perEvent + 1),
+			),
+		);
+		if (responses.some((rows) => rows.length > perEvent))
+			return { limited: true, events: 0, ...attendanceDashboard([]) };
+		const values = responses.flat().map((row) => row.value);
+		const byPerson = new Map<string, typeof values>();
+		for (const response of values)
+			byPerson.set(response.personId, [
+				...(byPerson.get(response.personId) ?? []),
+				response,
+			]);
+		const rows = members
+			.map((row) =>
+				dashboardRow(row.value, events, byPerson.get(row.value.id) ?? [], now),
+			)
+			.filter((row) => row.total > 0);
+		return {
+			limited: false,
+			events: events.length,
+			...attendanceDashboard(rows),
+		};
 	},
 });

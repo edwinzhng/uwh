@@ -3,7 +3,7 @@ import Google from "@auth/core/providers/google";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
 import { authRedirect } from "../src/domain/social-auth";
-import { authEmail } from "./auth_email";
+import { authEmail, authSignInEmail } from "./auth_email";
 import { withPasswordErrors } from "./auth_errors";
 import { saveAuthUser } from "./auth_users";
 import { socialEnabled } from "./social_config";
@@ -15,6 +15,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
 			authRedirect(redirectTo, process.env.SITE_URL ?? ""),
 	},
 	providers: [
+		authSignInEmail(),
 		...(socialEnabled("google")
 			? [
 					Google({
@@ -68,8 +69,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
 							: (email.split("@").at(0) ?? "Member");
 					if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
 						throw new Error("Enter a valid email.");
-					if (name.length > 80)
-						throw new Error("Use a name under 80 characters.");
+					if (name.length > 80) throw new Error("Use 80 characters or fewer.");
 					params.email = email;
 					return { email, name };
 				},
@@ -77,7 +77,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
 					if (typeof password !== "string" || password.length < 12)
 						throw new Error("Use at least 12 characters.");
 					if (password.length > 256)
-						throw new Error("Use no more than 256 characters.");
+						throw new Error("Use 256 characters or fewer.");
 				},
 			}),
 		),

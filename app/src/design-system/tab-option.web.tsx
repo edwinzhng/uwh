@@ -1,14 +1,14 @@
 import type { ReactElement } from "react";
-import { Badge } from "./badge";
 import type { TabOptionProps } from "./tab-option";
 import { useTheme } from "./theme";
-import { control, font, geometry, space } from "./tokens";
+import { control, corners, font, geometry, space } from "./tokens";
 export const TabOption = ({
 	label,
-	staffRole,
 	selected,
+	indicatorReady = false,
 	disabled,
 	onPress,
+	onFocus,
 }: TabOptionProps): ReactElement => {
 	const theme = useTheme();
 	return (
@@ -18,7 +18,8 @@ export const TabOption = ({
 			aria-selected={selected}
 			disabled={disabled}
 			tabIndex={selected ? 0 : -1}
-			onClick={onPress}
+			onClick={(event): void => onPress(event.detail === 0)}
+			onFocus={onFocus}
 			onKeyDown={(event): void => {
 				if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
 					return;
@@ -41,7 +42,7 @@ export const TabOption = ({
 										tabs.length,
 								);
 				event.preventDefault();
-				next?.focus();
+				next?.focus({ preventScroll: true });
 				next?.click();
 			}}
 			style={{
@@ -51,7 +52,14 @@ export const TabOption = ({
 				gap: space.xs,
 				padding: `0 ${space.xs}px`,
 				border: 0,
-				background: "transparent",
+				background:
+					selected && !indicatorReady
+						? theme.mode === "dark"
+							? theme.background.selected
+							: theme.background.primary
+						: "transparent",
+				borderRadius: corners.control,
+				opacity: disabled ? geometry.disabledOpacity : 1,
 				cursor: "pointer",
 				fontFamily: font.medium,
 				fontSize: control.typography.fontSize,
@@ -59,13 +67,6 @@ export const TabOption = ({
 			}}
 		>
 			{label}
-			{staffRole ? (
-				<Badge
-					label={staffRole === "coach" ? "Coach" : "Admin"}
-					kind={staffRole}
-					compact
-				/>
-			) : undefined}
 		</button>
 	);
 };

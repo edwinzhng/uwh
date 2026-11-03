@@ -1,5 +1,5 @@
 import { type ReactElement, useState } from "react";
-import { newId, useApp } from "../demo/app-state";
+import { newId, useApp, useAppStatus } from "../demo/app-state";
 import {
 	Button,
 	DatePicker,
@@ -13,7 +13,8 @@ import {
 } from "../design-system";
 
 export const SeasonSettings = (): ReactElement => {
-	const { data, dispatch, busy } = useApp();
+	const { data, dispatch } = useApp();
+	const { busy } = useAppStatus();
 	const [open, setOpen] = useState(false);
 	const [name, setName] = useState("");
 	const [start, setStart] = useState<string>();
@@ -56,10 +57,13 @@ export const SeasonSettings = (): ReactElement => {
 					))}
 				</List>
 				<Dialog
-					staffRole="admin"
+					intent="form"
+					isDismissDisabled={busy}
 					title="New season"
 					isOpen={open}
-					onOpenChange={setOpen}
+					onOpenChange={(value): void => {
+						if (!busy) setOpen(value);
+					}}
 					footer={
 						<Button
 							label="Create season"

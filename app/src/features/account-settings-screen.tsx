@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useAtom, useSetAtom } from "jotai";
 import type { ReactElement } from "react";
 import { useBackend } from "../backend/context";
@@ -8,8 +9,9 @@ import {
 	useApp,
 } from "../demo/app-state";
 import {
-	Badge,
 	Button,
+	hapticsAvailable,
+	hapticsEnabledAtom,
 	Row,
 	reduceMotionAtom,
 	Select,
@@ -21,57 +23,30 @@ import {
 	themePreferenceAtom,
 } from "../design-system";
 import { AccountSecurity } from "./account-security";
-import { BlockedAccounts } from "./blocked-accounts";
 import { NotificationSettings } from "./notification-settings";
 import { useTask } from "./use-task";
 export const AccountSettingsContent = (): ReactElement => {
-	const { account, source, data } = useApp();
+	const { source } = useApp();
 	const backend = useBackend();
+	const router = useRouter();
 	const task = useTask();
 	const [theme, setTheme] = useAtom(themePreferenceAtom);
 	const [reduceMotion, setReduceMotion] = useAtom(reduceMotionAtom);
+	const [haptics, setHaptics] = useAtom(hapticsEnabledAtom);
 	const [previewAccount] = useAtom(previewAccountIdAtom);
 	const selectAccount = useSetAtom(selectPreviewAccountAtom);
 	return (
 		<Stack>
 			<Surface>
 				<Stack>
-					<Text variant="h4">
-						{source === "convex" ? account.name : "App preview"}
-					</Text>
-					<Row wrap>
-						{source === "convex" ? (
-							<Badge label="Signed in" kind="success" />
-						) : (
-							<Badge label="Sample data" />
-						)}
-						{account.admin ? <Badge label="Admin" kind="admin" /> : undefined}
-						{account.coachPrograms.length ? (
-							<Badge label="Coach" kind="coach" />
-						) : undefined}
-						{account.children.length ? <Badge label="Parent" /> : undefined}
-						{data.members.find((member) => member.id === account.personId)
-							?.programs.length ? (
-							<Badge label="Player" />
-						) : undefined}
-					</Row>
+					<Text variant="h4">Preferences</Text>
 					{source === "preview" ? (
 						<Select
-							label="Preview account"
+							label="Account"
 							value={previewAccount}
 							options={previewAccounts.map((entry) => ({
 								value: entry.id,
-								label:
-									entry.name +
-									(entry.admin && entry.coachPrograms.length
-										? " · All roles"
-										: entry.admin
-											? " · Admin"
-											: entry.coachPrograms.length
-												? " · Coach"
-												: entry.children.length
-													? " · Parent"
-													: " · Player"),
+								label: entry.name,
 							}))}
 							onValueChange={(value): void => {
 								if (value) selectAccount(value);
@@ -84,12 +59,17 @@ export const AccountSettingsContent = (): ReactElement => {
 						value={reduceMotion}
 						onValueChange={setReduceMotion}
 					/>
+					{hapticsAvailable() ? (
+						<Toggle
+							label="Button haptics"
+							value={haptics}
+							onValueChange={setHaptics}
+						/>
+					) : undefined}
 				</Stack>
 			</Surface>
 			{source === "convex" ? (
 				<>
-					<NotificationSettings />
-					<BlockedAccounts />
 					<AccountSecurity />
 					<Row>
 						<Button
@@ -105,6 +85,12 @@ export const AccountSettingsContent = (): ReactElement => {
 					</Row>
 				</>
 			) : undefined}
+			<NotificationSettings />
+			<Button
+				label="Club terms"
+				variant="ghost"
+				onPress={(): void => router.navigate("/terms")}
+			/>
 			{task.error ? (
 				<Text variant="small" tone="danger">
 					{task.error}

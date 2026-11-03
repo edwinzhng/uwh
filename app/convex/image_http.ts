@@ -1,4 +1,5 @@
-import { imageLimits, imageMime } from "../src/domain/messaging";
+import { chatAttachmentMime } from "../src/domain/chat-attachment";
+import { imageLimits } from "../src/domain/messaging";
 import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { actionUserId as getAuthUserId } from "./identity";
@@ -29,9 +30,15 @@ export const upload = httpAction(async (ctx, request): Promise<Response> => {
 	const blob = await boundedBlob(request, imageLimits.bytes);
 	if (!blob?.size || blob.size > imageLimits.bytes)
 		return failure("Choose a photo under 5 MB.", 413);
-	const mime = imageMime(new Uint8Array(await blob.slice(0, 16).arrayBuffer()));
+	const bytes = new Uint8Array(await blob.slice(0, 64).arrayBuffer());
+	const mime = chatAttachmentMime(
+		bytes,
+		blob.type,
+		params.get("name") ?? "",
+		params.get("kind") === "file",
+	);
 	if (!mime || mime !== blob.type)
-		return failure("Choose a JPG, PNG or WebP photo.", 415);
+		return failure("Choose a supported image, PDF, or document file.", 415);
 	const name = (params.get("name") || "Photo").slice(0, 120);
 	const storageId = await ctx.storage.store(blob);
 	try {
@@ -43,7 +50,7 @@ export const upload = httpAction(async (ctx, request): Promise<Response> => {
 			mime,
 			size: blob.size,
 		});
-		return Response.json({ id, name }, { headers });
+		return Response.json({ id, name, mime }, { headers });
 	} catch {
 		await ctx.storage.delete(storageId);
 		return failure(
@@ -65,6 +72,10 @@ export const download = httpAction(async (ctx, request): Promise<Response> => {
 	const blob = await ctx.storage.get(image.storageId);
 	if (!blob) return failure("Photo unavailable.", 404);
 	return new Response(blob, {
-		headers: { ...headers, "Content-Type": image.mime },
+		headers: {
+			...headers,
+			"Content-Type": image.mime,
+			"Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(image.name)}`,
+		},
 	});
 });

@@ -1,8 +1,8 @@
-## Browser usage preference
-
-Edwin explicitly approved browser use whenever needed on September 8, 2026 and requested removal of the earlier per-turn permission restriction. Browser use is authorized for visual verification and performance testing. Reuse a single browser tab where practical and keep checks lightweight.
-
 ## Coding Style
+
+- This is the production club app. Read [the documentation index](app/docs/README.md), [design contract](app/docs/DESIGN-SYSTEM.md), and [engineering guide](app/docs/engineering/README.md) before product changes. Keep local runtime configuration, release readiness, and historical test evidence distinct. Do not present fictional fixtures or diagnostic actions in normal product flows.
+
+- Fix shared visual defects in the design-system owner and verify its callers. Use the five shared text sizes, neutral utility icons, rectangular fields and selectors, and pill shapes only for action buttons. Verify desktop and narrow layouts, keyboard focus, reduced motion, and interrupted interactions. A native export does not establish device behavior.
 
 - Follow [the shared motion guidelines](packages/design-system/MOTION.md). Use only shared duration and easing tokens; page and tab fades use `slow` (300ms) and `out`. Run `bun run check:motion` in both `app` and `site` after motion changes.
 

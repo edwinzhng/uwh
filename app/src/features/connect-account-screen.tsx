@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useGlobalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useEffect, useRef, useState } from "react";
 import { useBackend } from "../backend/context";
 import { friendlyError } from "../backend/errors";
@@ -6,7 +6,7 @@ import { AuthLayout, Button, Stack, Text } from "../design-system";
 import type { AccountConnectionPurpose } from "../domain/social-auth";
 
 export const ConnectAccountScreen = (): ReactElement => {
-	const { request = "", code = "" } = useLocalSearchParams<{
+	const { request = "", code = "" } = useGlobalSearchParams<{
 		request?: string;
 		code?: string;
 	}>();

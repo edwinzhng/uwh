@@ -90,7 +90,7 @@ export const unlinkedPerson = async (
 			q.eq("clubId", clubId).eq("personId", personId),
 		)
 		.first();
-	if (!person || linked)
+	if (!person || person.value.mergedInto || linked)
 		throw new Error("This profile is unavailable or already has an account.");
 	return person;
 };

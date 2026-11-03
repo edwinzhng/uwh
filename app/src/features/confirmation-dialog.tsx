@@ -33,6 +33,8 @@ export const ConfirmationDialog = ({
 	};
 	return (
 		<Dialog
+			intent="confirmation"
+			isDismissDisabled={task.busy}
 			title={title}
 			isOpen
 			onOpenChange={(open): void => {

@@ -1,6 +1,7 @@
 export type CalendarDayProps = {
 	value: string;
 	label: string;
+	weekday?: string;
 	selected: boolean;
 	today: boolean;
 	muted: boolean;

@@ -39,7 +39,8 @@ export const MemberEditor = ({
 	};
 	return (
 		<Dialog
-			staffRole="admin"
+			intent="form"
+			isDismissDisabled={task.busy}
 			title="Invite member"
 			isOpen={open}
 			onOpenChange={(value): void => {

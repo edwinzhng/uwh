@@ -52,7 +52,7 @@ const AttendanceContent = ({
 			</SectionHeading>
 			<Surface>
 				<Stack>
-					{summary.recorded > 0 ? (
+					{summary.total > 0 ? (
 						<Row gap="xl" wrap>
 							<Stack gap="xxs">
 								<Text variant="number">
@@ -62,7 +62,10 @@ const AttendanceContent = ({
 								</Text>
 								<Text variant="small">Practices attended</Text>
 								<Text variant="caption" tone="secondary">
-									Of recorded practices
+									{summary.attendedCount} of {summary.total} available
+								</Text>
+								<Text variant="caption" tone="secondary">
+									Of all completed eligible practices
 								</Text>
 							</Stack>
 							<Stack gap="xxs">
@@ -76,19 +79,18 @@ const AttendanceContent = ({
 							</Stack>
 						</Row>
 					) : undefined}
+					<Text variant="caption" tone="secondary">
+						{summary.recorded}/{summary.total} attendance records · Unmarked
+						sessions remain in the total.
+					</Text>
 					{summary.recorded > 0 && summary.points.length ? (
 						<AttendanceChart data={summary.points} />
 					) : (
 						<EmptyState
 							title={
 								summary.total
-									? "Attendance hasn’t been recorded yet"
+									? "Attendance not recorded"
 									: "No completed practices this season"
-							}
-							description={
-								summary.total
-									? "Attendance trends will appear after a coach records practice attendance."
-									: "Completed practices and recorded attendance will appear here as the season progresses."
 							}
 						/>
 					)}

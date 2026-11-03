@@ -1,6 +1,10 @@
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useMemo, useState } from "react";
 import { useApp } from "../demo/app-state";
-import { type ConversationSummary, messagePageSize } from "../domain/messaging";
+import {
+	type ConversationSummary,
+	messagePageSize,
+	previewMessageTimestamp,
+} from "../domain/messaging";
 import { ThreadContent } from "./thread-content";
 
 export const PreviewConversation = ({
@@ -10,18 +14,22 @@ export const PreviewConversation = ({
 }): ReactElement => {
 	const { data } = useApp();
 	const [count, setCount] = useState(messagePageSize);
-	const messages = data.messages
-		.map((message, index) => ({
-			...message,
-			createdAt: index + 1,
-			reply: data.messages.find(
-				(entry) =>
-					entry.id === message.replyToId && entry.threadId === message.threadId,
-			),
-		}))
-		.filter((message) => message.threadId === thread.id)
-		.slice()
-		.reverse();
+
+	const messages = useMemo(() => {
+		const source = data.messages.filter(
+			(message) => message.threadId === thread.id,
+		);
+		const byId = new Map(source.map((message) => [message.id, message]));
+		return source
+			.map((message) => ({
+				...message,
+				createdAt: previewMessageTimestamp(message),
+				reply: message.replyToId ? byId.get(message.replyToId) : undefined,
+			}))
+			.reverse()
+			.sort((first, second) => second.createdAt - first.createdAt);
+	}, [data.messages, thread.id]);
+
 	return (
 		<ThreadContent
 			thread={thread}

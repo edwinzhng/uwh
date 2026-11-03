@@ -18,7 +18,10 @@ export const send = internalAction({
 			});
 			return;
 		}
-		if (process.env.PUSH_DELIVERY_ENABLED !== "true") {
+		if (
+			process.env.OUTBOUND_DELIVERY_DISABLED === "true" ||
+			process.env.PUSH_DELIVERY_ENABLED !== "true"
+		) {
 			await ctx.runMutation(internal.notifications.record, {
 				id,
 				error: "DeliveryNotConfigured",

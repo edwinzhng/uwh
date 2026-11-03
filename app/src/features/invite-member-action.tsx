@@ -1,7 +1,15 @@
 import { type ReactElement, useState } from "react";
 import { useBackend } from "../backend/context";
-import { Button, Dialog, Field, Stack, Text } from "../design-system";
-import { useTask } from "./use-task";
+import {
+	actionToast,
+	Button,
+	Dialog,
+	Field,
+	Stack,
+	Text,
+} from "../design-system";
+import { inviteEmail, inviteEmailError } from "../domain/invitations";
+import { useFormTask } from "./use-form-task";
 
 export const InviteMemberAction = ({
 	personId,
@@ -13,8 +21,21 @@ export const InviteMemberAction = ({
 	const backend = useBackend();
 	const [open, setOpen] = useState(false);
 	const [email, setEmail] = useState("");
-	const task = useTask("sentInvite", { subject: email });
-	const [sent, setSent] = useState(false);
+	const task = useFormTask();
+	const submit = (): void => {
+		void task.submit(
+			() => inviteEmailError(email),
+			async (): Promise<void> => {
+				if (!backend.invites)
+					throw new Error("Connect to the club to send invites.");
+				const address = inviteEmail(email);
+				await backend.invites.create({ email: address, profile: { personId } });
+				actionToast("sentInvite", "success", { subject: address });
+				setOpen(false);
+				setEmail("");
+			},
+		);
+	};
 	return (
 		<>
 			<Button
@@ -24,50 +45,30 @@ export const InviteMemberAction = ({
 				onPress={(): void => {
 					task.clear();
 					setOpen(true);
-					setSent(false);
 				}}
 			/>
 			<Dialog
+				intent="form"
+				isDismissDisabled={task.busy}
 				title={`Connect an account for ${name}`}
 				isOpen={open}
 				onOpenChange={(value): void => {
 					if (!task.busy) setOpen(value);
 				}}
 				footer={
-					<Button
-						label={sent ? "Done" : "Send invite"}
-						isLoading={task.busy}
-						validationError={
-							!sent && !email.trim() ? "Check the required fields" : undefined
-						}
-						onPress={(): void => {
-							if (sent) {
-								setOpen(false);
-								return;
-							}
-							void task.run(async (): Promise<void> => {
-								if (!backend.invites)
-									throw new Error("Connect to the club to send invites.");
-								await backend.invites.create({ email, profile: { personId } });
-								setSent(true);
-							});
-						}}
-					/>
+					<Button label="Send invite" isLoading={task.busy} onPress={submit} />
 				}
 			>
 				<Stack>
-					{sent ? (
-						<Text>Invite queued. Check Members → Invites for delivery.</Text>
-					) : (
-						<Field
-							label="Email"
-							inputMode="email"
-							autoComplete="email"
-							value={email}
-							onValueChange={setEmail}
-							isDisabled={task.busy}
-						/>
-					)}
+					<Field
+						label="Email"
+						inputMode="email"
+						autoComplete="email"
+						value={email}
+						onValueChange={setEmail}
+						onSubmit={submit}
+						isDisabled={task.busy}
+					/>
 					{task.error ? (
 						<Text variant="small" tone="danger">
 							{task.error}

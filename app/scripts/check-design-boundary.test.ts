@@ -90,6 +90,23 @@ test("selection lists use shared compact spacing", (): void => {
 	).toHaveLength(0);
 });
 
+test("decorative role tags are rejected without restricting access controls", (): void => {
+	for (const source of [
+		'<Button label="Edit" staffRole="admin" />',
+		'<Dialog title="Edit" staffRole="coach" />',
+		'<Badge label="Coach" />',
+		'<Badge label={"Parent"} />',
+	])
+		expect(inspectDesignBoundary(source, "feature.tsx")).toHaveLength(1);
+	for (const source of [
+		'<List><Checkbox label="Coach" checked={coaching} onChange={setCoaching} /></List>',
+		'<Button label="Coaching plan" onPress={openPlan} />',
+		'<Badge label="Signed in" kind="success" />',
+		'<Badge label="Draft" kind="coach" />',
+	])
+		expect(inspectDesignBoundary(source, "access.tsx")).toEqual([]);
+});
+
 test("mapped row collections use List", (): void => {
 	expect(
 		inspectDesignBoundary(

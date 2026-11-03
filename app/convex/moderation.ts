@@ -1,5 +1,6 @@
 import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
+import { conversationKind } from "../src/domain/messaging";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
 	type MutationCtx,
@@ -9,6 +10,8 @@ import {
 } from "./_generated/server";
 import { memberFor, requireMember } from "./identity";
 import { threadFor } from "./message_access";
+import { eraseMessageAnnouncement } from "./message_announcements_cleanup";
+import { removeReportedPerformance } from "./session_performance_reports";
 
 export const blockedIds = async (
 	ctx: QueryCtx,
@@ -51,9 +54,7 @@ export const chatAccessError = async (
 		return "Conversation unavailable.";
 	const blocked = await blockedIds(ctx, membership.userId);
 	if (
-		!thread.value.eventId &&
-		thread.value.id !== "club" &&
-		thread.value.id !== "youth" &&
+		["direct", "group"].includes(conversationKind(thread.value)) &&
 		thread.value.accountIds.some((id) => blocked.includes(id))
 	)
 		return "Messaging is unavailable between these accounts.";
@@ -71,6 +72,17 @@ export const eraseMessage = async (
 	ctx: MutationCtx,
 	message: Doc<"messages">,
 ): Promise<void> => {
+	await eraseMessageAnnouncement(ctx, message.clubId, message.value.id);
+	for (const pin of await ctx.db
+		.query("chatPins")
+		.withIndex("by_message", (q) =>
+			q
+				.eq("clubId", message.clubId)
+				.eq("threadId", message.value.threadId)
+				.eq("messageId", message.value.id),
+		)
+		.collect())
+		await ctx.db.delete(pin._id);
 	for (const photo of message.value.images ?? []) {
 		const id = ctx.db.normalizeId("images", photo.id);
 		const image = id ? await ctx.db.get(id) : undefined;
@@ -162,8 +174,9 @@ export const report = mutation({
 	args: { messageId: v.string(), reason: v.string(), blockAuthor: v.boolean() },
 	handler: async (ctx, { messageId, reason, blockAuthor }): Promise<void> => {
 		const member = await requireMember(ctx);
-		if (!reason.trim() || reason.length > 1000)
-			throw new Error("Add a reason under 1,000 characters.");
+		if (!reason.trim()) throw new Error("Add a reason");
+		if (reason.length > 1000)
+			throw new Error("Keep the reason to 1,000 characters");
 		const message = await ctx.db
 			.query("messages")
 			.withIndex("by_club_and_key", (q) =>
@@ -176,12 +189,7 @@ export const report = mutation({
 			message.value.accountId === member.userId
 		)
 			throw new Error("Message unavailable.");
-		const thread = await ctx.db
-			.query("conversations")
-			.withIndex("by_club_and_key", (q) =>
-				q.eq("clubId", member.clubId).eq("value.id", message.value.threadId),
-			)
-			.unique();
+		const thread = await threadFor(ctx, member.clubId, message.value.threadId);
 		if (
 			!thread?.value.accountIds.includes(member.userId) ||
 			(await blockedIds(ctx, member.userId)).includes(message.value.accountId)
@@ -287,15 +295,18 @@ export const review = mutation({
 			throw new Error("Report unavailable.");
 		if (report.state !== "open") return;
 		if (decision === "removed") {
-			const message = await ctx.db
-				.query("messages")
-				.withIndex("by_club_and_key", (q) =>
-					q.eq("clubId", member.clubId).eq("value.id", report.messageId),
-				)
-				.unique();
-			if (message) await eraseMessage(ctx, message);
+			if (report.source) await removeReportedPerformance(ctx, report);
+			else {
+				const message = await ctx.db
+					.query("messages")
+					.withIndex("by_club_and_key", (q) =>
+						q.eq("clubId", member.clubId).eq("value.id", report.messageId),
+					)
+					.unique();
+				if (message) await eraseMessage(ctx, message);
+			}
 		}
-		if (pauseChat && report.subjectId) {
+		if (!report.source && pauseChat && report.subjectId) {
 			const subjectId = report.subjectId;
 			const target = await ctx.db
 				.query("memberships")

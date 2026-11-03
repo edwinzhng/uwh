@@ -1,7 +1,9 @@
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { type ReactElement, useId } from "react";
+import { HoverSurface } from "./hover-surface.web";
 import { Icon } from "./icon";
 import { matchesQuery } from "./matches-query";
+import { NativePicker } from "./native-picker";
 import type { ChoiceOption, PickerProps } from "./picker-props";
 import { usePopupContainer } from "./popup-container";
 import { space } from "./tokens";
@@ -10,6 +12,7 @@ export const Combobox = <T extends string>({
 	label,
 	value,
 	options,
+	listFooter,
 	onValueChange,
 	placeholder = "Search…",
 	isDisabled,
@@ -17,6 +20,19 @@ export const Combobox = <T extends string>({
 	const id = useId();
 	const container = usePopupContainer();
 	const selected = options.find((option) => option.value === value);
+	if (listFooter)
+		return (
+			<NativePicker
+				label={label}
+				value={value}
+				options={options}
+				onValueChange={onValueChange}
+				placeholder={placeholder}
+				isDisabled={isDisabled}
+				listFooter={listFooter}
+				searchable
+			/>
+		);
 	return (
 		<BaseCombobox.Root<ChoiceOption<T>>
 			items={options}
@@ -66,27 +82,31 @@ export const Combobox = <T extends string>({
 					align="start"
 				>
 					<BaseCombobox.Popup className="club-popup" data-club-popup>
-						<BaseCombobox.Empty className="club-popup-empty">
-							No results
-						</BaseCombobox.Empty>
-						<BaseCombobox.List className="club-popup-list">
-							{(option: ChoiceOption<T>): ReactElement => (
-								<BaseCombobox.Item
-									key={option.value}
-									value={option}
-									disabled={option.isDisabled}
-									className="club-popup-item"
-								>
-									{option.icon ? (
-										<Icon name={option.icon} tone="secondary" />
-									) : undefined}
-									<span className="club-popup-item-label">{option.label}</span>
-									<BaseCombobox.ItemIndicator className="club-popup-indicator">
-										<Icon name="check" />
-									</BaseCombobox.ItemIndicator>
-								</BaseCombobox.Item>
-							)}
-						</BaseCombobox.List>
+						<HoverSurface>
+							<BaseCombobox.Empty className="club-popup-empty">
+								No results
+							</BaseCombobox.Empty>
+							<BaseCombobox.List className="club-popup-list">
+								{(option: ChoiceOption<T>): ReactElement => (
+									<BaseCombobox.Item
+										key={option.value}
+										value={option}
+										disabled={option.isDisabled}
+										className="club-popup-item"
+									>
+										{option.icon ? (
+											<Icon name={option.icon} tone="secondary" />
+										) : undefined}
+										<span className="club-popup-item-label">
+											{option.label}
+										</span>
+										<BaseCombobox.ItemIndicator className="club-popup-indicator">
+											<Icon name="check" />
+										</BaseCombobox.ItemIndicator>
+									</BaseCombobox.Item>
+								)}
+							</BaseCombobox.List>
+						</HoverSurface>
 					</BaseCombobox.Popup>
 				</BaseCombobox.Positioner>
 			</BaseCombobox.Portal>

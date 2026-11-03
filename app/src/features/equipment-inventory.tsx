@@ -18,13 +18,13 @@ export const EquipmentInventory = ({
 	loans,
 	busy,
 	onEdit,
-	onIssue,
+	onLoan,
 }: {
 	items: Equipment[];
 	loans: Loan[];
 	busy: boolean;
 	onEdit: (item: Equipment) => void;
-	onIssue: (id: string) => void;
+	onLoan: (id: string) => void;
 }): ReactElement => (
 	<LocalPage items={items}>
 		{(page) => (
@@ -65,10 +65,10 @@ export const EquipmentInventory = ({
 										<Badge label="Repair" kind="warning" />
 									) : (
 										<Button
-											label="Issue"
+											label="Loan"
 											variant="secondary"
 											isDisabled={busy || stock.available === 0}
-											onPress={(): void => onIssue(item.id)}
+											onPress={(): void => onLoan(item.id)}
 										/>
 									)}
 								</Row>

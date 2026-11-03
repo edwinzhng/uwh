@@ -3,18 +3,15 @@ import {
 	lightColorScales,
 	type SemanticColorScales,
 } from "./color-scales";
+import { rainbowSurface } from "./rainbow-palette";
 
 export const palette = {
-	moss: "#021E00",
-	pine: "#033300",
 	accent: lightColorScales.accent.solid,
 	black: "#000000",
 	white: "#FFFFFF",
 } as const;
 
 export {
-	corners,
-	elevation,
 	layer,
 	motion,
 	opacity,
@@ -22,28 +19,108 @@ export {
 	space,
 } from "@calgarycrocs/design-system/tokens";
 
-import { type elevation, space } from "@calgarycrocs/design-system/tokens";
+import {
+	corners as sharedCorners,
+	elevation as sharedElevation,
+	radius as sharedRadius,
+	space,
+} from "@calgarycrocs/design-system/tokens";
+export const corners = {
+	...sharedCorners,
+	control: sharedRadius.md,
+	button: sharedRadius.md,
+	navigation: sharedRadius.md,
+	menuRow: sharedRadius.md,
+	menu: sharedRadius.md + space.xs,
+	item: sharedRadius.md,
+	panel: sharedRadius.md,
+	overlay: sharedRadius.xxxl,
+};
 export const font = {
-	heading: "Inter_600SemiBold",
-	regular: "Inter_400Regular",
-	medium: "Inter_500Medium",
-	semibold: "Inter_600SemiBold",
+	heading: "CrocsDisplay",
+	regular: "CrocsInter",
+	medium: "CrocsInterMedium",
+	semibold: "CrocsInterSemibold",
 } as const;
+
+export const elevation = {
+	...sharedElevation,
+	raised: {
+		boxShadow: "0 1px 2px rgba(0,0,0,0.025), 0 4px 12px rgba(0,0,0,0.035)",
+		elevation: 1,
+	},
+	floating: {
+		boxShadow: "0 2px 4px rgba(0,0,0,0.035), 0 8px 24px rgba(0,0,0,0.07)",
+		elevation: 4,
+	},
+	overlay: {
+		boxShadow: "0 4px 12px rgba(0,0,0,0.04), 0 16px 48px rgba(0,0,0,0.12)",
+		elevation: 8,
+	},
+};
+
+export const pageMaterialOpacity = { light: 0.08, dark: 0.12 } as const;
+
+export const progressColors = ["#173E2B", "#638E41", "#D8FF63"] as const;
 
 import { typography as sharedTypography } from "@calgarycrocs/design-system/tokens";
 
 export const typography = {
 	...sharedTypography,
-	h1: { ...sharedTypography.h1, fontSize: 28, lineHeight: 34 },
-	h2: { ...sharedTypography.h2, fontSize: 24, lineHeight: 30 },
-	h3: { ...sharedTypography.h3, fontSize: 18, lineHeight: 24 },
-	h4: { ...sharedTypography.h4, fontSize: 16, lineHeight: 22 },
-	body: { ...sharedTypography.body, fontSize: 14, lineHeight: 20 },
-	number: { ...sharedTypography.number, fontSize: 24, lineHeight: 30 },
+	h1: {
+		...sharedTypography.h1,
+		family: "heading",
+		fontSize: 32,
+		lineHeight: 36,
+		textTransform: "uppercase",
+		letterSpacing: -0.4,
+	},
+	h2: {
+		...sharedTypography.h4,
+		family: "semibold",
+		fontSize: 18,
+		lineHeight: 24,
+	},
+	h3: {
+		...sharedTypography.h4,
+		family: "semibold",
+		fontSize: 18,
+		lineHeight: 24,
+	},
+	h4: {
+		...sharedTypography.h4,
+		family: "semibold",
+		fontSize: 18,
+		lineHeight: 24,
+	},
+	body: { ...sharedTypography.body, fontSize: 16, lineHeight: 24 },
+	small: { ...sharedTypography.small, fontSize: 14, lineHeight: 20 },
+	caption: { ...sharedTypography.caption, fontSize: 14, lineHeight: 20 },
+	overline: { ...sharedTypography.overline, fontSize: 12, lineHeight: 16 },
+	label: {
+		...sharedTypography.label,
+		fontSize: 16,
+		lineHeight: 22,
+		family: "medium",
+	},
+	field: { ...sharedTypography.field, fontSize: 16, lineHeight: 22 },
+	navigation: {
+		...sharedTypography.caption,
+		fontSize: 12,
+		lineHeight: 16,
+		family: "medium",
+	},
+	number: {
+		...sharedTypography.number,
+		family: "heading",
+		fontSize: 32,
+		lineHeight: 36,
+	},
 } as const;
 
 export const geometry = {
 	chart: 220,
+	chartBar: 40,
 	border: 1,
 	focus: 2,
 	touch: 44,
@@ -61,8 +138,9 @@ export const geometry = {
 	switchThumb: 14,
 	switchInset: 2,
 	avatar: 36,
+	compactAvatar: 28,
 	icon: 20,
-	iconStroke: 1.7,
+	iconStroke: 1.8,
 	content: 1080,
 	reading: 720,
 	drawer: 304,
@@ -71,13 +149,37 @@ export const geometry = {
 	wide: 900,
 	narrow: 480,
 	swatch: 40,
-	progress: 4,
+	progress: 8,
 	numberDigit: 23,
 	numberSeparator: 10,
 	tab: 64,
 	disabledOpacity: 0.45,
 	pressedOpacity: 0.82,
 } as const;
+
+export const featureColors = {
+	light: {
+		fern: rainbowSurface("green", "light"),
+		sky: rainbowSurface("blue", "light"),
+		amber: rainbowSurface("yellow", "light"),
+		violet: rainbowSurface("violet", "light"),
+		coral: rainbowSurface("red", "light"),
+		orange: rainbowSurface("orange", "light"),
+		indigo: rainbowSurface("indigo", "light"),
+	},
+	dark: {
+		fern: rainbowSurface("green", "dark"),
+		sky: rainbowSurface("blue", "dark"),
+		amber: rainbowSurface("yellow", "dark"),
+		violet: rainbowSurface("violet", "dark"),
+		coral: rainbowSurface("red", "dark"),
+		orange: rainbowSurface("orange", "dark"),
+		indigo: rainbowSurface("indigo", "dark"),
+	},
+} as const;
+
+export const categoryPalette = featureColors;
+export type CategoryColor = keyof typeof categoryPalette.light;
 
 export const control = {
 	height: typography.field.lineHeight + space.xs * 2 + geometry.border * 2,
@@ -94,12 +196,13 @@ export const control = {
 
 const dangerAction = {
 	background: lightColorScales.danger.solid,
-	hover: lightColorScales.danger.text,
-	pressed: "#991B1B",
-	foreground: palette.white,
+	hover: lightColorScales.danger.solid,
+	pressed: lightColorScales.danger.solid,
+	foreground: palette.black,
 };
 
 export const lightTheme: Theme = {
+	mode: "light",
 	coach: {
 		background: lightColorScales.coach.subtle,
 		foreground: lightColorScales.coach.text,
@@ -111,39 +214,47 @@ export const lightTheme: Theme = {
 	dangerAction,
 	colorScales: lightColorScales,
 	background: {
-		primary: palette.white,
-		secondary: "#F5F5F5",
-		selected: "#D3D3D8",
-		tertiary: "#EEEEEE",
-		hover: "#E8E8E8",
-		pressed: "#DEDEDE",
-		contrast: "#171717",
+		canvas: "#F7F8F5",
+		card: "#FFFFFF",
+		primary: "#F7F8F5",
+		secondary: "#ECEFE9",
+		selected: "#D8FF63",
+		tertiary: "#E5E9E2",
+		hover: "#ECEFE9",
+		pressed: "#D8DED3",
+		contrast: "#182018",
 	},
 	text: {
-		primary: palette.black,
-		secondary: "#555555",
+		primary: "#111811",
+		secondary: "#465044",
 		contrast: palette.white,
 	},
-	border: "#E5E5E5",
-	controlBorder: "#858585",
+	border: "#C8D0C3",
+	controlBorder: "#697564",
 	accent: {
-		background: palette.accent,
-		hover: "#0B46DC",
-		pressed: lightColorScales.accent.text,
-		foreground: palette.white,
+		background: "#182018",
+		hover: "#2A3527",
+		pressed: "#111811",
+		foreground: "#D8FF63",
 	},
-	focus: palette.accent,
-	switchOn: "#242424",
-	switchOff: "#E5E5E5",
+	navigation: {
+		selected: "#D8FF63",
+		hover: "#ECEFE9",
+		indicator: "#182018",
+		unread: "#182018",
+	},
+	focus: "#182018",
+	switchOn: "#182018",
+	switchOff: "#D5DCD0",
 	switchThumbOn: palette.white,
-	switchThumbOff: "#737373",
-	neutral: { background: "#F0F0F0", foreground: palette.black },
-	brand: { background: palette.moss, foreground: palette.white },
+	switchThumbOff: "#56644E",
+	neutral: { background: "#ECEFE9", foreground: "#111811" },
+	brand: { background: "#182018", foreground: palette.white },
 	success: {
 		background: lightColorScales.success.subtle,
 		foreground: lightColorScales.success.text,
 	},
-	info: { background: "#F0F0F0", foreground: palette.black },
+	info: { background: "#ECEFE9", foreground: "#111811" },
 	pending: {
 		background: lightColorScales.pending.subtle,
 		foreground: lightColorScales.pending.text,
@@ -159,6 +270,7 @@ export const lightTheme: Theme = {
 };
 
 export const darkTheme: Theme = {
+	mode: "dark",
 	coach: {
 		background: darkColorScales.coach.subtle,
 		foreground: darkColorScales.coach.text,
@@ -170,39 +282,47 @@ export const darkTheme: Theme = {
 	dangerAction,
 	colorScales: darkColorScales,
 	background: {
-		primary: "#111111",
-		secondary: "#1C1C1C",
-		selected: "#48484F",
-		tertiary: "#252525",
-		hover: "#2B2B2B",
-		pressed: "#333333",
-		contrast: "#F5F5F5",
+		canvas: "#121812",
+		card: "#1C251C",
+		primary: "#1C251C",
+		secondary: "#263026",
+		selected: "#313E1B",
+		tertiary: "#2B3528",
+		hover: "#2A3627",
+		pressed: "#3A482E",
+		contrast: "#EEF2D9",
 	},
 	text: {
-		primary: palette.white,
-		secondary: "#C0C0C0",
+		primary: "#EEF2D9",
+		secondary: "#A8B8A6",
 		contrast: palette.black,
 	},
-	border: "#292929",
-	controlBorder: "#737373",
+	border: "#344634",
+	controlBorder: "#819078",
 	accent: {
-		background: palette.accent,
-		hover: "#1C59F8",
-		pressed: "#0B46DC",
-		foreground: palette.white,
+		background: "#D8FF63",
+		hover: "#CBF05B",
+		pressed: "#BBDC50",
+		foreground: "#162010",
 	},
-	focus: "#829FFF",
-	switchOn: "#E5E5E5",
-	switchOff: "#333333",
-	switchThumbOn: "#242424",
-	switchThumbOff: "#D4D4D4",
-	neutral: { background: "#242424", foreground: palette.white },
-	brand: { background: palette.pine, foreground: palette.white },
+	navigation: {
+		selected: "#313E1B",
+		hover: "#2A3627",
+		indicator: "#D8FF63",
+		unread: "#D8FF63",
+	},
+	focus: "#D8FF63",
+	switchOn: "#D8FF63",
+	switchOff: "#3A4834",
+	switchThumbOn: "#162010",
+	switchThumbOff: "#B7C7A8",
+	neutral: { background: "#2B3528", foreground: "#EEF2D9" },
+	brand: { background: "#D8FF63", foreground: "#162010" },
 	success: {
 		background: darkColorScales.success.subtle,
 		foreground: darkColorScales.success.text,
 	},
-	info: { background: "#242424", foreground: palette.white },
+	info: { background: "#263026", foreground: palette.white },
 	pending: {
 		background: darkColorScales.pending.subtle,
 		foreground: darkColorScales.pending.text,
@@ -240,8 +360,11 @@ export type Theme = Record<
 	| "focus",
 	string
 > & {
+	mode: "light" | "dark";
 	colorScales: SemanticColorScales;
 	background: Record<
+		| "canvas"
+		| "card"
 		| "primary"
 		| "secondary"
 		| "selected"
@@ -253,6 +376,7 @@ export type Theme = Record<
 	>;
 	text: Record<"primary" | "secondary" | "contrast", string>;
 	accent: ActionColors;
+	navigation: Record<"selected" | "hover" | "indicator" | "unread", string>;
 	dangerAction: ActionColors;
 } & Record<Kind, { background: string; foreground: string }>;
 

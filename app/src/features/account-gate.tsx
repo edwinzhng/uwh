@@ -9,7 +9,13 @@ export const AccountGate = (): ReactElement => {
 	const task = useTask();
 	const [club, setClub] = useState("");
 	return (
-		<AuthLayout title="Enter invite code">
+		<AuthLayout
+			title={
+				backend.authenticated && backend.accountInfo
+					? "Enter invite code"
+					: "UWH Club"
+			}
+		>
 			{!backend.authenticated ? (
 				<AuthForm />
 			) : !backend.accountInfo ? (

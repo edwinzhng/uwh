@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useApp } from "../demo/app-state";
 import { clubDate } from "../domain/event-time";
+import { subscribeMinute } from "../platform/minute-clock";
 
 export const useClubToday = (): string => {
 	const { data } = useApp();
-	const [now, setNow] = useState(Date.now);
-	useEffect(() => {
-		const timer = setInterval((): void => setNow(Date.now()), 60000);
-		return (): void => clearInterval(timer);
-	}, []);
-	return clubDate(now, data.timeZone);
+	const today = (): string => clubDate(Date.now(), data.timeZone);
+	return useSyncExternalStore(subscribeMinute, today, today);
 };

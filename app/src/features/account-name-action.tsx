@@ -11,7 +11,7 @@ export const AccountNameAction = ({
 	const backend = useBackend();
 	const [open, setOpen] = useState(false);
 	const [name, setName] = useState("");
-	const task = useTask("savedName", { subject: name });
+	const task = useTask();
 	const changeOpen = (value: boolean): void => {
 		if (task.busy) return;
 		setName(backend.accountInfo?.name ?? "");
@@ -26,6 +26,8 @@ export const AccountNameAction = ({
 				onPress={(): void => changeOpen(true)}
 			/>
 			<Dialog
+				intent="form"
+				isDismissDisabled={task.busy}
 				title="Edit name"
 				isOpen={open}
 				onOpenChange={changeOpen}

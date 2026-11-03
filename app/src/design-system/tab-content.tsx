@@ -1,5 +1,5 @@
 import { Fragment, type ReactElement, type ReactNode } from "react";
-import { PageReveal } from "./page-reveal";
+import { Stack } from "./stack";
 
 export const TabContent = ({
 	value,
@@ -7,10 +7,8 @@ export const TabContent = ({
 }: {
 	value: string;
 	children: ReactNode;
-}): ReactElement => {
-	return (
-		<PageReveal replayKey={value} replayOnFocus={false} animateOnMount>
-			<Fragment key={value}>{children}</Fragment>
-		</PageReveal>
-	);
-};
+}): ReactElement => (
+	<Stack gap="xl">
+		<Fragment key={value}>{children}</Fragment>
+	</Stack>
+);

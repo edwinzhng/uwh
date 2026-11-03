@@ -1,96 +1,100 @@
-import { usePathname, useRouter } from "expo-router";
+import { usePathname } from "expo-router";
 import type { ReactElement, ReactNode } from "react";
-import clubLogo from "../../assets/club-logo.png";
-import { useApp } from "../demo/app-state";
+import { useApp, useAppStatus } from "../demo/app-state";
 import {
 	AppLayout,
-	Badge,
 	Button,
-	LoadingContent,
+	LoadingBoundary,
+	LoadingScope,
 	Row,
 	Stack,
 	Text,
 } from "../design-system";
+import { isPrimaryDestination } from "../domain/page-navigation";
 import { FamilyMenu } from "./family-menu";
 import { NotificationsMenu } from "./notifications-menu";
-import { hasRouteBreadcrumbs, RouteBreadcrumbs } from "./route-breadcrumbs";
-import { useClubNavigation } from "./use-club-navigation";
+import { hasRouteBack, RouteBack } from "./route-back";
 
 type Props = {
 	children: ReactNode;
 	title?: string;
+	workspaceTitle?: ReactNode;
 	subtitle?: string;
 	action?: ReactNode;
+	toolbarLeading?: ReactNode;
+	actionPlacement?: "responsive" | "inline";
 	tabs?: ReactNode;
 	back?: ReactNode;
-	staffRole?: "coach" | "admin";
 	footer?: ReactNode;
+	floatingAction?: ReactNode;
 	scrollable?: boolean;
+	presentation?: "page" | "workspace";
 };
 export const ClubShell = ({
 	children,
 	title,
+	workspaceTitle,
 	subtitle,
 	action,
+	toolbarLeading,
+	actionPlacement,
 	tabs,
 	back,
-	staffRole,
 	footer,
+	floatingAction,
 	scrollable,
+	presentation = "page",
 }: Props): ReactElement => {
-	const navigation = useClubNavigation();
 	const pathname = usePathname();
-	const router = useRouter();
-	const { data, error, clearError, loading } = useApp();
+	const { loading } = useApp();
+	const { error, clearError } = useAppStatus();
 	return (
-		<AppLayout
-			persistentNavigation
-			brand={data.clubName}
-			onBrandPress={(): void => router.navigate("/")}
-			brandLogo={data.clubName === "Calgary Crocs" ? clubLogo : undefined}
-			title={title}
-			subtitle={subtitle}
-			action={action}
-			tabs={tabs}
-			titleAccessory={
-				staffRole ? (
-					<Badge
-						label={staffRole === "admin" ? "Admin" : "Coach"}
-						kind={staffRole}
-					/>
-				) : undefined
-			}
-			back={
-				hasRouteBreadcrumbs(pathname) ? (
-					<RouteBreadcrumbs pathname={pathname} />
-				) : (
-					back
-				)
-			}
-			footer={footer}
-			scrollable={scrollable}
-			profile={<FamilyMenu />}
-			accessory={<NotificationsMenu />}
-			navigation={navigation}
-		>
-			{error ? (
-				<Row justify="between" wrap>
-					<Text variant="small" tone="danger">
-						{error}
-					</Text>
-					<Button label="Dismiss" variant="ghost" onPress={clearError} />
-				</Row>
-			) : undefined}
-			{loading ? (
-				<LoadingContent />
-			) : (
-				<Stack
-					grow={scrollable === false}
-					gap={scrollable === false ? "md" : "xl"}
-				>
-					{children}
-				</Stack>
-			)}
-		</AppLayout>
+		<LoadingScope>
+			<AppLayout
+				primaryDestination={isPrimaryDestination(pathname)}
+				presentation={presentation}
+				title={title}
+				workspaceTitle={workspaceTitle}
+				subtitle={subtitle}
+				toolbarLeading={toolbarLeading}
+				action={action}
+				actionPlacement={actionPlacement}
+				tabs={tabs}
+				back={
+					back ??
+					(presentation === "page" && hasRouteBack(pathname) ? (
+						<RouteBack pathname={pathname} />
+					) : undefined)
+				}
+				footer={footer}
+				floatingAction={floatingAction}
+				scrollable={scrollable}
+				profile={<FamilyMenu />}
+				accessory={<NotificationsMenu />}
+			>
+				{error ? (
+					<Row justify="between" wrap>
+						<Text variant="small" tone="danger">
+							{error}
+						</Text>
+						<Button label="Dismiss" variant="ghost" onPress={clearError} />
+					</Row>
+				) : undefined}
+				<LoadingBoundary loading={Boolean(loading)} fill={scrollable === false}>
+					<Stack
+						grow={scrollable === false}
+						gap={
+							presentation === "workspace"
+								? "none"
+								: scrollable === false
+									? "md"
+									: "xl"
+						}
+					>
+						{children}
+					</Stack>
+				</LoadingBoundary>
+			</AppLayout>
+		</LoadingScope>
 	);
 };

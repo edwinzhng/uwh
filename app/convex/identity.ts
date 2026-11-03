@@ -10,6 +10,7 @@ import {
 	internalQuery,
 	type QueryCtx,
 } from "./_generated/server";
+import { requireAcceptedTerms } from "./terms_access";
 
 export const getAuthUserId = async (
 	ctx: QueryCtx,
@@ -50,10 +51,12 @@ export const requireMember = async (
 ): Promise<Doc<"memberships">> => {
 	const member = await memberFor(ctx);
 	if (!member) throw new Error("Sign in and join a club first.");
+	await requireAcceptedTerms(ctx, member);
 	return member;
 };
 
 export const accountFor = (membership: Doc<"memberships">): Account => ({
+	defaultPersonId: membership.defaultPersonId,
 	id: membership.userId,
 	name: membership.name,
 	personId: membership.personId,

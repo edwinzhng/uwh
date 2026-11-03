@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import type { GroupDraft } from "../domain/group-conversation";
 import type { ConversationSummary } from "../domain/messaging";
 
 type Messaging = {
@@ -8,6 +9,7 @@ type Messaging = {
 	loading: boolean;
 	openSession: (eventId: string) => Promise<string>;
 	openDirect: (recipientId: string) => Promise<string>;
+	createGroup: (draft: GroupDraft) => Promise<string>;
 	markRead: (threadId: string, messageId: string) => Promise<void>;
 };
 export const MessagingContext = createContext<Messaging | undefined>(undefined);

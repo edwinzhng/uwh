@@ -1,5 +1,9 @@
-export const fitnessUnits = ["time", "count", "pass_fail"] as const;
+export const fitnessUnits = ["time", "distance", "count", "pass_fail"] as const;
 export type FitnessUnit = (typeof fitnessUnits)[number];
+export const fitnessLowerIsBetter = (test: {
+	unit: FitnessUnit;
+	lowerIsBetter?: boolean;
+}): boolean => test.lowerIsBetter ?? test.unit === "time";
 export type FitnessSummary = { count: number; total: number; best?: number };
 export const parseFitnessValue = (
 	unit: FitnessUnit,
@@ -17,6 +21,13 @@ export const parseFitnessValue = (
 			throw new Error("Enter a whole count between 0 and 1,000,000.");
 		return Number(value);
 	}
+	if (unit === "distance") {
+		if (!/^\d+(?:\.\d{1,2})?$/.test(value) || Number(value) > 1000000)
+			throw new Error(
+				"Enter metres from 0 to 1,000,000, with up to two decimal places.",
+			);
+		return Number(value);
+	}
 	if (!/^\d{1,4}:[0-5]\d(?:\.\d{1,2})?$/.test(value))
 		throw new Error("Enter a time as m:ss, for example 1:24.50.");
 	const [minutes, seconds] = value.split(":").map(Number);
@@ -30,6 +41,7 @@ export const formatFitnessValue = (
 ): string => {
 	if (value === undefined) return "—";
 	if (unit === "pass_fail") return value === 1 ? "Pass" : "Fail";
+	if (unit === "distance") return String(Number(value.toFixed(2)));
 	if (unit === "count")
 		return Number.isInteger(value) ? String(value) : value.toFixed(1);
 	const hundredths = Math.round(value * 100);
@@ -49,9 +61,14 @@ export const fitnessAverage = (
 		: unit === "pass_fail"
 			? `${Math.round((stats.total / stats.count) * 100)}% pass`
 			: formatFitnessValue(unit, stats.total / stats.count);
-export const fitnessUnitLabel = (unit: FitnessUnit): string =>
+export const fitnessUnitLabel = (
+	unit: FitnessUnit,
+	lowerIsBetter = unit === "time",
+): string =>
 	unit === "time"
-		? "Time · lower is better"
-		: unit === "count"
-			? "Count · higher is better"
-			: "Pass / fail";
+		? `Time · ${lowerIsBetter ? "lower" : "higher"} is better`
+		: unit === "distance"
+			? `Distance (m) · ${lowerIsBetter ? "lower" : "higher"} is better`
+			: unit === "count"
+				? "Count · higher is better"
+				: "Pass / fail";

@@ -1,25 +1,23 @@
-import { useFocusEffect } from "expo-router";
 import {
-	createContext,
 	type ReactElement,
-	type ReactNode,
 	useCallback,
 	useContext,
 	useLayoutEffect,
-	useRef,
 } from "react";
 import Animated, {
 	cancelAnimation,
 	Easing,
+	ReduceMotion,
 	useAnimatedStyle,
 	useSharedValue,
 	withTiming,
 } from "react-native-reanimated";
 import { pageMotionAllowed } from "./page-motion-input";
+import { PageRevealContext } from "./page-reveal-context";
+import type { PageRevealProps } from "./reveal-props";
 import { motion, space } from "./tokens";
 import { useMotion } from "./use-motion";
-
-const PageRevealContext = createContext(false);
+import { usePageReveal } from "./use-page-reveal";
 
 export const PageReveal = ({
 	children,
@@ -28,56 +26,38 @@ export const PageReveal = ({
 	enabled = true,
 	replayOnFocus = true,
 	replayKey,
-	animateOnMount = false,
-}: {
-	children: ReactNode;
-	fill?: boolean;
-	gap?: "none";
-	enabled?: boolean;
-	replayOnFocus?: boolean;
-	replayKey?: string;
-	animateOnMount?: boolean;
-}): ReactElement => {
+}: PageRevealProps): ReactElement => {
 	const motionEnabled = useMotion();
 	const nested = useContext(PageRevealContext);
-	const previousKey = useRef(replayKey);
-	const animate = motionEnabled && enabled && pageMotionAllowed();
-	const opacity = useSharedValue(
-		animate && (!nested || animateOnMount) ? 0 : 1,
-	);
+	const animate =
+		motionEnabled &&
+		enabled &&
+		(!nested || !replayOnFocus) &&
+		pageMotionAllowed();
+	const opacity = useSharedValue(animate && !nested ? 0 : 1);
 	const reveal = useCallback((): void => {
 		cancelAnimation(opacity);
 		if (!animate) {
 			opacity.set(1);
 			return;
 		}
-		opacity.set(0);
+		if (opacity.get() === 1) opacity.set(0);
 		opacity.set(
 			withTiming(1, {
 				duration: motion.duration.slow,
 				easing: Easing.bezier(...motion.easing.out),
+				reduceMotion: ReduceMotion.System,
 			}),
 		);
 	}, [animate, opacity]);
-	useFocusEffect(
-		useCallback(() => {
-			if (!replayOnFocus) return;
-			reveal();
-			return (): void => {
-				cancelAnimation(opacity);
-			};
-		}, [replayOnFocus, reveal, opacity]),
-	);
-	useLayoutEffect(() => {
-		if (replayOnFocus) return;
-		const changed = previousKey.current !== replayKey;
-		previousKey.current = replayKey;
-		if (!nested || animateOnMount || changed) reveal();
-		else opacity.set(1);
-		return (): void => {
-			cancelAnimation(opacity);
-		};
-	}, [replayKey, replayOnFocus, nested, animateOnMount, reveal, opacity]);
+	const stop = useCallback((): void => {
+		cancelAnimation(opacity);
+		opacity.set(1);
+	}, [opacity]);
+	usePageReveal({ replayOnFocus, replayKey, nested, reveal, stop });
+	useLayoutEffect((): void => {
+		if (!animate) stop();
+	}, [animate, stop]);
 	const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
 	return (
 		<PageRevealContext.Provider value={true}>

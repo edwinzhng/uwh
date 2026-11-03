@@ -1,7 +1,6 @@
 import DateTimePicker, {
 	DateTimePickerAndroid,
 } from "@react-native-community/datetimepicker";
-import { useAtomValue } from "jotai";
 import { type ReactElement, useState } from "react";
 import { Platform } from "react-native";
 import { Button } from "./button";
@@ -16,7 +15,7 @@ import { PickerTrigger } from "./picker-trigger";
 import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
-import { themePreferenceAtom, useTheme } from "./theme";
+import { useTheme } from "./theme";
 
 type Props = {
 	label: string;
@@ -42,7 +41,7 @@ export const NativeDateTimePicker = ({
 	onValueChange,
 }: Props): ReactElement => {
 	const theme = useTheme();
-	const appearance = useAtomValue(themePreferenceAtom);
+	const appearance = theme.mode;
 	const [draft, setDraft] = useState<Date>();
 	const [androidOpen, setAndroidOpen] = useState(false);
 	const allowed = (date: Date): boolean =>

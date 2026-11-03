@@ -13,6 +13,7 @@ import {
 	query,
 } from "./_generated/server";
 import { getAuthUserId } from "./identity";
+import { requireAcceptedTerms } from "./terms_access";
 
 const membershipForUser = async (
 	ctx: QueryCtx,
@@ -72,6 +73,7 @@ export const register = internalMutation({
 		const membership = await membershipForUser(ctx, userId);
 		if (!membership || !ownsPerson(membership, personId))
 			throw new Error("Choose your profile or a linked child.");
+		await requireAcceptedTerms(ctx, membership);
 		const person = await ctx.db
 			.query("members")
 			.withIndex("by_club_and_key", (q) =>
@@ -122,6 +124,8 @@ export const preferences = mutation({
 			!ownsPerson(membership, personId)
 		)
 			throw new Error("Calendar unavailable.");
+		if (!membership) throw new Error("Calendar unavailable.");
+		await requireAcceptedTerms(ctx, membership);
 		await ctx.db.patch(feed._id, { includeWaitlisted });
 		return null;
 	},

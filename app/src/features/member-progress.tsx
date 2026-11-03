@@ -1,18 +1,13 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import {
-	EmptyState,
-	SectionHeading,
-	Stack,
-	Surface,
-	Text,
-} from "../design-system";
+import { Row, Stack, Surface, Text } from "../design-system";
 import { canCoachMember } from "../domain/app-rules";
 import type { Member } from "../domain/app-types";
-import { FeedbackEditor } from "./feedback-editor";
-import { FeedbackList } from "./feedback-list";
+import { goalCategoryLabel } from "../domain/goals";
+import { GoalCheckIn } from "./goal-check-in";
 import { GoalEditor } from "./goal-editor";
 import { GoalRequest } from "./goal-request";
+import { PersonalFitness } from "./personal-fitness";
 
 export const MemberProgress = ({
 	member,
@@ -23,61 +18,36 @@ export const MemberProgress = ({
 	const coach = canCoachMember(account, member);
 	return (
 		<Stack gap="xl">
-			<Stack gap="sm">
-				<SectionHeading
-					action={
-						coach || account.personId === member.id ? (
+			<Surface density="compact">
+				<Stack gap="sm">
+					<Row justify="between" wrap>
+						<Text variant="label">Current goal</Text>
+						{coach || account.personId === member.id ? (
 							<GoalEditor key={member.id} member={member} />
-						) : undefined
-					}
-				>
-					Current goal
-				</SectionHeading>
-				<Surface>
-					<Stack>
-						{member.goal ? (
-							<Text>{member.goal}</Text>
-						) : (
-							<EmptyState
-								title="No goal yet"
-								description="Set a goal with your coach to give your training a focus."
-							/>
-						)}
-						<GoalRequest member={member} />
-						<Text variant="caption" tone="secondary">
-							Shared with your coaches
-						</Text>
-					</Stack>
-				</Surface>
-			</Stack>
-			<Stack gap="sm">
-				<SectionHeading
-					action={
-						coach ? (
-							<FeedbackEditor key={member.id} personId={member.id} />
-						) : undefined
-					}
-				>
-					Feedback
-				</SectionHeading>
-				<Surface>
-					<Stack gap="sm">
-						<FeedbackList
-							personId={member.id}
-							visibility="published"
-							embedded
-						/>
-						{coach ? (
-							<FeedbackList
-								personId={member.id}
-								visibility="private"
-								embedded
-								hideEmpty
-							/>
 						) : undefined}
-					</Stack>
-				</Surface>
-			</Stack>
+					</Row>
+					{member.goalDetails ? (
+						<Text variant="caption">
+							{goalCategoryLabel(member.goalDetails)}
+						</Text>
+					) : undefined}
+					{member.goal ? (
+						<Text variant="h4">{member.goal}</Text>
+					) : (
+						<Text variant="small" tone="secondary">
+							Set a goal with your coach to give your training a focus.
+						</Text>
+					)}
+					{member.goalDetails?.remarks ? (
+						<Text variant="small">{member.goalDetails.remarks}</Text>
+					) : undefined}
+					{member.goal ? (
+						<GoalCheckIn key={member.id} member={member} />
+					) : undefined}
+					<GoalRequest member={member} />
+				</Stack>
+			</Surface>
+			<PersonalFitness member={member} />
 		</Stack>
 	);
 };

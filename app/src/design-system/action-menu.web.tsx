@@ -1,6 +1,7 @@
 import { Menu } from "@base-ui/react/menu";
-import { Fragment, type ReactElement } from "react";
+import type { ReactElement } from "react";
 import { Icon } from "./icon";
+import { MenuItems } from "./menu-items.web";
 import type { ActionMenuProps } from "./picker-props";
 import { usePopupContainer } from "./popup-container";
 import { space } from "./tokens";
@@ -24,7 +25,7 @@ export const ActionMenu = ({
 				data-icon={icon ? "" : undefined}
 			>
 				{icon ? (
-					<Icon name={icon} size="sm" tone="secondary" />
+					<Icon name={icon} size="md" tone="secondary" />
 				) : (
 					<>
 						{label}
@@ -40,58 +41,7 @@ export const ActionMenu = ({
 					align="start"
 				>
 					<Menu.Popup className="club-popup club-menu-popup" data-club-popup>
-						{groups.map((group) => (
-							<Fragment key={group.id}>
-								{group !== groups.at(0) ? (
-									<Menu.Separator className="club-popup-separator" />
-								) : undefined}
-								<Menu.Group>
-									{group.label ? (
-										<Menu.GroupLabel className="club-popup-group-label">
-											{group.label}
-										</Menu.GroupLabel>
-									) : undefined}
-									{group.items.map((item) =>
-										item.checked !== undefined ? (
-											<Menu.CheckboxItem
-												key={item.id}
-												checked={item.checked}
-												disabled={isDisabled || item.isDisabled}
-												className="club-popup-item"
-												label={item.label}
-												onCheckedChange={(): void => item.onSelect()}
-											>
-												<Icon
-													name={item.checked ? "checkboxChecked" : "stop"}
-													size="sm"
-												/>
-												<span className="club-popup-item-label">
-													{item.label}
-												</span>
-											</Menu.CheckboxItem>
-										) : (
-											<Menu.Item
-												key={item.id}
-												label={item.label}
-												disabled={item.isDisabled}
-												className="club-popup-item"
-												data-tone={item.tone}
-												onClick={(): void => {
-													if (!item.isDisabled) item.onSelect();
-												}}
-											>
-												{item.icon ? (
-													<Icon name={item.icon} tone="secondary" />
-												) : undefined}
-												<span className="club-popup-item-label">
-													{item.label}
-												</span>
-											</Menu.Item>
-										),
-									)}
-								</Menu.Group>
-							</Fragment>
-						))}
+						<MenuItems groups={groups} isDisabled={isDisabled} />
 					</Menu.Popup>
 				</Menu.Positioner>
 			</Menu.Portal>

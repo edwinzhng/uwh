@@ -1,0 +1,786 @@
+[
+	{
+		"path": "/schedule",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Schedule",
+			"Past",
+			"29",
+			"Club training",
+			"Upcoming",
+			"3",
+			"Previous hockey practice",
+			"5",
+			"Youth training",
+			"5",
+			"Thursday practice",
+			"6"
+		],
+		"nodes": 463,
+		"overflow": false,
+		"title": "Crocs UWH | Schedule"
+	},
+	{
+		"path": "/club",
+		"canvases": 0,
+		"energy": false,
+		"headings": ["Club", "Browse", "Resources", "Coaching", "Administration"],
+		"nodes": 420,
+		"overflow": false,
+		"title": "Crocs UWH | Club"
+	},
+	{
+		"path": "/members",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Members"
+		],
+		"nodes": 616,
+		"overflow": false,
+		"title": "Crocs UWH | Members"
+	},
+	{
+		"path": "/programs",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Programs"
+		],
+		"nodes": 482,
+		"overflow": false,
+		"title": "Crocs UWH | Programs"
+	},
+	{
+		"path": "/registration",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Registration"
+		],
+		"nodes": 569,
+		"overflow": false,
+		"title": "Crocs UWH | Registration"
+	},
+	{
+		"path": "/payments",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Payments"
+		],
+		"nodes": 569,
+		"overflow": false,
+		"title": "Crocs UWH | Payments"
+	},
+	{
+		"path": "/equipment",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Equipment"
+		],
+		"nodes": 574,
+		"overflow": false,
+		"title": "Crocs UWH | Equipment"
+	},
+	{
+		"path": "/resources",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Resources"
+		],
+		"nodes": 545,
+		"overflow": false,
+		"title": "Crocs UWH | Resources"
+	},
+	{
+		"path": "/fitness",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Fitness tests"
+		],
+		"nodes": 493,
+		"overflow": false,
+		"title": "Crocs UWH | Fitness"
+	},
+	{
+		"path": "/account",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Account",
+			"Profile",
+			"Alex Rivera",
+			"Registration"
+		],
+		"nodes": 563,
+		"overflow": false,
+		"title": "Crocs UWH | Account"
+	},
+	{
+		"path": "/account-settings",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Settings",
+			"Preferences",
+			"Notifications",
+			"Household"
+		],
+		"nodes": 671,
+		"overflow": false,
+		"title": "Crocs UWH | Account settings"
+	},
+	{
+		"path": "/member?id=alex",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Alex Rivera",
+			"Create space after the pass",
+			"Fitness tests"
+		],
+		"nodes": 554,
+		"overflow": false,
+		"title": "Crocs UWH | Profile"
+	},
+	{
+		"path": "/progress?id=alex",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Alex Rivera",
+			"Create space after the pass",
+			"Fitness tests"
+		],
+		"nodes": 554,
+		"overflow": false,
+		"title": "Crocs UWH | Progress"
+	},
+	{
+		"path": "/shoutouts",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Your shoutouts"
+		],
+		"nodes": 454,
+		"overflow": false,
+		"title": "Crocs UWH | Shoutouts"
+	},
+	{
+		"path": "/announcements",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Announcements"
+		],
+		"nodes": 474,
+		"overflow": false,
+		"title": "Crocs UWH | Announcements"
+	},
+	{
+		"path": "/development",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Player reviews"
+		],
+		"nodes": 575,
+		"overflow": false,
+		"title": "Crocs UWH | Development"
+	},
+	{
+		"path": "/coaching-hours",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Coaching",
+			"Practices",
+			"Program defaults"
+		],
+		"nodes": 537,
+		"overflow": false,
+		"title": "Crocs UWH | Coaching hours"
+	},
+	{
+		"path": "/moderation",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Moderation"
+		],
+		"nodes": 464,
+		"overflow": false,
+		"title": "Crocs UWH | Moderation"
+	},
+	{
+		"path": "/settings",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Club settings",
+			"General",
+			"Member trackers",
+			"Account access"
+		],
+		"nodes": 577,
+		"overflow": false,
+		"title": "Crocs UWH | Settings"
+	},
+	{
+		"path": "/import",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Import data",
+			"Import CSV",
+			"Existing IDs",
+			"Import history"
+		],
+		"nodes": 511,
+		"overflow": false,
+		"title": "Crocs UWH | Import"
+	},
+	{
+		"path": "/attendance-report",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Attendance"
+		],
+		"nodes": 441,
+		"overflow": false,
+		"title": "Crocs UWH | Attendance report"
+	},
+	{
+		"path": "/session?event=club-thu",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Thursday practice",
+			"MNP Community & Sport Centre",
+			"Session plan",
+			"Objective"
+		],
+		"nodes": 578,
+		"overflow": false,
+		"title": "Crocs UWH | Session"
+	},
+	{
+		"path": "/session?event=club-thu&tab=coaching",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Thursday practice",
+			"Session plan",
+			"Objective",
+			"1. Passing lanes"
+		],
+		"nodes": 676,
+		"overflow": false,
+		"title": "Crocs UWH | Session"
+	},
+	{
+		"path": "/conversation?id=club",
+		"canvases": 0,
+		"nodes": 666,
+		"overflow": false,
+		"title": "Crocs UWH | Conversation",
+		"interaction": "Info sheet opened and dismissed three times; attachment menu verified"
+	},
+	{
+		"path": "/messages",
+		"canvases": 0,
+		"energy": false,
+		"headings": ["Chats"],
+		"nodes": 271,
+		"overflow": false,
+		"title": "Crocs UWH | Chats"
+	},
+	{
+		"path": "/membership",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Account",
+			"Profile",
+			"Alex Rivera",
+			"Registration"
+		],
+		"nodes": 563,
+		"overflow": false,
+		"title": "Crocs UWH | Account"
+	},
+	{
+		"path": "/my-progress",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Account",
+			"Create space after the pass",
+			"Fitness tests"
+		],
+		"nodes": 529,
+		"overflow": false,
+		"title": "Crocs UWH | Account"
+	},
+	{
+		"path": "/administration",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Club",
+			"Browse",
+			"Resources",
+			"Coaching"
+		],
+		"nodes": 695,
+		"overflow": false,
+		"title": "Crocs UWH | Club"
+	},
+	{
+		"path": "/club-information",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Club",
+			"Browse",
+			"Resources",
+			"Coaching"
+		],
+		"nodes": 695,
+		"overflow": false,
+		"title": "Crocs UWH | Club"
+	},
+	{
+		"path": "/terms",
+		"canvases": 0,
+		"headings": [
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Club terms",
+			"Sample club terms"
+		],
+		"nodes": 469,
+		"overflow": false,
+		"title": "Crocs UWH | Terms"
+	},
+	{
+		"path": "/join",
+		"canvases": 0,
+		"headings": [
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Couldn’t load this screen"
+		],
+		"nodes": 403,
+		"overflow": false,
+		"title": "Crocs UWH | Join"
+	},
+	{
+		"path": "/calendar",
+		"canvases": 0,
+		"headings": [
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Couldn’t load this screen"
+		],
+		"nodes": 403,
+		"overflow": false,
+		"title": "Crocs UWH | Calendar"
+	},
+	{
+		"path": "/delete-account",
+		"canvases": 0,
+		"headings": [
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"UWH Club",
+			"Delete your account"
+		],
+		"nodes": 422,
+		"overflow": false,
+		"title": "Crocs UWH | Delete account"
+	},
+	{
+		"path": "/connect-account",
+		"canvases": 0,
+		"headings": [
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"UWH Club",
+			"Connect account"
+		],
+		"nodes": 427,
+		"overflow": false,
+		"title": "Crocs UWH | Connect account"
+	},
+	{
+		"path": "/auth-callback",
+		"canvases": 0,
+		"headings": [
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"UWH Club",
+			"Signing in"
+		],
+		"nodes": 419,
+		"overflow": false,
+		"title": "Crocs UWH | Sign in"
+	},
+	{
+		"path": "/email-sign-in",
+		"canvases": 0,
+		"headings": [
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"UWH Club",
+			"Sign in to UWH Club"
+		],
+		"nodes": 423,
+		"overflow": false,
+		"title": "Crocs UWH | Email sign in"
+	},
+	{
+		"path": "/review-auth",
+		"canvases": 0,
+		"headings": [
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"UWH Club",
+			"Sign in"
+		],
+		"nodes": 412,
+		"overflow": false,
+		"title": "Crocs UWH | Review auth"
+	},
+	{
+		"path": "/otp-test",
+		"canvases": 0,
+		"headings": [
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"UWH Club",
+			"OTP test"
+		],
+		"nodes": 387,
+		"overflow": false,
+		"title": "Crocs UWH | Otp test"
+	},
+	{
+		"path": "/glass-preview",
+		"canvases": 0,
+		"headings": [
+			"Recent chats",
+			"Glass",
+			"Current",
+			"Next practice",
+			"Monday training",
+			"Satin glass",
+			"Next practice",
+			"Monday training"
+		],
+		"nodes": 688,
+		"overflow": false,
+		"title": "Crocs UWH | Glass preview"
+	},
+	{
+		"path": "/join",
+		"canvases": 0,
+		"headings": [
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"UWH Club",
+			"Club invitation"
+		],
+		"nodes": 415,
+		"overflow": false,
+		"title": "Crocs UWH | Join"
+	},
+	{
+		"path": "/calendar",
+		"canvases": 0,
+		"headings": [
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"UWH Club",
+			"Public schedule"
+		],
+		"nodes": 417,
+		"overflow": false,
+		"title": "Crocs UWH | Calendar"
+	},
+	{
+		"path": "/session?event=club-thu&tab=coaching",
+		"canvases": 0,
+		"energy": false,
+		"headings": [
+			"Summary",
+			"Response needed",
+			"Announcement",
+			"Feedback",
+			"Next practice",
+			"Previous hockey practice",
+			"Fitness tests",
+			"Recent chats",
+			"Thursday practice",
+			"Session plan",
+			"Objective",
+			"1. Passing lanes"
+		],
+		"nodes": 676,
+		"overflow": false,
+		"title": "Crocs UWH | Session"
+	}
+]

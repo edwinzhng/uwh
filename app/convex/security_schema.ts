@@ -1,5 +1,9 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
+import {
+	granularPreferenceFields,
+	notificationSourceFields,
+} from "./notification_schema";
 
 export const notificationKind = v.union(
 	v.literal("messages"),
@@ -39,6 +43,16 @@ export const securityTables = {
 		.index("by_user", ["userId"])
 		.index("by_club", ["clubId"]),
 	chatReports: defineTable({
+		source: v.optional(
+			v.object({
+				kind: v.literal("sessionPerformance"),
+				id: v.id("sessionPerformance"),
+				personId: v.string(),
+				eventId: v.string(),
+				revision: v.number(),
+				rating: v.number(),
+			}),
+		),
 		clubId: v.id("clubs"),
 		reporterId: v.optional(v.id("users")),
 		subjectId: v.optional(v.id("users")),
@@ -58,6 +72,7 @@ export const securityTables = {
 	})
 		.index("by_club_state", ["clubId", "state"])
 		.index("by_reporter_message", ["reporterId", "messageId"])
+		.index("by_source_person", ["clubId", "source.personId"])
 		.index("by_message", ["clubId", "messageId"])
 		.index("by_club", ["clubId"])
 		.index("by_reporter", ["reporterId"]),
@@ -73,6 +88,7 @@ export const securityTables = {
 		.index("by_installation", ["installationId"])
 		.index("by_token", ["token"]),
 	pushPreferences: defineTable({
+		...granularPreferenceFields,
 		userId: v.id("users"),
 		messages: v.boolean(),
 		events: v.boolean(),
@@ -80,12 +96,14 @@ export const securityTables = {
 		announcements: v.boolean(),
 	}).index("by_user", ["userId"]),
 	pushJobs: defineTable({
+		...notificationSourceFields,
 		clubId: v.id("clubs"),
 		kind: notificationKind,
 		entityId: v.string(),
 		actorId: v.optional(v.id("users")),
 		eventPhase: v.optional(
 			v.union(
+				v.literal("created"),
 				v.literal("open"),
 				v.literal("closing"),
 				v.literal("changed"),

@@ -60,12 +60,12 @@ describe("coach attendance reports", () => {
 		);
 		expect(result.recorded).toBe(3);
 		expect(result.total).toBe(4);
-		expect(result.attended).toBe(67);
+		expect(result.attended).toBe(50);
 		expect(result.onTime).toBe(50);
 		expect(result.additions).toBe(1);
 		expect(result.cancellations).toBe(1);
 		expect(result.cells.at(-1)?.attendance).toBe("unmarked");
-		expect(result.points).toEqual([{ date: "2026-09-01", value: 67 }]);
+		expect(result.points).toEqual([{ date: "2026-09-01", value: 50 }]);
 	});
 	test("eligibility, cancellation and completion control report denominators", () => {
 		const result = attendanceReportRow(

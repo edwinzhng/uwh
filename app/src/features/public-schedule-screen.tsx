@@ -1,9 +1,9 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { usePaginatedQuery, useQuery } from "convex/react";
-import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
+import { useBackend } from "../backend/context";
 import {
 	AuthLayout,
 	Badge,
@@ -11,6 +11,7 @@ import {
 	Calendar,
 	EmptyState,
 	IconButton,
+	InfiniteScroll,
 	LoadingContent,
 	Row,
 	SectionHeading,
@@ -21,8 +22,9 @@ import {
 } from "../design-system";
 import { formatDate, formatTime } from "../domain/app-rules";
 import { clubDate } from "../domain/event-time";
+import * as Clipboard from "../platform/clipboard";
 
-export const PublicScheduleScreen = (): ReactElement => {
+const LivePublicScheduleScreen = (): ReactElement => {
 	const { club = "" } = useLocalSearchParams<{ club?: string }>();
 	const router = useRouter();
 	const [selectedDate, setDate] = useState<string>();
@@ -152,16 +154,31 @@ export const PublicScheduleScreen = (): ReactElement => {
 							)
 						) : undefined}
 						{status === "CanLoadMore" || status === "LoadingMore" ? (
-							<Button
-								label="More events"
-								variant="secondary"
-								isLoading={status === "LoadingMore"}
-								onPress={(): void => loadMore(30)}
+							<InfiniteScroll
+								loadMore={(): void => loadMore(30)}
+								loading={status === "LoadingMore"}
+								revision={results.length}
+								disabled={false}
 							/>
 						) : undefined}
 					</>
 				)}
 			</Stack>
+		</AuthLayout>
+	);
+};
+
+export const PublicScheduleScreen = (): ReactElement => {
+	const { club } = useLocalSearchParams<{ club?: string }>();
+	const backend = useBackend();
+	return backend.available && club ? (
+		<LivePublicScheduleScreen />
+	) : (
+		<AuthLayout title="Public schedule">
+			<EmptyState
+				title="Schedule unavailable"
+				description="Check the club link or contact the club for its public schedule."
+			/>
 		</AuthLayout>
 	);
 };

@@ -1,11 +1,11 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useGlobalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useEffect, useRef, useState } from "react";
 import { useBackend } from "../backend/context";
 import { friendlyError } from "../backend/errors";
 import { AuthLayout, Button, Text } from "../design-system";
 
 export const AuthCallbackScreen = (): ReactElement => {
-	const { code = "" } = useLocalSearchParams<{ code?: string }>();
+	const { code = "" } = useGlobalSearchParams<{ code?: string }>();
 	const backend = useBackend();
 	const router = useRouter();
 	const started = useRef(false);

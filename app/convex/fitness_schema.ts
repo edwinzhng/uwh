@@ -2,6 +2,7 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 export const fitnessUnit = v.union(
 	v.literal("time"),
+	v.literal("distance"),
 	v.literal("count"),
 	v.literal("pass_fail"),
 );
@@ -10,6 +11,7 @@ export const fitnessTables = {
 		clubId: v.id("clubs"),
 		name: v.string(),
 		unit: fitnessUnit,
+		lowerIsBetter: v.optional(v.boolean()),
 		archived: v.boolean(),
 		revision: v.number(),
 	})
@@ -21,6 +23,8 @@ export const fitnessTables = {
 		seasonId: v.string(),
 		date: v.string(),
 		notes: v.string(),
+		eventId: v.optional(v.string()),
+		programId: v.optional(v.string()),
 		revision: v.number(),
 		resultCount: v.number(),
 	})
@@ -36,11 +40,13 @@ export const fitnessTables = {
 		date: v.string(),
 		value: v.number(),
 		notes: v.string(),
+		operationKey: v.optional(v.string()),
 	})
 		.index("by_session_person", ["sessionId", "personId"])
 		.index("by_person_date", ["testId", "seasonId", "personId", "date"])
 		.index("by_person_value", ["testId", "seasonId", "personId", "value"])
 		.index("by_club_person", ["clubId", "personId"])
+		.index("by_club_person_date", ["clubId", "personId", "date"])
 		.index("by_club", ["clubId"]),
 	fitnessStats: defineTable({
 		clubId: v.id("clubs"),
@@ -52,6 +58,7 @@ export const fitnessTables = {
 		best: v.number(),
 	})
 		.index("by_test_season_person", ["testId", "seasonId", "personId"])
+		.index("by_test_season_best", ["testId", "seasonId", "best"])
 		.index("by_club_person", ["clubId", "personId"])
 		.index("by_club", ["clubId"]),
 };

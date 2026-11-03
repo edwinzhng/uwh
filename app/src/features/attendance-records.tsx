@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
-import { Badge, Button, List, ListItem, Stack } from "../design-system";
+import { Badge, InfiniteScroll, List, ListItem, Stack } from "../design-system";
 import { formatDate } from "../domain/app-rules";
 import type { attendanceSummary } from "../domain/attendance-summary";
 export const AttendanceRecords = ({
@@ -52,13 +52,14 @@ export const AttendanceRecords = ({
 					/>
 				))}
 			</List>
-			{visibleCount < recent.length ? (
-				<Button
-					label="See more"
-					variant="ghost"
-					onPress={(): void => setVisibleCount((count) => count + 5)}
-				/>
-			) : undefined}
+			<InfiniteScroll
+				revision={visibleCount}
+				loadMore={
+					visibleCount < recent.length
+						? (): void => setVisibleCount((count) => count + 10)
+						: undefined
+				}
+			/>
 		</Stack>
 	);
 };

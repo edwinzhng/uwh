@@ -31,6 +31,8 @@ export const DeleteAccountAction = (): ReactElement | undefined => {
 				onPress={(): void => changeOpen(true)}
 			/>
 			<Dialog
+				intent="form"
+				isDismissDisabled={task.busy}
 				isOpen={open}
 				onOpenChange={changeOpen}
 				title="Delete account?"

@@ -1,10 +1,11 @@
-import { usePathname, useRouter } from "expo-router";
+import { usePathname } from "expo-router";
 import type { ReactElement, ReactNode } from "react";
-import clubLogo from "../../assets/club-logo.png";
-import { useApp } from "../demo/app-state";
-import { DesktopNavigation, NavigationFrame } from "../design-system";
-import { FamilyMenu } from "./family-menu";
-import { NotificationsMenu } from "./notifications-menu";
+import {
+	ChatWorkspace,
+	DesktopNavigation,
+	NavigationFrame,
+} from "../design-system";
+import { MessagesScreen } from "./messages-screen";
 import { useClubNavigation } from "./use-club-navigation";
 
 export const AppNavigation = ({
@@ -13,23 +14,21 @@ export const AppNavigation = ({
 	children: ReactNode;
 }): ReactElement => {
 	const path = usePathname();
-	const router = useRouter();
-	const { data } = useApp();
 	const navigation = useClubNavigation();
-	const hidden = path === "/design-system" || path === "/otp-test";
+	const hidden = ["/otp-test", "/review-auth", "/glass-preview"].includes(path);
 	return (
-		<NavigationFrame routeKey={path} navigation={navigation} hidden={hidden}>
-			{children}
-			{!hidden ? (
-				<DesktopNavigation
-					brand={data.clubName}
-					logo={data.clubName === "Calgary Crocs" ? clubLogo : undefined}
-					onBrandPress={(): void => router.navigate("/")}
-					navigation={navigation}
-					profile={<FamilyMenu />}
-					notifications={<NotificationsMenu labeled />}
-				/>
-			) : undefined}
+		<NavigationFrame
+			routeKey={path}
+			navigation={navigation}
+			hidden={hidden || path === "/conversation"}
+		>
+			<ChatWorkspace
+				active={path === "/conversation"}
+				sidebar={<MessagesScreen embedded />}
+			>
+				{children}
+			</ChatWorkspace>
+			{!hidden ? <DesktopNavigation navigation={navigation} /> : undefined}
 		</NavigationFrame>
 	);
 };

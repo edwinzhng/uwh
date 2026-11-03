@@ -2,10 +2,12 @@ import { describe, expect, test } from "bun:test";
 import type { ClubEvent } from "../src/domain/app-types";
 import {
 	type CoachingPractice,
+	coachingAssignmentSummary,
 	coachingPartMinutes,
 	coachingTotals,
 	completedCoachingEvent,
 	defaultCoachingDuration,
+	practiceCoachingDuration,
 	resolvedCoachingAssignment,
 	updatedCoachingPartIds,
 	validCoachingDuration,
@@ -47,6 +49,39 @@ const coach = (
 	personId: coachId,
 });
 describe("coaching hours", () => {
+	test("summarizes assigned hours and only the coach’s actual practice parts", (): void => {
+		const combined: ClubEvent = {
+			...event,
+			parts: [
+				{
+					id: "skills",
+					title: "Skills",
+					kind: "training",
+					start: "19:00",
+					end: "20:00",
+				},
+				{
+					id: "hockey",
+					title: "Hockey",
+					kind: "hockey",
+					start: "20:00",
+					end: "20:30",
+				},
+			],
+		};
+		expect(coachingAssignmentSummary(event, coach("alex", 90))).toBe(
+			"1.5 hours",
+		);
+		expect(coachingAssignmentSummary(combined, coach("alex", 90))).toBe(
+			"1.5 hours · Skills · Hockey",
+		);
+		expect(
+			coachingAssignmentSummary(combined, {
+				...coach("alex", 60),
+				partIds: ["skills"],
+			}),
+		).toBe("1 hour · Skills");
+	});
 	test("practice parts count only assigned time and never double-count overlaps", () => {
 		const combined: ClubEvent = {
 			...event,
@@ -103,7 +138,10 @@ describe("coaching hours", () => {
 		).toEqual(["hockey"]);
 		expect(updatedCoachingPartIds(combined, assignment, false)).toEqual([]);
 	});
-	test("retains Friday and non-Friday duration defaults", () => {
+	test("retains legacy duration presets while new practice defaults use actual times", () => {
+		expect(
+			practiceCoachingDuration({ ...event, start: "19:00", end: "19:45" }),
+		).toBe(45);
 		expect(defaultCoachingDuration("2026-09-11")).toBe(60);
 		expect(defaultCoachingDuration("2026-09-07")).toBe(90);
 		expect(defaultCoachingDuration("2026-09-13")).toBe(90);

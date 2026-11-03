@@ -1,25 +1,34 @@
 import type { ReactElement } from "react";
+import { useWindowDimensions } from "react-native";
 import { Toaster } from "sonner";
 import { useTheme } from "./theme";
-import { corners, font } from "./tokens";
+import { geometry, space } from "./tokens";
 export const ActionToaster = (): ReactElement => {
 	const theme = useTheme();
+	const { width } = useWindowDimensions();
+	const wide = width >= geometry.wide;
+	const offset = {
+		left: `calc(env(safe-area-inset-left, 0px) + ${space.md}px)`,
+		right: `calc(env(safe-area-inset-right, 0px) + ${space.md}px)`,
+		bottom: `calc(env(safe-area-inset-bottom, 0px) + ${space.md}px)`,
+	};
 	return (
 		<Toaster
-			position="bottom-right"
-			duration={5000}
+			position={wide ? "bottom-right" : "bottom-center"}
+			offset={offset}
+			mobileOffset={offset}
+			duration={Number.POSITIVE_INFINITY}
 			visibleToasts={3}
-			closeButton
-			theme={theme.background.primary === "#FFFFFF" ? "light" : "dark"}
-			toastOptions={{
-				style: {
-					fontFamily: font.medium,
-					background: theme.background.primary,
-					color: theme.text.primary,
-					borderColor: theme.border,
-					borderRadius: corners.control,
-				},
+			closeButton={false}
+			swipeDirections={["left", "right", "bottom"]}
+			theme={theme.mode}
+			style={{
+				left: wide ? "auto" : "50%",
+				right: wide ? offset.right : "auto",
+				transform: wide ? "none" : "translateX(-50%)",
+				width: `min(356px, calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - ${space.md * 2}px))`,
 			}}
+			toastOptions={{ style: { width: "100%" } }}
 		/>
 	);
 };

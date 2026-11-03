@@ -1,0 +1,13 @@
+- [Engineering](engineering/README.md): ownership, implementation and documentation rules.
+- [Forms](FORMS.md): validation, pending writes and recovery.
+- [Product scope](PRODUCT-SPEC.md): capabilities and access rules; verify historical plans against code.
+- [Performance](PERFORMANCE.md): dated measurements, not design requirements.
+- [Production readiness](PRODUCTION-READINESS.md): launch gaps and verification limits.
+- [Local data](LOCAL-REAL-DATA.md): isolated import, exceptions and audit caveats.
+- [Hosting](HOSTING.md), [release](RELEASE.md), [beta](BETA.md), [OTA updates](OTA-UPDATES.md), [social sign-in](SOCIAL-AUTH.md): operational setup.
+- Feature documents describe domain behavior; dated audits record earlier evidence.
+- Previous palettes, fonts, corners, materials, motion and screen arrangements are not redesign requirements.
+- Preserve intentional task behavior. In particular, the lineup builder fills landscape phones with the two teams side by side.
+- Check implementation and user intent before classifying behavior as obsolete.
+- Keep product permissions, privacy, drafts, explicit save/publication and recovery intact.
+- Keep documentation to necessary bullets; do not create another visual contract or implementation diary.

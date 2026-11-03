@@ -1,5 +1,5 @@
 import { type ReactElement, useRef, useState } from "react";
-import { newId, useApp } from "../demo/app-state";
+import { newId, useApp, useAppStatus } from "../demo/app-state";
 import {
 	Button,
 	Dialog,
@@ -11,66 +11,96 @@ import {
 } from "../design-system";
 import { memberName } from "../domain/app-rules";
 import type { CoachingFeedback } from "../domain/app-types";
+import { clubDate } from "../domain/event-time";
 import { ConfirmButton } from "./confirm-button";
 import { useDraft } from "./use-draft";
+import { useFormTask } from "./use-form-task";
 
 export const FeedbackEditor = ({
 	personId,
+	eventId,
 	existing,
+	isOpen: controlledOpen,
+	onOpenChange,
 }: {
 	personId: string;
+	eventId?: string;
 	existing?: CoachingFeedback;
-}): ReactElement => {
-	const { account, data, dispatch, busy, source } = useApp();
-	const [open, setOpen] = useState(false);
+} & (
+	| { isOpen: boolean; onOpenChange: (open: boolean) => void }
+	| { isOpen?: undefined; onOpenChange?: undefined }
+)): ReactElement => {
+	const { account, data, dispatch, source } = useApp();
+	const { busy: dispatchBusy } = useAppStatus();
+	const task = useFormTask();
+	const busy = dispatchBusy || task.busy;
+	const [localOpen, setLocalOpen] = useState(false);
+	const open = controlledOpen ?? localOpen;
+	const setOpen = (value: boolean): void => {
+		setLocalOpen(value);
+		onOpenChange?.(value);
+	};
 	const [privateNote, setPrivateNote] = useState(
 		existing?.visibility === "private",
 	);
 	const [body, setBody] = useDraft(
-		`feedback:${source}:${account.id}:${personId}:${existing?.id ?? "new"}`,
+		`feedback:${source}:${account.id}:${personId}:${existing?.id ?? "new"}${eventId ? `:${eventId}` : ""}`,
 	);
 	const attempt = useRef<string | undefined>(undefined);
 	const save = async (
 		visibility: CoachingFeedback["visibility"],
-	): Promise<boolean> => {
-		const id = existing?.id ?? attempt.current ?? newId();
-		attempt.current = id;
-		if (
-			await dispatch({
-				type: "save-feedback",
-				feedback: {
-					id,
-					personId,
-					authorId: account.id,
-					body,
-					visibility,
-					date: existing?.date ?? new Date().toISOString().slice(0, 10),
-				},
-			})
-		) {
-			setBody("");
-			setOpen(false);
-			attempt.current = undefined;
-			return true;
-		}
-		return false;
-	};
+	): Promise<boolean> =>
+		task.submit(
+			() =>
+				!body.trim()
+					? "Add feedback"
+					: body.length > 10000
+						? "Keep feedback to 10,000 characters"
+						: undefined,
+			async (): Promise<void> => {
+				const id = existing?.id ?? attempt.current ?? newId();
+				attempt.current = id;
+				const saved = await dispatch({
+					type: "save-feedback",
+					feedback: {
+						id,
+						kind: "coaching",
+						personId,
+						authorId: account.id,
+						eventId: existing?.eventId ?? eventId,
+						body,
+						visibility,
+						date:
+							existing?.date ??
+							data.events.find((event) => event.id === eventId)?.date ??
+							clubDate(Date.now(), data.timeZone),
+					},
+				});
+				if (!saved) throw new Error("Couldn’t save feedback. Try again.");
+				setBody("");
+				setOpen(false);
+				attempt.current = undefined;
+			},
+		);
 	return (
 		<>
-			<Button
-				compact
-				staffRole={existing ? undefined : "coach"}
-				label={existing ? "Edit" : "Feedback"}
-				prefix={existing ? "edit" : "plus"}
-				variant="secondary"
-				onPress={(): void => {
-					if (existing) setBody(existing.body);
-					setOpen(true);
-				}}
-			/>
+			{controlledOpen === undefined ? (
+				<Button
+					compact
+					label={existing ? "Edit note" : "Add note"}
+					prefix={existing ? "edit" : "plus"}
+					variant="secondary"
+					onPress={(): void => {
+						task.clear();
+						if (existing) setBody(existing.body);
+						setOpen(true);
+					}}
+				/>
+			) : undefined}
 			<Dialog
-				staffRole="coach"
-				title={`Feedback for ${memberName(data, personId)}`}
+				intent="form"
+				isDismissDisabled={busy}
+				title={`Coach note for ${memberName(data, personId)}`}
 				isOpen={open}
 				onOpenChange={(value): void => {
 					if (!busy) setOpen(value);
@@ -81,9 +111,7 @@ export const FeedbackEditor = ({
 							<Button
 								label="Save draft"
 								variant="ghost"
-								validationError={
-									busy || !body.trim() ? "Check the required fields" : undefined
-								}
+								isDisabled={busy}
 								onPress={(): void => {
 									void save("draft");
 								}}
@@ -93,9 +121,6 @@ export const FeedbackEditor = ({
 							<Button
 								label="Save note"
 								isLoading={busy}
-								validationError={
-									!body.trim() ? "Check the required fields" : undefined
-								}
 								onPress={(): void => {
 									void save("private");
 								}}
@@ -106,9 +131,7 @@ export const FeedbackEditor = ({
 								title="Publish feedback?"
 								description={`Share with ${memberName(data, personId)} and linked parents. Published feedback can’t be edited or deleted.`}
 								confirmLabel="Publish feedback"
-								validationError={
-									busy || !body.trim() ? "Check the required fields" : undefined
-								}
+								isDisabled={busy}
 								onConfirm={(): Promise<boolean> => save("published")}
 							/>
 						)}
@@ -135,6 +158,11 @@ export const FeedbackEditor = ({
 							? "Coaches only"
 							: `Publishes to ${memberName(data, personId)} and linked parents.`}
 					</Text>
+					{task.error ? (
+						<Text variant="small" tone="danger">
+							{task.error}
+						</Text>
+					) : undefined}
 				</Stack>
 			</Dialog>
 		</>

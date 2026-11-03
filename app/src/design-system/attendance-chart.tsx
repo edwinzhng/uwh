@@ -1,8 +1,16 @@
-import { chartColors } from "@calgarycrocs/design-system/tokens";
 import type { ReactElement } from "react";
 import { View } from "react-native";
-import Svg, { Line, Rect, Text as SvgText } from "react-native-svg";
+import Svg, { Line, Path, Text as SvgText } from "react-native-svg";
 import type { AttendancePoint } from "../domain/attendance-summary";
+import {
+	attendanceBarPath,
+	attendanceChartLabel,
+	attendanceChartPoints,
+	attendanceStackSegments,
+	type RecordedAttendancePoint,
+	recordedAttendance,
+} from "./attendance-plot-model";
+import { chartColors } from "./rainbow-palette";
 import { Row } from "./row";
 import { Text } from "./text";
 import { useTheme } from "./theme";
@@ -14,24 +22,15 @@ export const AttendanceChart = ({
 	data: AttendancePoint[];
 }): ReactElement => {
 	const theme = useTheme();
-	const max = Math.max(
-		1,
-		...data.map(
-			(point) => point.onTime + point.late + point.absent + point.unmarked,
-		),
-	);
+	const points = attendanceChartPoints(data);
+	const max = Math.max(1, ...points.map(recordedAttendance));
 	const width = geometry.messageImage;
 	const height = geometry.chart - space.xl;
-	const slot = width / Math.max(1, data.length);
+	const slot = width / Math.max(1, points.length);
 	return (
 		<View
 			accessibilityRole="image"
-			accessibilityLabel={data
-				.map(
-					(point) =>
-						`${point.label}: ${point.onTime} on time, ${point.late} late, ${point.absent} no-show, ${point.unmarked} unmarked`,
-				)
-				.join(". ")}
+			accessibilityLabel={attendanceChartLabel(points)}
 		>
 			<Svg
 				width="100%"
@@ -46,9 +45,10 @@ export const AttendanceChart = ({
 						y1={height * fraction}
 						y2={height * fraction}
 						stroke={theme.border}
+						strokeLinecap="round"
 					/>
 				))}
-				{data.map((point, index) => (
+				{points.map((point, index) => (
 					<ReactChartColumn
 						key={point.label}
 						point={point}
@@ -64,7 +64,6 @@ export const AttendanceChart = ({
 					{ label: "On time", color: chartColors.green },
 					{ label: "Late", color: chartColors.amber },
 					{ label: "No-show", color: chartColors.red },
-					{ label: "Not marked", color: theme.colorScales.pending.border },
 				].map((item) => (
 					<Row key={item.label} gap="xxs">
 						<View
@@ -92,39 +91,37 @@ const ReactChartColumn = ({
 	height,
 	max,
 }: {
-	point: AttendancePoint;
+	point: RecordedAttendancePoint;
 	x: number;
 	slot: number;
 	height: number;
 	max: number;
 }): ReactElement => {
 	const theme = useTheme();
-	const parts = [
-		{ value: point.onTime, color: chartColors.green },
-		{ value: point.late, color: chartColors.amber },
-		{ value: point.absent, color: chartColors.red },
-		{ value: point.unmarked, color: theme.colorScales.pending.border },
-	];
+	const barWidth = Math.min(geometry.chartBar, Math.max(1, slot - space.xs));
+	const parts = attendanceStackSegments(point, max, height, barWidth);
+	const colors = {
+		onTime: chartColors.green,
+		late: chartColors.amber,
+		absent: chartColors.red,
+	};
 	return (
 		<>
-			{parts.map((part, index) => (
-				<Rect
-					key={part.color}
-					x={x + space.xxs}
-					width={Math.max(1, slot - space.xs)}
-					y={
-						height -
-						(parts
-							.slice(0, index + 1)
-							.reduce((total, entry) => total + entry.value, 0) /
-							max) *
-							height
-					}
-					height={(part.value / max) * height}
-					fill={part.color}
-					rx={corners.item}
-				/>
-			))}
+			{parts
+				.filter((part) => part.height > 0)
+				.map((part) => (
+					<Path
+						key={part.key}
+						d={attendanceBarPath(
+							x + (slot - barWidth) / 2,
+							part.y,
+							barWidth,
+							part.height,
+							part.radius,
+						)}
+						fill={colors[part.key]}
+					/>
+				))}
 			<SvgText
 				x={x + slot / 2}
 				y={height + space.md}

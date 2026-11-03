@@ -1,0 +1,19 @@
+- Use public design-system components; keep styling and platform controls in their shared owners.
+- Keep routes thin and components focused. Hooks own reusable query/controller logic.
+- Convex owns server state; Jotai owns shared client state; local state owns ephemeral edits.
+- Derive state rather than synchronizing duplicate copies through effects.
+- Production renders real authorized data or honest signed-out/loading/empty/error states.
+- Fixtures are isolated review data, never a fallback for a failed live backend.
+- Preserve task-specific behavior when changing presentation: landscape-phone lineups remain fullscreen with teams side by side; inspect other special cases before simplifying them.
+- Capture actor, selected person, record and revision when a write starts; context switching must not retarget it.
+- Preserve drafts through reactive updates, failed writes and nested tasks. Retry an unchanged write with the same operation key.
+- Build write payloads from explicit input contracts, not spreads of queried records.
+- Follow [form behavior](../FORMS.md); await saves before closing, dismissing or advancing.
+- Preserve domain distinctions: account versus selected household person, RSVP versus observed attendance, private drafts versus published content.
+- Keep primary tasks discoverable; choose menus, sheets and screens by task complexity and available space.
+- Preserve deterministic Back destinations, deep links, focus restoration and native gestures.
+- Use shared motion tokens; respect reduced motion/transparency, cancel interruptions and pause inactive work.
+- Verify keyboard access, visible focus, accessible names, large text and touch targets.
+- Native/touch targets are at least 44 points; editable mobile-web text is at least 16 px; preserve pinch zoom.
+- Bound database queries and live rendering separately. Measure actual interaction and long-scroll performance.
+- Document only durable, non-obvious behavior in concise bullets; keep aesthetic proposals and temporary review notes out of committed guides.

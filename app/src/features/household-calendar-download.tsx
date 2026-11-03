@@ -16,7 +16,7 @@ export const HouseholdCalendarDownload = ({
 		</Text>
 	) : (
 		<FileDownload
-			label="Download .ics"
+			label="Download .ics file"
 			filename="club-calendar.ics"
 			contents={contents}
 			onError={onError}

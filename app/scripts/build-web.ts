@@ -1,7 +1,9 @@
 import { resolve } from "node:path";
+import { buildPushWorker } from "./build-push-worker";
 import { buildWebExport } from "./publish-web-export";
 
 const root = resolve(import.meta.dir, "..");
+await buildPushWorker();
 await buildWebExport(root, async (staging): Promise<number> => {
 	const child = Bun.spawn(
 		[

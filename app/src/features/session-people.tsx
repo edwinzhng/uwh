@@ -7,7 +7,6 @@ import {
 	EmptyState,
 	Row,
 	Stack,
-	StaffSection,
 	Surface,
 	Text,
 } from "../design-system";
@@ -19,6 +18,7 @@ import { AttendanceControl } from "./attendance-control";
 import { AttendanceFlagBadge } from "./attendance-flag-badge";
 import { AttendanceFlagControl } from "./attendance-flag-control";
 import { AttendanceFlagProvider } from "./attendance-flag-provider";
+import { FeedbackEditor } from "./feedback-editor";
 
 export const SessionPeople = ({
 	event,
@@ -48,95 +48,94 @@ export const SessionPeople = ({
 	];
 	return (
 		<AttendanceFlagProvider eventId={event.id}>
-			<StaffSection
-				staffRole={staff ? (canCoach(account) ? "coach" : "admin") : undefined}
-			>
-				<Stack gap="xl">
-					{groups
-						.filter((group) => group.members.length > 0)
-						.map((group) => (
-							<Stack key={group.id} gap="sm">
-								<Text variant="label" tone="secondary">
-									{group.label}
-								</Text>
-								<Surface padding="sm">
-									<Stack gap="sm">
-										{group.members.map((member, index) => {
-											const response = eventResponse(data, event.id, member.id);
-											const label =
-												response.response === "going"
-													? "Going"
-													: response.response === "waiting"
-														? "Waitlist"
-														: response.response === "unavailable"
-															? "Can’t go"
-															: "No reply";
-											return (
-												<Stack key={member.id} gap="sm">
-													{index > 0 ? <Divider /> : undefined}
-													<ContentRow
-														title={member.name}
-														identity={staff ? undefined : member.name}
-														metadata={
-															staff ? (
-																<AttendanceFlagBadge personId={member.id} />
-															) : undefined
-														}
-														description={
-															staff && response.response !== "going"
-																? [label, response.absenceReason]
-																		.filter(Boolean)
+			<Stack gap="xl">
+				{groups
+					.filter((group) => group.members.length > 0)
+					.map((group) => (
+						<Stack key={group.id} gap="sm">
+							<Text variant="label" tone="secondary">
+								{group.label}
+							</Text>
+							<Surface padding="sm">
+								<Stack gap="sm">
+									{group.members.map((member, index) => {
+										const response = eventResponse(data, event.id, member.id);
+										const label =
+											response.response === "going"
+												? "Going"
+												: response.response === "waiting"
+													? "Waitlist"
+													: response.response === "unavailable"
+														? "Can’t go"
+														: "No reply";
+										return (
+											<Stack key={member.id} gap="sm">
+												{index > 0 ? <Divider /> : undefined}
+												<ContentRow
+													title={member.name}
+													identity={staff ? undefined : member.name}
+													metadata={
+														staff ? (
+															<AttendanceFlagBadge personId={member.id} />
+														) : undefined
+													}
+													description={
+														staff && response.response !== "going"
+															? [label, response.absenceReason]
+																	.filter(Boolean)
+																	.join(" · ")
+															: !partId &&
+																	event.parts?.length &&
+																	response.partIds?.length
+																? selectedParts(event, response)
+																		.map((part) => part.title)
 																		.join(" · ")
-																: !partId &&
-																		event.parts?.length &&
-																		response.partIds?.length
-																	? selectedParts(event, response)
-																			.map((part) => part.title)
-																			.join(" · ")
-																	: undefined
-														}
-														control={
-															staff ? (
-																<Row gap="xs">
-																	<AttendanceControl
+																: undefined
+													}
+													control={
+														staff ? (
+															<Row gap="xs" wrap>
+																<AttendanceControl
+																	eventId={event.id}
+																	personId={member.id}
+																	name={member.name}
+																	value={effectiveAttendance(
+																		event,
+																		response,
+																		partId,
+																	)}
+																	defaultHere={response.response === "going"}
+																	partId={partId}
+																	disabled={event.cancelled}
+																/>
+																<AttendanceFlagControl
+																	personId={member.id}
+																	name={member.name}
+																	disabled={event.cancelled}
+																/>
+																{canCoach(account, event.program) ? (
+																	<FeedbackEditor
+																		personId={member.id}
 																		eventId={event.id}
-																		personId={member.id}
-																		name={member.name}
-																		value={effectiveAttendance(
-																			event,
-																			response,
-																			partId,
-																		)}
-																		defaultHere={response.response === "going"}
-																		partId={partId}
-																		disabled={event.cancelled}
 																	/>
-																	<AttendanceFlagControl
-																		personId={member.id}
-																		name={member.name}
-																		disabled={event.cancelled}
-																	/>
-																</Row>
-															) : (
-																<Badge label={label} />
-															)
-														}
-													/>
-												</Stack>
-											);
-										})}
-									</Stack>
-								</Surface>
-							</Stack>
-						))}
-					{!members.length ? (
-						<EmptyState
-							title="No eligible players"
-							description="Players eligible for this session will appear here for attendance."
-						/>
-					) : undefined}
-				</Stack>
-			</StaffSection>
+																) : undefined}
+															</Row>
+														) : (
+															<Badge label={label} />
+														)
+													}
+												/>
+											</Stack>
+										);
+									})}
+								</Stack>
+							</Surface>
+						</Stack>
+					))}
+				{!members.length ? (
+					<EmptyState title="No eligible players" />
+				) : undefined}
+			</Stack>
 		</AttendanceFlagProvider>
 	);
 };

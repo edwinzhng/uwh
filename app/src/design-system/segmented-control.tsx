@@ -1,17 +1,15 @@
 import { type ReactElement, useId, useState } from "react";
-import {
-	type LayoutChangeEvent,
-	useWindowDimensions,
-	View,
-} from "react-native";
+import { useWindowDimensions, View } from "react-native";
 import type { IconName } from "./icon";
 import { ScrollArea } from "./scroll-area";
-import { type SegmentFrame, SegmentIndicator } from "./segment-indicator";
 import { SegmentOption } from "./segment-option";
+import { SelectionIndicator } from "./selection-indicator";
 import { Stack } from "./stack";
+import { type TabSize, tabFrame } from "./tab-layout";
 import { Text } from "./text";
 import { useTheme } from "./theme";
-import { control, corners, geometry, layer, space } from "./tokens";
+import { control, corners, geometry, radius, space } from "./tokens";
+import { useControlSelection } from "./use-control-selection";
 import { useControlSize } from "./use-control-size";
 
 type Option<T extends string> = {
@@ -19,7 +17,6 @@ type Option<T extends string> = {
 	label: string;
 	isDisabled?: boolean;
 };
-
 type Props<T extends string> = {
 	label: string;
 	value: T;
@@ -39,42 +36,34 @@ export const SegmentedControl = <T extends string>({
 	onValueChange,
 }: Props<T>): ReactElement => {
 	const theme = useTheme();
+	const { selectedValue, selectValue } = useControlSelection(
+		value,
+		onValueChange,
+	);
+	const [sizes, setSizes] = useState<Partial<Record<T, TabSize>>>({});
 	const groupName = useId();
 	const controlSize = useControlSize();
-	const isRound = variant === "icons";
+	const icons = variant === "icons";
 	const { fontScale } = useWindowDimensions();
 	const height = Math.max(
-		controlSize,
+		(icons ? Math.max(controlSize, geometry.touch) : controlSize) +
+			(icons ? control.segmentInset * 2 + geometry.border * 2 : 0),
 		control.typography.lineHeight * fontScale +
 			control.paddingY * 2 +
 			geometry.border * 2,
 	);
-	const [frames, setFrames] = useState<Partial<Record<T, SegmentFrame>>>({});
-	const [hoveredValue, setHoveredValue] = useState<T>();
 	const selected = options.find(
-		(option) => option.value === value && !option.isDisabled,
+		(option) => option.value === selectedValue && !option.isDisabled,
+	);
+	const frame = tabFrame(
+		options.map((option) => ({
+			value: option.value,
+			size: sizes[option.value],
+		})),
+		selectedValue,
+		icons ? 0 : space.xxs,
 	);
 	const tabStop = selected ?? options.find((option) => !option.isDisabled);
-	const frame = selected ? frames[selected.value] : undefined;
-	const hovered = options.find(
-		(option) =>
-			option.value === hoveredValue &&
-			!option.isDisabled &&
-			option.value !== value,
-	);
-	const hoverFrame = hovered ? frames[hovered.value] : undefined;
-	const measure = (optionValue: T, event: LayoutChangeEvent): void => {
-		const next = event.nativeEvent.layout;
-		setFrames((current) => {
-			const previous = current[optionValue];
-			return previous?.x === next.x &&
-				previous.y === next.y &&
-				previous.width === next.width &&
-				previous.height === next.height
-				? current
-				: { ...current, [optionValue]: next };
-		});
-	};
 	return (
 		<Stack gap="xs">
 			{!hideLabel ? (
@@ -99,62 +88,61 @@ export const SegmentedControl = <T extends string>({
 					style={{
 						flexDirection: "row",
 						alignItems: "center",
-						gap: space.xxs,
+						gap: icons ? 0 : space.xxs,
 						padding: control.segmentInset,
-						borderRadius: isRound ? corners.pill : corners.panel,
-						outlineWidth: isRound ? geometry.border : 0,
-						outlineOffset: -geometry.border,
-						outlineColor: theme.border,
+						borderRadius: icons ? radius.round : corners.control,
+						borderWidth: icons ? geometry.border : 0,
+						borderColor: theme.border,
 						backgroundColor: theme.background.secondary,
 					}}
 				>
-					{hoverFrame ? (
-						<View
-							pointerEvents="none"
-							accessible={false}
-							style={{
-								position: "absolute",
-								zIndex: layer.base,
-								left: hoverFrame.x,
-								top: hoverFrame.y,
-								width: hoverFrame.width,
-								height: hoverFrame.height,
-								borderRadius: isRound ? corners.pill : corners.control,
-								backgroundColor: theme.background.hover,
-							}}
-						/>
-					) : undefined}
 					{frame ? (
-						<SegmentIndicator frame={frame} isRound={isRound} />
+						<SelectionIndicator
+							frame={{
+								...frame,
+								x: frame.x + control.segmentInset,
+								y: control.segmentInset,
+							}}
+							value={selectedValue}
+							color={
+								theme.mode === "dark"
+									? theme.background.selected
+									: theme.background.primary
+							}
+							radius={icons ? radius.round : corners.control}
+							borderColor={icons ? theme.border : undefined}
+						/>
 					) : undefined}
 					{options.map((option) => (
 						<View
 							key={option.value}
-							style={{ zIndex: layer.selected }}
-							onLayout={(event): void => measure(option.value, event)}
+							onLayout={(event): void => {
+								const { width, height } = event.nativeEvent.layout;
+								setSizes((current) =>
+									current[option.value]?.width === width &&
+									current[option.value]?.height === height
+										? current
+										: { ...current, [option.value]: { width, height } },
+								);
+							}}
 						>
 							<SegmentOption
+								key={option.value}
 								label={option.label}
 								icon={option.icon}
 								value={option.value}
 								groupName={groupName}
 								isSelected={selected?.value === option.value}
+								indicatorReady={frame !== undefined}
 								isDisabled={option.isDisabled}
 								isTabStop={tabStop?.value === option.value}
-								showSelection={selected?.value === option.value && !frame}
-								height={height - control.segmentInset * 2}
-								onHoverChange={(isHovered): void =>
-									setHoveredValue((current) =>
-										isHovered
-											? option.value
-											: current === option.value
-												? undefined
-												: current,
-									)
+								height={
+									height -
+									control.segmentInset * 2 -
+									(icons ? geometry.border * 2 : 0)
 								}
 								onSelect={(): void => {
-									if (!option.isDisabled && option.value !== value)
-										onValueChange(option.value);
+									if (!option.isDisabled) selectValue(option.value);
 								}}
 							/>
 						</View>

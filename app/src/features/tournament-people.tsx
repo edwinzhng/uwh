@@ -37,10 +37,7 @@ export const TournamentPeople = ({
 					);
 				})}
 				{!members.length ? (
-					<EmptyState
-						title="No eligible players"
-						description="Players eligible for this tournament will appear here with their availability and team assignments."
-					/>
+					<EmptyState title="No eligible players" />
 				) : undefined}
 			</List>
 		</Stack>

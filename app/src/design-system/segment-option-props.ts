@@ -6,10 +6,9 @@ export type SegmentOptionProps = {
 	value: string;
 	groupName: string;
 	isSelected: boolean;
+	indicatorReady?: boolean;
 	isDisabled?: boolean;
 	isTabStop: boolean;
-	showSelection: boolean;
 	height: number;
 	onSelect: () => void;
-	onHoverChange: (hovered: boolean) => void;
 };

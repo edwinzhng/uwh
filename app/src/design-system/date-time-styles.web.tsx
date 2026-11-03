@@ -19,11 +19,11 @@ export const DateTimeStyles = (): ReactElement => {
 .club-calendar .rdp-day { padding:0; text-align:center; }
 .club-calendar .rdp-day_button, .club-calendar .rdp-button_previous, .club-calendar .rdp-button_next { box-sizing:border-box; display:flex; align-items:center; justify-content:center; width:${geometry.calendarDay}px; height:${geometry.calendarDay}px; max-width:100%; padding:0; margin:0; border:0; border-radius:${corners.control}px; background:transparent; color:${theme.text.primary}; font:inherit; cursor:pointer; }
 .club-calendar .rdp-day_button { width:100%; font-variant-numeric:tabular-nums; }
-.club-calendar button:hover:not(:disabled):not([aria-disabled="true"]), .club-calendar-shortcut:hover:not(:disabled) { background:${theme.background.secondary}; }
+@media (hover:hover) and (pointer:fine) { .club-calendar button:hover:not(:disabled):not([aria-disabled="true"]), .club-calendar-shortcut:hover:not(:disabled) { background:${theme.background.secondary}; } }
 .club-calendar .rdp-outside .rdp-day_button { color:${theme.text.secondary}; }
 .club-calendar .rdp-today .rdp-day_button { box-shadow:inset 0 0 0 ${geometry.border}px ${theme.controlBorder}; }
 .club-calendar .rdp-selected .rdp-day_button { background:${theme.accent.background}; color:${theme.accent.foreground}; box-shadow:none; }
-.club-calendar .rdp-selected .rdp-day_button:hover { background:${theme.accent.hover}; }
+@media (hover:hover) and (pointer:fine) { .club-calendar .rdp-selected .rdp-day_button:hover { background:${theme.accent.hover}; } }
 .club-calendar button:disabled, .club-calendar button[aria-disabled="true"], .club-calendar-shortcut:disabled { opacity:${geometry.disabledOpacity}; cursor:default; }
 .club-calendar button:focus-visible, .club-calendar-shortcut:focus-visible { outline:${geometry.focus}px solid ${theme.focus}; outline-offset:-${geometry.focus}px; }
 .club-calendar .rdp-chevron { fill:currentColor; }

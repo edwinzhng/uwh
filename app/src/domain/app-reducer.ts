@@ -1,3 +1,4 @@
+import { actionPeople } from "./action-people";
 import {
 	addDays,
 	balance,
@@ -15,10 +16,30 @@ import {
 } from "./app-rules";
 import type { Account, AppAction, AppData, EventResponse } from "./app-types";
 import { generatePreviewTeams } from "./club";
-import { equipmentStock, validateEquipment } from "./equipment";
+import { validateEquipment } from "./equipment";
+import { memberLoan } from "./equipment-loans";
 import { editedOccurrences, eligibleResponses } from "./event-recurrence";
 import { clubDate, signupState } from "./event-time";
+import { feedbackKind } from "./feedback-access";
+import { updateGoal } from "./goals";
+import {
+	assignLineupPosition,
+	lineupSnapshot,
+	normalizeLineup,
+	saveLineup,
+	validateLineup,
+	validateLineupReferees,
+	writeTeamPlan,
+} from "./lineup";
+import { carryForwardLineup } from "./lineup-carry";
+import { setMemberArchived } from "./member-lifecycle";
 import { reduceMessages } from "./message-reducer";
+import {
+	canManageNotice,
+	editNotice,
+	isNoticeActive,
+	validateNoticeDraft,
+} from "./notices";
 import { defaultPlayerCoaching } from "./player-coaching";
 import {
 	aggregateAttendance,
@@ -28,6 +49,8 @@ import {
 	selectedParts,
 	validatePartSelection,
 } from "./practice-parts";
+import { clubPrograms, deleteProgram, saveProgram } from "./programs";
+import { validatePartResponses } from "./schedule-agenda";
 import {
 	canonicalTimeZone,
 	defaultClubTimeZone,
@@ -42,6 +65,13 @@ export const reduceApp = (
 	account: Account,
 	action: AppAction,
 ): AppData => {
+	const references = new Set(actionPeople(action));
+	if (
+		data.members.some((entry) => references.has(entry.id) && entry.mergedInto)
+	)
+		throw new Error(
+			"This profile was merged. Open the current member before making changes.",
+		);
 	const member =
 		"personId" in action
 			? data.members.find((entry) => entry.id === action.personId)
@@ -51,6 +81,31 @@ export const reduceApp = (
 			? data.events.find((entry) => entry.id === action.eventId)
 			: undefined;
 	switch (action.type) {
+		case "delete-program":
+			requireAccess(account.admin);
+			return deleteProgram(data, action.id, action.expectedRevision);
+		case "save-program":
+			requireAccess(account.admin);
+			return saveProgram(
+				data,
+				action.draft,
+				action.expectedRevision,
+				action.memberIds,
+			);
+		case "set-member-archived":
+			requireAccess(account.admin && Boolean(member));
+			return {
+				...data,
+				members: data.members.map((entry) =>
+					entry.id === action.personId
+						? setMemberArchived(
+								entry,
+								action.archived,
+								clubDate(undefined, data.timeZone),
+							)
+						: entry,
+				),
+			};
 		case "add-season":
 			requireAccess(account.admin);
 			if (
@@ -71,13 +126,19 @@ export const reduceApp = (
 			};
 		case "add-member":
 			requireAccess(account.admin);
+			if (action.member.mergedInto || action.member.mergedAt)
+				throw new Error(
+					"Use member merge to create an archived profile alias.",
+				);
 			if (
 				!action.member.name.trim() ||
 				!Number.isInteger(action.charge) ||
 				action.charge < 0 ||
 				action.charge > 1000000 ||
-				!action.member.programs.every(
-					(program) => program === "club" || program === "youth",
+				!action.member.programs.every((program) =>
+					clubPrograms(data).some(
+						(entry) => entry.id === program && !entry.archived,
+					),
 				)
 			)
 				throw new Error("Check the member details and fee.");
@@ -106,6 +167,12 @@ export const reduceApp = (
 			if (current.seriesExpected && action.response === "unavailable")
 				throw new Error("Use the series attendance form and provide a reason.");
 			validatePartSelection(event, action.partIds);
+			validatePartResponses(
+				event,
+				action.response,
+				action.partIds,
+				action.declinedPartIds,
+			);
 			const going = data.responses.filter(
 				(entry) =>
 					entry.eventId === event.id &&
@@ -122,6 +189,7 @@ export const reduceApp = (
 				absenceReason:
 					action.response === "going" ? undefined : current.absenceReason,
 				partIds: action.response === "going" ? action.partIds : undefined,
+				declinedPartIds: action.declinedPartIds,
 			};
 			const next: EventResponse = {
 				...updated,
@@ -158,7 +226,7 @@ export const reduceApp = (
 				Boolean(
 					member &&
 						event &&
-						canRegister(member, event) &&
+						canRegister({ ...member, archived: false }, event) &&
 						(account.admin || canCoach(account, event.program)),
 				),
 			);
@@ -207,6 +275,16 @@ export const reduceApp = (
 		}
 		case "create-event": {
 			requireAccess(account.admin);
+			if (
+				action.draft.program !== "all" &&
+				!clubPrograms(data).some(
+					(program) =>
+						program.id === action.draft.program &&
+						!program.archived &&
+						program.status !== "completed",
+				)
+			)
+				throw new Error("Choose an active program.");
 			const draft = {
 				...action.draft,
 				timeZone:
@@ -253,6 +331,17 @@ export const reduceApp = (
 			return { ...data, events: [...data.events, ...events] };
 		}
 		case "edit-event": {
+			if (
+				action.draft.program !== event?.program &&
+				action.draft.program !== "all" &&
+				!clubPrograms(data).some(
+					(program) =>
+						program.id === action.draft.program &&
+						!program.archived &&
+						program.status !== "completed",
+				)
+			)
+				throw new Error("Choose an active program.");
 			if (account.admin && action.editId && event?.editId === action.editId)
 				return data;
 			requireAccess(account.admin && Boolean(event && !event.cancelled));
@@ -377,21 +466,31 @@ export const reduceApp = (
 				})),
 				{ separateYouth: action.separateYouth ?? true, excludedPersonIds },
 			);
-			const plan = {
-				partId: action.partId,
-				separateYouth: action.separateYouth ?? true,
-				excludedPersonIds,
-				assignments: [...generated.black, ...generated.white].map((player) => ({
-					personId: player.id,
-					position: player.assignedPosition,
-					ageGroup: player.ageGroup,
-				})),
-				eventId: action.eventId,
-				black: generated.black.map((entry) => entry.id),
-				white: generated.white.map((entry) => entry.id),
-				attendees: attendees.map((entry) => entry.id),
-				published: false,
-			};
+			const previous = data.teams.find(
+				(entry) =>
+					entry.eventId === action.eventId && entry.partId === action.partId,
+			);
+			const plan = writeTeamPlan(
+				previous,
+				normalizeLineup({
+					partId: action.partId,
+					separateYouth: action.separateYouth ?? true,
+					excludedPersonIds,
+					assignments: [...generated.black, ...generated.white].map(
+						(player) => ({
+							personId: player.id,
+							position: player.assignedPosition,
+							ageGroup: player.ageGroup,
+						}),
+					),
+					eventId: action.eventId,
+					black: generated.black.map((entry) => entry.id),
+					white: generated.white.map((entry) => entry.id),
+					attendees: attendees.map((entry) => entry.id),
+					published: false,
+				}),
+				action.expectedRevision,
+			);
 			return {
 				...data,
 				teams: [
@@ -402,6 +501,83 @@ export const reduceApp = (
 					),
 					plan,
 				],
+			};
+		}
+		case "carry-lineup": {
+			requireAccess(
+				Boolean(event && !event.cancelled && canCoach(account, event.program)),
+			);
+			const sourceEvent = data.events.find(
+				(entry) => entry.id === action.sourceEventId,
+			);
+			const source = data.teams.find(
+				(entry) =>
+					entry.eventId === action.sourceEventId &&
+					entry.partId === action.sourcePartId,
+			);
+			if (!event || !sourceEvent || !source)
+				throw new Error("Source lineup unavailable.");
+			const previous = data.teams.find(
+				(entry) => entry.eventId === event.id && entry.partId === action.partId,
+			);
+			const carried = carryForwardLineup({
+				source,
+				sourceEvent,
+				targetEvent: event,
+				partId: action.partId,
+				previous,
+				attendees: eventAttendees(data, event.id, action.partId),
+				profiles: data.playerCoaching ?? [],
+				members: data.members,
+				expectedSourceRevision: action.expectedSourceRevision,
+				expectedRevision: action.expectedRevision,
+			});
+			return { ...data, teams: [...data.teams, carried] };
+		}
+		case "save-lineup": {
+			requireAccess(
+				Boolean(event && !event.cancelled && canCoach(account, event.program)),
+			);
+			if (
+				action.partId &&
+				!event?.parts?.some((part) => part.id === action.partId)
+			)
+				throw new Error("Practice part not found.");
+			const plan = data.teams.find(
+				(entry) =>
+					entry.eventId === action.eventId && entry.partId === action.partId,
+			);
+			if (!plan) throw new Error("Generate teams first.");
+			if (lineupNeedsReview(data, plan))
+				throw new Error("Lineup changed. Regenerate teams before editing.");
+			const refereeIssue = validateLineupReferees(
+				action.snapshot,
+				data.members,
+			);
+			if (refereeIssue) throw new Error(refereeIssue);
+			if (
+				action.snapshot.positions.some(
+					(entry) =>
+						entry.ageGroup !== undefined &&
+						entry.ageGroup !==
+							(data.playerCoaching?.find(
+								(profile) => profile.personId === entry.personId,
+							)?.ageGroup ??
+								plan.assignments?.find(
+									(assignment) => assignment.personId === entry.personId,
+								)?.ageGroup ??
+								(data.members
+									.find((member) => member.id === entry.personId)
+									?.programs.includes("youth")
+									? "youth"
+									: "adult")),
+				)
+			)
+				throw new Error("Use the player's current age group.");
+			const next = saveLineup(plan, action.snapshot, action.expectedRevision);
+			return {
+				...data,
+				teams: data.teams.map((entry) => (entry === plan ? next : entry)),
 			};
 		}
 		case "move-player":
@@ -422,49 +598,53 @@ export const reduceApp = (
 			if (!plan) throw new Error("Generate teams first.");
 			if (lineupNeedsReview(data, plan))
 				throw new Error("Lineup changed. Regenerate teams before publishing.");
-			if (action.type === "publish-teams")
-				return {
-					...data,
-					teams: data.teams.map((entry) =>
-						entry === plan ? { ...entry, published: true } : entry,
-					),
-				};
-			requireAccess([...plan.black, ...plan.white].includes(action.personId));
-			if (action.type === "assign-position")
+			if (action.type === "publish-teams") {
+				const refereeIssue = validateLineupReferees(
+					lineupSnapshot(plan),
+					data.members,
+				);
+				if (refereeIssue) throw new Error(refereeIssue);
+				if (plan.blackFormation || plan.whiteFormation) {
+					const error = validateLineup(plan, lineupSnapshot(plan));
+					if (error) throw new Error(error);
+				}
 				return {
 					...data,
 					teams: data.teams.map((entry) =>
 						entry === plan
-							? {
-									...entry,
-									published: false,
-									assignments: (
-										entry.assignments ??
-										entry.attendees.map((personId) => ({
-											personId,
-											position: "FORWARD" as const,
-											ageGroup: "adult" as const,
-										}))
-									).map((assignment) =>
-										assignment.personId === action.personId
-											? { ...assignment, position: action.position }
-											: assignment,
-									),
-								}
+							? writeTeamPlan(
+									plan,
+									{ ...entry, published: true },
+									action.expectedRevision,
+								)
 							: entry,
 					),
 				};
+			}
+			requireAccess([...plan.black, ...plan.white].includes(action.personId));
+			const snapshot = lineupSnapshot(plan);
 			const fromBlack = plan.black.includes(action.personId);
-			const next = {
-				...plan,
-				published: false,
-				black: fromBlack
-					? plan.black.filter((id) => id !== action.personId)
-					: [...plan.black, action.personId],
-				white: fromBlack
-					? [...plan.white, action.personId]
-					: plan.white.filter((id) => id !== action.personId),
-			};
+			const position = snapshot.positions.find(
+				(entry) => entry.personId === action.personId,
+			)?.position;
+			if (!position) throw new Error("Choose a positioned player.");
+			const next = saveLineup(
+				plan,
+				assignLineupPosition(
+					plan,
+					snapshot,
+					action.personId,
+					action.type === "assign-position"
+						? fromBlack
+							? "black"
+							: "white"
+						: fromBlack
+							? "white"
+							: "black",
+					action.type === "assign-position" ? action.position : position,
+				),
+				action.expectedRevision ?? plan.revision ?? 0,
+			);
 			return {
 				...data,
 				teams: data.teams.map((entry) => (entry === plan ? next : entry)),
@@ -495,18 +675,53 @@ export const reduceApp = (
 				(entry) => entry.id === action.feedback.id,
 			);
 			const newShoutout =
-				target && !existing && action.feedback.visibility === "published";
+				target &&
+				(!existing || existing.authorId === account.id) &&
+				feedbackKind(action.feedback) === "shoutout" &&
+				action.feedback.visibility === "published";
 			requireAccess(
 				Boolean(target && (canCoachMember(account, target) || newShoutout)),
 			);
-			if (!action.feedback.body.trim())
+			if (
+				feedbackKind(action.feedback) === "shoutout" &&
+				(target?.archived || target?.mergedInto)
+			)
+				throw new Error("Choose an active player.");
+			if (
+				feedbackKind(action.feedback) === "shoutout" &&
+				action.feedback.body.length > 1000
+			)
+				throw new Error("Keep shoutout notes to 1,000 characters.");
+			if (!validDate(action.feedback.date))
+				throw new Error("Choose a valid feedback date.");
+			if (
+				action.feedback.eventId &&
+				!data.events.some((entry) => entry.id === action.feedback.eventId)
+			)
+				throw new Error("Practice not found.");
+			if (
+				action.feedback.category &&
+				feedbackKind(action.feedback) !== "shoutout"
+			)
+				throw new Error("Recognition categories are for shoutouts only.");
+			if (!action.feedback.body.trim() && !action.feedback.category)
 				throw new Error("Write some feedback first.");
+			if (
+				feedbackKind(action.feedback) === "shoutout" &&
+				action.feedback.visibility !== "published"
+			)
+				throw new Error("Shoutouts must be sent to the recipient.");
+			if (existing && feedbackKind(existing) !== feedbackKind(action.feedback))
+				throw new Error("Keep coaching feedback and shoutouts separate.");
 			if (
 				existing?.visibility === "published" &&
 				existing.authorId === account.id &&
 				existing.personId === action.feedback.personId &&
 				action.feedback.visibility === "published" &&
-				existing.body === action.feedback.body.trim().slice(0, 10000)
+				existing.body === action.feedback.body.trim().slice(0, 10000) &&
+				existing.category === action.feedback.category &&
+				existing.eventId === action.feedback.eventId &&
+				existing.date === action.feedback.date
 			)
 				return data;
 			if (
@@ -529,7 +744,12 @@ export const reduceApp = (
 					...data.feedback.filter((entry) => entry.id !== action.feedback.id),
 					{
 						...action.feedback,
+						kind: feedbackKind(action.feedback),
 						authorId: account.id,
+						authorName:
+							feedbackKind(action.feedback) === "coaching"
+								? account.name
+								: undefined,
 						body: action.feedback.body.trim().slice(0, 10000),
 					},
 				],
@@ -542,11 +762,12 @@ export const reduceApp = (
 			);
 			requireAccess(
 				Boolean(
-					entry &&
-						member &&
-						entry.authorId === account.id &&
-						entry.visibility !== "published" &&
-						canCoachMember(account, member),
+					(entry && account.admin && feedbackKind(entry) === "shoutout") ||
+						(entry &&
+							member &&
+							entry.authorId === account.id &&
+							entry.visibility !== "published" &&
+							canCoachMember(account, member)),
 				),
 			);
 			return {
@@ -574,60 +795,16 @@ export const reduceApp = (
 			};
 		}
 		case "request-goal":
-			requireAccess(Boolean(member && account.personId === member.id));
-			if (
-				!action.goal.trim() ||
-				action.goal.length > 500 ||
-				action.goal.trim() === member?.goal
-			)
-				throw new Error("Propose a different goal under 500 characters.");
-			return {
-				...data,
-				members: data.members.map((entry) =>
-					entry.id === action.personId
-						? { ...entry, pendingGoal: action.goal.trim() }
-						: entry,
-				),
-			};
 		case "review-goal":
-			requireAccess(
-				Boolean(
-					member &&
-						canCoachMember(account, member) &&
-						account.personId !== member.id,
-				),
-			);
-			if (!member?.pendingGoal || member.pendingGoal !== action.goal)
-				throw new Error("This request has changed. Review the latest goal.");
+		case "set-goal": {
+			const updated = updateGoal(member, account, action);
 			return {
 				...data,
 				members: data.members.map((entry) =>
-					entry.id === action.personId
-						? {
-								...entry,
-								goal: action.approve ? action.goal : entry.goal,
-								pendingGoal: undefined,
-							}
-						: entry,
+					entry.id === action.personId ? updated : entry,
 				),
 			};
-		case "set-goal":
-			requireAccess(Boolean(member && canCoachMember(account, member)));
-			if (!action.goal.trim() || action.goal.length > 500)
-				throw new Error("Add a goal under 500 characters.");
-			return {
-				...data,
-				members: data.members.map((entry) =>
-					entry.id === action.personId
-						? {
-								...entry,
-								goal: action.goal.trim(),
-								steps: 0,
-								pendingGoal: undefined,
-							}
-						: entry,
-				),
-			};
+		}
 		case "goal-step":
 			requireAccess(
 				Boolean(
@@ -655,17 +832,36 @@ export const reduceApp = (
 		case "set-reaction":
 		case "create-thread":
 			return { ...data, ...reduceMessages(data, account, action) };
+		case "edit-notice": {
+			const notice = data.notices.find((entry) => entry.id === action.noticeId);
+			if (!notice) throw new Error("Announcement unavailable.");
+			const updated = editNotice(
+				notice,
+				account,
+				action,
+				clubDate(undefined, data.timeZone),
+			);
+			return {
+				...data,
+				notices: data.notices.map((entry) =>
+					entry.id === notice.id ? updated : entry,
+				),
+			};
+		}
 		case "dismiss-notice":
 		case "expire-notice": {
 			const notice = visibleNotices(data, account).find(
 				(entry) => entry.id === action.noticeId,
 			);
 			requireAccess(Boolean(notice));
-			if (action.type === "expire-notice")
-				requireAccess(
-					account.admin ||
-						account.coachPrograms.includes(notice?.program ?? ""),
-				);
+			if (action.type === "expire-notice") {
+				requireAccess(Boolean(notice && canManageNotice(account, notice)));
+				if (
+					!notice ||
+					!isNoticeActive(notice, clubDate(undefined, data.timeZone))
+				)
+					throw new Error("Only live announcements can be ended.");
+			}
 			return {
 				...data,
 				notices: data.notices.map((entry) =>
@@ -682,34 +878,18 @@ export const reduceApp = (
 				),
 			};
 		}
-		case "acknowledge":
-			requireAccess(
-				visibleNotices(data, account).some(
-					(entry) => entry.id === action.noticeId,
-				),
-			);
-			return {
-				...data,
-				notices: data.notices.map((entry) =>
-					entry.id === action.noticeId &&
-					!entry.acknowledgedBy.includes(account.id)
-						? {
-								...entry,
-								acknowledgedBy: [...entry.acknowledgedBy, account.id],
-							}
-						: entry,
-				),
-			};
 		case "create-notice": {
+			if (!validDate(action.notice.date))
+				throw new Error("Choose a valid publication date.");
 			const expiresAt =
 				action.notice.expiresAt ?? addDays(action.notice.date, 14);
-			requireAccess(
-				account.admin || account.coachPrograms.includes(action.notice.program),
+			requireAccess(canManageNotice(account, action.notice));
+			const error = validateNoticeDraft(
+				{ body: action.notice.body, expiresAt },
+				action.notice.date,
 			);
-			if (!validDate(expiresAt) || expiresAt <= action.notice.date)
-				throw new Error("Expiry must be after the publication date.");
-			if (!action.notice.title.trim() || !action.notice.body.trim())
-				throw new Error("Add a title and message.");
+			if (error) throw new Error(error);
+			if (!action.notice.title.trim()) throw new Error("Add a title.");
 			if (data.notices.some((entry) => entry.id === action.notice.id))
 				return data;
 			return {
@@ -717,6 +897,8 @@ export const reduceApp = (
 				notices: [
 					{
 						...action.notice,
+						title: action.notice.title.trim(),
+						body: action.notice.body.trim(),
 						postedAt: Date.now(),
 						expiresAt,
 						acknowledgedBy: [],
@@ -761,24 +943,16 @@ export const reduceApp = (
 			};
 		case "issue": {
 			requireAccess(account.admin);
-			if (data.loans.some((entry) => entry.id === action.loan.id)) return data;
-			const item = data.equipment.find(
-				(entry) => entry.id === action.loan.itemId,
-			);
-			if (
-				!item ||
-				item.condition !== "ready" ||
-				equipmentStock(item, data.loans).available === 0
-			)
-				throw new Error("This item is unavailable.");
-			if (
-				!data.members.some((entry) => entry.id === action.loan.personId) ||
-				!validDate(action.loan.due)
-			)
-				throw new Error("Choose a member and return date.");
+			const loan = memberLoan({
+				loan: action.loan,
+				item: data.equipment.find((entry) => entry.id === action.loan.itemId),
+				loans: data.loans,
+				members: data.members,
+			});
+			if (data.loans.some((entry) => entry.id === loan.id)) return data;
 			return {
 				...data,
-				loans: [...data.loans, { ...action.loan, returned: false }],
+				loans: [...data.loans, loan],
 			};
 		}
 		case "return":

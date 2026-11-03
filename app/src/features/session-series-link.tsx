@@ -1,29 +1,28 @@
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
-import {
-	Button,
-	Dialog,
-	EmptyState,
-	LoadingContent,
-	Stack,
-} from "../design-system";
+import { Button, Dialog, LoadingContent } from "../design-system";
 import { SessionSeriesManager } from "./session-series-manager";
-import {
-	type SeriesControls,
-	useLiveSeries,
-	usePreviewSeries,
-} from "./use-session-series";
+import { useFormTask } from "./use-form-task";
+import { useLiveSeries, usePreviewSeries } from "./use-session-series";
 
-const LiveManager = ({ seriesId }: { seriesId: string }): ReactElement => {
+type ManagerProps = {
+	seriesId: string;
+	task: ReturnType<typeof useFormTask>;
+};
+const LiveManager = ({ seriesId, task }: ManagerProps): ReactElement => {
 	const controls = useLiveSeries(seriesId);
 	return controls.loading ? (
 		<LoadingContent />
 	) : (
-		<SessionSeriesManager seriesId={seriesId} controls={controls} />
+		<SessionSeriesManager seriesId={seriesId} controls={controls} task={task} />
 	);
 };
-const PreviewManager = ({ seriesId }: { seriesId: string }): ReactElement => (
-	<SessionSeriesManager seriesId={seriesId} controls={usePreviewSeries()} />
+const PreviewManager = ({ seriesId, task }: ManagerProps): ReactElement => (
+	<SessionSeriesManager
+		seriesId={seriesId}
+		controls={usePreviewSeries()}
+		task={task}
+	/>
 );
 export const SessionSeriesLink = ({
 	seriesId,
@@ -34,76 +33,34 @@ export const SessionSeriesLink = ({
 }): ReactElement => {
 	const { source } = useApp();
 	const [open, setOpen] = useState(false);
+	const task = useFormTask();
 	return (
 		<>
 			<Button
 				label={label}
 				variant="secondary"
-				onPress={(): void => setOpen(true)}
+				onPress={(): void => {
+					task.clear();
+					setOpen(true);
+				}}
 			/>
-			<Dialog title="Session series" isOpen={open} onOpenChange={setOpen}>
+			<Dialog
+				title="Session series"
+				intent="form"
+				isOpen={open}
+				isDismissDisabled={task.busy}
+				onOpenChange={(value): void => {
+					if (!task.busy) setOpen(value);
+				}}
+			>
 				{open ? (
 					source === "convex" ? (
-						<LiveManager seriesId={seriesId} />
+						<LiveManager seriesId={seriesId} task={task} />
 					) : (
-						<PreviewManager seriesId={seriesId} />
+						<PreviewManager seriesId={seriesId} task={task} />
 					)
 				) : undefined}
 			</Dialog>
 		</>
 	);
 };
-const Commitments = ({
-	controls,
-	personId,
-}: {
-	controls: SeriesControls;
-	personId?: string;
-}): ReactElement => {
-	const { account } = useApp();
-	const series = controls.series.filter((entry) =>
-		entry.enrollments.some(
-			(enrollment) => enrollment.personId === (personId ?? account.personId),
-		),
-	);
-	return (
-		<Stack>
-			{controls.loading ? (
-				<LoadingContent />
-			) : series.length ? (
-				series.map((entry) => (
-					<SessionSeriesLink
-						key={entry.id}
-						seriesId={entry.id}
-						label={entry.title}
-					/>
-				))
-			) : (
-				<EmptyState
-					title="No session commitments yet"
-					description="Open a recurring session from Schedule to join its series."
-				/>
-			)}
-		</Stack>
-	);
-};
-const LiveCommitments = ({ personId }: { personId?: string }): ReactElement => (
-	<Commitments controls={useLiveSeries()} personId={personId} />
-);
-const PreviewCommitments = ({
-	personId,
-}: {
-	personId?: string;
-}): ReactElement => (
-	<Commitments controls={usePreviewSeries()} personId={personId} />
-);
-export const AccountCommitments = ({
-	personId,
-}: {
-	personId?: string;
-}): ReactElement =>
-	useApp().source === "convex" ? (
-		<LiveCommitments personId={personId} />
-	) : (
-		<PreviewCommitments personId={personId} />
-	);

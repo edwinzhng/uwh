@@ -2,12 +2,31 @@ import type { ClubEvent } from "./app-types";
 import { clubTimestamp } from "./event-time";
 
 export const coachingDurations = [60, 90, 120, 150, 180] as const;
+export const maxPracticeCoaches = 3;
+export const canAssignPracticeCoach = (
+	assignments: readonly Pick<CoachingAssignment, "coachId">[],
+	coachId: string,
+): boolean =>
+	assignments.some((entry) => entry.coachId === coachId) ||
+	new Set(assignments.map((entry) => entry.coachId)).size < maxPracticeCoaches;
 export const validCoachingDuration = (minutes: number): boolean =>
 	coachingDurations.some((duration) => duration === minutes);
 export const defaultCoachingDuration = (date: string): number =>
 	new Date(`${date}T12:00:00Z`).getUTCDay() === 5 ? 60 : 90;
 export const coachingHoursLabel = (minutes: number): string =>
-	`${minutes / 60} ${minutes === 60 ? "hour" : "hours"}`;
+	minutes < 60
+		? `${minutes} min`
+		: `${minutes / 60} ${minutes === 60 ? "hour" : "hours"}`;
+
+export const practiceCoachingDuration = (event: ClubEvent): number =>
+	Math.max(
+		1,
+		Math.round(
+			(clubTimestamp(event.endDate ?? event.date, event.end, event.timeZone) -
+				clubTimestamp(event.date, event.start, event.timeZone)) /
+				60000,
+		),
+	);
 export const completedCoachingEvent = (
 	event: ClubEvent,
 	now: number,
@@ -16,6 +35,12 @@ export const completedCoachingEvent = (
 	event.kind !== "social" &&
 	event.kind !== "meeting" &&
 	clubTimestamp(event.endDate ?? event.date, event.end, event.timeZone) <= now;
+export type CoachOption = {
+	coachId: string;
+	name: string;
+	personId: string;
+	programIds?: string[];
+};
 export type CoachingAssignment = {
 	coachId: string;
 	personId: string;
@@ -23,6 +48,18 @@ export type CoachingAssignment = {
 	durationMinutes: number;
 	partIds?: string[];
 };
+export const coachingAssignmentSummary = (
+	event: ClubEvent,
+	assignment: CoachingAssignment,
+): string =>
+	[
+		coachingHoursLabel(assignment.durationMinutes),
+		...(event.parts ?? [])
+			.filter(
+				(part) => !assignment.partIds || assignment.partIds.includes(part.id),
+			)
+			.map((part) => part.title),
+	].join(" · ");
 export const coachingPartIds = (
 	event: ClubEvent,
 	assignedPartIds?: string[],

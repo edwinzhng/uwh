@@ -1,22 +1,17 @@
+import { StatusBar } from "expo-status-bar";
 import type { ReactElement, ReactNode } from "react";
-import {
-	Image,
-	KeyboardAvoidingView,
-	Platform,
-	ScrollView,
-} from "react-native";
-import Animated, { Easing, LinearTransition } from "react-native-reanimated";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import clubLogo from "../../assets/club-logo.png";
-import { AuthBackground } from "./auth-background";
-import { GlassPanel } from "./glass-panel";
-import { Row } from "./row";
+import { ContentReveal } from "./content-reveal";
+import { LoadingBackdrop } from "./loading-backdrop";
+import { PaginationScrollView as ScrollView } from "./pagination-scroll-view";
 import { Stack } from "./stack";
+import { Surface } from "./surface";
 import { Text } from "./text";
 
 import { useTheme } from "./theme";
-import { corners, motion, space } from "./tokens";
-import { useMotion } from "./use-motion";
+import { space } from "./tokens";
+import { UwhMark } from "./uwh-mark";
 
 export const AuthLayout = ({
 	title,
@@ -26,16 +21,10 @@ export const AuthLayout = ({
 	children: ReactNode;
 }): ReactElement => {
 	const theme = useTheme();
-	const canAnimate = useMotion();
-	const panelTransition = LinearTransition.duration(
-		canAnimate ? motion.duration.slow : motion.duration.instant,
-	).easing(Easing.bezier(...motion.easing.out));
 	return (
-		<SafeAreaView
-			nativeID="auth-surface"
-			style={{ flex: 1, backgroundColor: theme.background.secondary }}
-		>
-			<AuthBackground />
+		<SafeAreaView nativeID="auth-surface" style={{ flex: 1 }}>
+			<LoadingBackdrop canvas={theme.background.canvas} line={theme.border} />
+			<StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
 			<KeyboardAvoidingView
 				style={{ flex: 1 }}
 				behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -51,33 +40,37 @@ export const AuthLayout = ({
 						padding: space.lg,
 					}}
 				>
-					<Animated.View
-						layout={panelTransition}
+					<View
 						style={{
 							width: "100%",
 							maxWidth: 440,
 							alignSelf: "center",
 						}}
 					>
-						<GlassPanel padding="lg" seamless>
-							<Stack gap="lg">
-								<Row gap="sm">
-									<Image
-										source={clubLogo}
-										style={{
-											width: 32,
-											height: 32,
-											borderRadius: corners.control,
-										}}
-									/>
-									<Text variant="h1" tone="brand">
-										{title}
-									</Text>
-								</Row>
-								{children}
-							</Stack>
-						</GlassPanel>
-					</Animated.View>
+						<ContentReveal gap="lg">
+							<View
+								style={{
+									alignItems: "center",
+									flexDirection: "row",
+									justifyContent: "center",
+									gap: space.xs,
+								}}
+							>
+								<UwhMark size={40} />
+								<Text variant="h1" lines={1}>
+									UWH Club
+								</Text>
+							</View>
+							<Surface padding="lg">
+								<Stack gap="md">
+									{title !== "UWH Club" ? (
+										<Text variant="h4">{title}</Text>
+									) : undefined}
+									{children}
+								</Stack>
+							</Surface>
+						</ContentReveal>
+					</View>
 				</ScrollView>
 			</KeyboardAvoidingView>
 		</SafeAreaView>

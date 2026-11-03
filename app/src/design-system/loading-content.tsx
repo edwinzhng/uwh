@@ -1,34 +1,32 @@
-import { type ReactElement, useEffect, useState } from "react";
+import { useSetAtom } from "jotai";
+import { type ReactElement, useContext, useId, useLayoutEffect } from "react";
 import { View } from "react-native";
-import { useTheme } from "./theme";
-import { corners, geometry, space } from "./tokens";
+import {
+	LoadingCoveredContext,
+	LoadingScopeContext,
+	loadingRequestsAtom,
+} from "./loading-state";
+import { geometry, space } from "./tokens";
+import { useScreenActive } from "./use-screen-active";
+
 export const LoadingContent = (): ReactElement => {
-	const theme = useTheme();
-	const [visible, setVisible] = useState(false);
-	useEffect(() => {
-		const timer = setTimeout(() => setVisible(true), 300);
-		return (): void => clearTimeout(timer);
-	}, []);
-	return (
-		<View
-			accessibilityLabel={visible ? "Loading content" : undefined}
-			accessibilityRole={visible ? "progressbar" : undefined}
-			style={{
-				gap: space.sm,
-				paddingVertical: space.sm,
-				opacity: visible ? 1 : 0,
-			}}
-		>
-			{[0, 1, 2].map((id) => (
-				<View
-					key={id}
-					style={{
-						height: geometry.touch,
-						borderRadius: corners.control,
-						backgroundColor: theme.background.secondary,
-					}}
-				/>
-			))}
-		</View>
-	);
+	const scope = useContext(LoadingScopeContext);
+	const covered = useContext(LoadingCoveredContext);
+	const active = useScreenActive();
+	const id = useId();
+	const setRequests = useSetAtom(loadingRequestsAtom);
+	useLayoutEffect(() => {
+		if (!scope?.active || covered || !active) return;
+		setRequests((current) => ({
+			...current,
+			[id]: { scopeId: scope.id, depth: scope.depth },
+		}));
+		return (): void =>
+			setRequests((current) =>
+				Object.fromEntries(
+					Object.entries(current).filter(([key]) => key !== id),
+				),
+			);
+	}, [id, scope, covered, active, setRequests]);
+	return <View style={{ minHeight: geometry.touch * 3 + space.sm * 4 }} />;
 };

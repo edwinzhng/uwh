@@ -6,11 +6,11 @@ export const passwordErrorMessage = (error: unknown): string | undefined => {
 	if (/InvalidAccountId|InvalidSecret|Invalid credentials/.test(error.message))
 		return "Incorrect email or password.";
 	if (/TooManyFailedAttempts|Too many requests|rate limit/i.test(error.message))
-		return "Too many attempts. Please wait a few minutes and try again.";
+		return "Too many attempts. Try again later.";
 	if (/Could not verify code|expired.*code|invalid.*code/i.test(error.message))
-		return "That code is invalid or expired. Request a new code and try again.";
+		return "Invalid or expired code. Request a new code.";
 	if (
-		/^(Enter a valid email\.|Use a name under 80 characters\.|Use at least 12 characters\.|Use no more than 256 characters\.)$/.test(
+		/^(Enter a valid email\.|Use 80 characters or fewer\.|Use at least 12 characters\.|Use 256 characters or fewer\.)$/.test(
 			error.message,
 		)
 	)

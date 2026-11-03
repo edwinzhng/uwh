@@ -1,4 +1,5 @@
-import type { ClubEvent, EventResponse } from "./app-types";
+import type { ClubEvent, EventResponse, Member } from "./app-types";
+import { canRegister } from "./event-eligibility";
 import { clubTimestamp } from "./event-time";
 
 export type SeriesEnrollment = {
@@ -22,6 +23,16 @@ export const enrollmentApplies = (
 	enrollment.state === "committed" &&
 	enrollment.start <= date &&
 	(!enrollment.end || date < enrollment.end);
+export const currentSeriesEnrollment = (
+	series: SessionSeries,
+	personId: string,
+	today: string,
+): SeriesEnrollment | undefined =>
+	series.enrollments.find(
+		(entry) =>
+			entry.personId === personId &&
+			(!entry.end || (entry.end > today && entry.end > entry.start)),
+	);
 export const seriesEvents = (
 	series: SessionSeries,
 	events: ClubEvent[],
@@ -57,12 +68,43 @@ export const seriesHasSpace = (
 			(series.capacity ?? Infinity),
 	);
 };
+export const reconcileSeriesEligibility = (
+	series: SessionSeries,
+	events: ClubEvent[],
+	members: readonly Member[],
+	today: string,
+	now: number,
+): SessionSeries => ({
+	...series,
+	enrollments: series.enrollments.map((entry) => {
+		const person = members.find((member) => member.id === entry.personId);
+		const losesFutureEligibility = seriesEvents(series, events).some(
+			(event) =>
+				!event.cancelled &&
+				event.date >= entry.start &&
+				(!entry.end || event.date < entry.end) &&
+				clubTimestamp(event.date, event.start, event.timeZone) > now &&
+				(!person ||
+					person.archived ||
+					person.mergedInto ||
+					(event.programRsvp &&
+						event.program !== "all" &&
+						!person.programs.includes(event.program) &&
+						!event.eligiblePersonIds?.includes(person.id))),
+		);
+		return losesFutureEligibility && (!entry.end || entry.end > today)
+			? { ...entry, end: entry.start > today ? entry.start : today }
+			: entry;
+	}),
+});
 export const syncSeriesResponses = (
 	series: SessionSeries,
 	events: ClubEvent[],
 	responses: EventResponse[],
 	today: string,
 	now?: number,
+	excludedPersonIds: string[] = [],
+	members?: readonly Member[],
 ): EventResponse[] => {
 	const activationTime = now ?? Date.now();
 	const sessions = seriesEvents(series, events).filter(
@@ -70,7 +112,7 @@ export const syncSeriesResponses = (
 			!event.cancelled &&
 			event.date >= today &&
 			(now === undefined ||
-				clubTimestamp(event.date, event.end, event.timeZone) > now),
+				clubTimestamp(event.date, event.start, event.timeZone) > now),
 	);
 	return sessions.reduce<EventResponse[]>((current, event) => {
 		const people = [
@@ -89,13 +131,19 @@ export const syncSeriesResponses = (
 				(response) =>
 					response.eventId === event.id && response.personId === personId,
 			);
-			const expected = series.enrollments.some(
-				(entry) =>
-					entry.personId === personId &&
-					enrollmentApplies(entry, event.date) &&
-					(!event.eligiblePersonIds ||
-						event.eligiblePersonIds.includes(personId)),
-			);
+			const expected =
+				!excludedPersonIds.includes(personId) &&
+				(members === undefined ||
+					members.some(
+						(member) => member.id === personId && canRegister(member, event),
+					)) &&
+				series.enrollments.some(
+					(entry) =>
+						entry.personId === personId &&
+						enrollmentApplies(entry, event.date) &&
+						(!event.eligiblePersonIds ||
+							event.eligiblePersonIds.includes(personId)),
+				);
 			if (!expected && !existing?.seriesExpected) return result;
 			const opened =
 				event.opensAt === undefined
@@ -107,6 +155,10 @@ export const syncSeriesResponses = (
 				eventId: event.id,
 				personId,
 				seriesExpected: expected || undefined,
+				declinedPartIds:
+					expected && !existing?.seriesExpected
+						? undefined
+						: existing?.declinedPartIds,
 				seriesInvitedAt: activated
 					? (existing?.seriesInvitedAt ?? activationTime)
 					: existing?.seriesInvitedAt,

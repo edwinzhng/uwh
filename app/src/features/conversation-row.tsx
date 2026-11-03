@@ -1,12 +1,22 @@
-import { useRouter } from "expo-router";
+import { useGlobalSearchParams, usePathname, useRouter } from "expo-router";
 import type { ReactElement } from "react";
-import { Badge, ListItem, Stack, Text } from "../design-system";
+import { useApp } from "../demo/app-state";
+import {
+	formattedTextPreview,
+	ListItem,
+	Stack,
+	Text,
+	UnreadCount,
+} from "../design-system";
+import { chatFirstName } from "../domain/chat-labels";
+import { chatTimeLabel } from "../domain/message-presentation";
 import {
 	type ConversationSummary,
-	conversationKind,
-	conversationKindLabel,
+	conversationActivityAt,
 	messagePreview,
 } from "../domain/messaging";
+
+import { ConversationAvatar } from "./conversation-avatar";
 
 export const ConversationRow = ({
 	thread,
@@ -14,15 +24,15 @@ export const ConversationRow = ({
 	thread: ConversationSummary;
 }): ReactElement => {
 	const router = useRouter();
-	const kind = conversationKind(thread);
+	const { data } = useApp();
+	const { id } = useGlobalSearchParams<{ id?: string }>();
+	const pathname = usePathname();
 	return (
 		<ListItem
 			title={thread.title}
-			titleAccessory={
-				kind === "direct" ? undefined : (
-					<Badge label={conversationKindLabel(thread)} compact />
-				)
-			}
+			selected={id === thread.id}
+			titleLines={1}
+			emphasis={thread.unread ? "strong" : "subtle"}
 			accessibilityLabel={
 				thread.unread
 					? `${thread.title}, ${thread.unread >= 100 ? "over 99" : thread.unread} unread messages`
@@ -30,30 +40,32 @@ export const ConversationRow = ({
 			}
 			descriptionLines={1}
 			descriptionItalic={thread.latest?.deleted}
-			avatar={kind === "direct" ? thread.title : undefined}
-			icon={
-				kind === "event" ? "calendar" : kind === "direct" ? undefined : "users"
-			}
+			leading={<ConversationAvatar thread={thread} />}
 			description={
 				thread.latest
-					? `${thread.latest.author.split(" ").at(0)}: ${messagePreview(thread.latest)}`
+					? `${chatFirstName(thread.latest.author)}: ${formattedTextPreview(messagePreview(thread.latest))}`
 					: "No messages yet"
 			}
 			trailing={
 				<Stack gap="xxs">
 					<Text variant="caption" tone="secondary">
-						{thread.latest?.time}
+						{thread.latest
+							? chatTimeLabel(conversationActivityAt(thread), data.timeZone)
+							: undefined}
 					</Text>
-					{thread.unread ? (
-						<Badge
-							label={thread.unread >= 100 ? "99+" : String(thread.unread)}
-							kind="info"
-						/>
-					) : undefined}
+					{thread.unread ? <UnreadCount count={thread.unread} /> : undefined}
 				</Stack>
 			}
 			onPress={(): void =>
-				router.push({ pathname: "/conversation", params: { id: thread.id } })
+				pathname === "/conversation"
+					? router.replace({
+							pathname: "/conversation",
+							params: { id: thread.id },
+						})
+					: router.push({
+							pathname: "/conversation",
+							params: { id: thread.id },
+						})
 			}
 		/>
 	);

@@ -22,7 +22,7 @@ const event: ClubEvent = {
 };
 const now = Date.parse("2026-09-08T18:00:00Z");
 
-test("attendance percentages exclude unmarked records, future events, socials and other seasons", (): void => {
+test("attendance uses all available sessions, including unmarked, while excluding future or ineligible events", (): void => {
 	const data: AppData = {
 		...initialAppData,
 		events: ["present", "late", "absent", "unmarked"]
@@ -44,7 +44,7 @@ test("attendance percentages exclude unmarked records, future events, socials an
 	};
 	const summary = attendanceSummary(data, member, "2026-2027", now);
 	expect(summary).toMatchObject({
-		attended: 67,
+		attended: 50,
 		onTime: 50,
 		total: 4,
 		recorded: 3,
@@ -54,14 +54,14 @@ test("attendance percentages exclude unmarked records, future events, socials an
 	]);
 });
 
-test("no recorded attendance shows unknown percentages rather than false zeros", (): void => {
+test("no recorded attendance retains missing data while reporting zero confirmed attendance", (): void => {
 	const summary = attendanceSummary(
 		{ ...initialAppData, events: [event], responses: [] },
 		member,
 		"2026-2027",
 		now,
 	);
-	expect(summary.attended).toBeUndefined();
+	expect(summary.attended).toBe(0);
 	expect(summary.onTime).toBeUndefined();
 	expect(summary.recorded).toBe(0);
 	expect(summary.total).toBe(1);

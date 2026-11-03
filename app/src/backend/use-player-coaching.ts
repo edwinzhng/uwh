@@ -20,7 +20,8 @@ export const usePlayerCoaching = (personId: string): PlayerCoachingState => {
 		setBusy(true);
 		setError(undefined);
 		try {
-			await update(value);
+			const { scores: _scores, ...details } = value;
+			await update(details);
 			return true;
 		} catch (failure) {
 			setError(friendlyError(failure));

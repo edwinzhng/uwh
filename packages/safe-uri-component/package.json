@@ -2,5 +2,8 @@
 	"name": "@calgarycrocs/safe-uri-component",
 	"version": "1.0.0",
 	"private": true,
-	"main": "index.ts"
+	"main": "index.cjs",
+	"scripts": {
+		"build": "bun build index.ts --target node --format cjs --outfile index.cjs"
+	}
 }

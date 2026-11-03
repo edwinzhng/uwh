@@ -1,91 +1,111 @@
 import { useRouter } from "expo-router";
-import type { ReactElement } from "react";
+import { Fragment, type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
-import { ListItem, SectionHeading, Stack, Surface } from "../design-system";
+import {
+	CategoryCard,
+	CategoryGrid,
+	Divider,
+	EmptyState,
+	Field,
+	featureIdentity,
+	List,
+	ListItem,
+	SectionHeading,
+	Stack,
+	Surface,
+} from "../design-system";
+import { type ClubTool, clubToolGroups } from "../domain/club-navigation";
 import { ClubShell } from "./club-shell";
+import { clubToolLinks } from "./club-tool-links";
+
+const categoryColors = {
+	programs: featureIdentity.programs.category,
+	members: featureIdentity.members.category,
+	fitness: featureIdentity.fitness.category,
+	videos: featureIdentity.videos.category,
+} as const;
 
 export const ClubHomeScreen = (): ReactElement => {
-	const { account, data } = useApp();
+	const { account } = useApp();
 	const router = useRouter();
+	const [search, setSearch] = useState("");
+	const query = search.trim().toLowerCase();
+	const matches = (key: ClubTool): boolean => {
+		const tool = clubToolLinks[key];
+		return `${tool.title} ${"description" in tool ? tool.description : ""} ${key}`
+			.toLowerCase()
+			.includes(query);
+	};
+	const groups = clubToolGroups(account).filter((group) =>
+		group.tools.some(matches),
+	);
 	return (
-		<ClubShell title="Club" subtitle={data.clubName}>
-			<Surface padding="xs">
-				<Stack gap="none">
-					<ListItem
-						title="Members"
-						description="Players, parents and coaches"
-						icon="users"
-						onPress={(): void => router.push("/members")}
-					/>
-				</Stack>
-			</Surface>
-			{account.coachPrograms.length ? (
-				<Stack gap="sm">
-					<SectionHeading size="small">Coaching</SectionHeading>
-					<Surface padding="xs">
-						<Stack gap="none">
-							<ListItem
-								title="Players & progress"
-								icon="users"
-								onPress={(): void => router.push("/members")}
-							/>
-							<ListItem
-								title="Coaching hours"
-								icon="clock"
-								onPress={(): void => router.push("/coaching-hours")}
-							/>
-							<ListItem
-								title="Fitness tests"
-								icon="lab"
-								onPress={(): void => router.push("/fitness")}
-							/>
-							<ListItem
-								title="Attendance reports"
-								icon="layers"
-								onPress={(): void => router.push("/attendance-report")}
-							/>
+		<ClubShell title="Club">
+			<Field
+				label="Search club tools"
+				hideLabel
+				placeholder="Search club tools"
+				inputMode="search"
+				value={search}
+				onValueChange={setSearch}
+			/>
+			{groups.map((group) => {
+				if (group.kind === "categories")
+					return (
+						<Stack key={group.title} gap="xs">
+							<SectionHeading>{group.title}</SectionHeading>
+							<CategoryGrid>
+								{group.tools.filter(matches).map((key) => {
+									const tool = clubToolLinks[key];
+									return (
+										<CategoryCard
+											key={key}
+											title={tool.title}
+											description={tool.description}
+											icon={tool.icon}
+											category={categoryColors[key]}
+											density="compact"
+											onPress={(): void => router.push(tool.href)}
+										/>
+									);
+								})}
+							</CategoryGrid>
 						</Stack>
+					);
+				const tools = group.tools.filter(matches);
+				const rows = (
+					<Surface key={`rows:${group.title}`} padding="xs">
+						<List>
+							{tools.map((key, index) => {
+								const tool = clubToolLinks[key];
+								return (
+									<Fragment key={key}>
+										<ListItem
+											title={tool.title}
+											icon={tool.icon}
+											onPress={(): void => router.push(tool.href)}
+										/>
+										{index < tools.length - 1 ? <Divider /> : undefined}
+									</Fragment>
+								);
+							})}
+						</List>
 					</Surface>
-				</Stack>
-			) : undefined}
-			{account.admin ? (
-				<Stack gap="sm">
-					<SectionHeading size="small">Manage club</SectionHeading>
-					<Surface padding="xs">
-						<Stack gap="none">
-							<ListItem
-								title="Registration"
-								icon="users"
-								onPress={(): void => router.push("/registration")}
-							/>
-							<ListItem
-								title="Payments"
-								icon="layers"
-								onPress={(): void => router.push("/payments")}
-							/>
-							<ListItem
-								title="Equipment"
-								icon="archive"
-								onPress={(): void => router.push("/equipment")}
-							/>
-							<ListItem
-								title="Club settings"
-								icon="settings"
-								onPress={(): void => router.push("/settings")}
-							/>
-							<ListItem
-								title="Moderation"
-								icon="message"
-								onPress={(): void => router.push("/moderation")}
-							/>
-							<ListItem
-								title="Import data"
-								icon="download"
-								onPress={(): void => router.push("/import")}
-							/>
-						</Stack>
-					</Surface>
-				</Stack>
+				);
+				return (
+					<Stack key={group.title} gap="xs">
+						<SectionHeading>
+							{group.title === "Manage club" ? "Administration" : group.title}
+						</SectionHeading>
+						{rows}
+					</Stack>
+				);
+			})}
+			{groups.length === 0 ? (
+				<EmptyState
+					title="No tools found"
+					description="Try a program, document, coaching or account tool."
+				/>
 			) : undefined}
 		</ClubShell>
 	);

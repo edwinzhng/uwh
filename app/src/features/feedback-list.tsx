@@ -2,24 +2,30 @@ import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
 import { Divider, EmptyState, Row, Stack, Text } from "../design-system";
+import { feedbackKind } from "../domain/feedback-access";
 import { DataPage } from "./data-page";
 import { FeedbackCard } from "./feedback-card";
 export const FeedbackList = ({
 	personId,
 	visibility,
+	kind = "coaching",
 	embedded = false,
 	hideEmpty = false,
+	compactEmpty = false,
 }: {
 	personId: string;
 	embedded?: boolean;
 	hideEmpty?: boolean;
+	compactEmpty?: boolean;
 	visibility: "published" | "private";
+	kind?: "coaching" | "shoutout";
 }): ReactElement => {
 	const { data } = useApp();
 	const preview = data.feedback
 		.filter(
 			(entry) =>
 				entry.personId === personId &&
+				feedbackKind(entry) === kind &&
 				(entry.visibility === "published") === (visibility === "published"),
 		)
 		.slice()
@@ -28,7 +34,7 @@ export const FeedbackList = ({
 		<DataPage
 			config={{
 				query: api.pages.feedback,
-				args: { personId, visibility },
+				args: { personId, visibility, kind },
 				preview,
 				size: 10,
 			}}
@@ -53,18 +59,21 @@ export const FeedbackList = ({
 							/>
 						))}
 						{!items.length ? (
-							<EmptyState
-								title={
-									visibility === "published"
-										? "No shared feedback"
-										: "No drafts or private notes"
-								}
-								description={
-									visibility === "published"
-										? "Shoutouts from club members will appear here."
-										: "Add feedback to save a draft or a private coaching note."
-								}
-							/>
+							compactEmpty ? (
+								<Text variant="small" tone="secondary">
+									No shared coach notes.
+								</Text>
+							) : (
+								<EmptyState
+									title={
+										visibility === "published"
+											? kind === "shoutout"
+												? "No shoutouts"
+												: "No shared coaching feedback"
+											: "No drafts or private notes"
+									}
+								/>
+							)
 						) : undefined}
 					</Stack>
 				)

@@ -1,49 +1,25 @@
 import type { ReactElement } from "react";
-import Animated, {
-	type SharedValue,
-	useAnimatedStyle,
-} from "react-native-reanimated";
-import { GlassBackdrop } from "./glass-backdrop";
-import { materialColors } from "./materials";
+import type { NavigationFrameGeometry } from "./navigation-model";
+import { SelectionIndicator } from "./selection-indicator";
 import { useTheme } from "./theme";
-import { corners, layer, space } from "./tokens";
+import { corners } from "./tokens";
 
 export const NavigationIndicator = ({
-	position,
-	itemWidth,
-	barHeight,
+	frame,
+	height,
+	value,
 }: {
-	position: SharedValue<number>;
-	itemWidth: SharedValue<number>;
-	barHeight: SharedValue<number>;
+	frame: NavigationFrameGeometry;
+	height: number;
+	value: string;
 }): ReactElement => {
-	const colors = materialColors(useTheme());
-	const frame = useAnimatedStyle(() => ({
-		width: Math.max(0, itemWidth.get() - space.xxs * 2),
-		height: Math.max(0, barHeight.get() - space.xxs * 2),
-		transform: [
-			{ translateX: position.get() * itemWidth.get() + space.xxs },
-			{ translateY: space.xxs },
-		],
-	}));
+	const theme = useTheme();
 	return (
-		<Animated.View
-			pointerEvents="none"
-			style={[
-				{
-					position: "absolute",
-					zIndex: layer.raised,
-					left: 0,
-					top: 0,
-					backgroundColor: "transparent",
-					boxShadow: colors.selectionShadow,
-					overflow: "hidden",
-					borderRadius: corners.control,
-				},
-				frame,
-			]}
-		>
-			<GlassBackdrop material="selection" />
-		</Animated.View>
+		<SelectionIndicator
+			frame={{ x: frame.left, y: 0, width: frame.width, height }}
+			value={value}
+			radius={corners.pill}
+			color={theme.navigation.selected}
+		/>
 	);
 };

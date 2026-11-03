@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, mutation } from "./_generated/server";
 import { getAuthUserId } from "./identity";
+import { threadFor } from "./message_access";
 import { blockedIds, chatAccessError, requireChat } from "./moderation";
 import { threadMembership } from "./thread_access";
 
@@ -34,6 +35,7 @@ export const register = internalMutation({
 			.withIndex("by_owner_message", (q) =>
 				q.eq("ownerId", userId).eq("messageId", undefined),
 			)
+			.filter((q) => q.neq(q.field("chatAvatar"), true))
 			.take(imageLimits.pending);
 		if (pending.length >= imageLimits.pending)
 			throw new Error("Send or remove your pending photos first.");
@@ -54,7 +56,18 @@ export const readable = internalQuery({
 	handler: async (ctx, { userId, imageId }): Promise<Doc<"images"> | null> => {
 		const id = ctx.db.normalizeId("images", imageId);
 		const image = id ? await ctx.db.get(id) : undefined;
-		if (!image || (!image.messageId && image.ownerId !== userId)) return null;
+		if (!image) return null;
+		if (image.chatAvatar) {
+			const member = await threadMembership(ctx, userId, image.threadId);
+			const thread = member
+				? await threadFor(ctx, member.clubId, image.threadId)
+				: undefined;
+			return member?.clubId === image.clubId &&
+				thread?.value.avatarImageId === image._id
+				? image
+				: null;
+		}
+		if (!image.messageId && image.ownerId !== userId) return null;
 		const account = await ctx.db
 			.query("memberships")
 			.withIndex("by_user", (q) => q.eq("userId", userId))
@@ -81,7 +94,11 @@ export const remove = mutation({
 		const userId = await getAuthUserId(ctx);
 		const id = ctx.db.normalizeId("images", imageId);
 		const image = id ? await ctx.db.get(id) : undefined;
-		if (!userId || (image && (image.ownerId !== userId || image.messageId)))
+		if (
+			!userId ||
+			(image &&
+				(image.ownerId !== userId || image.messageId || image.chatAvatar))
+		)
 			throw new Error("Photo unavailable.");
 		if (image) {
 			await ctx.storage.delete(image.storageId);
@@ -95,7 +112,7 @@ export const expire = internalMutation({
 	args: { id: v.id("images") },
 	handler: async (ctx, { id }): Promise<null> => {
 		const image = await ctx.db.get(id);
-		if (image && !image.messageId) {
+		if (image && !image.messageId && !image.chatAvatar) {
 			await ctx.storage.delete(image.storageId);
 			await ctx.db.delete(id);
 		}

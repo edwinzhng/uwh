@@ -1,14 +1,16 @@
 import type { ReactElement } from "react";
-import { useApp } from "../demo/app-state";
+import { useApp, useAppStatus } from "../demo/app-state";
 import { Badge, Button, Divider, Row, Stack, Text } from "../design-system";
 import { canCoachMember } from "../domain/app-rules";
 import type { Member } from "../domain/app-types";
+import { goalCategoryLabel } from "../domain/goals";
 export const GoalRequest = ({
 	member,
 }: {
 	member: Member;
 }): ReactElement | undefined => {
-	const { account, busy, dispatch } = useApp();
+	const { account, dispatch } = useApp();
+	const { busy } = useAppStatus();
 	const goal = member.pendingGoal;
 	if (!goal) return undefined;
 	const canReview =
@@ -18,6 +20,14 @@ export const GoalRequest = ({
 			<Divider />
 			<Badge label="Awaiting coach approval" kind="pending" />
 			<Text variant="small">{goal}</Text>
+			{member.pendingGoalDetails ? (
+				<Text variant="small" tone="secondary">
+					{goalCategoryLabel(member.pendingGoalDetails)}
+					{member.pendingGoalDetails.remarks
+						? ` · ${member.pendingGoalDetails.remarks}`
+						: ""}
+				</Text>
+			) : undefined}
 			{canReview ? (
 				<Row>
 					<Button
@@ -30,6 +40,7 @@ export const GoalRequest = ({
 								personId: member.id,
 								goal,
 								approve: true,
+								requestRevision: member.pendingGoalRevision ?? 0,
 							});
 						}}
 					/>
@@ -44,6 +55,7 @@ export const GoalRequest = ({
 								personId: member.id,
 								goal,
 								approve: false,
+								requestRevision: member.pendingGoalRevision ?? 0,
 							});
 						}}
 					/>

@@ -1,16 +1,9 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { useRetainedQuery } from "../backend/use-retained-query";
 import { useApp } from "../demo/app-state";
-import {
-	Button,
-	LoadingContent,
-	SectionHeading,
-	Stack,
-	TabContent,
-	Tabs,
-} from "../design-system";
+import { Button, LoadingContent } from "../design-system";
+import { visibleNotices } from "../domain/app-rules";
 import type { Notice } from "../domain/app-types";
 import { isNoticeActive } from "../domain/notices";
 import { ClubShell } from "./club-shell";
@@ -25,65 +18,42 @@ const AnnouncementsContent = ({
 	notices: Notice[];
 	loading?: boolean;
 }): ReactElement => {
-	const { account } = useApp();
-	const router = useRouter();
-	const params = useLocalSearchParams<{ tab?: string }>();
-	const tab = account.admin && params.tab === "manage" ? "manage" : "live";
-	const [composing, setComposing] = useState(false);
+	const { account, data, source, workspaceId } = useApp();
+	const [editor, setEditor] = useState<{ notice?: Notice }>();
 	const today = useClubToday();
-	const active = notices
+	const active = visibleNotices({ ...data, notices }, account)
 		.filter((notice) => isNoticeActive(notice, today))
 		.slice()
 		.sort((a, b) => b.date.localeCompare(a.date));
 	return (
 		<ClubShell
 			title="Announcements"
-			subtitle="Current club updates"
-			tabs={
-				account.admin ? (
-					<Tabs
-						page
-						label="Announcements"
-						hideLabel
-						value={tab}
-						onValueChange={(value): void => router.setParams({ tab: value })}
-						options={[
-							{ value: "live", label: "Announcements" },
-							{ value: "manage", label: "Manage" },
-						]}
-					/>
-				) : undefined
-			}
 			action={
-				account.admin && tab === "live" ? (
+				account.admin || account.coachPrograms.length ? (
 					<Button
-						label={composing ? "Cancel" : "New announcement"}
-						staffRole="admin"
-						prefix={composing ? undefined : "plus"}
-						onPress={(): void => setComposing((value) => !value)}
+						label="New"
+						prefix="plus"
+						onPress={(): void => setEditor({})}
 					/>
 				) : undefined
 			}
 		>
-			<TabContent value={tab}>
-				{tab === "manage" ? (
-					<Stack gap="sm">
-						<SectionHeading size="small">Manage announcements</SectionHeading>
-						{loading ? (
-							<LoadingContent />
-						) : (
-							<NoticeList notices={active} manageable />
-						)}
-					</Stack>
-				) : (
-					<Stack gap="sm">
-						{composing ? (
-							<NoticeComposer onPublished={(): void => setComposing(false)} />
-						) : undefined}
-						{loading ? <LoadingContent /> : <NoticeList notices={active} />}
-					</Stack>
-				)}
-			</TabContent>
+			{loading ? (
+				<LoadingContent />
+			) : (
+				<NoticeList
+					notices={active}
+					today={today}
+					onEdit={(notice): void => setEditor({ notice })}
+				/>
+			)}
+			{editor ? (
+				<NoticeComposer
+					key={`${source}:${workspaceId}:${account.id}:${editor.notice?.id ?? "new"}`}
+					notice={editor.notice}
+					onClose={(): void => setEditor(undefined)}
+				/>
+			) : undefined}
 		</ClubShell>
 	);
 };

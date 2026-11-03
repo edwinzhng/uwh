@@ -1,7 +1,5 @@
-import { useMutation } from "convex/react";
 import { type ReactElement, useState } from "react";
-import { api } from "../../convex/_generated/api";
-import type { Doc, Id } from "../../convex/_generated/dataModel";
+import { useFitnessActions } from "../backend/fitness-actions";
 import { useApp } from "../demo/app-state";
 import {
 	Button,
@@ -11,8 +9,10 @@ import {
 	Stack,
 	Text,
 } from "../design-system";
+import { validDate } from "../domain/app-rules";
 import { clubDate } from "../domain/event-time";
-import { useFitnessTask } from "./use-fitness-task";
+import type { FitnessSession } from "../domain/fitness-model";
+import { useFormTask } from "./use-form-task";
 export const FitnessSessionForm = ({
 	testId,
 	seasonId,
@@ -20,11 +20,11 @@ export const FitnessSessionForm = ({
 	onClose,
 	onSaved,
 }: {
-	testId: Id<"fitnessTests">;
+	testId: string;
 	seasonId: string;
-	session?: Doc<"fitnessSessions">;
+	session?: FitnessSession;
 	onClose: () => void;
-	onSaved: (id: Id<"fitnessSessions">) => void;
+	onSaved: (id: string) => void;
 }): ReactElement => {
 	const { data } = useApp();
 	const season = data.seasons.find((entry) => entry.id === seasonId);
@@ -38,10 +38,12 @@ export const FitnessSessionForm = ({
 					: today),
 	);
 	const [notes, setNotes] = useState(session?.notes ?? "");
-	const save = useMutation(api.fitness.saveSession);
-	const task = useFitnessTask();
+	const save = useFitnessActions().saveSession;
+	const task = useFormTask();
 	return (
 		<Dialog
+			intent="form"
+			isDismissDisabled={task.busy}
 			title={session ? "Edit session" : "New session"}
 			isOpen
 			onOpenChange={(open): void => {
@@ -52,18 +54,29 @@ export const FitnessSessionForm = ({
 					label="Save"
 					isLoading={task.busy}
 					onPress={(): void => {
-						void task.run(async () => {
-							const id = await save({
-								testId,
-								seasonId,
-								sessionId: session?._id,
-								revision: session?.revision,
-								date,
-								notes,
-							});
-							onSaved(id);
-							onClose();
-						});
+						void task.submit(
+							() =>
+								!validDate(date) ||
+								!season ||
+								date < season.start ||
+								date > season.end
+									? "Choose a date within the season."
+									: notes.length > 2000
+										? "Keep notes to 2,000 characters"
+										: undefined,
+							async () => {
+								const id = await save({
+									testId,
+									seasonId,
+									sessionId: session?._id,
+									revision: session?.revision,
+									date,
+									notes,
+								});
+								onSaved(id);
+								onClose();
+							},
+						);
 					}}
 				/>
 			}
@@ -75,7 +88,7 @@ export const FitnessSessionForm = ({
 					min={season?.start}
 					max={season?.end}
 					onValueChange={(value): void => setDate(value ?? "")}
-					isDisabled={task.busy}
+					isDisabled={task.busy || Boolean(session?.eventId)}
 				/>
 				<Field
 					label="Session notes"

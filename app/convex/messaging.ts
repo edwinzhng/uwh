@@ -3,12 +3,20 @@ import { v } from "convex/values";
 import type { Message } from "../src/domain/app-types";
 import {
 	type ConversationSummary,
+	compareConversations,
 	conversationKind,
+	previewMessageTimestamp,
 	type ThreadMessage,
 } from "../src/domain/messaging";
 import { sessionThreadId } from "../src/domain/session-discussion";
+import { participantPersonIds } from "../src/domain/thread-participants";
 import { mutation, query } from "./_generated/server";
-import { ensureGeneralChat, resolveClubThread } from "./general_chat";
+import {
+	clubRoomContext,
+	ensureGeneralChat,
+	resolveClubThread,
+} from "./general_chat";
+import { createGroupConversation } from "./group_conversations";
 import { memberFor, requireMember } from "./identity";
 import { messageFor, threadFor, visibleMessage } from "./message_access";
 import { openDirectThread } from "./message_commands";
@@ -20,7 +28,7 @@ export const inbox = query({
 	handler: async (ctx): Promise<ConversationSummary[]> => {
 		const member = await memberFor(ctx);
 		if (!member) return [];
-		const [threads, reads, blocked, members] = await Promise.all([
+		const [threads, reads, blocked, roomContext] = await Promise.all([
 			ctx.db
 				.query("conversations")
 				.withIndex("by_club", (q) => q.eq("clubId", member.clubId))
@@ -28,23 +36,27 @@ export const inbox = query({
 			ctx.db
 				.query("conversationReads")
 				.withIndex("by_user", (q) => q.eq("userId", member.userId))
+				.filter((q) => q.eq(q.field("clubId"), member.clubId))
 				.collect(),
 			blockedIds(ctx, member.userId),
-			ctx.db
-				.query("memberships")
-				.withIndex("by_club", (q) => q.eq("clubId", member.clubId))
-				.collect(),
+			clubRoomContext(ctx, member.clubId),
 		]);
+		const readThrough = new Map(
+			reads.map((read) => [read.threadId, read.through]),
+		);
+		const people = new Map(
+			roomContext.data.members.map((person) => [person.id, person]),
+		);
+		const personIds = [...people.keys()];
 		const resolvedThreads = await Promise.all(
-			threads.map((thread) => resolveClubThread(ctx, thread)),
+			threads.map((thread) => resolveClubThread(ctx, thread, roomContext)),
 		);
 		const results = await Promise.all(
 			resolvedThreads
 				.filter((row) => row.value.accountIds.includes(member.userId))
 				.map(async (thread): Promise<ConversationSummary> => {
 					const through =
-						reads.find((read) => read.threadId === thread.value.id)?.through ??
-						member._creationTime;
+						readThrough.get(thread.value.id) ?? member._creationTime;
 					const [latest, unread] = await Promise.all([
 						ctx.db
 							.query("messages")
@@ -83,14 +95,26 @@ export const inbox = query({
 							kind: thread.directKey ? "direct" : thread.value.kind,
 						}) === "direct";
 					const other = direct
-						? members.find(
+						? roomContext.accounts.find(
 								(entry) =>
-									entry.userId !== member.userId &&
-									thread.value.accountIds.includes(entry.userId),
+									entry.id !== member.userId &&
+									thread.value.accountIds.includes(entry.id),
 							)
 						: undefined;
 					return {
 						...thread.value,
+						participants: participantPersonIds(
+							thread.value.accountIds,
+							thread.value.participantPersonIds ?? [],
+							roomContext.accounts,
+							personIds,
+						)
+							.filter((id) => id !== member.personId)
+							.slice(0, 3)
+							.flatMap((personId) => {
+								const person = people.get(personId);
+								return person ? [{ personId, name: person.name }] : [];
+							}),
 						kind: thread.directKey ? "direct" : thread.value.kind,
 						title:
 							thread.recipientPersonId &&
@@ -98,15 +122,15 @@ export const inbox = query({
 								? thread.value.title
 								: (other?.name ?? thread.value.title),
 						latest: latest ? visibleMessage(latest.value, blocked) : undefined,
-						updatedAt: latest?._creationTime ?? thread._creationTime,
+						updatedAt: latest
+							? previewMessageTimestamp(latest.value) || latest._creationTime
+							: thread._creationTime,
 						unread: unread.length,
 						readThrough: through,
 					};
 				}),
 		);
-		return results.toSorted(
-			(a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id),
-		);
+		return results.toSorted(compareConversations);
 	},
 });
 
@@ -181,6 +205,16 @@ export const openDirect = mutation({
 	args: { recipientId: v.string() },
 	handler: async (ctx, { recipientId }): Promise<string> =>
 		openDirectThread(ctx, await requireMember(ctx), recipientId),
+});
+
+export const createGroup = mutation({
+	args: {
+		groupId: v.string(),
+		name: v.string(),
+		recipientIds: v.array(v.string()),
+	},
+	handler: async (ctx, input): Promise<string> =>
+		createGroupConversation(ctx, await requireMember(ctx), input),
 });
 
 export const markRead = mutation({

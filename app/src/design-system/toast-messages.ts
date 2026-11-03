@@ -1,74 +1,58 @@
-export type ToastCopy = { title: string; description: string };
+export type ToastCopy = { title: string; description?: string };
 export const toastMessages = {
 	savedName: {
-		title: "Your account name was updated",
-		description: "Your new name will appear on your account.",
+		title: "Account name updated",
 	},
 	savedPassword: {
-		title: "Your password was updated",
-		description: "Use your new password the next time you sign in.",
+		title: "Password updated",
 	},
 	savedFilters: {
-		title: "Your chat filters were saved",
-		description: "Your updated filters are ready to use in Messages.",
+		title: "Chat filters saved",
 	},
 	sentInvite: {
-		title: "Your club invite is queued",
-		description: "Check Members → Invites for delivery status.",
+		title: "Invite queued",
+		description: "Members → Invites",
 	},
 	savedNotifications: {
-		title: "Your notification preferences were saved",
-		description: "Future alerts will follow your updated preferences.",
+		title: "Notification settings saved",
 	},
 	switchedProfile: {
-		title: "Your active profile changed",
-		description: "You’re now viewing the selected household profile.",
+		title: "Profile view updated",
 	},
 	signedOut: {
-		title: "You’ve signed out of Calgary UWH",
-		description: "Sign in again to access your household and club.",
+		title: "Signed out",
 	},
 	copiedLink: {
-		title: "Your invite link was copied",
-		description:
-			"The link is ready to paste and share with the invited member.",
+		title: "Invite link copied",
 	},
 	revokedInvite: {
-		title: "The club invite was revoked",
-		description: "This invite link can no longer be used to join.",
+		title: "Invite revoked",
 	},
 	enabledNotifications: {
-		title: "Push notifications are enabled on this device",
-		description: "This device can receive alerts allowed by your preferences.",
+		title: "Device notifications enabled",
 	},
 	disabledNotifications: {
-		title: "Push notifications are disabled on this device",
-		description: "This device will no longer receive push alerts.",
+		title: "Device notifications disabled",
 	},
 	retryAction: {
-		title: "Your action couldn’t be completed",
-		description: "Review the details on this screen and try again.",
+		title: "Action failed",
+		description: "Try again",
 	},
 } satisfies Record<string, ToastCopy>;
 export type ToastMessage = keyof typeof toastMessages;
-export type ToastContext = { subject?: string; description?: string };
+export type ToastContext = {
+	subject?: string;
+	description?: string;
+	duration?: number;
+};
 export const resolveToastCopy = (
 	message: ToastMessage,
 	context?: ToastContext,
 ): ToastCopy => {
 	const subject = context?.subject?.trim();
-	const titles: Partial<Record<ToastMessage, string>> = subject
-		? {
-				switchedProfile: `You’re now viewing ${subject}’s profile`,
-				sentInvite: `An invite for ${subject} is queued`,
-				revokedInvite: `The invite for ${subject} was revoked`,
-				copiedLink: `The invite link for ${subject} was copied`,
-				savedName: `Your account name is now ${subject}`,
-				savedNotifications: `${subject} notification preferences were saved`,
-			}
-		: {};
+	const copy: ToastCopy = toastMessages[message];
 	return {
-		title: titles[message] ?? toastMessages[message].title,
-		description: context?.description ?? toastMessages[message].description,
+		title: copy.title,
+		description: context?.description?.trim() || subject || copy.description,
 	};
 };

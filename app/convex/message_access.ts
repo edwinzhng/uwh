@@ -1,4 +1,5 @@
 import type { Message } from "../src/domain/app-types";
+import { disabledConversation } from "../src/domain/conversation-policy";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 
@@ -21,6 +22,7 @@ export const threadFor = async (
 	clubId: Id<"clubs">,
 	threadId: string,
 ): Promise<Doc<"conversations"> | null> => {
+	if (disabledConversation(threadId)) return null;
 	const thread = await ctx.db
 		.query("conversations")
 		.withIndex("by_club_and_key", (q) =>

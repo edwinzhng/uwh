@@ -1,0 +1,25 @@
+- Test observable behavior and boundaries, not constants or implementation structure.
+- Run focused tests first; run `bun run check` in app when changes stabilize. It covers types, Biome, design boundaries and tests.
+- Run app/site `bun run check:motion` after motion changes; rebuild the native development client after dependency or adapter changes.
+- Use the isolated Convex endpoints on 3210/3211. Guard endpoints before creating fictional `example.test` accounts; use the shared fixture runner and guarantee cleanup without masking the original error.
+- Never fall back to cloud endpoints or overwrite normal developer configuration for verification.
+- Cover signed-out, unrelated-club, member, guardian, assigned-coach and admin access; include guessed IDs, revoked access and private drafts.
+- Check concurrency, stale revisions, repeated operation keys, invalid external data and private file bytes independently of metadata.
+- Exercise cross-domain changes: roster edits preserve historical attendance/lineups; policy changes invalidate stale approvals; declined goals reject stale editors.
+- Check near-limit uploads, suffix ranges and revocation; merges reject identity/key collisions and stale alias writes.
+- Check inbox redaction after revocation; roster/staff changes update managed-room audiences immediately.
+- Messages and announcements have no acknowledgement workflow; terms acceptance remains explicit, version-bound and club-scoped.
+- Check dependent-link proof and revocation. Keep session performance (1–10), goal reflection (1–5) and private energy (1–5) distinct.
+- Check latest/personal/team fitness results, zero, pass/fail, lower-is-better rules and pagination.
+- Use relevant `verify:*` commands with explicit isolated-endpoint guards; register new verification commands in package scripts.
+- Walk real tasks through entry, completion and recovery: invalid/corrected submissions, backend rejection, duplicate input, clearing, context switching and retained drafts.
+- Check phone portrait/landscape and desktop, long text, loading/empty/error/inaccessible states, focus restoration, keyboard, touch and reduced motion.
+- Preserve landscape-phone fullscreen lineups with teams left/right, move/swap/add semantics and explicit save/publication.
+- Check actual load, interaction and long-scroll performance; stop inactive decorative work and pagination.
+- For messaging changes, check direct/group/channel audiences, reactions, replies, polls, photo drafts and composer access with the keyboard open.
+- Two intentional identical poll submissions create two polls; retries of one submission create one.
+- Native menus, glass, VoiceOver, keyboard, gestures, haptics and push require appropriate simulator/device evidence; bundles and browser checks do not prove them.
+- Review builds contain fictional fixtures only: no live backend URL, tokens, private files or real account data.
+- Freeze baseline bundles and dependencies together; normalize vendor paths for hosting and verify deployed fonts, deep links and interactions.
+- Use real interactive before/after components. On phones mount only the current pair of two frames; destroy offscreen contexts. Bound desktop live rendering.
+- Record only meaningful results with environment and limitations; keep temporary captures and review diaries out of tracked source.

@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
-import { useApp } from "../demo/app-state";
+import { useApp, useAppStatus } from "../demo/app-state";
 import {
+	ActionMenu,
 	Badge,
 	Button,
 	Dialog,
@@ -15,8 +16,10 @@ import {
 	Text,
 } from "../design-system";
 import { canCoach, formatDate, formatTime } from "../domain/app-rules";
+import { availableLoanPractice } from "../domain/equipment-loans";
 import { eventKindLabel, practiceEvent } from "../domain/event-types";
 import { ClubShell } from "./club-shell";
+import { EquipmentLoanDialog } from "./equipment-loan-dialog";
 import { EventEditor } from "./event-editor";
 import { ResponseControl } from "./response-control";
 import { SessionCoaching } from "./session-coaching";
@@ -25,6 +28,7 @@ import { SessionGuestManager } from "./session-guest-manager";
 import { SessionPeople } from "./session-people";
 import { SessionSeriesLink } from "./session-series-link";
 import { SessionShoutouts } from "./session-shoutouts";
+import { SharedSessionPlan } from "./shared-session-plan";
 import { TeamPanel } from "./team-panel";
 import { TournamentPeople } from "./tournament-people";
 import { TournamentSummary } from "./tournament-summary";
@@ -42,7 +46,8 @@ export const EventScreen = (): ReactElement => {
 		part?: string;
 	}>();
 	const id = eventId ?? legacyId;
-	const { data, account, dispatch, busy } = useApp();
+	const { data, account, dispatch } = useApp();
+	const { busy } = useAppStatus();
 	const router = useRouter();
 	const event = data.events.find((entry) => entry.id === id);
 	const partId = event?.parts?.some((part) => part.id === selectedPart)
@@ -52,6 +57,7 @@ export const EventScreen = (): ReactElement => {
 	const setTab = (tab: string): void => router.setParams({ tab });
 	const [cancel, setCancel] = useState(false);
 	const [edit, setEdit] = useState(false);
+	const [loan, setLoan] = useState(false);
 	const coach = event
 		? practiceEvent(event) && canCoach(account, event.program)
 		: false;
@@ -65,6 +71,7 @@ export const EventScreen = (): ReactElement => {
 					: "overview";
 	return (
 		<ClubShell
+			actionPlacement="inline"
 			tabs={
 				<Tabs
 					page
@@ -85,7 +92,6 @@ export const EventScreen = (): ReactElement => {
 									{
 										value: "coaching",
 										label: "Coaching",
-										staffRole: "coach" as const,
 									},
 								]
 							: []),
@@ -116,20 +122,47 @@ export const EventScreen = (): ReactElement => {
 			}
 			action={
 				account.admin && event && !event.cancelled ? (
-					<Row gap="xs">
-						<Button
-							label="Cancel event"
-							variant="ghost"
-							onPress={(): void => setCancel(true)}
-						/>
-						<Button
-							label="Edit"
-							staffRole="admin"
-							prefix="edit"
-							variant="secondary"
-							onPress={(): void => setEdit(true)}
-						/>
-					</Row>
+					<ActionMenu
+						label="Event actions"
+						accessibilityLabel={`Actions for ${event.title}`}
+						icon="more"
+						isDisabled={busy}
+						groups={[
+							{
+								id: "edit",
+								label: "Admin",
+								items: [
+									{
+										id: "edit",
+										label: "Edit event",
+										icon: "edit",
+										onSelect: (): void => setEdit(true),
+									},
+									...(availableLoanPractice(event, Date.now(), data.timeZone)
+										? [
+												{
+													id: "loan",
+													label: "Loan equipment",
+													onSelect: (): void => setLoan(true),
+												},
+											]
+										: []),
+								],
+							},
+							{
+								id: "cancel",
+								items: [
+									{
+										id: "cancel",
+										label: "Cancel event",
+										icon: "close",
+										tone: "danger",
+										onSelect: (): void => setCancel(true),
+									},
+								],
+							},
+						]}
+					/>
 				) : undefined
 			}
 		>
@@ -187,7 +220,10 @@ export const EventScreen = (): ReactElement => {
 								{event.kind === "tournament" ? (
 									<TournamentSummary event={event} />
 								) : practiceEvent(event) ? (
-									<TeamPanel event={event} partId={partId} readOnly />
+									<>
+										<SharedSessionPlan event={event} partId={partId} />
+										<TeamPanel event={event} partId={partId} readOnly />
+									</>
 								) : undefined}
 							</Stack>
 						) : activeTab === "shoutouts" ? (
@@ -211,14 +247,19 @@ export const EventScreen = (): ReactElement => {
 						)}
 					</TabContent>
 					<Dialog
+						intent="confirmation"
+						isDismissDisabled={busy}
 						title="Cancel this event?"
 						isOpen={cancel}
-						onOpenChange={setCancel}
+						onOpenChange={(value): void => {
+							if (!busy) setCancel(value);
+						}}
 						footer={
 							<Row>
 								<Button
 									label="Keep event"
 									variant="ghost"
+									isDisabled={busy}
 									onPress={(): void => setCancel(false)}
 								/>
 								<Button
@@ -248,6 +289,12 @@ export const EventScreen = (): ReactElement => {
 							event={event}
 							open
 							onClose={(): void => setEdit(false)}
+						/>
+					) : undefined}
+					{loan && account.admin ? (
+						<EquipmentLoanDialog
+							practice={event}
+							onClose={(): void => setLoan(false)}
 						/>
 					) : undefined}
 				</>

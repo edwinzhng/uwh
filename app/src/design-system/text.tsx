@@ -5,6 +5,7 @@ import { font, type TypographyVariant, typography } from "./tokens";
 
 type Props = {
 	children: ReactNode;
+	accessibilityLabel?: string;
 	variant?: TypographyVariant;
 	tone?:
 		| "primary"
@@ -15,27 +16,29 @@ type Props = {
 		| "success"
 		| "warning"
 		| "danger";
-	staffRole?: "coach" | "admin";
 	align?: "left" | "center";
 	selectable?: boolean;
 	italic?: boolean;
+	weight?: "regular" | "medium" | "semibold";
 	lines?: 1 | 2 | 3;
 };
 
 export const Text = ({
 	children,
+	accessibilityLabel,
 	variant = "body",
 	tone = "primary",
 	align = "left",
 	selectable,
 	italic = false,
-	staffRole,
+	weight,
 	lines,
 }: Props): ReactElement => {
 	const theme = useTheme();
 	const { family, ...style } = typography[variant];
 	return (
 		<NativeText
+			accessibilityLabel={accessibilityLabel}
 			selectable={selectable}
 			numberOfLines={lines}
 			accessibilityRole={variant.startsWith("h") ? "header" : undefined}
@@ -44,14 +47,13 @@ export const Text = ({
 			}
 			style={{
 				...style,
-				fontFamily: font[family],
+				fontFamily: font[weight ?? family],
 				fontStyle: italic ? "italic" : "normal",
-				color: staffRole
-					? theme[staffRole].foreground
-					: tone === "onBrand"
+				color:
+					tone === "onBrand"
 						? theme.brand.foreground
 						: tone === "brand"
-							? theme.brand.background
+							? theme.colorScales.accent.text
 							: tone === "success" || tone === "warning" || tone === "danger"
 								? theme[tone].foreground
 								: theme.text[tone],

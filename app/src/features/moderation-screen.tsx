@@ -1,9 +1,17 @@
 import { useRouter } from "expo-router";
+import { useAtomValue, useSetAtom } from "jotai";
+import { useHydrateAtoms } from "jotai/utils";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Doc } from "../../convex/_generated/dataModel";
 import { useChatSafety } from "../backend/chat-safety";
 import { useApp } from "../demo/app-state";
+import {
+	type PreviewPerformanceReport,
+	previewPerformanceReportFixture,
+	previewPerformanceReportReview,
+	previewPerformanceReports,
+} from "../demo/session-performance-state";
 import {
 	Badge,
 	Button,
@@ -24,6 +32,7 @@ import { ClubShell } from "./club-shell";
 import { ConfirmButton } from "./confirm-button";
 import { DataPage } from "./data-page";
 import { MessagePhoto } from "./message-photo";
+import { useReviewFlow } from "./use-review-flow";
 import { useTask } from "./use-task";
 
 export const ModerationScreen = (): ReactElement => {
@@ -31,8 +40,27 @@ export const ModerationScreen = (): ReactElement => {
 	const safety = useChatSafety();
 	const router = useRouter();
 	const task = useTask();
+	const reviewFlow = useReviewFlow();
 	const [tab, setTab] = useState<"open" | "reviewed">("open");
-	const [selected, setSelected] = useState<Doc<"chatReports">>();
+	const [selected, setSelected] = useState<
+		Doc<"chatReports"> | PreviewPerformanceReport | undefined
+	>(
+		reviewFlow === "review-session-note-report"
+			? previewPerformanceReportFixture
+			: undefined,
+	);
+	const previewReports = useAtomValue(previewPerformanceReports);
+	useHydrateAtoms(
+		new Map([
+			[
+				previewPerformanceReports,
+				reviewFlow === "review-session-note-report"
+					? [previewPerformanceReportFixture]
+					: previewReports,
+			],
+		]),
+	);
+	const reviewPreview = useSetAtom(previewPerformanceReportReview);
 	const [pause, setPause] = useState(false);
 	const report = selected;
 	const review = async (
@@ -40,7 +68,8 @@ export const ModerationScreen = (): ReactElement => {
 	): Promise<boolean> => {
 		if (!report) return false;
 		const ok = await task.run(async (): Promise<void> => {
-			await safety.review?.(report._id, decision, pause);
+			if ("preview" in report) reviewPreview({ id: report._id, decision });
+			else await safety.review?.(report._id, decision, pause);
 		});
 		if (ok) setSelected(undefined);
 		return ok;
@@ -48,7 +77,6 @@ export const ModerationScreen = (): ReactElement => {
 	return (
 		<ClubShell
 			title="Moderation"
-			staffRole={account.admin ? "admin" : undefined}
 			back={
 				<Button
 					label="Club"
@@ -83,7 +111,13 @@ export const ModerationScreen = (): ReactElement => {
 						{(items) => (
 							<Surface>
 								<List>
-									{items.map((entry) => (
+									{(source === "preview"
+										? previewReports.filter(
+												(entry) =>
+													(entry.state === "open") === (tab === "open"),
+											)
+										: items
+									).map((entry) => (
 										<ListItem
 											key={entry._id}
 											title={entry.author}
@@ -108,11 +142,15 @@ export const ModerationScreen = (): ReactElement => {
 											}}
 										/>
 									))}
-									{!items.length ? (
-										<EmptyState
-											title="No reports"
-											description="Reported messages matching this view will appear here for review."
-										/>
+									{!(
+										source === "preview"
+											? previewReports.filter(
+													(entry) =>
+														(entry.state === "open") === (tab === "open"),
+												)
+											: items
+									).length ? (
+										<EmptyState title="No reports" />
 									) : undefined}
 								</List>
 							</Surface>
@@ -151,8 +189,15 @@ export const ModerationScreen = (): ReactElement => {
 						</Text>
 					) : undefined}
 					<Dialog
-						staffRole="admin"
-						title="Reported message"
+						intent="detail"
+						isDismissDisabled={task.busy}
+						title={
+							report?.author === "Deleted account"
+								? "Reported content"
+								: report?.source
+									? "Reported session feedback"
+									: "Reported message"
+						}
 						isOpen={Boolean(report)}
 						onOpenChange={(open): void => {
 							if (!open && !task.busy) setSelected(undefined);
@@ -164,7 +209,7 @@ export const ModerationScreen = (): ReactElement => {
 										label="Dismiss"
 										title="Dismiss report?"
 										description={
-											"Close this report without removing the message." +
+											"Close this report without removing the content." +
 											(pause
 												? " This account’s chat access will also be paused."
 												: "")
@@ -175,15 +220,29 @@ export const ModerationScreen = (): ReactElement => {
 										onConfirm={() => review("dismissed")}
 									/>
 									<ConfirmButton
-										label="Remove message"
-										title="Remove message?"
+										label={
+											report.source
+												? "Remove session feedback"
+												: "Remove message"
+										}
+										title={
+											report.source
+												? "Remove session feedback?"
+												: "Remove message?"
+										}
 										description={
-											"Remove this message and its photos for everyone. This can’t be undone." +
+											(report.source
+												? "Remove this reported feedback version from the player’s history. Newer feedback will not be removed."
+												: "Remove this message and its photos for everyone. This can’t be undone.") +
 											(pause
 												? " This account’s chat access will also be paused."
 												: "")
 										}
-										confirmLabel="Remove message"
+										confirmLabel={
+											report.source
+												? "Remove session feedback"
+												: "Remove message"
+										}
 										danger
 										variant="danger"
 										isDisabled={task.busy}
@@ -195,13 +254,25 @@ export const ModerationScreen = (): ReactElement => {
 					>
 						<Stack>
 							<Text variant="label">{report?.author}</Text>
-							<Text variant="small">{report?.body || "Photo message"}</Text>
+							{report?.source ? (
+								<Badge
+									label={`${report.source.rating} / 10 · Session feedback`}
+								/>
+							) : undefined}
+							<Text variant="small">
+								{report?.author === "Deleted account"
+									? "Content removed with the account"
+									: report?.body ||
+										(report?.source ? "No written comments" : "Photo message")}
+							</Text>
 							{report?.imageIds.map((id) => (
 								<MessagePhoto key={id} image={{ id, name: "Reported photo" }} />
 							))}
 							<Text variant="label">Report</Text>
 							<Text variant="small">{report?.reason}</Text>
-							{report?.state === "open" && report.subjectId ? (
+							{report?.state === "open" &&
+							!report.source &&
+							report.subjectId ? (
 								<Toggle
 									label="Pause this account’s chat access"
 									value={pause}

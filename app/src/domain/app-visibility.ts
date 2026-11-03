@@ -7,17 +7,15 @@ import {
 	visibleNotices,
 } from "./app-rules";
 import type { Account, AppData } from "./app-types";
+import { canReadFeedback } from "./feedback-access";
 import { practicePartKey } from "./practice-parts";
+import { publicFeedback } from "./shoutouts";
 
 export const visibleAppData = (data: AppData, account: Account): AppData => {
 	const members = new Map(data.members.map((member) => [member.id, member]));
 	const events = new Map(data.events.map((event) => [event.id, event]));
 	const privatePerson = (id: string): boolean =>
 		account.admin || canManagePerson(account, id);
-	const coachingPerson = (id: string): boolean => {
-		const member = members.get(id);
-		return Boolean(member && canCoachMember(account, member));
-	};
 	const conversations = data.conversations.filter((entry) =>
 		canReadThread(account, entry),
 	);
@@ -30,6 +28,12 @@ export const visibleAppData = (data: AppData, account: Account): AppData => {
 			rating: canCoachMember(account, entry) ? entry.rating : 0,
 			registration: privatePerson(entry.id) ? entry.registration : "approved",
 			goal: canReadProgress(account, entry) ? entry.goal : "",
+			goalDetails: canReadProgress(account, entry)
+				? entry.goalDetails
+				: undefined,
+			pendingGoalDetails: canReadProgress(account, entry)
+				? entry.pendingGoalDetails
+				: undefined,
 			pendingGoal: canReadProgress(account, entry)
 				? entry.pendingGoal
 				: undefined,
@@ -77,10 +81,11 @@ export const visibleAppData = (data: AppData, account: Account): AppData => {
 				),
 			),
 		),
-		feedback: data.feedback.filter(
-			(entry) =>
-				entry.visibility === "published" || coachingPerson(entry.personId),
-		),
+		feedback: data.feedback
+			.filter((entry) =>
+				canReadFeedback(entry, account, members.get(entry.personId)),
+			)
+			.map(publicFeedback),
 		conversations,
 		messages: data.messages.filter((entry) => threadIds.has(entry.threadId)),
 		notices: visibleNotices(data, account).map((entry) => ({
@@ -99,7 +104,12 @@ export const visibleAppData = (data: AppData, account: Account): AppData => {
 					),
 				)
 			: undefined,
-		loans: data.loans.filter((entry) => privatePerson(entry.personId)),
+		loans: data.loans.filter(
+			(entry) =>
+				account.admin ||
+				(entry.personId !== undefined &&
+					canManagePerson(account, entry.personId)),
+		),
 		trackerValues: Object.fromEntries(
 			Object.entries(data.trackerValues).filter(([key]) =>
 				privatePerson(key.split(":").at(1) ?? ""),

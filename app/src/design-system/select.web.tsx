@@ -1,14 +1,18 @@
 import { Select as BaseSelect } from "@base-ui/react/select";
 import type { ReactElement } from "react";
+import { HoverSurface } from "./hover-surface.web";
 import { Icon } from "./icon";
+import { NativePicker } from "./native-picker";
 import type { PickerProps } from "./picker-props";
 import { usePopupContainer } from "./popup-container";
 import { space } from "./tokens";
 
 export const Select = <T extends string>({
+	appearance = "field",
 	label,
 	value,
 	options,
+	listFooter,
 	onValueChange,
 	placeholder = "Select…",
 	isDisabled,
@@ -17,6 +21,18 @@ export const Select = <T extends string>({
 }: PickerProps<T>): ReactElement => {
 	const container = usePopupContainer();
 	const selected = options.find((option) => option.value === value);
+	if (listFooter)
+		return (
+			<NativePicker
+				label={label}
+				value={value}
+				options={options}
+				onValueChange={onValueChange}
+				placeholder={placeholder}
+				isDisabled={isDisabled}
+				listFooter={listFooter}
+			/>
+		);
 	return (
 		<BaseSelect.Root<T>
 			value={value ?? null}
@@ -34,6 +50,7 @@ export const Select = <T extends string>({
 				<BaseSelect.Trigger
 					className="club-picker-trigger"
 					data-picker
+					data-appearance={appearance}
 					aria-label={hideLabel ? label : undefined}
 					data-compact={compact || undefined}
 					data-tone={selected?.tone}
@@ -56,34 +73,36 @@ export const Select = <T extends string>({
 					align="start"
 				>
 					<BaseSelect.Popup className="club-popup" data-club-popup>
-						<BaseSelect.List className="club-popup-list">
-							{options.length === 0 ? (
-								<div className="club-popup-empty">No options</div>
-							) : (
-								options.map((option) => (
-									<BaseSelect.Item
-										key={option.value}
-										value={option.value}
-										disabled={option.isDisabled}
-										className="club-popup-item"
-										data-tone={option.tone}
-									>
-										{option.icon ? (
-											<Icon
-												name={option.icon}
-												tone={option.tone ?? "secondary"}
-											/>
-										) : undefined}
-										<BaseSelect.ItemText className="club-popup-item-label">
-											{option.label}
-										</BaseSelect.ItemText>
-										<BaseSelect.ItemIndicator className="club-popup-indicator">
-											<Icon name="check" tone={option.tone ?? "primary"} />
-										</BaseSelect.ItemIndicator>
-									</BaseSelect.Item>
-								))
-							)}
-						</BaseSelect.List>
+						<HoverSurface>
+							<BaseSelect.List className="club-popup-list">
+								{options.length === 0 ? (
+									<div className="club-popup-empty">No options</div>
+								) : (
+									options.map((option) => (
+										<BaseSelect.Item
+											key={option.value}
+											value={option.value}
+											disabled={option.isDisabled}
+											className="club-popup-item"
+											data-tone={option.tone}
+										>
+											{option.icon ? (
+												<Icon
+													name={option.icon}
+													tone={option.tone ?? "secondary"}
+												/>
+											) : undefined}
+											<BaseSelect.ItemText className="club-popup-item-label">
+												{option.label}
+											</BaseSelect.ItemText>
+											<BaseSelect.ItemIndicator className="club-popup-indicator">
+												<Icon name="check" tone={option.tone ?? "primary"} />
+											</BaseSelect.ItemIndicator>
+										</BaseSelect.Item>
+									))
+								)}
+							</BaseSelect.List>
+						</HoverSurface>
 					</BaseSelect.Popup>
 				</BaseSelect.Positioner>
 			</BaseSelect.Portal>

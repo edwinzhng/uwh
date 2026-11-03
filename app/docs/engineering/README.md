@@ -1,0 +1,14 @@
+- Stack: Expo/React Native, Convex, TypeScript, Bun and Biome.
+- Domain invariants: `src/domain`; authorization and persistence: `convex`; live controllers: `src/backend`.
+- Screens compose public `src/design-system` exports; platform visuals and shared tokens belong in the design system.
+- Routes stay thin; extract shared behavior into focused components and hooks.
+- Read the relevant [frontend](frontend.md), [backend](backend.md), [testing](testing.md) and [review](review.md) bullets.
+- Fix shared causes and verify their callers.
+- Preserve unrelated developer changes, local configuration and existing data.
+- Test complete tasks, failure and recovery; a build is not device or delivery evidence.
+- Documentation: concise bullets containing durable facts, necessary commands or non-obvious intentional behavior.
+- Do not commit verbose UI contracts, aesthetic manifestos, generated review diaries, repeated skill instructions or speculative requirements.
+- Keep temporary plans, screenshots and exploratory reports outside tracked source unless explicitly requested.
+- Record verification once, with its date, environment, result and limits; do not duplicate it across documents.
+- Document intentional behavior by its purpose and trigger, not by freezing incidental colors or dimensions.
+- Update existing guidance only when the underlying fact changes. Do not edit AGENTS.md unless explicitly requested.

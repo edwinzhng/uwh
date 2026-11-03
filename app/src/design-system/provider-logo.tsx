@@ -1,11 +1,13 @@
 import type { ReactElement } from "react";
 import Svg, { Path } from "react-native-svg";
+import { useTheme } from "./theme";
 export const ProviderLogo = ({
 	provider,
 }: {
 	provider: "google" | "apple";
-}): ReactElement =>
-	provider === "google" ? (
+}): ReactElement => {
+	const theme = useTheme();
+	return provider === "google" ? (
 		<Svg width={20} height={20} viewBox="0 0 48 48">
 			<Path
 				fill="#4285F4"
@@ -27,8 +29,9 @@ export const ProviderLogo = ({
 	) : (
 		<Svg width={20} height={20} viewBox="0 0 24 24">
 			<Path
-				fill="#111"
+				fill={theme.text.primary}
 				d="M17.05 12.54c.03 3.17 2.78 4.23 2.81 4.24-.02.08-.44 1.51-1.45 2.99-.88 1.28-1.79 2.56-3.23 2.59-1.41.03-1.87-.84-3.49-.84-1.61 0-2.12.81-3.46.87-1.39.05-2.45-1.39-3.34-2.67-1.82-2.62-3.21-7.41-1.34-10.64a5.18 5.18 0 0 1 4.38-2.66c1.37-.03 2.67.93 3.49.93.81 0 2.34-1.15 3.94-.98.67.03 2.56.27 3.77 2.04-.1.06-2.25 1.31-2.08 4.13ZM14.39 4.71c.74-.9 1.24-2.15 1.1-3.4-1.07.04-2.37.71-3.14 1.61-.69.79-1.29 2.06-1.12 3.28 1.19.09 2.41-.61 3.16-1.49Z"
 			/>
 		</Svg>
 	);
+};

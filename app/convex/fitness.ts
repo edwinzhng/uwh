@@ -1,7 +1,17 @@
 import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import { validDate } from "../src/domain/app-rules";
-import { parseFitnessValue } from "../src/domain/fitness";
+import { canReadProgress, validDate } from "../src/domain/app-rules";
+import type { ClubEvent, Member } from "../src/domain/app-types";
+import { canRegister } from "../src/domain/event-eligibility";
+import { clubDate } from "../src/domain/event-time";
+import { practiceEvent } from "../src/domain/event-types";
+import { fitnessLowerIsBetter, parseFitnessValue } from "../src/domain/fitness";
+import {
+	fitnessEntriesError,
+	fitnessTestNameError,
+} from "../src/domain/fitness-model";
+import type { HomeFitnessSnapshot } from "../src/domain/home-summary";
+import type { PersonalFitnessRow } from "../src/domain/personal-fitness";
 import { initialSeasons } from "../src/domain/seasons";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
@@ -11,13 +21,233 @@ import {
 	query,
 } from "./_generated/server";
 import { fitnessUnit } from "./fitness_schema";
-import { requireMember } from "./identity";
+import { accountFor, requireMember } from "./identity";
 
 const coach = async (ctx: QueryCtx): Promise<Doc<"memberships">> => {
 	const actor = await requireMember(ctx);
 	if (!actor.coachPrograms.length) throw new Error("Coach access required.");
 	return actor;
 };
+
+export const homeSummary = query({
+	args: { personId: v.string(), today: v.string() },
+	handler: async (
+		ctx,
+		{ personId },
+	): Promise<{ result?: HomeFitnessSnapshot }> => {
+		const actor = await requireMember(ctx);
+		const [person, club] = await Promise.all([
+			ctx.db
+				.query("members")
+				.withIndex("by_club_and_key", (q) =>
+					q.eq("clubId", actor.clubId).eq("value.id", personId),
+				)
+				.unique(),
+			ctx.db.get(actor.clubId),
+		]);
+		if (!person || !canReadProgress(accountFor(actor), person.value))
+			throw new Error("These fitness results are private.");
+		const latest = await ctx.db
+			.query("fitnessResults")
+			.withIndex("by_club_person_date", (q) =>
+				q
+					.eq("clubId", actor.clubId)
+					.eq("personId", personId)
+					.lte("date", clubDate(undefined, club?.timeZone)),
+			)
+			.order("desc")
+			.first();
+		if (!latest) return {};
+		const [test, history, stats] = await Promise.all([
+			ctx.db.get(latest.testId),
+			ctx.db
+				.query("fitnessResults")
+				.withIndex("by_person_date", (q) =>
+					q
+						.eq("testId", latest.testId)
+						.eq("seasonId", latest.seasonId)
+						.eq("personId", personId)
+						.lte("date", latest.date),
+				)
+				.order("desc")
+				.take(2),
+			ctx.db
+				.query("fitnessStats")
+				.withIndex("by_test_season_person", (q) =>
+					q
+						.eq("testId", latest.testId)
+						.eq("seasonId", latest.seasonId)
+						.eq("personId", personId),
+				)
+				.unique(),
+		]);
+		if (!test || test.clubId !== actor.clubId) return {};
+		return {
+			result: {
+				seasonId: latest.seasonId,
+				row: {
+					test: {
+						_id: test._id,
+						name: test.name,
+						unit: test.unit,
+						lowerIsBetter: test.lowerIsBetter,
+						archived: test.archived,
+						revision: test.revision,
+					},
+					history: history.map(({ sessionId, date, value, notes }) => ({
+						sessionId,
+						date,
+						value,
+						notes,
+					})),
+					stats: stats
+						? { count: stats.count, total: stats.total, best: stats.best }
+						: undefined,
+					limited: (stats?.count ?? history.length) > 2,
+				},
+			},
+		};
+	},
+});
+export const logContext = query({
+	args: { date: v.string(), eventId: v.optional(v.string()) },
+	handler: async (
+		ctx,
+		args,
+	): Promise<{
+		practices: ClubEvent[];
+		members: Member[];
+		limited: boolean;
+	}> => {
+		const actor = await coach(ctx);
+		if (!validDate(args.date)) throw new Error("Choose a valid date.");
+		const [groups, members, selected] = await Promise.all([
+			Promise.all(
+				(["training", "hockey"] as const).flatMap((kind) => [
+					ctx.db
+						.query("events")
+						.withIndex("by_club_kind_date", (q) =>
+							q
+								.eq("clubId", actor.clubId)
+								.eq("value.kind", kind)
+								.lte("value.date", args.date),
+						)
+						.order("desc")
+						.take(30),
+					ctx.db
+						.query("events")
+						.withIndex("by_club_kind_date", (q) =>
+							q
+								.eq("clubId", actor.clubId)
+								.eq("value.kind", kind)
+								.gt("value.date", args.date),
+						)
+						.take(10),
+				]),
+			),
+			ctx.db
+				.query("members")
+				.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+				.take(501),
+			args.eventId
+				? ctx.db
+						.query("events")
+						.withIndex("by_club_and_key", (q) =>
+							q.eq("clubId", actor.clubId).eq("value.id", args.eventId ?? ""),
+						)
+						.unique()
+				: undefined,
+		]);
+		const practices = [
+			...new Map(
+				[...groups.flat(), ...(selected ? [selected] : [])].map((row) => [
+					row.value.id,
+					row.value,
+				]),
+			).values(),
+		].filter((event) => practiceEvent(event) && !event.cancelled);
+		return {
+			practices,
+			members: members.slice(0, 500).map((row) => row.value),
+			limited: members.length > 500,
+		};
+	},
+});
+
+export const personal = query({
+	args: {
+		personId: v.string(),
+		seasonId: v.string(),
+		paginationOpts: paginationOptsValidator,
+	},
+	handler: async (ctx, args): Promise<PaginationResult<PersonalFitnessRow>> => {
+		const actor = await requireMember(ctx);
+		const member = await ctx.db
+			.query("members")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", actor.clubId).eq("value.id", args.personId),
+			)
+			.unique();
+		if (!member || !canReadProgress(accountFor(actor), member.value))
+			throw new Error("These fitness results are private.");
+		const tests = await ctx.db
+			.query("fitnessTests")
+			.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+			.paginate({
+				...args.paginationOpts,
+				numItems: Math.min(8, Math.max(1, args.paginationOpts.numItems)),
+				maximumRowsRead: 8,
+			});
+		const rows = await Promise.all(
+			tests.page.map(async (test): Promise<PersonalFitnessRow> => {
+				const [history, stats] = await Promise.all([
+					ctx.db
+						.query("fitnessResults")
+						.withIndex("by_person_date", (q) =>
+							q
+								.eq("testId", test._id)
+								.eq("seasonId", args.seasonId)
+								.eq("personId", args.personId),
+						)
+						.order("desc")
+						.take(101),
+					ctx.db
+						.query("fitnessStats")
+						.withIndex("by_test_season_person", (q) =>
+							q
+								.eq("testId", test._id)
+								.eq("seasonId", args.seasonId)
+								.eq("personId", args.personId),
+						)
+						.unique(),
+				]);
+				return {
+					test: {
+						_id: test._id,
+						name: test.name,
+						unit: test.unit,
+						lowerIsBetter: test.lowerIsBetter,
+						archived: test.archived,
+						revision: test.revision,
+					},
+					history: history
+						.slice(0, 100)
+						.map(({ sessionId, date, value, notes }) => ({
+							sessionId,
+							date,
+							value,
+							notes,
+						})),
+					stats: stats
+						? { count: stats.count, total: stats.total, best: stats.best }
+						: undefined,
+					limited: history.length > 100,
+				};
+			}),
+		);
+		return { ...tests, page: rows.filter((row) => row.history.length > 0) };
+	},
+});
 const testFor = async (
 	ctx: QueryCtx,
 	id: Id<"fitnessTests">,
@@ -83,17 +313,19 @@ export const saveTest = mutation({
 		revision: v.optional(v.number()),
 		name: v.string(),
 		unit: fitnessUnit,
+		lowerIsBetter: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args): Promise<Id<"fitnessTests">> => {
 		const actor = await coach(ctx);
 		const name = args.name.trim();
-		if (!name || name.length > 100)
-			throw new Error("Enter a name under 100 characters.");
+		const nameError = fitnessTestNameError(name);
+		if (nameError) throw new Error(nameError);
 		if (!args.testId)
 			return ctx.db.insert("fitnessTests", {
 				clubId: actor.clubId,
 				name,
 				unit: args.unit,
+				lowerIsBetter: fitnessLowerIsBetter(args),
 				archived: false,
 				revision: 0,
 			});
@@ -101,6 +333,11 @@ export const saveTest = mutation({
 		checkRevision(test.revision, args.revision ?? -1);
 		if (test.unit !== args.unit)
 			throw new Error("Create a new test to use a different unit.");
+		if (
+			args.lowerIsBetter !== undefined &&
+			fitnessLowerIsBetter(test) !== args.lowerIsBetter
+		)
+			throw new Error("Create a new test to change the scoring direction.");
 		await ctx.db.patch(test._id, { name, revision: test.revision + 1 });
 		return test._id;
 	},
@@ -169,7 +406,7 @@ export const saveSession = mutation({
 			throw new Error("Restore the test before editing sessions.");
 		await checkDate(ctx, test.clubId, args.seasonId, args.date);
 		if (args.notes.length > 2000)
-			throw new Error("Keep notes under 2,000 characters.");
+			throw new Error("Keep notes to 2,000 characters");
 		const duplicate = await ctx.db
 			.query("fitnessSessions")
 			.withIndex("by_test_date", (q) =>
@@ -192,6 +429,8 @@ export const saveSession = mutation({
 		if (session.testId !== test._id || session.seasonId !== args.seasonId)
 			throw new Error("Session does not belong to this test and season.");
 		checkRevision(session.revision, args.revision ?? -1);
+		if (session.eventId && session.date !== args.date)
+			throw new Error("Practice-linked results keep the practice date.");
 		if (session.date !== args.date) {
 			const results = await ctx.db
 				.query("fitnessResults")
@@ -317,7 +556,7 @@ const updateStats = async (
 				.eq("seasonId", session.seasonId)
 				.eq("personId", personId),
 		)
-		.order(test.unit === "time" ? "asc" : "desc")
+		.order(fitnessLowerIsBetter(test) ? "asc" : "desc")
 		.first();
 	if (!best) throw new Error("Results changed. Try again.");
 	const value = {
@@ -332,6 +571,118 @@ const updateStats = async (
 	if (stats) await ctx.db.patch(stats._id, value);
 	else await ctx.db.insert("fitnessStats", value);
 };
+export const logResult = mutation({
+	args: {
+		testId: v.id("fitnessTests"),
+		eventId: v.string(),
+		personId: v.string(),
+		value: v.string(),
+		notes: v.string(),
+		operationKey: v.string(),
+	},
+	handler: async (ctx, args): Promise<null> => {
+		const test = await testFor(ctx, args.testId);
+		if (test.archived) throw new Error("Choose an active test.");
+		if (!args.operationKey || args.operationKey.length > 100)
+			throw new Error("Invalid operation key.");
+		const [event, person, club] = await Promise.all([
+			ctx.db
+				.query("events")
+				.withIndex("by_club_and_key", (q) =>
+					q.eq("clubId", test.clubId).eq("value.id", args.eventId),
+				)
+				.unique(),
+			ctx.db
+				.query("members")
+				.withIndex("by_club_and_key", (q) =>
+					q.eq("clubId", test.clubId).eq("value.id", args.personId),
+				)
+				.unique(),
+			ctx.db.get(test.clubId),
+		]);
+		if (
+			!event ||
+			!practiceEvent(event.value) ||
+			event.value.cancelled ||
+			!person ||
+			!canRegister(person.value, event.value)
+		)
+			throw new Error("Choose a practice and an eligible player.");
+		const entryError = fitnessEntriesError(test.unit, [args]);
+		if (entryError) throw new Error(entryError);
+		const value = parseFitnessValue(test.unit, args.value);
+		if (value === undefined) throw new Error("Add a result.");
+		const season = (club?.seasons ?? initialSeasons).find(
+			(entry) =>
+				event.value.date >= entry.start && event.value.date <= entry.end,
+		);
+		if (!season) throw new Error("Choose a practice within a season.");
+		const previous = await ctx.db
+			.query("fitnessSessions")
+			.withIndex("by_test_date", (q) =>
+				q.eq("testId", test._id).eq("date", event.value.date),
+			)
+			.unique();
+		if (previous?.eventId && previous.eventId !== event.value.id)
+			throw new Error(
+				"This test already has results for another practice on this date.",
+			);
+		const sessionId =
+			previous?._id ??
+			(await ctx.db.insert("fitnessSessions", {
+				clubId: test.clubId,
+				testId: test._id,
+				seasonId: season.id,
+				date: event.value.date,
+				notes: "",
+				revision: 0,
+				resultCount: 0,
+				eventId: event.value.id,
+				programId: event.value.program,
+			}));
+		const session = await ctx.db.get(sessionId);
+		if (!session || session.seasonId !== season.id)
+			throw new Error("Session not found for this season.");
+		const existing = await ctx.db
+			.query("fitnessResults")
+			.withIndex("by_session_person", (q) =>
+				q.eq("sessionId", sessionId).eq("personId", args.personId),
+			)
+			.unique();
+		if (existing) {
+			if (
+				existing.operationKey === args.operationKey &&
+				existing.value === value &&
+				existing.notes === args.notes.trim()
+			)
+				return null;
+			throw new Error(
+				"A result is already recorded. Open the test to edit it.",
+			);
+		}
+		if (session.resultCount >= 500)
+			throw new Error("A session supports up to 500 players.");
+		await ctx.db.insert("fitnessResults", {
+			clubId: test.clubId,
+			testId: test._id,
+			sessionId,
+			seasonId: season.id,
+			personId: args.personId,
+			date: event.value.date,
+			value,
+			notes: args.notes.trim(),
+			operationKey: args.operationKey,
+		});
+		await updateStats(ctx, test, session, args.personId, undefined, value);
+		await ctx.db.patch(sessionId, {
+			revision: session.revision + 1,
+			resultCount: session.resultCount + 1,
+			eventId: event.value.id,
+			programId: event.value.program,
+		});
+		return null;
+	},
+});
 export const saveResults = mutation({
 	args: {
 		sessionId: v.id("fitnessSessions"),
@@ -345,13 +696,8 @@ export const saveResults = mutation({
 		if (test.archived)
 			throw new Error("Restore the test before editing results.");
 		checkRevision(session.revision, args.revision);
-		if (
-			!args.entries.length ||
-			args.entries.length > 25 ||
-			new Set(args.entries.map((entry) => entry.personId)).size !==
-				args.entries.length
-		)
-			throw new Error("Save up to 25 different players at a time.");
+		const entryError = fitnessEntriesError(test.unit, args.entries);
+		if (entryError) throw new Error(entryError);
 		const changes = await Promise.all(
 			args.entries.map(async (entry) => {
 				const person = await ctx.db
@@ -361,13 +707,11 @@ export const saveResults = mutation({
 					)
 					.unique();
 				if (!person) throw new Error("Player not found.");
-				if (entry.notes.length > 1000)
-					throw new Error("Keep player notes under 1,000 characters.");
-				const value = parseFitnessValue(test.unit, entry.value);
-				if (value === undefined && entry.notes.trim())
+				if (person.value.mergedInto)
 					throw new Error(
-						"Enter a result for the note, or clear both to remove it.",
+						"This profile was merged. Reopen the current roster.",
 					);
+				const value = parseFitnessValue(test.unit, entry.value);
 				const existing = await ctx.db
 					.query("fitnessResults")
 					.withIndex("by_session_person", (q) =>

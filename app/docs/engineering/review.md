@@ -1,0 +1,15 @@
+- Does the change help a real user complete a discoverable task?
+- Were intentional behaviors identified before changing layout or disclosure?
+- Do landscape-phone lineups still fill the screen with teams side by side?
+- Are primary actions, actor, audience and saved state clear?
+- Are hidden details discoverable without burying common tasks or essential status?
+- Do failed/interrupted writes preserve drafts and support retry without duplicates?
+- Are permissions, household boundaries, private content and revoked access enforced server-side?
+- Are writes atomic, revision-checked and idempotent?
+- Are shared defects fixed in their owner, with callers migrated coherently?
+- Do keyboard, focus, touch, large text, reduced motion and narrow layouts work?
+- Are platform differences guarded and unsupported clients usable?
+- Were complete tasks, errors and performance checked in the actual UI?
+- Are device-only claims backed by device evidence and remaining limits stated?
+- Are review fixtures isolated from live credentials and production data?
+- Are documentation changes necessary, concise bullets without duplicate contracts, speculative mandates or generated diaries?

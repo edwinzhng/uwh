@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { useActivePerson, useApp } from "../demo/app-state";
 import {
@@ -14,12 +14,17 @@ import {
 import { canReadProgress } from "../domain/app-rules";
 import { ClubShell } from "./club-shell";
 import { FeedbackList } from "./feedback-list";
+import { GuardianInviteAction } from "./guardian-invite-action";
 import { InviteMemberAction } from "./invite-member-action";
 import { MemberAdmin } from "./member-admin";
 import { MemberAttendance } from "./member-attendance";
+import { MemberFeedback } from "./member-feedback";
+import { MemberLifecycleAction } from "./member-lifecycle-action";
+import { MemberMergeAction } from "./member-merge-action";
 import { MemberProfileDetails } from "./member-profile-details";
 import { MemberProgress } from "./member-progress";
 import { PlayerCoachingPanel } from "./player-coaching-panel";
+import { RecognitionSummary } from "./recognition-summary";
 import { ShoutoutEditor } from "./shoutout-editor";
 
 export const MemberScreen = (): ReactElement => {
@@ -36,13 +41,13 @@ export const MemberScreen = (): ReactElement => {
 	const tabs: {
 		value: string;
 		label: string;
-		staffRole?: "admin" | "coach";
 	}[] = [
 		{ value: "profile", label: "Profile" },
 		{ value: "shoutouts", label: "Shoutouts" },
 		...(progress
 			? [
 					{ value: "progress", label: "Progress" },
+					{ value: "feedback", label: "Feedback" },
 					{ value: "attendance", label: "Attendance" },
 				]
 			: []),
@@ -51,7 +56,6 @@ export const MemberScreen = (): ReactElement => {
 					{
 						value: "admin",
 						label: "Admin",
-						staffRole: "admin" as const,
 					},
 				]
 			: []),
@@ -60,7 +64,6 @@ export const MemberScreen = (): ReactElement => {
 					{
 						value: "coach",
 						label: "Coach",
-						staffRole: "coach" as const,
 					},
 				]
 			: []),
@@ -68,8 +71,29 @@ export const MemberScreen = (): ReactElement => {
 	const selectedTab = tabs.some((entry) => entry.value === tab)
 		? tab
 		: "profile";
+	if (member?.mergedInto)
+		return (
+			<Redirect
+				href={{
+					pathname: "/member",
+					params: {
+						id: member.mergedInto,
+						...(params.tab ? { tab: params.tab } : {}),
+					},
+				}}
+			/>
+		);
 	return (
 		<ClubShell
+			action={
+				account.admin && member && selectedTab === "admin" ? (
+					<Row gap="xs" justify="end" wrap>
+						<MemberLifecycleAction member={member} compact />
+						<MemberMergeAction member={member} />
+						<GuardianInviteAction member={member} />
+					</Row>
+				) : undefined
+			}
 			tabs={
 				<Tabs
 					page
@@ -99,10 +123,18 @@ export const MemberScreen = (): ReactElement => {
 							<Row justify="end">
 								<ShoutoutEditor personId={member.id} />
 							</Row>
-							<FeedbackList personId={member.id} visibility="published" />
+							<RecognitionSummary personId={member.id} />
+							<FeedbackList
+								key={member.id}
+								personId={member.id}
+								visibility="published"
+								kind="shoutout"
+							/>
 						</Stack>
 					) : selectedTab === "progress" ? (
 						<MemberProgress member={member} />
+					) : selectedTab === "feedback" ? (
+						<MemberFeedback member={member} />
 					) : selectedTab === "attendance" ? (
 						<MemberAttendance key={member.id} member={member} />
 					) : selectedTab === "coach" ? (

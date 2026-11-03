@@ -1,21 +1,28 @@
 import { type ReactElement, useState } from "react";
-import { useApp } from "../demo/app-state";
+import { useApp, useAppStatus } from "../demo/app-state";
 import { Button, Dialog, Divider, Stack, Text, Toggle } from "../design-system";
 import { eventAttendees } from "../domain/app-rules";
 import type { TeamPlan } from "../domain/app-types";
+import { useFormTask } from "./use-form-task";
 
 export const TeamOptions = ({
 	eventId,
 	partId,
 	plan,
+	onGenerated,
 	onClose,
 }: {
 	eventId: string;
 	partId?: string;
 	plan?: TeamPlan;
+	onGenerated?: (revision: number) => void;
 	onClose: () => void;
 }): ReactElement => {
-	const { data, dispatch, busy } = useApp();
+	const { data, dispatch } = useApp();
+	const { busy: appBusy } = useAppStatus();
+	const task = useFormTask();
+	const busy = appBusy || task.busy;
+	const [expectedRevision] = useState(plan?.revision ?? 0);
 	const attendees = eventAttendees(data, eventId, partId);
 	const [separateYouth, setSeparateYouth] = useState(
 		plan?.separateYouth ?? true,
@@ -27,20 +34,37 @@ export const TeamOptions = ({
 	);
 	const generate = async (): Promise<void> => {
 		if (
-			await dispatch({
-				type: "generate-teams",
-				eventId,
-				partId,
-				separateYouth,
-				excludedPersonIds: excluded,
-			})
-		)
+			await task.submit(
+				(): string | undefined =>
+					attendees.length - excluded.length < 2
+						? "Include at least two players."
+						: undefined,
+				async (): Promise<void> => {
+					if (
+						!(await dispatch({
+							type: "generate-teams",
+							expectedRevision,
+							eventId,
+							partId,
+							separateYouth,
+							excludedPersonIds: excluded,
+						}))
+					)
+						throw new Error(
+							"Could not generate teams. Retry, or reopen if another coach changed the lineup.",
+						);
+				},
+			)
+		) {
+			onGenerated?.(expectedRevision + 1);
 			onClose();
+		}
 	};
 	return (
 		<Dialog
+			intent="form"
+			isDismissDisabled={busy}
 			title="Generate teams"
-			staffRole="coach"
 			isOpen
 			onOpenChange={(open): void => {
 				if (!open && !busy) onClose();
@@ -92,9 +116,9 @@ export const TeamOptions = ({
 						))}
 					</Stack>
 				</Stack>
-				{attendees.length - excluded.length < 2 ? (
-					<Text variant="small" tone="warning">
-						Include at least two players.
+				{task.error ? (
+					<Text variant="small" tone="danger">
+						{task.error}
 					</Text>
 				) : undefined}
 			</Stack>

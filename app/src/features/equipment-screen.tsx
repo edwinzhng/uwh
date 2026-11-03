@@ -1,11 +1,8 @@
 import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
-import { newId, useApp } from "../demo/app-state";
+import { useApp, useAppStatus } from "../demo/app-state";
 import {
 	Button,
-	Combobox,
-	DatePicker,
-	Dialog,
 	EmptyState,
 	Field,
 	List,
@@ -17,30 +14,26 @@ import {
 	Tabs,
 	Text,
 } from "../design-system";
+import { formatDate } from "../domain/app-rules";
 import type { Equipment } from "../domain/app-types";
-import { clubDate } from "../domain/event-time";
+import { loanBorrowerDescription } from "../domain/equipment-loans";
 import { ClubShell } from "./club-shell";
 import { EquipmentEditor } from "./equipment-editor";
 import { EquipmentInventory } from "./equipment-inventory";
+import { EquipmentLoanDialog } from "./equipment-loan-dialog";
 import { EquipmentReturns } from "./equipment-returns";
 import { LocalPage } from "./local-page";
 import { ReturnLoanButton } from "./return-loan-button";
 
 export const EquipmentScreen = (): ReactElement => {
-	const { data, account, dispatch, busy } = useApp();
+	const { data, account } = useApp();
+	const { busy } = useAppStatus();
 	const router = useRouter();
 	const [tab, setTab] = useState("items");
 	const [search, setSearch] = useState("");
-	const [issue, setIssue] = useState<string>();
-	const [person, setPerson] = useState<string>();
-	const [due, setDue] = useState<string | undefined>(() =>
-		clubDate(Date.now() + 30 * 86400000, data.timeZone),
-	);
+	const [loanItem, setLoanItem] = useState<Equipment>();
 	const [add, setAdd] = useState(false);
 	const [editing, setEditing] = useState<Equipment>();
-	const people = new Map(
-		data.members.map((person) => [person.id, person.name]),
-	);
 	const equipmentById = new Map(data.equipment.map((item) => [item.id, item]));
 	const inventory = data.equipment.filter((item) =>
 		(item.name + item.size).toLowerCase().includes(search.toLowerCase()),
@@ -49,32 +42,12 @@ export const EquipmentScreen = (): ReactElement => {
 		.filter((loan) => !loan.returned)
 		.filter((loan) =>
 			(
-				(people.get(loan.personId) ?? "") +
+				loanBorrowerDescription(loan, data.members) +
 				(equipmentById.get(loan.itemId)?.name ?? "")
 			)
 				.toLowerCase()
 				.includes(search.toLowerCase()),
 		);
-	const issueItem = async (): Promise<void> => {
-		if (
-			issue &&
-			person &&
-			due &&
-			(await dispatch({
-				type: "issue",
-				loan: {
-					id: newId(),
-					itemId: issue,
-					personId: person,
-					due,
-					returned: false,
-				},
-			}))
-		) {
-			setIssue(undefined);
-			setPerson(undefined);
-		}
-	};
 	return (
 		<ClubShell
 			tabs={
@@ -91,7 +64,6 @@ export const EquipmentScreen = (): ReactElement => {
 					]}
 				/>
 			}
-			staffRole={account.admin ? "admin" : undefined}
 			title="Equipment"
 			back={
 				<Row>
@@ -134,7 +106,9 @@ export const EquipmentScreen = (): ReactElement => {
 									loans={data.loans}
 									busy={busy}
 									onEdit={setEditing}
-									onIssue={setIssue}
+									onLoan={(id): void =>
+										setLoanItem(data.equipment.find((item) => item.id === id))
+									}
 								/>
 							) : (
 								<LocalPage key={search + tab} items={loans}>
@@ -147,9 +121,9 @@ export const EquipmentScreen = (): ReactElement => {
 														equipmentById.get(loan.itemId)?.name ?? "Equipment"
 													}
 													description={
-														(people.get(loan.personId) ?? "Member") +
+														loanBorrowerDescription(loan, data.members) +
 														" · Due " +
-														loan.due
+														formatDate(loan.due)
 													}
 													trailing={<ReturnLoanButton loan={loan} />}
 												/>
@@ -157,7 +131,7 @@ export const EquipmentScreen = (): ReactElement => {
 											{!items.length ? (
 												<EmptyState
 													title="No loans found"
-													description="Try another filter or issue equipment to a member."
+													description="Try another filter or loan equipment to a member or guest."
 												/>
 											) : undefined}
 										</List>
@@ -168,41 +142,12 @@ export const EquipmentScreen = (): ReactElement => {
 					</TabContent>
 				</Stack>
 			)}
-			<Dialog
-				staffRole="admin"
-				title={
-					"Issue " +
-					(data.equipment.find((item) => item.id === issue)?.name ??
-						"equipment")
-				}
-				isOpen={Boolean(issue)}
-				onOpenChange={(open): void => {
-					if (!open) setIssue(undefined);
-				}}
-				footer={
-					<Button
-						label="Issue equipment"
-						isDisabled={!person || !due}
-						isLoading={busy}
-						onPress={(): void => {
-							void issueItem();
-						}}
-					/>
-				}
-			>
-				<Stack>
-					<Combobox
-						label="Borrower"
-						value={person}
-						onValueChange={setPerson}
-						options={data.members.map((member) => ({
-							value: member.id,
-							label: member.name,
-						}))}
-					/>
-					<DatePicker label="Return by" value={due} onValueChange={setDue} />
-				</Stack>
-			</Dialog>
+			{loanItem ? (
+				<EquipmentLoanDialog
+					item={loanItem}
+					onClose={(): void => setLoanItem(undefined)}
+				/>
+			) : undefined}
 			{add || editing ? (
 				<EquipmentEditor
 					item={editing}

@@ -4,13 +4,19 @@ import { Divider, SectionHeading, Stack } from "../design-system";
 import { socialProviders } from "../domain/social-auth";
 import { ConnectedAccountRow } from "./connected-account-row";
 
-export const ConnectedAccounts = (): ReactElement => {
+export const ConnectedAccounts = (): ReactElement | undefined => {
 	const info = useBackend().social?.info;
+	const providers = socialProviders.filter(
+		(provider) =>
+			info?.[provider] ||
+			info?.accounts.some((account) => account.provider === provider),
+	);
+	if (!providers.length) return undefined;
 	return (
 		<Stack>
 			<Divider />
 			<SectionHeading>Connected accounts</SectionHeading>
-			{socialProviders.flatMap((provider) => {
+			{providers.flatMap((provider) => {
 				const accounts =
 					info?.accounts.filter((account) => account.provider === provider) ??
 					[];

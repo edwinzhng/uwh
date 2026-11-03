@@ -1,34 +1,42 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import type { ReactElement } from "react";
-import { useApp } from "../demo/app-state";
+import { FitnessProvider } from "../backend/fitness-actions";
+import { useActivePerson, useApp } from "../demo/app-state";
 import { Button, Text } from "../design-system";
+import { canReadProgress } from "../domain/app-rules";
 import { ClubShell } from "./club-shell";
 import { FitnessTests } from "./fitness-tests";
+import { PersonalFitness } from "./personal-fitness";
 export const FitnessScreen = (): ReactElement => {
-	const { account, source } = useApp();
+	const { account, data } = useApp();
+	const active = useActivePerson();
+	const { person } = useLocalSearchParams<{ person?: string }>();
 	const router = useRouter();
-	if (account.coachPrograms.length && source === "convex")
-		return <FitnessTests />;
-	return (
+	const member = data.members.find(
+		(entry) => entry.id === (person ?? active.id),
+	);
+	return person || !account.coachPrograms.length ? (
 		<ClubShell
-			title="Fitness"
-			staffRole="coach"
+			title="Fitness tests"
+			subtitle={member?.name}
 			back={
 				<Button
-					label="Club"
+					label="Back"
 					icon="arrowLeft"
 					variant="ghost"
-					onPress={(): void => router.navigate("/club")}
+					onPress={(): void => router.back()}
 				/>
 			}
 		>
-			{!account.coachPrograms.length ? (
-				<Text>Coach access required.</Text>
-			) : source !== "convex" ? (
-				<Text>Sign in to record fitness results.</Text>
+			{member && canReadProgress(account, member) ? (
+				<PersonalFitness member={member} full />
 			) : (
-				<FitnessTests />
+				<Text>These fitness results are private.</Text>
 			)}
 		</ClubShell>
+	) : (
+		<FitnessProvider>
+			<FitnessTests />
+		</FitnessProvider>
 	);
 };

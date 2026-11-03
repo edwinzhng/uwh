@@ -6,10 +6,11 @@ import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
-import { font, geometry, space, typography } from "./tokens";
+import { corners, font, geometry, space, typography } from "./tokens";
 import type { TrendChartProps } from "./trend-chart-props";
 export const TrendChart = ({
 	series,
+	maximum,
 	formatValue = String,
 }: TrendChartProps): ReactElement => {
 	const theme = useTheme();
@@ -23,6 +24,7 @@ export const TrendChart = ({
 	const height = geometry.chart - space.xxl;
 	const max = Math.max(
 		1,
+		maximum ?? 0,
 		...series.flatMap((entry) => entry.points.map((point) => point.value)),
 	);
 	const x = (date: string): number =>
@@ -55,6 +57,7 @@ export const TrendChart = ({
 							y1={y(max * fraction)}
 							y2={y(max * fraction)}
 							stroke={theme.border}
+							strokeLinecap="round"
 						/>
 					))}
 					{[0, 0.5, 1].map((fraction) => (
@@ -88,6 +91,8 @@ export const TrendChart = ({
 											y2={y(point.value)}
 											stroke={colors.at(index % colors.length)}
 											strokeWidth={geometry.focus}
+											strokeLinecap="round"
+											strokeLinejoin="round"
 										/>
 									) : undefined}
 									<Circle
@@ -124,6 +129,7 @@ export const TrendChart = ({
 							style={{
 								width: space.xs,
 								height: space.xs,
+								borderRadius: corners.pill,
 								backgroundColor: colors.at(index % colors.length),
 							}}
 						/>

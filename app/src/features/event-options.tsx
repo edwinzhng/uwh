@@ -2,17 +2,21 @@ import type { ReactElement } from "react";
 import { Field, Grid, Select, Stack, TimeSelector } from "../design-system";
 import type { EventDraft } from "../domain/app-types";
 import { EventEligibility } from "./event-eligibility";
+import { ProgramRsvpFields } from "./program-rsvp-fields";
 
 export const EventOptions = ({
 	draft,
 	onChange,
+	busy,
 }: {
 	draft: EventDraft;
 	onChange: (draft: EventDraft) => void;
+	busy: boolean;
 }): ReactElement => (
 	<Stack>
 		{draft.kind !== "tournament" ? (
 			<Field
+				isDisabled={busy}
 				label="Capacity (optional)"
 				placeholder="No limit"
 				inputMode="numeric"
@@ -26,12 +30,16 @@ export const EventOptions = ({
 			/>
 		) : undefined}
 		<EventEligibility
+			busy={busy}
+			program={draft.program}
+			rosterRestricted={Boolean(draft.programRsvp)}
 			value={draft.eligiblePersonIds}
 			onChange={(eligiblePersonIds): void =>
 				onChange({ ...draft, eligiblePersonIds })
 			}
 		/>
 		<Field
+			isDisabled={busy}
 			label={
 				draft.kind === "tournament"
 					? "Details, fees, travel and accommodation"
@@ -41,9 +49,16 @@ export const EventOptions = ({
 			onValueChange={(description): void => onChange({ ...draft, description })}
 			multiline
 		/>
-		{draft.kind !== "tournament" ? (
+		{draft.programRsvp ? (
+			<ProgramRsvpFields
+				value={draft.programRsvp}
+				onChange={(programRsvp): void => onChange({ ...draft, programRsvp })}
+				disabled={busy}
+			/>
+		) : draft.kind !== "tournament" ? (
 			<Grid gap="md">
 				<Select
+					isDisabled={busy}
 					label="Registration opens"
 					value={
 						draft.registrationOpen ? "weekday" : (draft.signupOpens ?? "now")
@@ -68,6 +83,7 @@ export const EventOptions = ({
 					}
 				/>
 				<Field
+					isDisabled={busy}
 					label="Registration closes (hours before start)"
 					inputMode="decimal"
 					value={String(
@@ -87,6 +103,7 @@ export const EventOptions = ({
 		{draft.registrationOpen ? (
 			<Grid gap="sm">
 				<Field
+					isDisabled={busy}
 					label="Weeks before event"
 					inputMode="numeric"
 					value={String(draft.registrationOpen.weeksBefore)}
@@ -105,6 +122,7 @@ export const EventOptions = ({
 					}
 				/>
 				<Select
+					isDisabled={busy}
 					label="Day of week"
 					value={String(draft.registrationOpen.weekday)}
 					options={[
@@ -131,6 +149,7 @@ export const EventOptions = ({
 					}
 				/>
 				<TimeSelector
+					isDisabled={busy}
 					label="Opening time"
 					value={draft.registrationOpen.time}
 					onValueChange={(time): void =>

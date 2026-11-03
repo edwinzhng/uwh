@@ -1,9 +1,10 @@
 import { type ReactElement, useState } from "react";
-import { useApp } from "../demo/app-state";
+import { useApp, useAppStatus } from "../demo/app-state";
 import { Button, Dialog, Text } from "../design-system";
 
 export const FeedbackDelete = ({ id }: { id: string }): ReactElement => {
-	const { dispatch, busy } = useApp();
+	const { dispatch } = useApp();
+	const { busy } = useAppStatus();
 	const [open, setOpen] = useState(false);
 	return (
 		<>
@@ -13,10 +14,13 @@ export const FeedbackDelete = ({ id }: { id: string }): ReactElement => {
 				onPress={(): void => setOpen(true)}
 			/>
 			<Dialog
-				staffRole="coach"
+				intent="confirmation"
+				isDismissDisabled={busy}
 				title="Delete this note?"
 				isOpen={open}
-				onOpenChange={setOpen}
+				onOpenChange={(value): void => {
+					if (!busy) setOpen(value);
+				}}
 				footer={
 					<Button
 						label="Delete"

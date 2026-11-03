@@ -1,3 +1,4 @@
+import { reservedRoomId } from "../src/domain/managed-rooms";
 import {
 	accountForRecipient,
 	recipientPersonId,
@@ -36,7 +37,8 @@ export const openDirectThread = async (
 				)
 				.unique()
 		: undefined;
-	if (personId && !person) throw new Error("Choose a club member.");
+	if (personId && (!person || person.value.archived || person.value.mergedInto))
+		throw new Error("Choose an active canonical club member.");
 	const memberships = personId
 		? await ctx.db
 				.query("memberships")
@@ -53,6 +55,17 @@ export const openDirectThread = async (
 				.withIndex("by_user", (q) => q.eq("userId", recipient))
 				.first()
 		: undefined;
+	const targetPerson =
+		target && !person
+			? await ctx.db
+					.query("members")
+					.withIndex("by_club_and_key", (q) =>
+						q.eq("clubId", member.clubId).eq("value.id", target.personId),
+					)
+					.unique()
+			: person;
+	if (targetPerson?.value.archived || targetPerson?.value.mergedInto)
+		throw new Error("Choose an active member");
 	if (
 		(!person && !target) ||
 		(target &&
@@ -91,7 +104,12 @@ export const openDirectThread = async (
 		return legacy.value.id;
 	}
 	const id = proposedId ?? directThreadId(member.userId, recipientId);
-	if (!id || id.length > 160 || (await threadFor(ctx, member.clubId, id)))
+	if (
+		!id ||
+		reservedRoomId(id) ||
+		id.length > 160 ||
+		(await threadFor(ctx, member.clubId, id))
+	)
 		throw new Error("Conversation unavailable.");
 	await ctx.db.insert("conversations", {
 		clubId: member.clubId,
@@ -181,7 +199,10 @@ export const applyMessage = async (
 				image.clubId !== member.clubId ||
 				image.threadId !== action.threadId ||
 				image.messageId ||
-				image.name !== photo.name
+				image.chatAvatar ||
+				image.name !== photo.name ||
+				(photo.mime !== undefined && image.mime !== photo.mime) ||
+				(!image.mime.startsWith("image/") && photo.mime !== image.mime)
 			)
 				throw new Error("Attach this photo again.");
 			await ctx.db.patch(image._id, { messageId: action.id });

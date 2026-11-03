@@ -1,0 +1,57 @@
+[
+	{ "name": "longtask", "duration": 52, "detail": {} },
+	{
+		"name": "paint:Account. Current profile: Alex Rivera",
+		"duration": 18.799999997019768,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 40, "detail": {} },
+	{ "name": "event:click", "duration": 40, "detail": {} },
+	{
+		"name": "paint:View Sam Rivera's profile",
+		"duration": 15.300000004470348,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 32, "detail": {} },
+	{ "name": "event:click", "duration": 32, "detail": {} },
+	{
+		"name": "paint:Account. Current profile: Sam Rivera",
+		"duration": 16.900000005960464,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 40, "detail": {} },
+	{ "name": "event:click", "duration": 40, "detail": {} },
+	{ "name": "event:keydown", "duration": 32, "detail": {} },
+	{
+		"name": "paint:Account. Current profile: Sam Rivera",
+		"duration": 15.799999997019768,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 40, "detail": {} },
+	{ "name": "event:click", "duration": 40, "detail": {} },
+	{ "name": "event:keydown", "duration": 24, "detail": {} },
+	{
+		"name": "paint:Account. Current profile: Sam Rivera",
+		"duration": 15.700000002980232,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 32, "detail": {} },
+	{ "name": "event:click", "duration": 32, "detail": {} },
+	{ "name": "event:keydown", "duration": 40, "detail": {} },
+	{
+		"name": "paint:Account. Current profile: Sam Rivera",
+		"duration": 15.899999998509884,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 40, "detail": {} },
+	{ "name": "event:click", "duration": 40, "detail": {} },
+	{ "name": "event:keydown", "duration": 32, "detail": {} },
+	{
+		"name": "paint:Account. Current profile: Sam Rivera",
+		"duration": 15.699999995529652,
+		"detail": { "nodes": 461, "canvases": 0 }
+	},
+	{ "name": "event:pointerup", "duration": 40, "detail": {} },
+	{ "name": "event:click", "duration": 40, "detail": {} },
+	{ "name": "event:keydown", "duration": 32, "detail": {} }
+]

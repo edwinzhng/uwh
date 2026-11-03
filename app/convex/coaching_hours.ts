@@ -5,10 +5,11 @@ import type { ClubEvent } from "../src/domain/app-types";
 import {
 	type CoachingAssignment,
 	type CoachingPractice,
+	canAssignPracticeCoach,
 	coachingPartIds,
 	coachingPartMinutes,
 	completedCoachingEvent,
-	defaultCoachingDuration,
+	practiceCoachingDuration,
 	resolvedCoachingAssignment,
 	updatedCoachingPartIds,
 	validCoachingDuration,
@@ -17,11 +18,16 @@ import { clubDate } from "../src/domain/event-time";
 import { defaultSeasonId, initialSeasons } from "../src/domain/seasons";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
+import {
+	effectiveEventCoaches,
+	materializeEventCoaches,
+} from "./coaching_schedule";
 import { requireMember } from "./identity";
 
 const requireCoach = async (ctx: QueryCtx): Promise<Doc<"memberships">> => {
 	const actor = await requireMember(ctx);
-	if (!actor.coachPrograms.length) throw new Error("Coach access required.");
+	if (!actor.coachPrograms.length && !actor.admin)
+		throw new Error("Coach or admin access required.");
 	return actor;
 };
 const requireEvent = async (
@@ -80,7 +86,9 @@ export const eventCoaches = query({
 			!event.value.parts?.some((part) => part.id === args.partId)
 		)
 			throw new Error("Choose a practice part.");
-		return assignmentsFor(ctx, actor.clubId, event.value, args.partId);
+		return (
+			await effectiveEventCoaches(ctx, actor.clubId, event.value, args.partId)
+		).assignments;
 	},
 });
 export const coaches = query({
@@ -89,7 +97,12 @@ export const coaches = query({
 		ctx,
 		args,
 	): Promise<
-		PaginationResult<{ coachId: Id<"users">; personId: string; name: string }>
+		PaginationResult<{
+			coachId: Id<"users">;
+			personId: string;
+			name: string;
+			programIds: string[];
+		}>
 	> => {
 		const actor = await requireCoach(ctx);
 		const page = await ctx.db
@@ -107,6 +120,7 @@ export const coaches = query({
 					coachId: member.userId,
 					personId: member.personId,
 					name: member.name,
+					programIds: member.coachPrograms,
 				})),
 		};
 	},
@@ -130,6 +144,17 @@ export const setCoach = mutation({
 			throw new Error("Choose a practice part.");
 		if (event.parts?.length && args.durationMinutes !== undefined)
 			throw new Error("Hours follow assigned practice parts.");
+		if (
+			args.assigned &&
+			!canAssignPracticeCoach(
+				(await effectiveEventCoaches(ctx, actor.clubId, event)).assignments,
+				args.coachId,
+			)
+		)
+			throw new Error(
+				"A practice can have up to 3 coaches. Remove a coach first.",
+			);
+		await materializeEventCoaches(ctx, actor.clubId, event, !args.assigned);
 		const existing = await ctx.db
 			.query("coachingHours")
 			.withIndex("by_club_event_coach", (q) =>
@@ -159,9 +184,15 @@ export const setCoach = mutation({
 			? coachingPartMinutes(event, partIds)
 			: (args.durationMinutes ??
 				existing?.durationMinutes ??
-				defaultCoachingDuration(event.date));
-		if (!event.parts?.length && !validCoachingDuration(durationMinutes))
-			throw new Error("Choose 1, 1.5, 2, 2.5 or 3 hours.");
+				practiceCoachingDuration(event));
+		if (
+			!event.parts?.length &&
+			!validCoachingDuration(durationMinutes) &&
+			durationMinutes !== practiceCoachingDuration(event)
+		)
+			throw new Error(
+				"Choose the practice duration or a listed coaching time.",
+			);
 		if (!event.seasonId)
 			await ctx.db.patch(eventRow._id, {
 				value: { ...event, seasonId: defaultSeasonId },
@@ -174,8 +205,10 @@ export const setCoach = mutation({
 			});
 		else {
 			const assignments = await assignmentsFor(ctx, actor.clubId, event);
-			if (assignments.length >= 32)
-				throw new Error("A practice can have up to 32 coaches.");
+			if (!canAssignPracticeCoach(assignments, args.coachId))
+				throw new Error(
+					"A practice can have up to 3 coaches. Remove a coach first.",
+				);
 			await ctx.db.insert("coachingHours", {
 				clubId: actor.clubId,
 				eventId: args.eventId,

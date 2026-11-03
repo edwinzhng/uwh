@@ -1,18 +1,29 @@
 import { useRouter } from "expo-router";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useMemo, useState } from "react";
 import { useChatSafety } from "../backend/chat-safety";
 import { useApp } from "../demo/app-state";
-import { Button, MessageTimeline, Row, Stack, Text } from "../design-system";
+import {
+	Button,
+	ChatIdentity,
+	MessageTimeline,
+	Row,
+	Stack,
+	Text,
+} from "../design-system";
+import { chatHeaderTitle } from "../domain/chat-labels";
+import { messagePresentations } from "../domain/message-presentation";
 import {
 	type ConversationSummary,
 	conversationKind,
-	conversationKindLabel,
 	type ThreadMessage,
 } from "../domain/messaging";
 import { ClubShell } from "./club-shell";
+import { ConversationAvatar } from "./conversation-avatar";
 import { MessageComposer } from "./message-composer";
 import { MessageItem } from "./message-item";
+import { ThreadExtras } from "./thread-extras";
 import { ThreadParticipantsHeader } from "./thread-participants-header";
+import { ThreadPractice } from "./thread-practice";
 import { useMessageReadState } from "./use-message-read-state";
 
 export type ThreadContentProps = {
@@ -31,7 +42,7 @@ export const ThreadContent = ({
 	canLoadMore,
 	onLoadMore,
 }: ThreadContentProps): ReactElement => {
-	const { account, source } = useApp();
+	const { account, source, data } = useApp();
 	const router = useRouter();
 	const safety = useChatSafety();
 	const [replyId, setReplyId] = useState<string>();
@@ -42,23 +53,52 @@ export const ThreadContent = ({
 		latestVisible === messages.at(0)?.id,
 	);
 	const blocked =
-		conversationKind(thread) === "direct" &&
+		["direct", "group"].includes(conversationKind(thread)) &&
 		thread.accountIds.some((id) => safety.status?.unavailableIds.includes(id));
 	const readOnly = safety.status?.paused || blocked;
 	const reply = messages.find((message) => message.id === replyId);
+	const showAuthors = conversationKind(thread) !== "direct";
+	const presentation = useMemo(
+		() =>
+			messagePresentations(messages, {
+				accountId: account.id,
+				showAuthors,
+				hasOlderMessages: canLoadMore || loadingMore,
+				timeZone: data.timeZone,
+			}),
+		[
+			messages,
+			account.id,
+			showAuthors,
+			canLoadMore,
+			loadingMore,
+			data.timeZone,
+		],
+	);
 	return (
 		<ClubShell
+			presentation="workspace"
 			action={<ThreadParticipantsHeader thread={thread} />}
 			title={thread.title}
-			subtitle={conversationKindLabel(thread)}
+			workspaceTitle={
+				<ChatIdentity
+					avatar={<ConversationAvatar thread={thread} />}
+					title={chatHeaderTitle(thread, [
+						...data.members.map((member) => member.name),
+						...(thread.participants ?? []).map((person) => person.name),
+					])}
+				/>
+			}
 			scrollable={false}
 			back={
-				<Button
-					label="Messages"
-					prefix="arrowLeft"
-					variant="ghost"
-					onPress={(): void => router.navigate("/messages")}
-				/>
+				<Row gap="xxs">
+					<Button
+						label="Chats"
+						icon="arrowLeft"
+						variant="ghost"
+						onPress={(): void => router.navigate("/messages")}
+					/>
+				</Row>
 			}
 			footer={
 				readOnly ? (
@@ -80,6 +120,8 @@ export const ThreadContent = ({
 				)
 			}
 		>
+			<ThreadPractice threadId={thread.id} />
+			<ThreadExtras />
 			{read.error ? (
 				<Row justify="between">
 					<Text variant="caption" tone="danger">
@@ -99,7 +141,9 @@ export const ThreadContent = ({
 					<MessageItem
 						message={message}
 						reply={message.reply}
-						onReply={(): void => setReplyId(message.id)}
+						showAuthor={presentation.get(message.id)?.showAuthor ?? false}
+						timeLabel={presentation.get(message.id)?.timeLabel}
+						onReply={setReplyId}
 					/>
 				)}
 			/>

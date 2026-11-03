@@ -91,13 +91,11 @@ describe("combined permissions and family context", () => {
 			),
 		).toThrow();
 	});
-	test("admin permission alone exposes club shoutouts but not coaching notes or private chats", () => {
+	test("admin permission alone does not expose coaching feedback or private chats", () => {
 		const admin = previewAccounts.find((account) => account.id === "morgan");
 		if (!admin) throw new Error("Missing fixture");
 		const visible = visibleAppData(initialAppData, admin);
-		expect(
-			visible.feedback.every((entry) => entry.visibility === "published"),
-		).toBe(true);
+		expect(visible.feedback).toEqual([]);
 		expect(visible.plans).toEqual({});
 		expect(visible.messages.some((entry) => entry.threadId === "casey")).toBe(
 			false,
@@ -110,16 +108,12 @@ describe("combined permissions and family context", () => {
 			}),
 		).toThrow();
 	});
-	test("guardians read club shoutouts and only linked financial records", () => {
+	test("guardians read only linked coaching feedback and financial records", () => {
 		const visible = visibleAppData(initialAppData, {
 			...parent,
 			children: ["sam"],
 		});
-		expect(visible.feedback.map((entry) => entry.id)).toEqual([
-			"f-sam",
-			"f-mila",
-			"f-alex",
-		]);
+		expect(visible.feedback.map((entry) => entry.id)).toEqual(["f-sam"]);
 		expect(
 			visible.payments.every(
 				(entry) => entry.personId === "sam" || entry.personId === "jamie",
@@ -127,7 +121,7 @@ describe("combined permissions and family context", () => {
 		).toBe(true);
 		expect(
 			visibleAppData(initialAppData, { ...parent, children: [] }).feedback,
-		).toHaveLength(3);
+		).toHaveLength(0);
 	});
 });
 

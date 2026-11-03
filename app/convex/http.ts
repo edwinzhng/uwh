@@ -2,7 +2,17 @@ import { httpRouter } from "convex/server";
 import { auth } from "./auth";
 import { calendarFeed } from "./calendar_http";
 import { download, preflight, upload } from "./image_http";
+import {
+	download as downloadProfilePhoto,
+	preflight as profilePhotoPreflight,
+	upload as uploadProfilePhoto,
+} from "./member_profile_http";
 import { feed as publicCalendarFeed } from "./public_calendar";
+import {
+	download as downloadResource,
+	preflight as resourcePreflight,
+	upload as uploadResource,
+} from "./resource_http";
 
 const http = httpRouter();
 auth.addHttpRoutes(http);
@@ -15,4 +25,34 @@ http.route({
 http.route({ path: "/images", method: "GET", handler: download });
 http.route({ path: "/images", method: "POST", handler: upload });
 http.route({ path: "/images", method: "OPTIONS", handler: preflight });
+http.route({
+	path: "/profiles/photo",
+	method: "GET",
+	handler: downloadProfilePhoto,
+});
+http.route({
+	path: "/profiles/photo",
+	method: "POST",
+	handler: uploadProfilePhoto,
+});
+http.route({
+	path: "/profiles/photo",
+	method: "OPTIONS",
+	handler: profilePhotoPreflight,
+});
+http.route({
+	path: "/resources/file",
+	method: "GET",
+	handler: downloadResource,
+});
+http.route({
+	path: "/resources/file",
+	method: "POST",
+	handler: uploadResource,
+});
+http.route({
+	path: "/resources/file",
+	method: "OPTIONS",
+	handler: resourcePreflight,
+});
 export default http;

@@ -1,11 +1,24 @@
 import { v } from "convex/values";
 import { canRegister } from "../src/domain/app-rules";
 import {
+	programRoomPersonIds,
+	reservedRoomId,
+} from "../src/domain/managed-rooms";
+import {
 	accountForRecipient,
+	activeMessageRecipient,
 	recipientDirectory,
 	recipientPersonId,
 } from "../src/domain/message-recipients";
-import { conversationKind } from "../src/domain/messaging";
+import {
+	type ConversationKind,
+	conversationKind,
+} from "../src/domain/messaging";
+import {
+	normalizeParticipantIds,
+	participantPersonIds as resolveParticipantPersonIds,
+	sameParticipantIds,
+} from "../src/domain/thread-participants";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
 import { accountFor, requireMember } from "./identity";
@@ -15,7 +28,7 @@ import { blockedIds, canChat, requireChat } from "./moderation";
 type Participants = {
 	members: { id: string; name: string }[];
 	candidates: { id: string; name: string }[];
-	kind: "general" | "event" | "direct" | "group";
+	kind: ConversationKind;
 	canAdd: boolean;
 };
 const contextFor = async (
@@ -46,18 +59,22 @@ const contextFor = async (
 const memberIds = (
 	thread: Doc<"conversations">,
 	memberships: Doc<"memberships">[],
-): string[] => [
-	...new Set([
-		...thread.value.accountIds,
-		...(thread.value.participantPersonIds ?? []),
-		...(thread.pendingPersonIds ?? []),
-		...(thread.pendingPersonId ? [thread.pendingPersonId] : []),
-		...(thread.recipientPersonId ? [thread.recipientPersonId] : []),
-		...memberships
-			.filter((member) => thread.value.accountIds.includes(member.userId))
-			.map((member) => member.personId),
-	]),
-];
+	people: Doc<"members">[],
+): string[] =>
+	resolveParticipantPersonIds(
+		thread.value.accountIds,
+		[
+			...(thread.value.participantPersonIds ?? []),
+			...(thread.pendingPersonIds ?? []),
+			...(thread.pendingPersonId ? [thread.pendingPersonId] : []),
+			...(thread.recipientPersonId ? [thread.recipientPersonId] : []),
+		],
+		memberships.map((member) => ({
+			id: member.userId,
+			personId: member.personId,
+		})),
+		people.map((person) => person.value.id),
+	);
 export const current = query({
 	args: { threadId: v.string() },
 	handler: async (ctx, { threadId }): Promise<Participants> => {
@@ -66,6 +83,9 @@ export const current = query({
 			threadId,
 		);
 		const kind = conversationKind(thread.value);
+		const programPeople = programRoomPersonIds(thread.value.id, {
+			members: people.map((person) => person.value),
+		});
 		const event = thread.value.eventId
 			? await ctx.db
 					.query("events")
@@ -80,7 +100,8 @@ export const current = query({
 			kind === "general"
 				? people.map((person) => person.value.id)
 				: [
-						...memberIds(thread, memberships),
+						...memberIds(thread, memberships, people),
+						...programPeople,
 						...(event
 							? people
 									.filter(
@@ -128,7 +149,7 @@ export const current = query({
 		);
 		return {
 			members,
-			candidates,
+			candidates: kind === "direct" || kind === "group" ? candidates : [],
 			kind,
 			canAdd:
 				!paused &&
@@ -150,30 +171,42 @@ export const add = mutation({
 		);
 		await requireChat(ctx, actor, args.threadId);
 		const kind = conversationKind(thread.value);
+		if (reservedRoomId(args.groupId))
+			throw new Error("Choose a new group identifier.");
 		if (kind !== "direct" && kind !== "group")
 			throw new Error(
 				"This conversation’s members are managed by the club or event roster.",
 			);
-		const recipientIds = [...new Set(args.recipientIds)];
-		if (!recipientIds.length || recipientIds.length > 50)
-			throw new Error("Choose 1–50 people to add.");
+		const recipientIds = normalizeParticipantIds(args.recipientIds);
 		const accounts = memberships.map(accountFor);
+		const knownPersonIds = people.map((person) => person.value.id);
 		const additions = recipientIds.map((id) => {
+			if (
+				!activeMessageRecipient(
+					id,
+					accounts,
+					people.map((row) => row.value),
+				)
+			)
+				throw new Error("Choose an active member");
 			const personId = recipientPersonId(id);
-			const person = personId
-				? people.find((person) => person.value.id === personId)
-				: undefined;
 			const account = personId
 				? accountForRecipient(accounts, personId, actor.userId)
 				: accounts.find((account) => account.id === id);
-			if ((personId && !person) || (!person && !account))
+			const person = people.find(
+				(person) => person.value.id === (personId ?? account?.personId),
+			);
+			if (
+				(personId && (!person || person.value.mergedInto)) ||
+				(!person && !account)
+			)
 				throw new Error("Choose members of this club.");
 			return {
-				personId: person?.value.id ?? account?.personId,
+				personId: person?.value.id,
 				accountId: account?.id,
 			};
 		});
-		const existingIds = memberIds(thread, memberships);
+		const existingIds = memberIds(thread, memberships, people);
 		if (
 			!additions.some((addition) =>
 				addition.personId
@@ -211,23 +244,29 @@ export const add = mutation({
 				),
 			]),
 		];
-		const participantPersonIds = [
-			...new Set([
+		const participantPersonIds = resolveParticipantPersonIds(
+			accountIds,
+			[
 				...existingIds,
 				...additions.flatMap((addition) =>
 					addition.personId ? [addition.personId] : [],
 				),
-			]),
-		];
-		const pendingPersonIds = [
-			...new Set([
+			],
+			accounts,
+			knownPersonIds,
+		);
+		const pendingPersonIds = resolveParticipantPersonIds(
+			[],
+			[
 				...(thread.pendingPersonIds ?? []),
 				...(thread.pendingPersonId ? [thread.pendingPersonId] : []),
 				...additions.flatMap((addition) =>
 					addition.personId && !addition.accountId ? [addition.personId] : [],
 				),
-			]),
-		];
+			],
+			[],
+			knownPersonIds,
+		);
 		if (kind === "direct") {
 			if (!args.groupId || args.groupId.length > 160)
 				throw new Error("Choose a valid group identifier.");
@@ -235,7 +274,9 @@ export const add = mutation({
 			if (existing) {
 				if (
 					existing.groupSourceThreadId === args.threadId &&
-					existing.groupCreatorId === actor.userId
+					existing.groupCreatorId === actor.userId &&
+					existing.value.accountIds.includes(actor.userId) &&
+					sameParticipantIds(existing.groupSourceRecipientIds, recipientIds)
 				)
 					return existing.value.id;
 				throw new Error("That group identifier is already in use.");
@@ -248,6 +289,7 @@ export const add = mutation({
 			await ctx.db.insert("conversations", {
 				clubId: actor.clubId,
 				groupSourceThreadId: args.threadId,
+				groupSourceRecipientIds: recipientIds,
 				groupCreatorId: actor.userId,
 				pendingPersonIds,
 				value: {

@@ -376,6 +376,7 @@ export const initialAppData: AppData = {
 	messages: [
 		{
 			id: "m1",
+			createdAt: Date.parse("2026-10-25T15:10:00Z"),
 			threadId: "club",
 			accountId: "casey",
 			author: "Casey Morgan",
@@ -384,6 +385,7 @@ export const initialAppData: AppData = {
 		},
 		{
 			id: "m2",
+			createdAt: Date.parse("2026-10-25T15:24:00Z"),
 			threadId: "club",
 			accountId: "taylor",
 			author: "Taylor Brooks",
@@ -392,6 +394,7 @@ export const initialAppData: AppData = {
 		},
 		{
 			id: "m3",
+			createdAt: Date.parse("2026-10-25T16:30:00Z"),
 			threadId: "youth",
 			accountId: "casey",
 			author: "Casey Morgan",
@@ -400,6 +403,7 @@ export const initialAppData: AppData = {
 		},
 		{
 			id: "m4",
+			createdAt: Date.parse("2026-10-25T17:00:00Z"),
 			threadId: "session",
 			accountId: "casey",
 			author: "Casey Morgan",
@@ -408,6 +412,7 @@ export const initialAppData: AppData = {
 		},
 		{
 			id: "m5",
+			createdAt: Date.parse("2026-10-24T17:00:00Z"),
 			threadId: "casey",
 			accountId: "casey",
 			author: "Casey Morgan",

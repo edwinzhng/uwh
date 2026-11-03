@@ -15,6 +15,7 @@ import {
 	query,
 } from "./_generated/server";
 import { requireMember } from "./identity";
+import { assertCanonicalMember } from "./member_alias";
 import { registrationValue } from "./season_schema";
 
 export const readSeasonRecord = async (
@@ -119,6 +120,7 @@ export const saveSeasonRecord = async (
 	clubId: Id<"clubs">,
 	record: SeasonRecord,
 ): Promise<void> => {
+	await assertCanonicalMember(ctx, clubId, record.personId);
 	const row = await ctx.db
 		.query("seasonRecords")
 		.withIndex("by_club_season_person", (q) =>

@@ -104,7 +104,7 @@ export const inspectDesignBoundary = (
 		)
 			fail(
 				node,
-				"Do not repeat role lists in page subtitles; use contextual role badges on restricted controls.",
+				"Do not display decorative role summaries; keep access choices in permission-management forms.",
 			);
 		if (
 			(ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
@@ -158,6 +158,36 @@ export const inspectDesignBoundary = (
 			if (ts.isIdentifier(node.tagName) && /^[a-z]/.test(node.tagName.text))
 				fail(node, "Raw HTML is not allowed in product code.");
 			for (const attribute of node.attributes.properties) {
+				if (
+					ts.isJsxAttribute(attribute) &&
+					attribute.name.getText(file) === "staffRole"
+				)
+					fail(
+						attribute,
+						"Remove decorative role tags; permission checks belong in the controller and backend.",
+					);
+				if (
+					node.tagName.getText(file) === "Badge" &&
+					ts.isJsxAttribute(attribute) &&
+					attribute.name.getText(file) === "label" &&
+					attribute.initializer
+				) {
+					const label = ts.isStringLiteral(attribute.initializer)
+						? attribute.initializer.text
+						: ts.isJsxExpression(attribute.initializer) &&
+								attribute.initializer.expression &&
+								ts.isStringLiteral(attribute.initializer.expression)
+							? attribute.initializer.expression.text
+							: undefined;
+					if (
+						label &&
+						/^(admin|coach|parent|player|guardian|staff)$/i.test(label)
+					)
+						fail(
+							attribute,
+							"Remove decorative role badges; retain explicit access-management choices.",
+						);
+				}
 				if (
 					ts.isJsxAttribute(attribute) &&
 					attribute.name.getText(file) === "isDisabled" &&

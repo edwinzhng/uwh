@@ -48,7 +48,11 @@ export const createImageService = (
 	return {
 		upload: async (threadId, blob, name): Promise<MessageImage> => {
 			const response = await request(
-				{ thread: threadId, name },
+				{
+					thread: threadId,
+					name,
+					kind: blob.type.startsWith("image/") ? "photo" : "file",
+				},
 				{ method: "POST", body: blob, headers: { "Content-Type": blob.type } },
 			);
 			const image: MessageImage = await response.json();
@@ -65,7 +69,7 @@ export const previewImageService: ImageService = {
 	upload: async (_threadId, blob, name): Promise<MessageImage> => {
 		const id = crypto.randomUUID();
 		previewPhotos.set(id, blob);
-		return { id, name };
+		return { id, name, mime: blob.type };
 	},
 	load: async (id): Promise<Blob> => {
 		const blob = previewPhotos.get(id);

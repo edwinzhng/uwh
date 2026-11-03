@@ -1,6 +1,12 @@
 import { getAuthSessionId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import { clubDate } from "../src/domain/event-time";
+import type { InboxContent } from "../src/domain/inbox";
+import { notificationPayload } from "../src/domain/notification-payload";
+import {
+	defaultNotificationPreferences,
+	notificationPreferenceFor,
+	resolvedNotificationPreferences,
+} from "../src/domain/notification-preferences";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import {
@@ -12,16 +18,13 @@ import {
 	query,
 } from "./_generated/server";
 import { getAuthUserId, memberFor, requireMember } from "./identity";
-import { threadFor } from "./message_access";
-import { blockedIds } from "./moderation";
-import { notificationKind } from "./security_schema";
+import { recordInbox } from "./inbox_store";
+import { notificationContent } from "./notification_access";
+import { notificationPreference } from "./notification_schema";
+import { pushRegistrationPlan } from "./push_registration";
+import { recordWebPush } from "./web_push_store";
 
-export const defaultPreferences = {
-	messages: true,
-	events: true,
-	feedback: true,
-	announcements: true,
-};
+export const defaultPreferences = defaultNotificationPreferences;
 export const settings = query({
 	args: {},
 	handler: async (
@@ -38,21 +41,14 @@ export const settings = query({
 			.withIndex("by_user", (q) => q.eq("userId", member.userId))
 			.collect();
 		return {
-			preferences: preferences
-				? {
-						messages: preferences.messages,
-						events: preferences.events,
-						feedback: preferences.feedback,
-						announcements: preferences.announcements,
-					}
-				: defaultPreferences,
+			preferences: resolvedNotificationPreferences(preferences ?? undefined),
 			devices: devices.length,
 		};
 	},
 });
 export const preferences = mutation({
 	args: {
-		kind: notificationKind,
+		kind: notificationPreference,
 		enabled: v.boolean(),
 	},
 	handler: async (ctx, args): Promise<void> => {
@@ -66,7 +62,10 @@ export const preferences = mutation({
 		else
 			await ctx.db.insert("pushPreferences", {
 				userId: member.userId,
-				...defaultPreferences,
+				messages: true,
+				events: true,
+				feedback: true,
+				announcements: true,
 				[args.kind]: args.enabled,
 			});
 	},
@@ -99,20 +98,13 @@ export const register = mutation({
 				.withIndex("by_token", (q) => q.eq("token", args.token))
 				.collect(),
 		]);
-		const existing = installation.find(
-			(device) =>
-				device.userId === member.userId &&
-				device.sessionId === sessionId &&
-				device.token === args.token,
-		);
-		for (const id of new Set(
-			[...installation, ...tokens].map((row) => row._id),
-		))
-			if (id !== existing?._id) await ctx.db.delete(id);
-		if (existing) {
-			await ctx.db.patch(existing._id, { updatedAt: Date.now() });
-			return;
-		}
+		const plan = pushRegistrationPlan([...installation, ...tokens], {
+			...args,
+			userId: member.userId,
+			sessionId,
+		});
+		for (const id of plan.removeIds) await ctx.db.delete(id);
+		if (plan.existingId) return;
 		await ctx.db.insert("pushDevices", {
 			...args,
 			userId: member.userId,
@@ -160,158 +152,26 @@ export const enqueue = async (
 		{ jobId },
 	);
 };
-const eligible = async (
+export const pushEnabled = async (
 	ctx: QueryCtx,
 	job: Doc<"pushJobs">,
 	member: Doc<"memberships">,
+	content: InboxContent,
 ): Promise<boolean> => {
-	if (member.clubId !== job.clubId || member.userId === job.actorId)
-		return false;
 	const preferences = await ctx.db
 		.query("pushPreferences")
 		.withIndex("by_user", (q) => q.eq("userId", member.userId))
 		.unique();
-	if (preferences && !preferences[job.kind]) return false;
 	if (
-		job.actorId &&
-		(await blockedIds(ctx, member.userId)).includes(job.actorId)
+		!resolvedNotificationPreferences(preferences ?? undefined)[
+			notificationPreferenceFor(job.kind, content.topic)
+		]
 	)
 		return false;
-	if (job.kind === "messages") {
-		const message = await ctx.db
-			.query("messages")
-			.withIndex("by_club_and_key", (q) =>
-				q.eq("clubId", job.clubId).eq("value.id", job.entityId),
-			)
-			.unique();
-		if (!message || message.value.deleted) return false;
-		const thread = await threadFor(ctx, job.clubId, message.value.threadId);
-		return Boolean(thread?.value.accountIds.includes(member.userId));
-	}
-	if (job.kind === "feedback") {
-		const row = await ctx.db
-			.query("feedback")
-			.withIndex("by_club_and_key", (q) =>
-				q.eq("clubId", job.clubId).eq("value.id", job.entityId),
-			)
-			.unique();
-		return (
-			row?.value.visibility === "published" &&
-			[member.personId, ...member.children].includes(row.value.personId)
-		);
-	}
-	if (job.kind === "announcements") {
-		const noticeClub = await ctx.db.get(job.clubId);
-		const notice = await ctx.db
-			.query("notices")
-			.withIndex("by_club_and_key", (q) =>
-				q.eq("clubId", job.clubId).eq("value.id", job.entityId),
-			)
-			.unique();
-		if (
-			!notice ||
-			(notice.value.expiresAt &&
-				notice.value.expiresAt <= clubDate(undefined, noticeClub?.timeZone))
-		)
-			return false;
-		if (
-			member.admin ||
-			notice.value.program === "all" ||
-			member.coachPrograms.includes(notice.value.program)
-		)
-			return true;
-		const people = await Promise.all(
-			[member.personId, ...member.children].map((personId) =>
-				ctx.db
-					.query("members")
-					.withIndex("by_club_and_key", (q) =>
-						q.eq("clubId", job.clubId).eq("value.id", personId),
-					)
-					.unique(),
-			),
-		);
-		return people.some((person) =>
-			person?.value.programs.includes(notice.value.program),
-		);
-	}
-	const club = await ctx.db.get(job.clubId);
-	const row = await ctx.db
-		.query("events")
-		.withIndex("by_club_and_key", (q) =>
-			q.eq("clubId", job.clubId).eq("value.id", job.entityId),
-		)
-		.unique();
-	const event = row?.value;
-	if (
-		event &&
-		club?.reminders &&
-		(job.eventPhase === "changed" || job.eventPhase === "cancelled")
-	) {
-		if ((job.eventPhase === "cancelled") !== event.cancelled) return false;
-		const responses = (
-			await Promise.all(
-				[member.personId, ...member.children].map((personId) =>
-					ctx.db
-						.query("responses")
-						.withIndex("by_person", (q) =>
-							q.eq("clubId", job.clubId).eq("value.personId", personId),
-						)
-						.collect(),
-				),
-			)
-		).flat();
-		const changedIds = new Set(job.eventIds ?? [event.id]);
-		return responses.some(
-			(response) =>
-				changedIds.has(response.value.eventId) &&
-				["going", "waiting"].includes(response.value.response),
-		);
-	}
-	if (
-		!club?.reminders ||
-		!event ||
-		event.cancelled ||
-		!event.closesAt ||
-		Date.now() >= event.closesAt ||
-		(event.opensAt && Date.now() < event.opensAt)
-	)
-		return false;
-	if (
-		(job.eventPhase === "open" ? event.opensAt : event.closesAt) !==
-		job.eventTimestamp
-	)
-		return false;
-	const people = [member.personId, ...member.children].filter(
-		(id) =>
-			!event.eligiblePersonIds?.length || event.eligiblePersonIds.includes(id),
-	);
-	const players = await Promise.all(
-		people.map((id) =>
-			ctx.db
-				.query("members")
-				.withIndex("by_club_and_key", (q) =>
-					q.eq("clubId", job.clubId).eq("value.id", id),
-				)
-				.unique(),
-		),
-	);
-	const eligiblePeople = players
-		.filter((person) => person?.value.programs.length)
-		.map((person) => person?.value.id);
-	const responses = await ctx.db
-		.query("responses")
-		.withIndex("by_event", (q) =>
-			q.eq("clubId", job.clubId).eq("value.eventId", event.id),
-		)
-		.collect();
-	return eligiblePeople.some(
-		(personId) =>
-			!responses.some(
-				(response) =>
-					response.value.personId === personId &&
-					response.value.eventId === event.id &&
-					response.value.response !== "unanswered",
-			),
+	return (
+		job.kind !== "events" ||
+		(job.topic && job.topic !== "event") ||
+		Boolean((await ctx.db.get(job.clubId))?.reminders)
 	);
 };
 export const fanout = internalMutation({
@@ -328,7 +188,11 @@ export const fanout = internalMutation({
 			.withIndex("by_job", (q) => q.eq("jobId", jobId))
 			.collect();
 		for (const member of members) {
-			if (!(await eligible(ctx, job, member))) continue;
+			const content = await notificationContent(ctx, job, member, "delivery");
+			if (!content) continue;
+			await recordInbox(ctx, job, member);
+			if (!(await pushEnabled(ctx, job, member, content))) continue;
+			await recordWebPush(ctx, job, member);
 			const devices = await ctx.db
 				.query("pushDevices")
 				.withIndex("by_user", (q) => q.eq("userId", member.userId))
@@ -382,49 +246,13 @@ export const payload = internalQuery({
 			!session ||
 			session.userId !== device.userId ||
 			session.expirationTime <= Date.now() ||
-			!member ||
-			!(await eligible(ctx, job, member))
+			!member
 		)
 			return null;
-		const message =
-			job.kind === "messages"
-				? await ctx.db
-						.query("messages")
-						.withIndex("by_club_and_key", (q) =>
-							q.eq("clubId", job.clubId).eq("value.id", job.entityId),
-						)
-						.unique()
-				: undefined;
-		const feedback =
-			job.kind === "feedback"
-				? await ctx.db
-						.query("feedback")
-						.withIndex("by_club_and_key", (q) =>
-							q.eq("clubId", job.clubId).eq("value.id", job.entityId),
-						)
-						.unique()
-				: undefined;
-		const path = message
-			? `/conversation?id=${encodeURIComponent(message.value.threadId)}`
-			: job.kind === "events"
-				? `/session?event=${encodeURIComponent(job.entityId)}`
-				: feedback
-					? `/member?id=${encodeURIComponent(feedback.value.personId)}&tab=shoutouts`
-					: "/messages?tab=notices";
-		const body =
-			job.kind === "messages"
-				? "You have a new message."
-				: job.kind === "feedback"
-					? "You received a new shoutout."
-					: job.kind === "announcements"
-						? "Your club posted an announcement."
-						: job.eventPhase === "open"
-							? "Registration is open."
-							: job.eventPhase === "changed"
-								? "An event you signed up for has changed."
-								: job.eventPhase === "cancelled"
-									? "An event you signed up for was cancelled."
-									: "Registration closes in 30 minutes.";
+		const content = await notificationContent(ctx, job, member, "delivery");
+		if (!content || !(await pushEnabled(ctx, job, member, content)))
+			return null;
+		const { body, path } = notificationPayload(job, content);
 		return {
 			token: device.token,
 			title: "UWH Club",

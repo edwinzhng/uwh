@@ -1,10 +1,12 @@
-import { type ReactElement, useState } from "react";
-import { useWindowDimensions, View } from "react-native";
-import { ScrollArea } from "./scroll-area";
-import { type SegmentFrame, SegmentIndicator } from "./segment-indicator";
+import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { View } from "react-native";
+import { ScrollArea, type ScrollAreaHandle } from "./scroll-area";
+import { SelectionIndicator } from "./selection-indicator";
+import { type TabSize, tabFrame, tabScrollRange } from "./tab-layout";
 import { TabOption } from "./tab-option";
 import { useTheme } from "./theme";
-import { geometry, space } from "./tokens";
+import { corners, space } from "./tokens";
+import { useControlSelection } from "./use-control-selection";
 
 type Props<T extends string> = {
 	label: string;
@@ -14,88 +16,134 @@ type Props<T extends string> = {
 	options: readonly {
 		value: T;
 		label: string;
-		staffRole?: "coach" | "admin";
 		isDisabled?: boolean;
 	}[];
 	onValueChange: (value: T) => void;
 };
 export const Tabs = <T extends string>({
 	label,
-	page = false,
 	value,
 	options,
 	onValueChange,
 }: Props<T>): ReactElement => {
 	const theme = useTheme();
-	const { width } = useWindowDimensions();
-	const [contentWidth, setContentWidth] = useState(0);
-	const viewportWidth =
-		width - (width >= geometry.wide ? geometry.popupWidth : 0);
-	const inset =
-		page && contentWidth ? Math.max(0, (viewportWidth - contentWidth) / 2) : 0;
-	const [frames, setFrames] = useState<Partial<Record<T, SegmentFrame>>>({});
-	const frame = frames[value];
+	const { selectedValue, selectValue } = useControlSelection(
+		value,
+		onValueChange,
+	);
+	const scroll = useRef<ScrollAreaHandle>(null);
+	const [scrollWidth, setScrollWidth] = useState(0);
+	const [rowWidth, setRowWidth] = useState(0);
+	const inset = space.xs;
+	const gap = space.xxs;
+	const [sizes, setSizes] = useState<Partial<Record<T, TabSize>>>({});
+	const measurements = useMemo(
+		() =>
+			options.map((option) => ({
+				value: option.value,
+				size: sizes[option.value],
+			})),
+		[options, sizes],
+	);
+	const frame = tabFrame(measurements, selectedValue, gap);
+	const selectedRange = frame
+		? tabScrollRange(frame, inset, space.md)
+		: undefined;
+	const rangeStart = selectedRange?.start;
+	const rangeEnd = selectedRange?.end;
+	const revealedValue = useRef(value);
+	useEffect((): void => {
+		if (
+			rangeStart !== undefined &&
+			rangeEnd !== undefined &&
+			scrollWidth > 0 &&
+			rowWidth > 0
+		) {
+			const intent = revealedValue.current === value ? "layout" : "activation";
+			revealedValue.current = value;
+			scroll.current?.reveal(
+				{ start: rangeStart, end: rangeEnd, inset: space.md },
+				intent,
+			);
+		}
+	}, [rangeStart, rangeEnd, rowWidth, scrollWidth, value]);
 	return (
 		<View
-			onLayout={(event): void =>
-				setContentWidth(event.nativeEvent.layout.width)
-			}
+			style={{
+				minWidth: 0,
+				maxWidth: "100%",
+				alignSelf: "flex-start",
+				backgroundColor: theme.background.secondary,
+				borderRadius: corners.control + space.xs,
+				overflow: "hidden",
+			}}
 		>
-			<View
-				pointerEvents="none"
-				style={{
-					position: "absolute",
-					bottom: 0,
-					left: -inset,
-					right: -inset,
-					height: geometry.border,
-					backgroundColor: theme.border,
-				}}
-			/>
 			<ScrollArea
+				revealRef={scroll}
 				horizontal
 				keyboardShouldPersistTaps="handled"
 				showsHorizontalScrollIndicator={false}
 				style={{ flexGrow: 0 }}
+				fadeTone="secondary"
+				onLayout={(event): void => {
+					const next = event.nativeEvent.layout.width;
+					setScrollWidth((current) => (current === next ? current : next));
+				}}
+				onContentSizeChange={(next): void =>
+					setRowWidth((current) => (current === next ? current : next))
+				}
 			>
 				<View
 					accessibilityRole="tablist"
 					accessibilityLabel={label}
-					style={{
-						flexDirection: "row",
-						gap: space.md,
-					}}
+					style={{ padding: inset }}
 				>
-					{options.map((option) => (
-						<View
-							key={option.value}
-							onLayout={(event): void => {
-								const next = event.nativeEvent.layout;
-								setFrames((current) => {
-									const previous = current[option.value];
-									return previous?.x === next.x &&
-										previous.width === next.width &&
-										previous.height === next.height
-										? current
-										: { ...current, [option.value]: next };
-								});
-							}}
-						>
-							<TabOption
-								label={option.label}
-								staffRole={option.staffRole}
-								selected={value === option.value}
-								disabled={option.isDisabled}
-								onPress={(): void => onValueChange(option.value)}
+					<View style={{ flexDirection: "row", gap }}>
+						{frame ? (
+							<SelectionIndicator
+								frame={frame}
+								value={selectedValue}
+								color={
+									theme.mode === "dark"
+										? theme.background.selected
+										: theme.background.primary
+								}
+								radius={corners.control}
 							/>
-						</View>
-					))}
-					{frame ? (
-						<SegmentIndicator
-							appearance="underline"
-							frame={{ ...frame, y: frame.height - 2, height: 2 }}
-						/>
-					) : undefined}
+						) : undefined}
+						{options.map((option) => (
+							<View
+								key={option.value}
+								onLayout={(event): void => {
+									const { width, height } = event.nativeEvent.layout;
+									setSizes((current) => {
+										const previous = current[option.value];
+										return previous?.width === width &&
+											previous.height === height
+											? current
+											: { ...current, [option.value]: { width, height } };
+									});
+								}}
+							>
+								<TabOption
+									label={option.label}
+									selected={selectedValue === option.value}
+									indicatorReady={frame !== undefined}
+									disabled={option.isDisabled}
+									onPress={(): void => {
+										selectValue(option.value);
+									}}
+									onFocus={(): void => {
+										const target = tabFrame(measurements, option.value, gap);
+										if (target)
+											scroll.current?.reveal(
+												tabScrollRange(target, inset, space.md),
+											);
+									}}
+								/>
+							</View>
+						))}
+					</View>
 				</View>
 			</ScrollArea>
 		</View>

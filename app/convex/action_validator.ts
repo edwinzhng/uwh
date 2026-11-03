@@ -1,16 +1,36 @@
 import { v } from "convex/values";
 import { eventDraftValue } from "./event_validator";
+import { goalDetailsValue } from "./goal_schema";
+import { lineupSnapshotValue } from "./lineup_schema";
 import { positionValue } from "./player_coaching_schema";
+import { programDraftValue } from "./program_schema";
 import {
 	equipmentValue,
 	feedbackValue,
-	loansValue,
+	memberLoanValue,
 	membersValue,
 	noticesValue,
 	paymentsValue,
 	trackersValue,
 } from "./validators";
 export const appAction = v.union(
+	v.object({
+		type: v.literal("delete-program"),
+		id: v.string(),
+		expectedRevision: v.number(),
+	}),
+	v.object({
+		type: v.literal("save-program"),
+		requestId: v.optional(v.string()),
+		draft: v.object(programDraftValue),
+		expectedRevision: v.number(),
+		memberIds: v.array(v.string()),
+	}),
+	v.object({
+		type: v.literal("set-member-archived"),
+		personId: v.string(),
+		archived: v.boolean(),
+	}),
 	v.object({
 		type: v.literal("add-season"),
 		season: v.object({
@@ -28,6 +48,7 @@ export const appAction = v.union(
 	}),
 	v.object({
 		type: v.literal("respond"),
+		declinedPartIds: v.optional(v.array(v.string())),
 		partIds: v.optional(v.array(v.string())),
 		eventId: v.string(),
 		personId: v.string(),
@@ -68,6 +89,7 @@ export const appAction = v.union(
 	v.object({ type: v.literal("cancel-event"), eventId: v.string() }),
 	v.object({
 		type: v.literal("generate-teams"),
+		expectedRevision: v.optional(v.number()),
 		partId: v.optional(v.string()),
 		eventId: v.string(),
 		separateYouth: v.optional(v.boolean()),
@@ -75,6 +97,7 @@ export const appAction = v.union(
 	}),
 	v.object({
 		type: v.literal("assign-position"),
+		expectedRevision: v.optional(v.number()),
 		partId: v.optional(v.string()),
 		eventId: v.string(),
 		personId: v.string(),
@@ -82,14 +105,32 @@ export const appAction = v.union(
 	}),
 	v.object({
 		type: v.literal("move-player"),
+		expectedRevision: v.optional(v.number()),
 		partId: v.optional(v.string()),
 		eventId: v.string(),
 		personId: v.string(),
 	}),
 	v.object({
 		type: v.literal("publish-teams"),
+		expectedRevision: v.optional(v.number()),
 		partId: v.optional(v.string()),
 		eventId: v.string(),
+	}),
+	v.object({
+		type: v.literal("save-lineup"),
+		eventId: v.string(),
+		partId: v.optional(v.string()),
+		expectedRevision: v.number(),
+		snapshot: lineupSnapshotValue,
+	}),
+	v.object({
+		type: v.literal("carry-lineup"),
+		eventId: v.string(),
+		partId: v.optional(v.string()),
+		sourceEventId: v.string(),
+		sourcePartId: v.optional(v.string()),
+		expectedSourceRevision: v.number(),
+		expectedRevision: v.number(),
 	}),
 	v.object({
 		type: v.literal("save-plan"),
@@ -101,17 +142,23 @@ export const appAction = v.union(
 	v.object({ type: v.literal("publish-feedback"), id: v.string() }),
 	v.object({
 		type: v.literal("request-goal"),
+		expectedPendingRevision: v.optional(v.number()),
+		details: v.optional(goalDetailsValue),
+		expectedRevision: v.optional(v.number()),
 		personId: v.string(),
 		goal: v.string(),
 	}),
 	v.object({
 		type: v.literal("review-goal"),
+		requestRevision: v.optional(v.number()),
 		personId: v.string(),
 		goal: v.string(),
 		approve: v.boolean(),
 	}),
 	v.object({
 		type: v.literal("set-goal"),
+		details: v.optional(goalDetailsValue),
+		expectedRevision: v.optional(v.number()),
 		personId: v.string(),
 		goal: v.string(),
 	}),
@@ -127,7 +174,15 @@ export const appAction = v.union(
 		threadId: v.string(),
 		body: v.string(),
 		time: v.string(),
-		images: v.optional(v.array(v.object({ id: v.string(), name: v.string() }))),
+		images: v.optional(
+			v.array(
+				v.object({
+					id: v.string(),
+					name: v.string(),
+					mime: v.optional(v.string()),
+				}),
+			),
+		),
 	}),
 	v.object({
 		type: v.literal("edit-message"),
@@ -152,7 +207,14 @@ export const appAction = v.union(
 	}),
 	v.object({ type: v.literal("dismiss-notice"), noticeId: v.string() }),
 	v.object({ type: v.literal("expire-notice"), noticeId: v.string() }),
-	v.object({ type: v.literal("acknowledge"), noticeId: v.string() }),
+	v.object({
+		type: v.literal("edit-notice"),
+		noticeId: v.string(),
+		body: v.string(),
+		expiresAt: v.optional(v.string()),
+		expectedBody: v.string(),
+		expectedExpiresAt: v.optional(v.string()),
+	}),
 	v.object({ type: v.literal("create-notice"), notice: noticesValue }),
 	v.object({
 		type: v.literal("registration"),
@@ -164,7 +226,7 @@ export const appAction = v.union(
 		),
 	}),
 	v.object({ type: v.literal("payment"), payment: paymentsValue }),
-	v.object({ type: v.literal("issue"), loan: loansValue }),
+	v.object({ type: v.literal("issue"), loan: memberLoanValue }),
 	v.object({ type: v.literal("return"), loanId: v.string() }),
 	v.object({ type: v.literal("add-equipment"), equipment: equipmentValue }),
 	v.object({ type: v.literal("update-equipment"), equipment: equipmentValue }),

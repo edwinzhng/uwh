@@ -1,10 +1,12 @@
 import { v } from "convex/values";
+import { addDays } from "../src/domain/app-rules";
 import type { ClubEvent } from "../src/domain/app-types";
-import { signupState } from "../src/domain/event-time";
+import { clubTimestamp, signupState } from "../src/domain/event-time";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, type MutationCtx } from "./_generated/server";
 import { enqueue } from "./notifications";
+import { applyProgramRsvpDefaults } from "./program_rsvp";
 import { syncEditedSeries } from "./session_series";
 
 export const refresh = internalMutation({
@@ -17,6 +19,7 @@ export const refresh = internalMutation({
 			)
 			.unique();
 		if (row) {
+			await applyProgramRsvpDefaults(ctx, row);
 			await ctx.db.patch(row._id, {
 				value: { ...row.value, signup: signupState(row.value, Date.now()) },
 			});
@@ -31,6 +34,26 @@ export const scheduleSignup = async (
 	event: ClubEvent,
 ): Promise<void> => {
 	if (!event.cancelled) {
+		if (event.programRsvp && event.closesAt !== undefined) {
+			const reminderAt = clubTimestamp(
+				addDays(event.date, -event.programRsvp.reminderDays),
+				event.start,
+				event.timeZone,
+			);
+			if (reminderAt > Date.now() && reminderAt < event.closesAt)
+				await enqueue(
+					ctx,
+					{
+						clubId,
+						kind: "events",
+						entityId: event.id,
+						eventPhase: "closing",
+						eventTimestamp: event.closesAt,
+						key: `${clubId}:${event.id}:program-reminder:${reminderAt}:${event.closesAt}`,
+					},
+					Math.max(reminderAt, event.opensAt ?? 0),
+				);
+		}
 		if (event.opensAt !== undefined && (event.closesAt ?? 0) > Date.now())
 			await enqueue(
 				ctx,

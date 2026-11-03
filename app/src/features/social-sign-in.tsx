@@ -8,12 +8,16 @@ export const SocialSignIn = ({
 	disabled = false,
 }: {
 	disabled?: boolean;
-}): ReactElement => {
+}): ReactElement | undefined => {
 	const social = useBackend().social;
 	const task = useTask();
+	const providers = socialProviders.filter(
+		(provider) => social?.info?.[provider],
+	);
+	if (!providers.length) return undefined;
 	return (
 		<Stack gap="sm">
-			{socialProviders.map((provider) => (
+			{providers.map((provider) => (
 				<Button
 					key={provider}
 					label={`Continue with ${providerName(provider)}`}

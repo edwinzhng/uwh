@@ -1,7 +1,9 @@
-import { canRegister } from "./app-rules";
 import type { AppData, Member } from "./app-types";
+import {
+	attendancePercent,
+	availableAttendanceEvent,
+} from "./attendance-metrics";
 import { effectiveAttendance } from "./effective-attendance";
-import { clubTimestamp } from "./event-time";
 import { groupBy } from "./group-by";
 import { defaultSeasonId } from "./seasons";
 
@@ -21,6 +23,7 @@ export const attendanceSummary = (
 	points: AttendancePoint[];
 	attended?: number;
 	onTime?: number;
+	attendedCount: number;
 	recorded: number;
 	total: number;
 	records: {
@@ -39,12 +42,7 @@ export const attendanceSummary = (
 		.filter(
 			(event) =>
 				(event.seasonId ?? defaultSeasonId) === seasonId &&
-				!event.cancelled &&
-				event.kind !== "social" &&
-				event.kind !== "meeting" &&
-				canRegister(member, event) &&
-				clubTimestamp(event.endDate ?? event.date, event.end, event.timeZone) <=
-					now,
+				availableAttendanceEvent(member, event, now),
 		)
 		.slice()
 		.sort((a, b) => a.date.localeCompare(b.date))
@@ -65,7 +63,8 @@ export const attendanceSummary = (
 	const byMonth = groupBy(records, (record) => record.date.slice(0, 7));
 	const months = [...byMonth.keys()];
 	return {
-		attended: recorded ? Math.round((attended / recorded) * 100) : undefined,
+		attended: attendancePercent(attended, records.length),
+		attendedCount: attended,
 		onTime: attended ? Math.round((onTime / attended) * 100) : undefined,
 		recorded,
 		total: records.length,

@@ -1,0 +1,90 @@
+import { useRouter } from "expo-router";
+import type { ReactElement } from "react";
+import { PersonalFitnessData } from "../backend/personal-fitness-data";
+import {
+	Button,
+	EmptyState,
+	InfiniteScroll,
+	LoadingContent,
+	SectionHeading,
+	Stack,
+	Text,
+} from "../design-system";
+import type { Member } from "../domain/app-types";
+import { PersonalFitnessSummary } from "./personal-fitness-summary";
+import { SeasonSelect } from "./season-select";
+import { useSeason } from "./use-season";
+
+export const PersonalFitness = ({
+	member,
+	full = false,
+}: {
+	member: Member;
+	full?: boolean;
+}): ReactElement => {
+	const router = useRouter();
+	const [seasonId] = useSeason();
+	return (
+		<Stack gap="sm">
+			{!full ? (
+				<SectionHeading
+					size="small"
+					action={
+						<Button
+							label="View all"
+							accessibilityLabel="View all fitness tests"
+							variant="ghost"
+							compact
+							onPress={(): void =>
+								router.push({
+									pathname: "/fitness",
+									params: { person: member.id },
+								})
+							}
+						/>
+					}
+				>
+					Fitness tests
+				</SectionHeading>
+			) : (
+				<SeasonSelect />
+			)}
+			<PersonalFitnessData
+				key={`${member.id}:${seasonId}`}
+				member={member}
+				seasonId={seasonId}
+			>
+				{({ rows, loading, more, loadingMore, loadMore }) => (
+					<Stack gap="sm">
+						{loading ? (
+							<LoadingContent />
+						) : !rows.length && !full ? (
+							<Text variant="small" tone="secondary">
+								{more ? "Checking earlier results…" : "No fitness results."}
+							</Text>
+						) : !rows.length ? (
+							<EmptyState
+								title={more ? "No results in these tests" : "No swim results"}
+								description={more ? "Checking earlier results…" : undefined}
+							/>
+						) : (
+							<PersonalFitnessSummary
+								rows={rows}
+								personId={member.id}
+								full={full}
+							/>
+						)}
+						{more && (full || !rows.length) ? (
+							<InfiniteScroll
+								loadMore={loadMore}
+								loading={loadingMore}
+								revision={rows.length}
+								disabled={false}
+							/>
+						) : undefined}
+					</Stack>
+				)}
+			</PersonalFitnessData>
+		</Stack>
+	);
+};

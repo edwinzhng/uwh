@@ -5,16 +5,16 @@
 	"start_url": "/",
 	"scope": "/",
 	"display": "standalone",
-	"background_color": "#f5f7f6",
-	"theme_color": "#f5f7f6",
+	"background_color": "#F7F8F5",
+	"theme_color": "#F7F8F5",
 	"icons": [
 		{
-			"src": "/club-logo-192.png",
+			"src": "/crocs-app-v1-192.png",
 			"type": "image/png",
 			"sizes": "192x192"
 		},
 		{
-			"src": "/club-logo-512.png",
+			"src": "/crocs-app-v1-512.png",
 			"type": "image/png",
 			"sizes": "512x512"
 		}

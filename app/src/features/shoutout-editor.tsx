@@ -1,61 +1,113 @@
 import { type ReactElement, useState } from "react";
-import { newId, useApp } from "../demo/app-state";
-import { Button, Dialog, Field, Row, Select, Stack } from "../design-system";
+import { useApp } from "../demo/app-state";
+import {
+	Button,
+	Dialog,
+	Field,
+	GlassPanel,
+	Row,
+	Select,
+	Stack,
+	Text,
+} from "../design-system";
 import { eventAttendees, memberName } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
+import { practiceEvent } from "../domain/event-types";
+import { type ShoutoutCategory, shoutoutCategories } from "../domain/shoutouts";
+import { ResourcePlayerPicker } from "./resource-player-picker";
 import { useClubToday } from "./use-club-today";
 import { useFormTask } from "./use-form-task";
+import { useOperationKey } from "./use-operation-key";
 
 export const ShoutoutEditor = ({
 	personId,
 	event,
+	compact = false,
+	floating = false,
 }: {
 	personId?: string;
 	event?: ClubEvent;
+	compact?: boolean;
+	floating?: boolean;
 }): ReactElement => {
 	const { account, data, dispatch } = useApp();
 	const today = useClubToday();
 	const task = useFormTask();
 	const choices = eventAttendees(data, event?.id ?? "");
-	const members = choices.length ? choices : data.members;
+	const members = (choices.length ? choices : data.members).filter(
+		(member) => !member.archived && !member.mergedInto,
+	);
 	const [open, setOpen] = useState(false);
-	const [targetId, setTargetId] = useState(personId ?? account.personId);
+	const [targetId, setTargetId] = useState(
+		personId ??
+			members.find((member) => member.id !== account.personId)?.id ??
+			"",
+	);
 	const [body, setBody] = useState("");
+	const [targetName, setTargetName] = useState(
+		members.find((member) => member.id === targetId)?.name ?? "",
+	);
+	const [category, setCategory] = useState<ShoutoutCategory>();
+	const [practiceId, setPracticeId] = useState(event?.id ?? "");
+	const [submission, setSubmission] = useState(0);
+	const operationKey = useOperationKey();
+	const practice =
+		event ?? data.events.find((entry) => entry.id === practiceId);
 	const save = async (): Promise<void> => {
 		await task.submit(
 			() =>
-				!targetId || !body.trim()
-					? "Choose a player and write a shoutout."
+				!targetId || !category
+					? "Choose a player and recognition category."
 					: undefined,
 			async (): Promise<void> => {
+				const payload = {
+					kind: "shoutout" as const,
+					personId: targetId,
+					authorId: account.id,
+					eventId: practice?.id,
+					body: body.trim(),
+					category,
+					visibility: "published" as const,
+					date: practice?.date ?? today,
+				};
 				const saved = await dispatch({
 					type: "save-feedback",
 					feedback: {
-						id: newId(),
-						personId: targetId,
-						authorId: account.id,
-						eventId: event?.id,
-						body: body.trim(),
-						visibility: "published",
-						date: event?.date ?? today,
+						...payload,
+						id: operationKey(JSON.stringify({ payload, submission })),
 					},
 				});
 				if (!saved)
 					throw new Error("Could not share this shoutout. Try again.");
 				setBody("");
+				setCategory(undefined);
+				setSubmission((value) => value + 1);
 				setOpen(false);
 			},
 		);
 	};
+	const trigger = (
+		<Button
+			label="Give shoutout"
+			prefix="plus"
+			variant={floating || compact ? "ghost" : "secondary"}
+			compact={compact}
+			round={floating}
+			onPress={(): void => setOpen(true)}
+		/>
+	);
 	return (
 		<>
-			<Button
-				label="Give shoutout"
-				prefix="plus"
-				variant="secondary"
-				onPress={(): void => setOpen(true)}
-			/>
+			{floating ? (
+				<GlassPanel padding="xs" shape="pill" interactive>
+					{trigger}
+				</GlassPanel>
+			) : (
+				trigger
+			)}
 			<Dialog
+				intent="form"
+				isDismissDisabled={task.busy}
 				title="Give a shoutout"
 				isOpen={open}
 				onOpenChange={(value): void => {
@@ -64,13 +116,8 @@ export const ShoutoutEditor = ({
 				footer={
 					<Row>
 						<Button
-							label="Share shoutout"
+							label="Send shoutout"
 							isLoading={task.busy}
-							validationError={
-								!targetId || !body.trim()
-									? "Check the required fields"
-									: undefined
-							}
 							onPress={(): void => {
 								void save();
 							}}
@@ -79,25 +126,66 @@ export const ShoutoutEditor = ({
 				}
 			>
 				<Stack>
+					<Text variant="small" tone="secondary">
+						Only the recipient and their linked household can see this. Your
+						name stays anonymous.
+					</Text>
 					{personId ? undefined : (
-						<Select
-							label="Player"
-							value={targetId}
-							options={members.map((member) => ({
-								value: member.id,
-								label: member.name,
-							}))}
-							onValueChange={(value): void =>
-								setTargetId(value ?? account.personId)
-							}
-							isDisabled={task.busy}
-						/>
+						<Stack gap="xs">
+							{targetId ? (
+								<Text variant="label">
+									For {targetName || "selected player"}
+								</Text>
+							) : undefined}
+							<ResourcePlayerPicker
+								label="Find a teammate"
+								actionLabel="Choose"
+								selected={targetId ? [targetId] : []}
+								disabled={task.busy}
+								onSelect={(id, name): void => {
+									setTargetId(id);
+									setTargetName(name);
+								}}
+							/>
+						</Stack>
 					)}
+					<Select
+						label="Recognition"
+						value={category ?? ""}
+						options={[
+							{ value: "", label: "Choose recognition" },
+							...shoutoutCategories,
+						]}
+						isDisabled={task.busy}
+						onValueChange={(value): void =>
+							setCategory(
+								shoutoutCategories.find((entry) => entry.value === value)
+									?.value,
+							)
+						}
+					/>
+					{!event ? (
+						<Select
+							label="Practice (optional)"
+							value={practiceId}
+							options={[
+								{ value: "", label: "No practice" },
+								...data.events
+									.filter((entry) => practiceEvent(entry) && !entry.cancelled)
+									.map((entry) => ({
+										value: entry.id,
+										label: `${entry.date} · ${entry.title}`,
+									})),
+							]}
+							isDisabled={task.busy}
+							onValueChange={(value): void => setPracticeId(value ?? "")}
+						/>
+					) : undefined}
 					<Field
 						label={
 							personId
-								? `Shoutout for ${memberName(data, personId)}`
-								: "Shoutout"
+								? `Note for ${memberName(data, personId)} (optional)`
+								: "Note (optional)"
 						}
 						placeholder="What did they do well?"
 						value={body}
@@ -107,6 +195,7 @@ export const ShoutoutEditor = ({
 						maxLength={1000}
 						isDisabled={task.busy}
 					/>
+					{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
 				</Stack>
 			</Dialog>
 		</>

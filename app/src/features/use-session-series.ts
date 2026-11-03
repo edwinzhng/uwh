@@ -6,6 +6,7 @@ import { previewSessionSeries } from "../demo/session-series-state";
 import type { ClubEvent } from "../domain/app-types";
 import { clubDate } from "../domain/event-time";
 import {
+	reconcileSeriesEligibility,
 	type SessionSeries,
 	seriesEvents,
 	seriesHasSpace,
@@ -71,18 +72,31 @@ export const usePreviewSeries = (): SeriesControls => {
 	const [series, setSeries] = useAtom(previewSessionSeries);
 	const setData = useSetAtom(previewDataAtom);
 	const save = (updated: SessionSeries): void => {
+		const now = Date.now();
+		const today = clubDate(now, data.timeZone);
+		const reconciled = reconcileSeriesEligibility(
+			updated,
+			data.events,
+			data.members,
+			today,
+			now,
+		);
 		setSeries((current) => [
 			...current.filter((entry) => entry.id !== updated.id),
-			updated,
+			reconciled,
 		]);
 		setData((current) => ({
 			...current,
 			responses: syncSeriesResponses(
-				updated,
+				reconciled,
 				current.events,
 				current.responses,
-				clubDate(undefined, current.timeZone),
-				Date.now(),
+				today,
+				now,
+				current.members
+					.filter((member) => member.archived)
+					.map((member) => member.id),
+				current.members,
 			),
 		}));
 	};
@@ -100,6 +114,12 @@ export const usePreviewSeries = (): SeriesControls => {
 			});
 		},
 		enroll: async (args) => {
+			if (
+				data.members.find((member) => member.id === args.personId)?.mergedInto
+			)
+				throw new Error("This profile was merged. Reopen the current roster.");
+			if (data.members.find((member) => member.id === args.personId)?.archived)
+				throw new Error("Restore this member before adding a commitment.");
 			const current = series.find((entry) => entry.id === args.seriesId);
 			if (!current) throw new Error("Series not found.");
 			if (
@@ -134,6 +154,10 @@ export const usePreviewSeries = (): SeriesControls => {
 			});
 		},
 		end: async (args) => {
+			if (
+				data.members.find((member) => member.id === args.personId)?.mergedInto
+			)
+				throw new Error("This profile was merged. Reopen the current roster.");
 			const current = series.find((entry) => entry.id === args.seriesId);
 			if (!current) throw new Error("Series not found.");
 			save({

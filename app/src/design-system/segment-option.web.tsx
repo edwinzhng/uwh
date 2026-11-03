@@ -2,7 +2,7 @@ import { type ReactElement, useState } from "react";
 import { Icon } from "./icon";
 import type { SegmentOptionProps } from "./segment-option-props";
 import { useTheme } from "./theme";
-import { control, corners, font, geometry, space } from "./tokens";
+import { control, corners, font, geometry, radius, space } from "./tokens";
 
 export const SegmentOption = ({
 	label,
@@ -10,19 +10,25 @@ export const SegmentOption = ({
 	value,
 	groupName,
 	isSelected,
+	indicatorReady = false,
 	isDisabled,
 	isTabStop,
-	showSelection,
 	height,
 	onSelect,
-	onHoverChange,
 }: SegmentOptionProps): ReactElement => {
 	const theme = useTheme();
 	const [focused, setFocused] = useState(false);
+	const [hovered, setHovered] = useState(false);
+	const selectedBackground =
+		theme.mode === "dark"
+			? theme.background.selected
+			: theme.background.primary;
+	const foreground = isSelected ? theme.text.primary : theme.text.secondary;
 	return (
 		<label
-			onMouseEnter={(): void => onHoverChange(true)}
-			onMouseLeave={(): void => onHoverChange(false)}
+			title={icon ? label : undefined}
+			onMouseEnter={(): void => setHovered(true)}
+			onMouseLeave={(): void => setHovered(false)}
 			style={{
 				position: "relative",
 				display: "flex",
@@ -32,11 +38,14 @@ export const SegmentOption = ({
 				minHeight: height,
 				width: icon ? height : undefined,
 				padding: `${control.paddingY - control.segmentInset}px ${icon ? space.none : control.paddingX}px`,
-				borderRadius: icon ? corners.pill : corners.control,
-				border: `${geometry.border}px solid transparent`,
-				backgroundColor: showSelection
-					? theme.background.selected
-					: "transparent",
+				borderRadius: icon ? radius.round : corners.control,
+				border: `${geometry.border}px solid ${icon && isSelected && !indicatorReady ? theme.border : "transparent"}`,
+				backgroundColor:
+					isSelected && !indicatorReady
+						? selectedBackground
+						: hovered && !isSelected && !isDisabled
+							? theme.background.hover
+							: "transparent",
 				outline: focused ? `${geometry.focus}px solid ${theme.focus}` : "none",
 				outlineOffset: -geometry.focus,
 				opacity: isDisabled ? geometry.disabledOpacity : 1,
@@ -82,18 +91,10 @@ export const SegmentOption = ({
 					fontSize: control.typography.fontSize,
 					lineHeight: `${control.typography.lineHeight}px`,
 					whiteSpace: "nowrap",
-					color: isSelected ? theme.text.primary : theme.text.secondary,
+					color: foreground,
 				}}
 			>
-				{icon ? (
-					<Icon
-						name={icon}
-						size="sm"
-						tone={isSelected ? "primary" : "secondary"}
-					/>
-				) : (
-					label
-				)}
+				{icon ? <Icon name={icon} size="sm" color={foreground} /> : label}
 			</span>
 		</label>
 	);

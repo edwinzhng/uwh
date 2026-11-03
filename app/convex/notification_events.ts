@@ -1,4 +1,5 @@
 import type { AppData } from "../src/domain/app-types";
+import { practicePartKey } from "../src/domain/practice-parts";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { enqueue } from "./notifications";
@@ -10,6 +11,25 @@ export const notifyChanges = async (
 	previous: AppData,
 	next: AppData,
 ): Promise<void> => {
+	const newEvents = next.events.filter(
+		(event) =>
+			!event.cancelled &&
+			(event.opensAt ?? 0) > Date.now() &&
+			!previous.events.some((entry) => entry.id === event.id),
+	);
+	for (const program of new Set(newEvents.map((event) => event.program))) {
+		const event = newEvents.find((entry) => entry.program === program);
+		if (event)
+			await enqueue(ctx, {
+				clubId,
+				actorId,
+				kind: "events",
+				topic: "event",
+				entityId: event.id,
+				eventPhase: "created",
+				key: `${clubId}:new-event:${event.id}`,
+			});
+	}
 	const changedEvents = next.events.filter((event) => {
 		const before = previous.events.find((entry) => entry.id === event.id);
 		return (
@@ -64,4 +84,89 @@ export const notifyChanges = async (
 			entityId: feedback.id,
 			key: `${clubId}:feedback:${feedback.id}`,
 		});
+	for (const notice of next.notices.filter(
+		(entry) => !previous.notices.some((old) => old.id === entry.id),
+	))
+		await enqueue(ctx, {
+			clubId,
+			actorId,
+			kind: "announcements",
+			entityId: notice.id,
+			key: `${clubId}:notice:${notice.id}`,
+		});
+	for (const plan of next.teams.filter((plan) => {
+		const before = previous.teams.find(
+			(entry) => entry.eventId === plan.eventId && entry.partId === plan.partId,
+		);
+		return (
+			plan.published &&
+			(!before?.published || before.revision !== plan.revision)
+		);
+	}))
+		await enqueue(ctx, {
+			clubId,
+			actorId,
+			kind: "events",
+			topic: "lineup",
+			entityId: plan.eventId,
+			partId: plan.partId,
+			sourceRevision: plan.revision,
+			key: `${clubId}:lineup:${practicePartKey(plan.eventId, plan.partId)}:${plan.revision ?? 0}`,
+		});
+	for (const response of next.responses.filter(
+		(response) =>
+			response.response === "unavailable" &&
+			!previous.responses.some(
+				(entry) =>
+					entry.personId === response.personId &&
+					entry.eventId === response.eventId &&
+					entry.response === "unavailable",
+			),
+	)) {
+		const row = await ctx.db
+			.query("responses")
+			.withIndex("by_club_and_key", (q) =>
+				q
+					.eq("clubId", clubId)
+					.eq("value.id", `${response.eventId}:${response.personId}`),
+			)
+			.unique();
+		if (row)
+			await enqueue(ctx, {
+				clubId,
+				actorId,
+				kind: "events",
+				topic: "rsvpNo",
+				entityId: row._id,
+				key: `${clubId}:rsvp-no:${row._id}:${Date.now()}`,
+			});
+	}
+	for (const person of next.members) {
+		const before = previous.members.find((entry) => entry.id === person.id);
+		const topic =
+			person.pendingGoal &&
+			person.pendingGoalRevision !== before?.pendingGoalRevision
+				? "goalRequest"
+				: before && person.steps > before.steps
+					? "progress"
+					: undefined;
+		if (!topic) continue;
+		const row = await ctx.db
+			.query("members")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", clubId).eq("value.id", person.id),
+			)
+			.unique();
+		if (row)
+			await enqueue(ctx, {
+				clubId,
+				actorId,
+				kind: "feedback",
+				topic,
+				entityId: row._id,
+				sourceRevision:
+					topic === "goalRequest" ? person.pendingGoalRevision : undefined,
+				key: `${clubId}:${topic}:${row._id}:${topic === "goalRequest" ? person.pendingGoalRevision : `${person.steps}:${Date.now()}`}`,
+			});
+	}
 };

@@ -1,67 +1,34 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { EmptyState, Row, Stack, Surface, Text } from "../design-system";
-import { formatDate } from "../domain/app-rules";
+import { EmptyState, Stack } from "../design-system";
 import type { Notice } from "../domain/app-types";
-import { ConfirmButton } from "./confirm-button";
+import { canManageNotice, isNoticeActive } from "../domain/notices";
+import { NoticeCard } from "./notice-card";
 
 export const NoticeList = ({
 	notices,
-	manageable = false,
+	today,
+	onEdit,
 }: {
 	notices: Notice[];
-	manageable?: boolean;
+	today: string;
+	onEdit: (notice: Notice) => void;
 }): ReactElement => {
-	const { account, data, dispatch, busy } = useApp();
+	const { account } = useApp();
 	return notices.length ? (
 		<Stack gap="sm">
-			{notices.map((notice) => {
-				const canExpire = manageable && account.admin;
-				return (
-					<Surface key={notice.id}>
-						<Stack gap="sm">
-							<Text variant="caption" tone="secondary">
-								Posted{" "}
-								{notice.postedAt !== undefined
-									? new Date(notice.postedAt).toLocaleString("en-CA", {
-											month: "short",
-											day: "numeric",
-											year: "numeric",
-											hour: "numeric",
-											minute: "2-digit",
-											timeZone: data.timeZone,
-										})
-									: formatDate(notice.date)}
-							</Text>
-							<Text>{notice.body}</Text>
-							{canExpire ? (
-								<Row justify="end">
-									<ConfirmButton
-										label="End now"
-										variant="ghost"
-										title="End this announcement?"
-										description="This removes the announcement from the player view immediately."
-										confirmLabel="End announcement"
-										danger
-										isDisabled={busy}
-										onConfirm={async (): Promise<void> => {
-											await dispatch({
-												type: "expire-notice",
-												noticeId: notice.id,
-											});
-										}}
-									/>
-								</Row>
-							) : undefined}
-						</Stack>
-					</Surface>
-				);
-			})}
+			{notices.map((notice) => (
+				<NoticeCard
+					key={notice.id}
+					notice={notice}
+					manageable={
+						canManageNotice(account, notice) && isNoticeActive(notice, today)
+					}
+					onEdit={onEdit}
+				/>
+			))}
 		</Stack>
 	) : (
-		<EmptyState
-			title="No live announcements"
-			description="New club announcements will appear here."
-		/>
+		<EmptyState title="No announcements" />
 	);
 };

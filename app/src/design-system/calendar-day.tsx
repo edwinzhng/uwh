@@ -7,6 +7,7 @@ import { corners, font, geometry, space, typography } from "./tokens";
 export const CalendarDay = ({
 	value,
 	label,
+	weekday,
 	selected,
 	today,
 	muted,
@@ -30,7 +31,8 @@ export const CalendarDay = ({
 				alignItems: "center",
 				justifyContent: "center",
 				gap: space.xxs,
-				borderRadius: corners.panel,
+				paddingVertical: weekday ? space.xs : 0,
+				borderRadius: corners.control,
 				borderWidth: geometry.border,
 				borderColor:
 					today && !selected ? theme.accent.background : "transparent",
@@ -41,12 +43,28 @@ export const CalendarDay = ({
 						: "transparent",
 			})}
 		>
+			{weekday ? (
+				<Text
+					style={{
+						color: foreground,
+						fontFamily: font.regular,
+						fontSize: typography.navigation.fontSize,
+						lineHeight: typography.navigation.lineHeight,
+					}}
+				>
+					{weekday}
+				</Text>
+			) : undefined}
 			<Text
 				style={{
 					color: foreground,
 					fontFamily: today || selected ? font.semibold : font.regular,
-					fontSize: typography.small.fontSize,
-					lineHeight: typography.small.lineHeight,
+					fontSize: weekday
+						? typography.label.fontSize
+						: typography.small.fontSize,
+					lineHeight: weekday
+						? typography.label.lineHeight
+						: typography.small.lineHeight,
 				}}
 			>
 				{Number(value.slice(-2))}

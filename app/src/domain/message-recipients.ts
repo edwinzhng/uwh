@@ -3,6 +3,21 @@ export const personRecipientId = (personId: string): string =>
 	`person:${personId}`;
 export const recipientPersonId = (recipientId: string): string | undefined =>
 	recipientId.startsWith("person:") ? recipientId.slice(7) : undefined;
+export const activeMessageRecipient = (
+	recipientId: string,
+	accounts: readonly Account[],
+	people: readonly Pick<Member, "id" | "archived" | "mergedInto">[],
+): boolean => {
+	const personId = recipientPersonId(recipientId);
+	const account = accounts.find((entry) => entry.id === recipientId);
+	if (personId === undefined && !account) return false;
+	const person = people.find(
+		(entry) => entry.id === (personId ?? account?.personId),
+	);
+	return person
+		? !person.archived && !person.mergedInto
+		: personId === undefined;
+};
 export const accountForRecipient = (
 	accounts: Account[],
 	personId: string,
@@ -18,7 +33,7 @@ export type RecipientDirectory = {
 };
 export const recipientDirectory = (
 	accounts: Account[],
-	players: Pick<Member, "id" | "name">[],
+	players: Pick<Member, "id" | "name" | "archived" | "mergedInto">[],
 	actorId: string,
 	unavailableIds: string[],
 	paused: boolean,
@@ -27,6 +42,7 @@ export const recipientDirectory = (
 		? []
 		: [
 				...players
+					.filter((player) => !player.archived && !player.mergedInto)
 					.filter((player) => {
 						const account = accountForRecipient(accounts, player.id, actorId);
 						return (

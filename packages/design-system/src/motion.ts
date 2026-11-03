@@ -7,11 +7,12 @@ export const motionDurations = {
 } as const;
 
 export const motionEffects = {
+	cardMaterialFlow: 6000,
+	loadingPuckLoop: 8000,
+	loadingHandoff: 2600,
 	liquidRelease: 1000,
 	heroCopyReveal: 1500,
 	heroActionDelay: 700,
-	scheduleStaggerStep: 70,
-	scheduleStaggerLimit: 210,
 } as const;
 
 export type MotionDurationToken = keyof typeof motionDurations;

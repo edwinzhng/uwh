@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { players } from "../src/demo/data";
 import { generatePreviewTeams } from "../src/domain/club";
+import { players } from "./fixtures/club-players";
 
 test("teams include each available attendee once, balance sizes, and are deterministic", (): void => {
 	const roster = players.map((player) =>

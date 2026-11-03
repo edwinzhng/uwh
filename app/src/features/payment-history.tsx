@@ -35,10 +35,7 @@ export const PaymentHistory = ({
 						))}
 					</Stack>
 				) : (
-					<EmptyState
-						title="No payments recorded"
-						description="Payments will appear here after the club records them."
-					/>
+					<EmptyState title="No payments recorded" />
 				)
 			}
 		</DataPage>

@@ -1,4 +1,4 @@
-import { type ReactElement, useState } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 import { useMessaging } from "../backend/messaging-context";
 import {
 	Button,
@@ -7,21 +7,26 @@ import {
 	List,
 	LoadingContent,
 	Row,
-	SectionHeading,
 	Stack,
-	Surface,
+	Tabs,
 	Text,
 } from "../design-system";
-import { conversationKind } from "../domain/messaging";
+import {
+	type ChatFilter,
+	filteredConversations,
+} from "../domain/conversation-sections";
 
 import { ConversationRow } from "./conversation-row";
 
-export const ConversationList = (): ReactElement => {
+export const ConversationList = ({
+	action,
+}: {
+	action?: ReactNode;
+}): ReactElement => {
 	const { threads, loading, error, retry } = useMessaging();
 	const [search, setSearch] = useState("");
-	const visible = threads.filter((thread) =>
-		thread.title.toLowerCase().includes(search.trim().toLowerCase()),
-	);
+	const [filter, setFilter] = useState<ChatFilter>("all");
+	const visible = filteredConversations(threads, search, filter);
 	return (
 		<Stack>
 			{error ? (
@@ -36,52 +41,53 @@ export const ConversationList = (): ReactElement => {
 					) : undefined}
 				</Row>
 			) : undefined}
-			<Field
-				label="Search"
-				placeholder="Find a conversation"
-				value={search}
-				onValueChange={setSearch}
+			<Row gap="xs">
+				<Stack grow>
+					<Field
+						label="Search"
+						hideLabel
+						inputMode="search"
+						placeholder="Search chats"
+						value={search}
+						onValueChange={setSearch}
+					/>
+				</Stack>
+				{action}
+			</Row>
+			<Tabs
+				label="Chat filters"
+				value={filter}
+				onValueChange={setFilter}
+				options={[
+					{ value: "all", label: "All" },
+					{ value: "unread", label: "Unread" },
+					{ value: "group", label: "Groups" },
+					{ value: "channel", label: "Channels" },
+				]}
 			/>
-
 			{visible.length ? (
-				[
-					{
-						title: "Conversations",
-						threads: visible.filter(
-							(thread) => conversationKind(thread) !== "direct",
-						),
-					},
-					{
-						title: "Direct messages",
-						threads: visible.filter(
-							(thread) => conversationKind(thread) === "direct",
-						),
-					},
-				]
-					.filter((section) => section.threads.length)
-					.map((section) => (
-						<Stack key={section.title} gap="sm">
-							<SectionHeading size="small">{section.title}</SectionHeading>
-							<Surface padding="xs">
-								<List>
-									{section.threads.map((thread) => (
-										<ConversationRow key={thread.id} thread={thread} />
-									))}
-								</List>
-							</Surface>
-						</Stack>
-					))
+				<List>
+					{visible.map((thread) => (
+						<ConversationRow key={thread.id} thread={thread} />
+					))}
+				</List>
 			) : loading ? (
 				<LoadingContent />
 			) : (
 				<EmptyState
 					title={
-						search.trim() ? "No conversations found" : "No conversations yet"
+						filter === "unread"
+							? "You’re all caught up"
+							: search.trim()
+								? "No conversations found"
+								: "No conversations yet"
 					}
 					description={
-						search.trim()
-							? "Try another name or clear your search."
-							: "Start a message or open a session discussion to begin a conversation."
+						filter === "unread"
+							? undefined
+							: search.trim()
+								? "Try another name or clear your search."
+								: "Start a message or open a session discussion to begin a conversation."
 					}
 				/>
 			)}

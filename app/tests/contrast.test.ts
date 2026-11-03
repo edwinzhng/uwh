@@ -1,6 +1,10 @@
 import { expect, test } from "bun:test";
 import { buttonColors } from "../src/design-system/button-colors";
-import { darkTheme, lightTheme } from "../src/design-system/tokens";
+import {
+	darkTheme,
+	featureColors,
+	lightTheme,
+} from "../src/design-system/tokens";
 
 const luminance = (hex: string): number => {
 	const channels = [1, 3, 5]
@@ -24,12 +28,14 @@ for (const [name, theme] of Object.entries({
 })) {
 	test(`${name} theme text, actions, status labels, and controls retain contrast`, () => {
 		for (const surface of [
+			theme.background.canvas,
 			theme.background.primary,
 			theme.background.secondary,
 			theme.background.selected,
 			theme.background.tertiary,
 			theme.background.hover,
 			theme.background.pressed,
+			theme.colorScales.accent.muted,
 		]) {
 			expect(contrast(theme.text.primary, surface)).toBeGreaterThanOrEqual(4.5);
 			expect(contrast(theme.text.secondary, surface)).toBeGreaterThanOrEqual(
@@ -105,3 +111,13 @@ for (const [name, theme] of Object.entries({
 			);
 	});
 }
+
+test("decorative feature icons remain distinct from their rounded color plates", () => {
+	for (const mode of Object.values(featureColors)) {
+		for (const colors of Object.values(mode)) {
+			expect(
+				contrast(colors.foreground, colors.background),
+			).toBeGreaterThanOrEqual(3);
+		}
+	}
+});

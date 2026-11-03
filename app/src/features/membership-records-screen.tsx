@@ -13,7 +13,7 @@ export const MembershipRecordsScreen = ({
 }: {
 	section: "registration" | "payments";
 }): ReactElement => {
-	const { account, source } = useApp();
+	const { account, data } = useApp();
 	const router = useRouter();
 	const [search, setSearch] = useState("");
 	const term = useSearchTerm(search);
@@ -26,7 +26,6 @@ export const MembershipRecordsScreen = ({
 						? "Payments"
 						: "Admin"
 			}
-			staffRole={account.admin ? "admin" : undefined}
 			back={
 				<Row>
 					<Button
@@ -49,25 +48,27 @@ export const MembershipRecordsScreen = ({
 						onValueChange={setSearch}
 						placeholder="Find a member"
 					/>
-					{source === "convex" ? (
-						<DataPage
-							config={{
-								query: api.pages.members,
-								args: { search: term },
-								preview: [],
-								size: 30,
-							}}
-						>
-							{(items) => (
-								<SeasonRoster
-									members={items.map((item) => item.member)}
-									section={section}
-								/>
-							)}
-						</DataPage>
-					) : (
-						<Text>Season records are available in the connected app.</Text>
-					)}
+					<DataPage
+						config={{
+							query: api.pages.members,
+							args: { search: term },
+							preview: data.members
+								.filter(
+									(member) =>
+										!member.archived &&
+										member.name.toLowerCase().includes(term.toLowerCase()),
+								)
+								.map((member) => ({ member, roles: "" })),
+							size: 30,
+						}}
+					>
+						{(items) => (
+							<SeasonRoster
+								members={items.map((item) => item.member)}
+								section={section}
+							/>
+						)}
+					</DataPage>
 				</Stack>
 			)}
 		</ClubShell>

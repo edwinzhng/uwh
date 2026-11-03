@@ -5,7 +5,7 @@ import {
 } from "../src/design-system/toast-messages";
 import { validToastCopy } from "./check-toast-copy";
 
-test("all catalog messages have a subject and useful detail", (): void => {
+test("catalog messages use concise titles and optional context", (): void => {
 	for (const message of Object.values(toastMessages))
 		expect(validToastCopy(message)).toBe(true);
 });
@@ -13,29 +13,38 @@ test("rejects vague, missing, excessive or celebratory copy", (): void => {
 	for (const title of [
 		"Saved name",
 		"",
-		"x".repeat(101),
+		"x".repeat(53),
 		"Your profile was successfully updated",
 	])
 		expect(
 			validToastCopy({
 				title,
-				description: "Your updated name appears on your account.",
+				description: "Alex Rivera",
 			}),
 		).toBe(false);
 	expect(
-		validToastCopy({ title: "Your account name was updated", description: "" }),
+		validToastCopy({ title: "Account name updated", description: "" }),
+	).toBe(false);
+	expect(validToastCopy({ title: "Password updated" })).toBe(true);
+	expect(
+		validToastCopy({
+			title: "Profile view updated",
+			description: "Profile view updated",
+		}),
 	).toBe(false);
 });
 test("profile switches retain the subject of each action", (): void => {
 	const first = resolveToastCopy("switchedProfile", { subject: "Sam" });
 	const second = resolveToastCopy("switchedProfile", { subject: "Edwin" });
-	expect(first.title).toBe("You’re now viewing Sam’s profile");
-	expect(second.title).toBe("You’re now viewing Edwin’s profile");
+	expect(first.title).toBe("Profile view updated");
+	expect(first.description).toBe("Sam");
+	expect(second.title).toBe("Profile view updated");
+	expect(second.description).toBe("Edwin");
 });
 test("invite messages identify their recipient and preserve delivery wording", (): void => {
 	const copy = resolveToastCopy("sentInvite", { subject: "sam@example.com" });
-	expect(copy.title).toBe("An invite for sam@example.com is queued");
-	expect(copy.description).toContain("delivery status");
+	expect(copy.title).toBe("Invite queued");
+	expect(copy.description).toBe("sam@example.com");
 });
 test("empty subjects fall back to meaningful copy and details can describe the change", (): void => {
 	expect(resolveToastCopy("savedName", { subject: "  " })).toEqual(
@@ -44,7 +53,7 @@ test("empty subjects fall back to meaningful copy and details can describe the c
 	expect(
 		resolveToastCopy("savedNotifications", {
 			subject: "Messages",
-			description: "Messages alerts are now disabled for your account.",
+			description: "Messages · Off",
 		}).description,
-	).toContain("disabled");
+	).toBe("Messages · Off");
 });

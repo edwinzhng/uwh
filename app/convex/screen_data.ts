@@ -14,13 +14,36 @@ export const screenData = async (
 	id?: string,
 ): Promise<AppData> => {
 	const clubId = member.clubId;
+	const requested =
+		id && ["member", "fitness", "resources"].includes(screen)
+			? await ctx.db
+					.query("members")
+					.withIndex("by_club_and_key", (q) =>
+						q.eq("clubId", clubId).eq("value.id", id),
+					)
+					.unique()
+			: undefined;
 	const family = [member.personId, ...member.children];
 	const people = [
-		...new Set([...family, ...(id && screen === "member" ? [id] : [])]),
+		...new Set([
+			...family,
+			...(id && ["member", "fitness", "resources"].includes(screen)
+				? [
+						id,
+						...(requested?.value.mergedInto
+							? [requested.value.mergedInto]
+							: []),
+					]
+				: []),
+		]),
 	];
-	const roster = ["schedule", "session", "equipment", "settings"].includes(
-		screen,
-	);
+	const roster = [
+		"schedule",
+		"session",
+		"equipment",
+		"settings",
+		"programs",
+	].includes(screen);
 	const notices = await ctx.db
 		.query("notices")
 		.withIndex("by_date", (q) => q.eq("clubId", clubId))

@@ -1,133 +1,119 @@
-import { useRouter } from "expo-router";
-import { Fragment, type ReactElement } from "react";
+import type { ReactElement } from "react";
 import { useActivePerson, useApp } from "../demo/app-state";
 import {
 	Badge,
-	Button,
-	Divider,
-	Icon,
-	List,
-	ListItem,
+	EventResponseRow,
+	EventSummary,
 	Row,
 	Stack,
 	Surface,
 	Text,
 } from "../design-system";
-import { eventResponse, formatDate, formatTime } from "../domain/app-rules";
+import { eventResponse, formatDate } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
-import { eventKindLabel, practiceEvent } from "../domain/event-types";
-import { householdAttendanceReason, householdMembers } from "../domain/home";
+import {
+	eventDateParts,
+	eventTimeRange,
+} from "../domain/event-card-presentation";
+import { householdAttendanceReason } from "../domain/home";
+import { venueName } from "../domain/venue";
+import { EventPreviewActions } from "./event-preview-actions";
 import { ResponseControl } from "./response-control";
 
 export const HouseholdEventCard = ({
 	event,
 	attendanceCount,
-	onAttendance,
+	past = false,
 }: {
 	event: ClubEvent;
 	attendanceCount?: number;
-	onAttendance?: () => void;
+	past?: boolean;
 }): ReactElement => {
 	const { data, account } = useApp();
-	const router = useRouter();
-	const people = householdMembers(data, account);
-	const active = useActivePerson();
-	const response = eventResponse(data, event.id, active.id).response;
-	const borderTone = event.cancelled
-		? "neutral"
-		: response === "going"
-			? "success"
-			: response === "waiting" || response === "unavailable"
-				? "warning"
-				: "neutral";
+	const person = useActivePerson();
+	const date = eventDateParts(event.date);
+	const reason = householdAttendanceReason(person, event);
+	const response = eventResponse(data, event.id, person.id).response;
+	const tone =
+		reason || event.cancelled || past
+			? "neutral"
+			: response === "going"
+				? "success"
+				: response === "unavailable"
+					? "danger"
+					: response === "waiting"
+						? "warning"
+						: "neutral";
 	return (
-		<Surface elevation="raised" borderTone={borderTone}>
-			<Stack>
-				<Row justify="between" wrap>
-					<Row gap="xs" wrap>
-						{event.kind === "tournament" ? (
-							<Icon name="trophy" size="sm" />
-						) : undefined}
-						<Text variant="h4">{event.title}</Text>
-						{onAttendance ? (
-							<Button
-								label={`${attendanceCount ?? 0} ${event.kind === "tournament" ? "interested" : "going"}`}
-								prefix="users"
-								variant="secondary"
-								onPress={onAttendance}
-							/>
-						) : undefined}
-					</Row>
-					<Row gap="xs" wrap>
-						{event.cancelled ? (
-							<Badge label="Cancelled" kind="warning" />
-						) : !practiceEvent(event) ? (
-							<Badge label={eventKindLabel(event.kind)} />
-						) : undefined}
-					</Row>
-				</Row>
-				<Stack gap="xs">
-					<Row gap="xs" align="start">
-						<Icon name="clock" size="sm" tone="secondary" />
-						<Text variant="small">
-							{formatDate(event.date)}
-							{event.endDate && event.endDate !== event.date
-								? ` – ${formatDate(event.endDate)}`
-								: ""}{" "}
-							· {formatTime(event.start)}–{formatTime(event.end)}
-						</Text>
-					</Row>
-					<Row gap="xs" align="start">
-						<Icon name="mapPin" size="sm" tone="secondary" />
-						<Text variant="small">{event.venue}</Text>
-					</Row>
-				</Stack>
-				{event.responseDeadline ? (
-					<Text variant="small">
-						Respond by {formatDate(event.responseDeadline)}
+		<Surface
+			density="compact"
+			borderTone={event.parts?.length ? "neutral" : tone}
+		>
+			<Stack gap="xs">
+				<EventSummary
+					title={event.title}
+					weekday={date.weekday}
+					day={date.day}
+					month={date.month}
+					dateLabel={formatDate(event.date)}
+					time={eventTimeRange(event.start, event.end)}
+					venue={venueName(event.venue)}
+					href={{ pathname: "/session", params: { event: event.id } }}
+				/>
+				{event.cancelled ? (
+					<Badge label="Cancelled" kind="warning" />
+				) : past ? undefined : reason ? (
+					<Text variant="caption" tone="secondary">
+						{reason}
 					</Text>
-				) : undefined}
-				<List>
-					{people.length ? <Divider /> : undefined}
-					{people.map((person) => {
-						const reason = householdAttendanceReason(person, event);
-						const reserved = eventResponse(
-							data,
-							event.id,
-							person.id,
-						).seriesExpected;
-						return (
-							<Fragment key={person.id}>
-								<ListItem
-									flush
-									avatar={person.name}
-									title={person.id === account.personId ? "You" : person.name}
-									description={
-										reason ?? (reserved ? "Reserved place" : undefined)
-									}
-									trailing={
-										reason ? undefined : (
-											<ResponseControl
-												event={event}
-												personId={person.id}
-												hideLabel
-											/>
-										)
-									}
+				) : (
+					<>
+						{person.id !== account.personId ? (
+							<Text variant="caption" tone="secondary">
+								Response for {person.name}
+							</Text>
+						) : undefined}
+						{event.parts?.length ? (
+							<ResponseControl
+								event={event}
+								personId={person.id}
+								hideLabel
+								quick
+							/>
+						) : (
+							<EventResponseRow
+								label={
+									response === "going"
+										? "Attending"
+										: response === "unavailable"
+											? "Not attending"
+											: response === "waiting"
+												? "Waitlisted"
+												: "Your response"
+								}
+								tone={tone}
+							>
+								<ResponseControl
+									event={event}
+									personId={person.id}
+									hideLabel
+									quick
 								/>
-								<Divider />
-							</Fragment>
-						);
-					})}
-				</List>
-				<Row justify="end">
-					<Button
-						label="More details"
-						variant="secondary"
-						onPress={(): void =>
-							router.push({ pathname: "/session", params: { event: event.id } })
-						}
-					/>
+							</EventResponseRow>
+						)}
+					</>
+				)}
+				<Row justify="between" wrap>
+					<Text variant="caption" tone="secondary">
+						{attendanceCount ?? 0} attending
+					</Text>
+					{past ? (
+						<Text variant="caption" tone="secondary">
+							Ended
+						</Text>
+					) : (
+						<EventPreviewActions event={event} />
+					)}
 				</Row>
 			</Stack>
 		</Surface>

@@ -12,10 +12,7 @@ export const InviteList = (): ReactElement => (
 					{items.length ? (
 						items.map((invite) => <InviteRow key={invite.id} invite={invite} />)
 					) : (
-						<EmptyState
-							title="No invitations"
-							description="New invitations will appear here."
-						/>
+						<EmptyState title="No invitations" />
 					)}
 				</List>
 			</Surface>

@@ -7,7 +7,9 @@ export type PersonPickerProps = {
 	value: string;
 	options: readonly PersonChoice[];
 	onValueChange: (id: string) => void;
+	isSelected?: boolean;
 	account?: {
+		onProfile?: () => void;
 		onSettings: () => void;
 		onSignOut?: () => void;
 	};

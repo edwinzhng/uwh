@@ -6,6 +6,7 @@ import { corners, font, geometry, space, typography } from "./tokens";
 export const CalendarDay = ({
 	value,
 	label,
+	weekday,
 	selected,
 	today,
 	muted,
@@ -55,8 +56,8 @@ export const CalendarDay = ({
 				alignItems: "center",
 				justifyContent: "center",
 				gap: space.xxs,
-				padding: space.xxs,
-				borderRadius: corners.panel,
+				padding: `${weekday ? space.xs : space.xxs}px ${space.xxs}px`,
+				borderRadius: corners.control,
 				border: `${geometry.border}px solid ${today && !selected ? theme.accent.background : "transparent"}`,
 				background: selected
 					? theme.accent.background
@@ -65,13 +66,26 @@ export const CalendarDay = ({
 						: "transparent",
 				color: foreground,
 				fontFamily: today || selected ? font.semibold : font.regular,
-				fontSize: typography.small.fontSize,
-				lineHeight: `${typography.small.lineHeight}px`,
+				fontSize: weekday
+					? typography.label.fontSize
+					: typography.small.fontSize,
+				lineHeight: `${weekday ? typography.label.lineHeight : typography.small.lineHeight}px`,
 				cursor: "pointer",
 				outline: focused ? `${geometry.focus}px solid ${theme.focus}` : "none",
 				outlineOffset: geometry.focus,
 			}}
 		>
+			{weekday ? (
+				<span
+					style={{
+						fontFamily: font.regular,
+						fontSize: typography.navigation.fontSize,
+						lineHeight: `${typography.navigation.lineHeight}px`,
+					}}
+				>
+					{weekday}
+				</span>
+			) : undefined}
 			{Number(value.slice(-2))}
 			<span
 				aria-hidden

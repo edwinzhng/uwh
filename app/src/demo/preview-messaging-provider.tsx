@@ -5,12 +5,18 @@ import {
 	accountForRecipient,
 	recipientPersonId,
 } from "../domain/message-recipients";
-import { directThreadId, isDirectThread } from "../domain/messaging";
+import {
+	conversationKind,
+	directThreadId,
+	isDirectThread,
+	previewMessageTimestamp,
+} from "../domain/messaging";
 import {
 	canDiscussSession,
 	sessionThreadId,
 } from "../domain/session-discussion";
 import { previewDataAtom, useApp } from "./app-state";
+import { createPreviewGroupAtom } from "./group-conversation-state";
 
 const readsAtom = atom<Record<string, number>>({});
 export const PreviewMessagingProvider = ({
@@ -20,14 +26,14 @@ export const PreviewMessagingProvider = ({
 }): ReactElement => {
 	const { data, account, accounts, dispatch } = useApp();
 	const setData = useSetAtom(previewDataAtom);
+	const createGroup = useSetAtom(createPreviewGroupAtom);
 	const [reads, setReads] = useAtom(readsAtom);
 	const markRead = useCallback(
 		async (threadId: string, messageId: string): Promise<void> => {
-			const through =
-				data.messages.findIndex(
-					(message) =>
-						message.id === messageId && message.threadId === threadId,
-				) + 1;
+			const message = data.messages.find(
+				(message) => message.id === messageId && message.threadId === threadId,
+			);
+			const through = message ? previewMessageTimestamp(message) : 0;
 			const key = `${account.id}:${threadId}`;
 			setReads((current) => ({
 				...current,
@@ -40,17 +46,21 @@ export const PreviewMessagingProvider = ({
 		<MessagingContext.Provider
 			value={{
 				loading: false,
+				createGroup: async (draft): Promise<string> => createGroup(draft),
 				threads: data.conversations
 					.map((thread) => {
 						const messages = data.messages
-							.map((message, index) => ({ ...message, createdAt: index + 1 }))
-							.filter((message) => message.threadId === thread.id);
+							.map((message) => ({
+								...message,
+								createdAt: previewMessageTimestamp(message),
+							}))
+							.filter((message) => message.threadId === thread.id)
+							.slice()
+							.sort((first, second) => first.createdAt - second.createdAt);
 						const readThrough = reads[`${account.id}:${thread.id}`] ?? 0;
 						const other =
-							!thread.eventId &&
-							!thread.id.startsWith("session:") &&
-							thread.accountIds.length === 2 &&
-							!["club", "youth"].includes(thread.id)
+							conversationKind(thread) === "direct" &&
+							thread.accountIds.length === 2
 								? accounts.find(
 										(entry) =>
 											entry.id !== account.id &&
@@ -108,6 +118,11 @@ export const PreviewMessagingProvider = ({
 					const target = personId
 						? accountForRecipient(accounts, personId, account.id)
 						: accounts.find((entry) => entry.id === recipientId);
+					const targetPerson =
+						person ??
+						data.members.find((entry) => entry.id === target?.personId);
+					if (targetPerson?.archived || targetPerson?.mergedInto)
+						throw new Error("Choose an active member");
 					const resolvedId = target?.id ?? recipientId;
 					const existing = data.conversations.find((thread) =>
 						isDirectThread(thread, account.id, resolvedId),

@@ -1,5 +1,4 @@
 import type { FunctionReturnType } from "convex/server";
-import * as Clipboard from "expo-clipboard";
 import { type ReactElement, useState } from "react";
 import type { api } from "../../convex/_generated/api";
 import { useBackend } from "../backend/context";
@@ -12,6 +11,7 @@ import {
 	Stack,
 	Text,
 } from "../design-system";
+import * as Clipboard from "../platform/clipboard";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { useTask } from "./use-task";
 

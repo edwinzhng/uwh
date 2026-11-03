@@ -3,7 +3,7 @@ import type { AppAction } from "../src/domain/app-types";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { type DataScope, loadData } from "./data";
-import { readPlayerCoaching } from "./player_coaching";
+import { rankingCoachIds, readPlayerCoaching } from "./player_coaching";
 
 export const eventRows = async (
 	ctx: QueryCtx,
@@ -36,17 +36,30 @@ export const actionData = async (
 				)
 				.unique();
 			const seriesId = event?.value.seriesId;
-			const events =
-				action.type === "edit-event" && action.scope !== "single" && seriesId
+			const source =
+				action.type === "carry-lineup"
 					? await ctx.db
 							.query("events")
-							.withIndex("by_series", (q) =>
-								q.eq("clubId", clubId).eq("value.seriesId", seriesId),
+							.withIndex("by_club_and_key", (q) =>
+								q.eq("clubId", clubId).eq("value.id", action.sourceEventId),
 							)
-							.collect()
-					: event
-						? [event]
-						: [];
+							.unique()
+					: undefined;
+			const events =
+				source && event
+					? [source, event]
+					: action.type === "edit-event" &&
+							action.scope !== "single" &&
+							seriesId
+						? await ctx.db
+								.query("events")
+								.withIndex("by_series", (q) =>
+									q.eq("clubId", clubId).eq("value.seriesId", seriesId),
+								)
+								.collect()
+						: event
+							? [event]
+							: [];
 			const ids = events.map((row) => row.value.id);
 			return {
 				select: { members: true, teams: ids, plans: ids },
@@ -54,6 +67,21 @@ export const actionData = async (
 			};
 		}
 		switch (action.type) {
+			case "delete-program":
+				return {
+					select: {
+						members: true,
+						events: true,
+						notices: true,
+						trackers: true,
+					},
+				};
+			case "save-program":
+				return {
+					select: { members: true, events: true, responses: true, teams: true },
+				};
+			case "set-member-archived":
+				return { select: { members: [action.personId] } };
 			case "create-event": {
 				const error = validateEvent(action.draft);
 				if (error) throw new Error(error);
@@ -82,6 +110,7 @@ export const actionData = async (
 					select: {
 						members: [action.feedback.personId],
 						feedback: [action.feedback.id],
+						events: action.feedback.eventId ? [action.feedback.eventId] : [],
 					},
 				};
 			case "delete-feedback":
@@ -200,7 +229,7 @@ export const actionData = async (
 				return { select: { notices: [action.notice.id] } };
 			case "dismiss-notice":
 			case "expire-notice":
-			case "acknowledge":
+			case "edit-notice":
 				return { select: { notices: [action.noticeId], members: true } };
 			case "settings":
 			case "add-season":
@@ -210,14 +239,33 @@ export const actionData = async (
 		}
 	};
 	const loaded = await loadData(ctx, clubId, await scope());
+	if (action.type === "save-lineup") {
+		const ids = new Set(
+			action.snapshot.positions
+				.filter((entry) => entry.ageGroup !== undefined)
+				.map((entry) => entry.personId),
+		);
+		return {
+			...loaded,
+			data: {
+				...loaded.data,
+				playerCoaching: await Promise.all(
+					loaded.data.members
+						.filter((member) => ids.has(member.id))
+						.map((member) => readPlayerCoaching(ctx, clubId, member, [])),
+				),
+			},
+		};
+	}
 	if (action.type !== "generate-teams") return loaded;
+	const coachIds = await rankingCoachIds(ctx, clubId);
 	return {
 		...loaded,
 		data: {
 			...loaded.data,
 			playerCoaching: await Promise.all(
 				loaded.data.members.map((member) =>
-					readPlayerCoaching(ctx, clubId, member),
+					readPlayerCoaching(ctx, clubId, member, coachIds),
 				),
 			),
 		},

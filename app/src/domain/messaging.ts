@@ -1,25 +1,47 @@
 import emojiRegex from "emoji-regex";
 import type { Conversation, Message } from "./app-types";
+import { managedRoom } from "./managed-rooms";
 
 export type ThreadMessage = Message & { createdAt: number; reply?: Message };
+export const previewMessageTimestamp = (message: Message): number => {
+	const timestamp = message.createdAt ?? Date.parse(message.time);
+	return Number.isFinite(timestamp) ? timestamp : 0;
+};
 export type ConversationSummary = Conversation & {
+	participants?: { personId: string; name: string }[];
 	latest?: Message;
 	updatedAt: number;
 	unread: number;
 	readThrough: number;
 };
+
+export const conversationActivityAt = (thread: ConversationSummary): number =>
+	thread.latest
+		? previewMessageTimestamp(thread.latest) || thread.updatedAt
+		: thread.updatedAt;
+
+export const compareConversations = (
+	a: ConversationSummary,
+	b: ConversationSummary,
+): number =>
+	Number(Boolean(b.latest)) - Number(Boolean(a.latest)) ||
+	conversationActivityAt(b) - conversationActivityAt(a) ||
+	a.id.localeCompare(b.id);
 export const messagePageSize = 40;
-export const conversationKind = (
-	thread: Conversation,
-): "general" | "event" | "direct" | "group" => {
-	if (thread.id === "club") return "general";
-	if (
-		thread.eventId ||
-		thread.id.startsWith("session:") ||
-		thread.id === "session"
-	)
-		return "event";
+export type ConversationKind =
+	| "general"
+	| "staff"
+	| "program"
+	| "event"
+	| "direct"
+	| "group";
+export const conversationKind = (thread: Conversation): ConversationKind => {
+	const room = managedRoom(thread.id);
+	if (room) return room.kind;
+	if (thread.eventId) return "event";
 	if (thread.kind) return thread.kind;
+	if (thread.id.startsWith("session:") || thread.id === "session")
+		return "event";
 	if (
 		thread.id.startsWith("dm-") ||
 		thread.subtitle === "Direct message" ||
@@ -28,10 +50,19 @@ export const conversationKind = (
 		return "direct";
 	return "group";
 };
+export type ConversationCategory = "direct" | "group" | "channel";
+export const conversationCategory = (
+	thread: Conversation,
+): ConversationCategory => {
+	const kind = conversationKind(thread);
+	return kind === "direct" || kind === "group" ? kind : "channel";
+};
 export const conversationKindLabel = (thread: Conversation): string =>
 	({
-		general: "Everyone",
-		event: "Event",
+		general: "Club channel",
+		staff: "Staff channel",
+		program: "Program channel",
+		event: "Event channel",
 		direct: "Direct message",
 		group: "Group",
 	})[conversationKind(thread)];
@@ -71,7 +102,7 @@ export const imageLimits = {
 	pending: 12,
 	lifetime: 24 * 60 * 60 * 1000,
 } as const;
-export type MessageImage = { id: string; name: string };
+export type MessageImage = { id: string; name: string; mime?: string };
 export type MessageReaction = { emoji: string; accountIds: string[] };
 export const imageMime = (bytes: Uint8Array): string | undefined => {
 	const starts = (signature: number[]): boolean =>

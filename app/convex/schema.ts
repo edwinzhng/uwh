@@ -4,14 +4,31 @@ import { v } from "convex/values";
 import { attendanceReportTables } from "./attendance_report_schema";
 import { calendarEntry } from "./calendar_schema";
 import { coachingHoursTables } from "./coaching_hours_schema";
+import { coachingScheduleTables } from "./coaching_schedule_schema";
 import { connectionTables } from "./connection_schema";
+import { developmentTables } from "./development_schema";
+import { equipmentLoanTables } from "./equipment_loans_schema";
 import { fitnessTables } from "./fitness_schema";
+import { householdTables } from "./household_schema";
 import { importTables } from "./import_schema";
+import { inboxTables } from "./inbox_schema";
 import { inviteTables } from "./invite_schema";
+import { localMigrationTables } from "./local_migration_schema";
+import { memberMergeTables } from "./member_merge_schema";
+import { memberProfileTables } from "./member_profiles_schema";
+import { messageAnnouncementTables } from "./message_announcements_schema";
 import { playerCoachingTables } from "./player_coaching_schema";
+import { programCommandTables } from "./program_commands_schema";
+import { clubProgramValue } from "./program_schema";
+import { resourceTables } from "./resources_schema";
 import { seasonTables } from "./season_schema";
 import { securityTables } from "./security_schema";
+import { sessionCheckinTables } from "./session_checkins_schema";
+import { sessionPerformanceTables } from "./session_performance_schema";
+import { sessionPlanTables } from "./session_plans_schema";
 import { sessionSeriesTables } from "./session_series_schema";
+import { termsTables } from "./terms_schema";
+import { threadToolsTables } from "./thread_tools_schema";
 import {
 	chargesValue,
 	conversationsValue,
@@ -29,6 +46,7 @@ import {
 	trackersValue,
 	trackerValuesValue,
 } from "./validators";
+import { webPushTables } from "./web_push_schema";
 
 export default defineSchema({
 	websiteLoginAttempts: defineTable({ fingerprint: v.string() }).index(
@@ -53,14 +71,31 @@ export default defineSchema({
 	...authTables,
 	...attendanceReportTables,
 	...playerCoachingTables,
+	...resourceTables,
+	...programCommandTables,
+	...threadToolsTables,
 	...coachingHoursTables,
+	...coachingScheduleTables,
 	...fitnessTables,
 	...connectionTables,
+	...developmentTables,
+	...equipmentLoanTables,
 	...securityTables,
+	...sessionCheckinTables,
+	...sessionPlanTables,
+	...sessionPerformanceTables,
 	...sessionSeriesTables,
 	...inviteTables,
+	...localMigrationTables,
+	...memberProfileTables,
+	...memberMergeTables,
 	...seasonTables,
 	...importTables,
+	...householdTables,
+	...inboxTables,
+	...termsTables,
+	...webPushTables,
+	...messageAnnouncementTables,
 	publicCalendarEntries: defineTable({
 		clubId: v.id("clubs"),
 		value: calendarEntry,
@@ -83,6 +118,7 @@ export default defineSchema({
 	})
 		.index("by_user", ["userId"])
 		.index("by_user_person", ["userId", "personId"])
+		.index("by_club", ["clubId"])
 		.index("by_token", ["token"]),
 	calendarEntries: defineTable({
 		feedId: v.id("calendarFeeds"),
@@ -97,10 +133,12 @@ export default defineSchema({
 		mime: v.string(),
 		size: v.number(),
 		messageId: v.optional(v.string()),
+		chatAvatar: v.optional(v.boolean()),
 	})
 		.index("by_owner", ["ownerId"])
 		.index("by_owner_message", ["ownerId", "messageId"]),
 	clubs: defineTable({
+		programs: v.optional(v.array(clubProgramValue)),
 		inviteCode: v.optional(v.string()),
 		venues: v.optional(v.array(v.string())),
 		timeZone: v.optional(v.string()),
@@ -123,6 +161,7 @@ export default defineSchema({
 		.index("by_invite_code", ["inviteCode"])
 		.index("by_public_slug", ["publicSlug"]),
 	memberships: defineTable({
+		defaultPersonId: v.optional(v.string()),
 		clubId: v.id("clubs"),
 		userId: v.id("users"),
 		name: v.string(),
@@ -148,6 +187,7 @@ export default defineSchema({
 		.index("by_club", ["clubId"])
 		.index("by_user", ["userId"]),
 	members: defineTable({ clubId: v.id("clubs"), value: membersValue })
+		.index("by_pending_goal", ["clubId", "value.pendingGoal"])
 		.searchIndex("search_name", {
 			searchField: "value.name",
 			filterFields: ["clubId"],
@@ -158,6 +198,12 @@ export default defineSchema({
 	events: defineTable({ clubId: v.id("clubs"), value: eventsValue })
 		.index("by_club_kind_date", ["clubId", "value.kind", "value.date"])
 		.index("by_date", ["clubId", "value.date", "value.start"])
+		.index("by_program_date", [
+			"clubId",
+			"value.program",
+			"value.date",
+			"value.start",
+		])
 		.index("by_public_date", [
 			"clubId",
 			"value.public",
@@ -186,7 +232,25 @@ export default defineSchema({
 		.index("by_club", ["clubId"])
 		.index("by_club_and_key", ["clubId", "value.id"]),
 	feedback: defineTable({ clubId: v.id("clubs"), value: feedbackValue })
+		.index("by_author_visibility", [
+			"clubId",
+			"value.authorId",
+			"value.visibility",
+		])
+		.index("by_club_kind_visibility", [
+			"clubId",
+			"value.kind",
+			"value.visibility",
+		])
+		.index("by_club_kind_visibility_date", [
+			"clubId",
+			"value.kind",
+			"value.visibility",
+			"value.date",
+			"value.id",
+		])
 		.index("by_person_date", ["clubId", "value.personId", "value.date"])
+		.index("by_event_date", ["clubId", "value.eventId", "value.date"])
 		.index("by_club", ["clubId"])
 		.index("by_club_and_key", ["clubId", "value.id"]),
 	conversations: defineTable({
@@ -194,12 +258,17 @@ export default defineSchema({
 		pendingPersonId: v.optional(v.string()),
 		pendingPersonIds: v.optional(v.array(v.string())),
 		groupSourceThreadId: v.optional(v.string()),
+		groupSourceRecipientIds: v.optional(v.array(v.string())),
 		groupCreatorId: v.optional(v.id("users")),
+		groupCreation: v.optional(
+			v.object({ name: v.string(), recipientIds: v.array(v.string()) }),
+		),
 		recipientPersonId: v.optional(v.string()),
 		directKey: v.optional(v.string()),
 		value: conversationsValue,
 	})
 		.index("by_direct", ["clubId", "directKey"])
+		.index("by_group_creator", ["clubId", "groupCreatorId"])
 		.index("by_club", ["clubId"])
 		.index("by_club_and_key", ["clubId", "value.id"]),
 	messages: defineTable({ clubId: v.id("clubs"), value: messagesValue })

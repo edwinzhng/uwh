@@ -1,6 +1,5 @@
 import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
-import { useApp } from "../demo/app-state";
 import {
 	Button,
 	Row,
@@ -10,53 +9,29 @@ import {
 	Text,
 } from "../design-system";
 import { formatDate, formatTime } from "../domain/app-rules";
-import { clubTimestamp } from "../domain/event-time";
+import type { ClubEvent } from "../domain/app-types";
+import { venueName } from "../domain/venue";
+import { CoachingSessionActions } from "./coaching-session-actions";
 
-export const HomeCoaching = ({
-	now,
-}: {
-	now: number;
-}): ReactElement | undefined => {
-	const { data, account } = useApp();
+export const HomeCoaching = ({ event }: { event: ClubEvent }): ReactElement => {
 	const router = useRouter();
-	const event = data.events
-		.filter(
-			(event) =>
-				!event.cancelled &&
-				clubTimestamp(
-					event.endDate ?? event.date,
-					event.end,
-					event.timeZone ?? data.timeZone,
-				) > now &&
-				(event.kind === "training" || event.kind === "hockey"),
-		)
-		.slice()
-		.sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
-		.at(0);
-	if (!account.coachPrograms.length || !event) return undefined;
 	return (
 		<Stack gap="sm">
-			<SectionHeading size="small">Next coaching session</SectionHeading>
+			<SectionHeading icon="calendar" size="small">
+				Next practice
+			</SectionHeading>
 			<Surface>
 				<Stack>
 					<Text variant="h4">{event.title}</Text>
 					<Text variant="small" tone="secondary">
-						{formatDate(event.date)} · {formatTime(event.start)} · {event.venue}
+						{formatDate(event.date)} · {formatTime(event.start)} ·{" "}
+						{venueName(event.venue)}
 					</Text>
-					<Row wrap>
+					<CoachingSessionActions eventId={event.id} />
+					<Row>
 						<Button
-							label="Attendance"
-							variant="secondary"
-							onPress={(): void =>
-								router.push({
-									pathname: "/session",
-									params: { event: event.id, tab: "people" },
-								})
-							}
-						/>
-						<Button
-							label="Session plan"
-							variant="ghost"
+							label="Prepare practice"
+							prefix="arrowRight"
 							onPress={(): void =>
 								router.push({
 									pathname: "/session",
