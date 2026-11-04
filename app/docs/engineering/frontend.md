@@ -13,6 +13,8 @@
 - Preserve domain distinctions: account versus selected household person, RSVP versus observed attendance, private drafts versus published content.
 - Keep primary tasks discoverable; choose menus, sheets and screens by task complexity and available space.
 - Preserve deterministic Back destinations, deep links, focus restoration and native gestures.
+- Route and tab content switches are instant. Keep navigator scenes opaque and page layouts free of reveal animations; resolve selected tabs directly from route parameters.
+- Register initial query loading with `LoadingBoundary` or `usePageLoading`, including optional sections that initially return nothing. `PageReady` waits for initial data and settled layout for each route-parameter identity; pagination and later reactive updates must not blank an already visible page.
 - Use shared motion tokens; respect reduced motion/transparency, cancel interruptions and pause inactive work.
 - Verify keyboard access, visible focus, accessible names, large text and touch targets.
 - Native/touch targets are at least 44 points; editable mobile-web text is at least 16 px; preserve pinch zoom.

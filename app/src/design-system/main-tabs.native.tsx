@@ -57,7 +57,7 @@ export const MainTabs = ({ unread = 0 }: MainTabsProps): ReactElement => {
 			<NativeTabs.Trigger
 				disableAutomaticContentInsets
 				name="index"
-				contentStyle={{ backgroundColor: "transparent" }}
+				contentStyle={{ backgroundColor: theme.background.canvas }}
 			>
 				<NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
 				<NativeTabs.Trigger.Icon
@@ -68,7 +68,7 @@ export const MainTabs = ({ unread = 0 }: MainTabsProps): ReactElement => {
 			<NativeTabs.Trigger
 				disableAutomaticContentInsets
 				name="schedule"
-				contentStyle={{ backgroundColor: "transparent" }}
+				contentStyle={{ backgroundColor: theme.background.canvas }}
 			>
 				<NativeTabs.Trigger.Label>Schedule</NativeTabs.Trigger.Label>
 				<NativeTabs.Trigger.Icon sf="calendar" md="calendar_today" />
@@ -76,7 +76,7 @@ export const MainTabs = ({ unread = 0 }: MainTabsProps): ReactElement => {
 			<NativeTabs.Trigger
 				disableAutomaticContentInsets
 				name="messages"
-				contentStyle={{ backgroundColor: "transparent" }}
+				contentStyle={{ backgroundColor: theme.background.canvas }}
 			>
 				<NativeTabs.Trigger.Label>Chats</NativeTabs.Trigger.Label>
 				<NativeTabs.Trigger.Icon
@@ -95,7 +95,7 @@ export const MainTabs = ({ unread = 0 }: MainTabsProps): ReactElement => {
 			<NativeTabs.Trigger
 				disableAutomaticContentInsets
 				name="club"
-				contentStyle={{ backgroundColor: "transparent" }}
+				contentStyle={{ backgroundColor: theme.background.canvas }}
 			>
 				<NativeTabs.Trigger.Label>Club</NativeTabs.Trigger.Label>
 				<NativeTabs.Trigger.Icon sf="shield" md="shield" />

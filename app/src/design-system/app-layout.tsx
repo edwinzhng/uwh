@@ -1,4 +1,9 @@
-import { Stack as RouterStack, useIsFocused, useSegments } from "expo-router";
+import {
+	Stack as RouterStack,
+	useIsFocused,
+	useLocalSearchParams,
+	useSegments,
+} from "expo-router";
 import {
 	getDefaultHeaderHeight,
 	HeaderHeightContext,
@@ -22,7 +27,6 @@ import { nativeTabsAvailable } from "./native-navigation";
 import { nativeHeaderRoute } from "./native-navigation-model";
 import { PageMaterialBackground } from "./page-material-background";
 import { PageReady } from "./page-ready";
-import { PageReveal } from "./page-reveal";
 import { PageTitle } from "./page-title";
 import { PaginationScrollView as ScrollView } from "./pagination-scroll-view";
 import { Row } from "./row";
@@ -51,7 +55,6 @@ type Props = {
 	floatingAction?: ReactNode;
 	scrollable?: boolean;
 	presentation?: "page" | "workspace";
-	transition?: "fade" | "instant";
 	primaryDestination?: boolean;
 	headerLayout?: "current" | "compact" | "integrated" | "content";
 };
@@ -74,7 +77,6 @@ export const AppLayout = ({
 	floatingAction,
 	scrollable = true,
 	presentation = "page",
-	transition = "fade",
 	primaryDestination = false,
 	headerLayout = "current",
 }: Props): ReactElement => {
@@ -85,6 +87,8 @@ export const AppLayout = ({
 	const { width } = dimensions;
 	const insets = useSafeAreaInsets();
 	const segments = useSegments();
+	const routeParameters = useLocalSearchParams();
+	const contentKey = JSON.stringify(routeParameters);
 	const nativeNavigation = nativeTabsAvailable();
 	const nativeHeader =
 		Platform.OS !== "web" && nativeHeaderRoute(segments.at(0) ?? "");
@@ -292,7 +296,7 @@ export const AppLayout = ({
 			importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
 			style={{ flex: 1, opacity: visible ? 1 : 0 }}
 		>
-			{Platform.OS !== "web" ? <PageMaterialBackground /> : undefined}
+			<PageMaterialBackground />
 			{nativeHeader && title ? (
 				<RouterStack.Screen
 					options={{
@@ -419,13 +423,10 @@ export const AppLayout = ({
 					) : undefined}
 					<PageReady
 						loading={loading}
+						contentKey={contentKey}
 						layoutKey={`${headerHeight}:${toolbarHeight}:${width}`}
 					>
-						<PageReveal
-							fill
-							gap="none"
-							enabled={transition !== "instant" && !nativeHeader}
-						>
+						<Stack grow gap="none">
 							{compactRoot && title ? <PageTitle title={title} /> : undefined}
 							{workspace && heading ? (
 								<View
@@ -539,7 +540,7 @@ export const AppLayout = ({
 									</View>
 								</View>
 							) : undefined}
-						</PageReveal>
+						</Stack>
 					</PageReady>
 					{floatingAction ? (
 						<View

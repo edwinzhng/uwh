@@ -94,3 +94,62 @@ test("leaving a page cancels pending work without a late reveal", (): void => {
 	frame();
 	expect(changes).toEqual([]);
 });
+
+test("a feedback deep link never reveals a previously ready membership tab", (): void => {
+	const { controller, frame, changes } = setup();
+	controller.update(false, false, "membership");
+	frame();
+	frame();
+	expect(changes).toEqual([true]);
+	controller.update(false, true, "feedback");
+	expect(changes).toEqual([true, false]);
+	frame();
+	frame();
+	expect(changes).toEqual([true, false]);
+	controller.update(false, false, "feedback");
+	frame();
+	frame();
+	expect(changes).toEqual([true, false, true]);
+});
+
+test("late home queries hold the entire initial layout until every dependency resolves", (): void => {
+	const { controller, frame, changes } = setup();
+	controller.update(true, false, "home");
+	frame();
+	controller.update(false, true, "home");
+	frame();
+	frame();
+	expect(changes).toEqual([]);
+	controller.update(false, false, "home");
+	frame();
+	controller.update(false, true, "home");
+	frame();
+	frame();
+	expect(changes).toEqual([]);
+	controller.update(false, false, "home");
+	frame();
+	frame();
+	expect(changes).toEqual([true]);
+	controller.update(false, true, "home");
+	expect(changes).toEqual([true]);
+});
+
+test("rapid tab changes cancel the abandoned tab's pending reveal", (): void => {
+	const { controller, frame, changes } = setup();
+	controller.update(false, false, "feedback");
+	frame();
+	controller.update(false, true, "fitness");
+	frame();
+	frame();
+	expect(changes).toEqual([]);
+	controller.update(false, false, "fitness");
+	frame();
+	controller.update(false, true, "feedback");
+	frame();
+	frame();
+	expect(changes).toEqual([]);
+	controller.update(false, false, "feedback");
+	frame();
+	frame();
+	expect(changes).toEqual([true]);
+});

@@ -4,6 +4,7 @@ import type { ReactElement, ReactNode } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
 import { previewFitnessAtom } from "../demo/fitness-state";
+import { usePageLoading } from "../design-system";
 import type { Member } from "../domain/app-types";
 import {
 	type HomeFitnessSnapshot,
@@ -24,6 +25,7 @@ const LiveFitness = ({ person, today, children }: Props): ReactElement => {
 		personId: person.id,
 		today,
 	});
+	usePageLoading(value === undefined);
 	return (
 		<>{children({ result: value?.result, loading: value === undefined })}</>
 	);

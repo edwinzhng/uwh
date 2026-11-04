@@ -25,7 +25,7 @@ export const LoadingScreen = (): ReactElement => {
 		>
 			<StatusBar style="light" />
 			<LoadingBackdrop />
-			<View style={{ width: size, alignItems: "center", gap: space.md }}>
+			<View style={{ width: size, alignItems: "center", gap: space.sm }}>
 				<LoadingReveal ready={ready}>
 					<LoadingPuck size={size} appearance="dark" onReady={onReady} />
 				</LoadingReveal>

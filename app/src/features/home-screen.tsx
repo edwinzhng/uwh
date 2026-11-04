@@ -41,7 +41,7 @@ export const HomeScreen = (): ReactElement => {
 	return (
 		<ClubShell
 			title="Summary"
-			toolbarCenter={
+			toolbarLeading={
 				canCoach(account) ? (
 					<GlassPanel padding="none" shape="pill" interactive>
 						<ContextPicker

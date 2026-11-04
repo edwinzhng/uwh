@@ -3,14 +3,11 @@ import type { ReactElement } from "react";
 import { HeaderBackdrop } from "./header-backdrop";
 import { nativeHeaderRoute, nativeRouteTitle } from "./native-navigation-model";
 import { useTheme } from "./theme";
-import { motion } from "./tokens";
-import { useMotion } from "./use-motion";
 
 const headerBackground = (): ReactElement => <HeaderBackdrop />;
 
 export const AppRouter = (): ReactElement => {
 	const theme = useTheme();
-	const animate = useMotion();
 	const base = theme.mode === "dark" ? DarkTheme : DefaultTheme;
 	return (
 		<ThemeProvider
@@ -18,7 +15,7 @@ export const AppRouter = (): ReactElement => {
 				...base,
 				colors: {
 					...base.colors,
-					background: "transparent",
+					background: theme.background.canvas,
 					card: theme.background.primary,
 					text: theme.text.primary,
 					border: theme.border,
@@ -38,12 +35,11 @@ export const AppRouter = (): ReactElement => {
 					headerStyle: { backgroundColor: "transparent" },
 					headerShadowVisible: false,
 					freezeOnBlur: true,
-					animation: animate ? "fade" : "none",
-					animationDuration: motion.duration.slow,
+					animation: "none",
 					gestureEnabled: true,
 					fullScreenGestureEnabled: false,
 					presentation: "card",
-					contentStyle: { backgroundColor: "transparent" },
+					contentStyle: { backgroundColor: theme.background.canvas },
 				})}
 			/>
 		</ThemeProvider>

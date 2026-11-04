@@ -7,6 +7,7 @@ import {
 	ListItem,
 	SummaryCard,
 	Text,
+	usePageLoading,
 } from "../design-system";
 import { homeRecentConversations } from "../domain/home-summary";
 import { messagePreview } from "../domain/messaging";
@@ -14,6 +15,7 @@ import { ConversationAvatar } from "./conversation-avatar";
 
 export const HomeMessages = (): ReactElement => {
 	const { threads, loading, error } = useMessaging();
+	usePageLoading(loading);
 	const router = useRouter();
 	const recent = homeRecentConversations(threads);
 	return (

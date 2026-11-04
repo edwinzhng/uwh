@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import ts from "typescript";
+import { inspectNavigationBoundary } from "./navigation-boundary";
 
 const visualImports =
 	/^(motion($|\/)|framer-motion($|\/)|@paper-design\/|sonner($|\/|-)|react-native($|\/|-)|react-day-picker($|\/)|@react-native-community\/|@rn-primitives\/|@base-ui\/|@radix-ui\/|lucide-|.*\.css$)/;
@@ -287,12 +288,17 @@ if (import.meta.main) {
 	const root = resolve(import.meta.dir, "..");
 	const files = Array.from(
 		new Bun.Glob("{app,src}/**/*.{ts,tsx,js,jsx}").scanSync({ cwd: root }),
-	).filter((file) => !file.startsWith("src/design-system/"));
+	);
 	const results = await Promise.all(
-		files.map(
-			async (file): Promise<string[]> =>
-				inspectDesignBoundary(await Bun.file(resolve(root, file)).text(), file),
-		),
+		files.map(async (file): Promise<string[]> => {
+			const source = await Bun.file(resolve(root, file)).text();
+			return [
+				...(file.startsWith("src/design-system/")
+					? []
+					: inspectDesignBoundary(source, file)),
+				...inspectNavigationBoundary(source, file),
+			];
+		}),
 	);
 	const failures = results.flat();
 	if (failures.length) {

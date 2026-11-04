@@ -8,6 +8,7 @@ import {
 	IconButton,
 	SummaryCard,
 	Text,
+	usePageLoading,
 } from "../design-system";
 import { formatDate } from "../domain/app-rules";
 import type { Notice } from "../domain/app-types";
@@ -56,6 +57,10 @@ const LiveAnnouncement = (): ReactElement => {
 		api.pages.homeAnnouncements,
 		{ today },
 		{ initialNumItems: 20 },
+	);
+	usePageLoading(
+		status === "LoadingFirstPage" ||
+			(!results.length && status !== "Exhausted"),
 	);
 	useEffect((): void => {
 		if (!results.length && status === "CanLoadMore") loadMore(20);

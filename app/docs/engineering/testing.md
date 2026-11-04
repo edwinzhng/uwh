@@ -1,5 +1,6 @@
 - Test observable behavior and boundaries, not constants or implementation structure.
 - Run focused tests first; run `bun run check` in app when changes stabilize. It covers types, Biome, design boundaries and tests.
+- Navigation regressions cover deep links into specific tabs, rapid interruption, cold and warm entry, delayed initial sections, and Back. `check:design` rejects route fades, transparent scenes, unkeyed page readiness and unregistered home queries.
 - Run app/site `bun run check:motion` after motion changes; rebuild the native development client after dependency or adapter changes.
 - Use the isolated Convex endpoints on 3210/3211. Guard endpoints before creating fictional `example.test` accounts; use the shared fixture runner and guarantee cleanup without masking the original error.
 - Never fall back to cloud endpoints or overwrite normal developer configuration for verification.

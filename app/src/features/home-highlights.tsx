@@ -2,7 +2,7 @@ import { usePaginatedQuery } from "convex/react";
 import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { useActivePerson, useApp } from "../demo/app-state";
-import { Grid } from "../design-system";
+import { Grid, usePageLoading } from "../design-system";
 import type { CoachingFeedback } from "../domain/app-types";
 import { homeCoachNotes, homeFeedbackHighlight } from "../domain/home-feedback";
 import { type ClubShoutout, clubShoutoutPreview } from "../domain/shoutouts";
@@ -39,6 +39,10 @@ const LiveHighlights = ({ personId }: { personId: string }): ReactElement => {
 		api.pages.shoutouts,
 		{ personId },
 		{ initialNumItems: 1 },
+	);
+	usePageLoading(
+		notes.status === "LoadingFirstPage" ||
+			shoutouts.status === "LoadingFirstPage",
 	);
 	return (
 		<Highlights

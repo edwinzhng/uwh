@@ -148,6 +148,7 @@ export { ToolbarGroup } from "./toolbar-group";
 export { TrendChart } from "./trend-chart";
 export { UnreadCount } from "./unread-count";
 export { useAppInactive } from "./use-app-inactive";
+export { usePageLoading } from "./use-page-loading";
 export { useVoiceRecorder } from "./use-voice-recorder";
 export { captureVideoThumbnail } from "./video-thumbnail";
 export { WatercolorControls } from "./watercolor-controls";

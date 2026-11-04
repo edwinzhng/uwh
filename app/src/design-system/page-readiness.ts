@@ -5,7 +5,11 @@ export const createPageReadiness = ({
 	scheduleFrame: (callback: () => void) => () => void;
 	onChange: (ready: boolean) => void;
 }): {
-	update: (routeLoading: boolean, sectionLoading: boolean) => void;
+	update: (
+		routeLoading: boolean,
+		sectionLoading: boolean,
+		contentKey?: string,
+	) => void;
 	layout: () => void;
 	dispose: () => void;
 } => {
@@ -13,6 +17,7 @@ export const createPageReadiness = ({
 		shown: boolean;
 		ready: boolean;
 		pending: boolean;
+		contentKey?: string;
 		cancel?: () => void;
 	} = { shown: false, ready: false, pending: false };
 	const cancel = (): void => {
@@ -31,7 +36,16 @@ export const createPageReadiness = ({
 		});
 	};
 	return {
-		update: (routeLoading, sectionLoading): void => {
+		update: (routeLoading, sectionLoading, contentKey = ""): void => {
+			if (state.contentKey !== contentKey) {
+				cancel();
+				state.contentKey = contentKey;
+				state.shown = false;
+				if (state.ready) {
+					state.ready = false;
+					onChange(false);
+				}
+			}
 			if (routeLoading) state.shown = false;
 			state.pending = routeLoading || (!state.shown && sectionLoading);
 			if (state.pending) {

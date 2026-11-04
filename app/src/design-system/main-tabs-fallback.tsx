@@ -1,8 +1,10 @@
 import { Tabs } from "expo-router";
 import type { ReactElement } from "react";
 import type { MainTabsProps } from "./main-tabs-props";
+import { useTheme } from "./theme";
 
 export const MainTabsFallback = (_props: MainTabsProps): ReactElement => {
+	const theme = useTheme();
 	return (
 		<Tabs
 			initialRouteName="index"
@@ -13,7 +15,7 @@ export const MainTabsFallback = (_props: MainTabsProps): ReactElement => {
 				lazy: true,
 				freezeOnBlur: true,
 				animation: "none",
-				sceneStyle: { backgroundColor: "transparent" },
+				sceneStyle: { backgroundColor: theme.background.canvas },
 			}}
 		>
 			<Tabs.Screen name="index" />

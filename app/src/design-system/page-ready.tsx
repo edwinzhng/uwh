@@ -5,6 +5,7 @@ import {
 	useId,
 	useLayoutEffect,
 	useMemo,
+	useRef,
 	useState,
 } from "react";
 import { View } from "react-native";
@@ -15,10 +16,12 @@ export const PageReady = ({
 	children,
 	loading = false,
 	layoutKey,
+	contentKey = "",
 }: {
 	children: ReactNode;
 	loading?: boolean;
 	layoutKey: string;
+	contentKey?: string;
 }): ReactElement => {
 	const id = useId();
 	const pendingAtom = useMemo(
@@ -31,11 +34,15 @@ export const PageReady = ({
 		[id],
 	);
 	const pending = useAtomValue(pendingAtom);
-	const [ready, setReady] = useState(false);
+	const latestKey = useRef(contentKey);
+	latestKey.current = contentKey;
+	const [revealedKey, setRevealedKey] = useState<string>();
+	const ready = revealedKey === contentKey && !loading;
 	const controller = useMemo(
 		() =>
 			createPageReadiness({
-				onChange: setReady,
+				onChange: (shown): void =>
+					setRevealedKey(shown ? latestKey.current : undefined),
 				scheduleFrame: (callback): (() => void) => {
 					const frame = requestAnimationFrame(callback);
 					return (): void => cancelAnimationFrame(frame);
@@ -44,8 +51,8 @@ export const PageReady = ({
 		[],
 	);
 	useLayoutEffect(
-		(): void => controller.update(loading, pending),
-		[controller, loading, pending],
+		(): void => controller.update(loading, pending, contentKey),
+		[controller, loading, pending, contentKey],
 	);
 	useLayoutEffect(() => (): void => controller.dispose(), [controller]);
 	useLayoutEffect((): void => {
@@ -55,6 +62,7 @@ export const PageReady = ({
 		<LoadingPageContext value={id}>
 			<View style={{ flex: 1, minHeight: 0 }}>
 				<View
+					testID="club-page-content"
 					onLayout={controller.layout}
 					pointerEvents={ready ? "auto" : "none"}
 					accessibilityElementsHidden={!ready}
