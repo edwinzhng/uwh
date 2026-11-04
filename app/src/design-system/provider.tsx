@@ -4,8 +4,9 @@ import {
 	DefaultTheme,
 	ThemeProvider,
 } from "expo-router/react-navigation";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { type ReactElement, type ReactNode, useMemo } from "react";
+import { type ReactElement, type ReactNode, useEffect, useMemo } from "react";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
@@ -38,6 +39,10 @@ export const DesignProvider = ({
 	const [loaded, error] = useFonts(fontSources);
 	const clientReady = useClientReady();
 	const theme = useTheme();
+	useEffect((): void => {
+		if (Platform.OS !== "web" && clientReady && (loaded || error))
+			SplashScreen.hide();
+	}, [clientReady, loaded, error]);
 	const navigationTheme = useMemo(() => {
 		const base = theme.mode === "dark" ? DarkTheme : DefaultTheme;
 		return {
