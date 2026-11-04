@@ -298,7 +298,9 @@ export const AppLayout = ({
 				paddingRight: insets.right,
 			}}
 		>
-			<PageMaterialBackground />
+			<PageMaterialBackground
+				showGrid={route.name !== "messages" && route.name !== "conversation"}
+			/>
 			{nativeHeader && title ? (
 				<RouterStack.Screen
 					options={{

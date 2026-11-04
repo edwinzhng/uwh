@@ -1,10 +1,10 @@
-import { usePathname, useRouter } from "expo-router";
+import { useRoute, useRouter } from "expo-router";
 import { useSetAtom } from "jotai";
 import { type ReactElement, useState } from "react";
 import { selectedPersonAtom, useActivePerson, useApp } from "../demo/app-state";
 import { PersonPicker } from "../design-system";
 import { canManagePerson } from "../domain/app-rules";
-import { isAccountDestination } from "../domain/page-navigation";
+import { isAccountDestination, pagePathname } from "../domain/page-navigation";
 import { SignOutConfirmation } from "./sign-out-confirmation";
 
 export const FamilyMenu = (): ReactElement => {
@@ -13,7 +13,7 @@ export const FamilyMenu = (): ReactElement => {
 	const active = useActivePerson();
 	const select = useSetAtom(selectedPersonAtom);
 	const router = useRouter();
-	const pathname = usePathname();
+	const pathname = pagePathname(useRoute().name);
 	return (
 		<>
 			<PersonPicker

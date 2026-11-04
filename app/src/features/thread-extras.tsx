@@ -11,6 +11,7 @@ import {
 	Stack,
 	Surface,
 	Text,
+	usePageLoading,
 } from "../design-system";
 import { messageTimeLabel } from "../domain/message-presentation";
 import { messagePreview } from "../domain/messaging";
@@ -20,6 +21,7 @@ import { useReviewFlow } from "./use-review-flow";
 
 export const ThreadExtras = (): ReactElement | undefined => {
 	const tools = useThreadTools();
+	usePageLoading(Boolean(tools?.loading));
 	const { data } = useApp();
 	const reviewFlow = useReviewFlow();
 	const [showPins, setShowPins] = useState(reviewFlow === "pins");

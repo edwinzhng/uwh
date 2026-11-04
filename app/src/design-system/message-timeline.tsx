@@ -1,9 +1,15 @@
 import { type ReactElement, type ReactNode, useRef, useState } from "react";
-import { FlatList, View, type ViewToken } from "react-native";
+import {
+	ActivityIndicator,
+	FlatList,
+	View,
+	type ViewToken,
+} from "react-native";
 import { Button } from "./button";
 import { EmptyState } from "./empty-state";
 import { LoadingContent } from "./loading-content";
 import { Stack } from "./stack";
+import { useTheme } from "./theme";
 import { geometry, layer, space } from "./tokens";
 import { ToolbarGroup } from "./toolbar-group";
 import { useMotion } from "./use-motion";
@@ -48,6 +54,7 @@ export const MessageTimeline = <T extends { id: string }>({
 		},
 	);
 	const canAnimate = useMotion();
+	const theme = useTheme();
 	return (
 		<View
 			style={{
@@ -126,7 +133,12 @@ export const MessageTimeline = <T extends { id: string }>({
 				ListFooterComponent={
 					loadingMore ? (
 						<Stack padding="sm">
-							<LoadingContent />
+							<ActivityIndicator
+								accessibilityLabel="Loading earlier messages"
+								color={theme.text.secondary}
+								animating={canAnimate}
+								hidesWhenStopped={false}
+							/>
 						</Stack>
 					) : undefined
 				}

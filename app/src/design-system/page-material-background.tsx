@@ -1,5 +1,4 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { usePathname } from "expo-router";
 import { useAtomValue } from "jotai";
 import type { ReactElement } from "react";
 import { StyleSheet, View } from "react-native";
@@ -11,10 +10,12 @@ import { materialVariation } from "./material-variation";
 import { useTheme } from "./theme";
 import { pageMaterialOpacity } from "./tokens";
 
-export const PageMaterialBackground = (): ReactElement | undefined => {
+export const PageMaterialBackground = ({
+	showGrid = true,
+}: {
+	showGrid?: boolean;
+}): ReactElement | undefined => {
 	const theme = useTheme();
-	const pathname = usePathname();
-	const showGrid = pathname !== "/messages" && pathname !== "/conversation";
 	const material = useAtomValue(cardMaterialAtom);
 
 	return (

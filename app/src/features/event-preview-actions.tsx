@@ -2,7 +2,13 @@ import { useQuery } from "convex/react";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { AppContext, useActivePerson, useApp } from "../demo/app-state";
-import { Button, Dialog, EmptyState, LoadingContent } from "../design-system";
+import {
+	Button,
+	Dialog,
+	EmptyState,
+	LoadingContent,
+	usePageLoading,
+} from "../design-system";
 import { eventResponse } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import { publishedEventLineups } from "../domain/event-lineups";
@@ -107,6 +113,7 @@ const LiveEventPreviewAction = ({
 		eventId: event.id,
 		personId: person.id,
 	});
+	usePageLoading(available === undefined);
 	return (
 		<EventPreviewActionContent event={event} available={available === true} />
 	);

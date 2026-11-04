@@ -15,10 +15,22 @@ export const inspectNavigationBoundary = (
 	const basename = filename.split("/").at(-1) ?? filename;
 	const navigator = navigatorFiles.has(basename);
 	const content = contentFiles.has(basename);
-	const shell = basename === "app-layout.tsx" || basename === "club-shell.tsx";
-	const home = /(?:features\/home-[^/]+|backend\/home-fitness-data)\.tsx$/.test(
-		filename,
-	);
+	const shell = [
+		"app-layout.tsx",
+		"club-shell.tsx",
+		"page-material-background.tsx",
+		"family-menu.tsx",
+	].includes(basename);
+	const home =
+		/(?:features\/home-[^/]+|backend\/home-fitness-data)\.tsx$/.test(
+			filename,
+		) ||
+		[
+			"thread-practice.tsx",
+			"thread-extras.tsx",
+			"event-preview-actions.tsx",
+			"recognition-summary.tsx",
+		].includes(basename);
 	if (!navigator && !content && !home && !shell) return [];
 	const file = ts.createSourceFile(
 		filename,
@@ -162,18 +174,25 @@ export const inspectNavigationBoundary = (
 			const collect = (child: ts.Node): void => {
 				if (ts.isCallExpression(child))
 					calls.add(child.expression.getText(file));
+				if (ts.isJsxOpeningElement(child) || ts.isJsxSelfClosingElement(child))
+					calls.add(child.tagName.getText(file));
 				ts.forEachChild(child, collect);
 			};
 			collect(node);
 			if (
-				["useQuery", "usePaginatedQuery", "useMessaging"].some((name) =>
+				[
+					"useQuery",
+					"usePaginatedQuery",
+					"useMessaging",
+					"useThreadTools",
+				].some((name) => calls.has(name)) &&
+				!["usePageLoading", "LoadingContent", "LoadingBoundary"].some((name) =>
 					calls.has(name),
-				) &&
-				!calls.has("usePageLoading")
+				)
 			)
 				fail(
 					node,
-					"Home queries must register initial loading with usePageLoading before optional cards appear.",
+					"Initial layout queries must register loading with usePageLoading before optional sections appear.",
 				);
 		}
 		ts.forEachChild(node, inspect);

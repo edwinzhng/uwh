@@ -3,7 +3,11 @@ import { useRouter } from "expo-router";
 import { type ReactElement, useRef } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
-import { formatTimeLocation, PracticeBanner } from "../design-system";
+import {
+	formatTimeLocation,
+	PracticeBanner,
+	usePageLoading,
+} from "../design-system";
 import {
 	type ChatPractice,
 	chatProgramId,
@@ -54,6 +58,7 @@ const LivePractice = ({
 	now: number;
 }): ReactElement => {
 	const practice = useQuery(api.chat_practice.next, { threadId, now });
+	usePageLoading(practice === undefined);
 	const previous = useRef<ChatPractice | null>(undefined);
 	if (practice !== undefined) previous.current = practice;
 	return (

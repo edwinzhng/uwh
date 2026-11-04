@@ -14,6 +14,7 @@ import {
 } from "./loading-state";
 import { useTheme } from "./theme";
 import { layer } from "./tokens";
+import { useLoadingDelay } from "./use-loading-delay";
 import { useMotion } from "./use-motion";
 
 export const LoadingScope = ({
@@ -37,10 +38,13 @@ export const LoadingScope = ({
 	const covered = useContext(LoadingCoveredContext);
 	const theme = useTheme();
 	const animate = useMotion();
+	const showIndicator = useLoadingDelay(
+		selected === id && scope.active && !covered,
+	);
 	return (
 		<LoadingScopeContext value={scope}>
 			{children}
-			{selected === id && scope.active && !covered ? (
+			{showIndicator ? (
 				<View
 					pointerEvents="none"
 					style={[

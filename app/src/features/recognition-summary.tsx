@@ -2,7 +2,7 @@ import { useQuery } from "convex/react";
 import type { ReactElement } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
-import { Badge, Row, Stack, Text } from "../design-system";
+import { Badge, Row, Stack, Text, usePageLoading } from "../design-system";
 import { feedbackKind } from "../domain/feedback-access";
 import { shoutoutSummary } from "../domain/shoutouts";
 
@@ -30,11 +30,11 @@ const SummaryContent = ({
 			</Row>
 		</Stack>
 	) : undefined;
-const LiveSummary = ({ personId }: { personId: string }): ReactElement => (
-	<>
-		<SummaryContent summary={useQuery(api.pages.recognition, { personId })} />
-	</>
-);
+const LiveSummary = ({ personId }: { personId: string }): ReactElement => {
+	const summary = useQuery(api.pages.recognition, { personId });
+	usePageLoading(summary === undefined);
+	return <SummaryContent summary={summary} />;
+};
 export const RecognitionSummary = ({
 	personId,
 }: {

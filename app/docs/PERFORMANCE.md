@@ -1,4 +1,12 @@
-- Latest interaction audit: [November 3 route-by-route findings and evidence](PERFORMANCE-AUDIT-2026-11-03.md).
+## November 4, 2026: transition and loading follow-up
+
+- Shared fixes: screen-local backgrounds and account highlighting; initial readiness registration for chat practice/pins, lineup actions and recognition summaries; delayed routine indicators without a minimum completion wait; local chat pagination feedback; retained material frames on blur with inactive dependencies detached.
+- Automated coverage includes all 16,807 five-step loading/query/layout/frame/route interleavings, cancelled indicator timers, dialog loading ownership, native transition policy, and existing dialog/scroll/pagination/activity regressions. The local performance fixture passed with 400 events, 2,000 attendance records and 120-item histories; its scoped Schedule request took 53 ms and transferred 27,072 versus 510,553 bytes. This verifies existing query scoping, not a new network speedup.
+- Interactive fixture checks covered feedback deep links, conversation Back, empty search/schedule, validation, nested participant/shoutout sheets, pins and long names at phone/desktop widths. Checked phone views had no horizontal overflow; Chats search returned to the same position after Back. These are browser checks. Native keyboard/gesture interruption, release-device frame pacing, low-end Android and sustained memory need hardware profiling; no universal smoothness or FPS claim is established.
+
+## Earlier audits
+
+- [November 3 route-by-route findings and evidence](PERFORMANCE-AUDIT-2026-11-03.md).
 
 - Reviewed the 41 route entries, their reachable feature/design-system modules, animation loops, loading owners and scoped query lifetimes. Import tracing covered frontend routes and verification scripts; Convex notification helpers, the browser push worker, declaration files and test entrypoints were retained. Removed the unused initials helper and its obsolete test after confirming the shared Avatar uses the generic-person icon fallback.
 
