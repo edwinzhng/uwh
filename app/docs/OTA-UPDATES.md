@@ -1,5 +1,7 @@
 - The native app is configured for EAS Update on `@calgary-uwh/calgary-uwh` (project `8670108c-8259-43e5-8799-f1d4078577e8`). The SDK-compatible `expo-updates` client checks on launch without waiting for the network. It downloads compatible updates in the background and applies them on the next restart. The app does not force a reload during a chat, form, or practice workflow.
 
+- Use `bunx eas-cli@27.3.0 build --profile production-simulator --platform ios` for an iOS Simulator binary that receives production OTA updates. This profile inherits the production channel and environment without incrementing the store build number. Screenshot-only builds with updates disabled, Expo Go, and Metro sessions do not verify production OTA delivery. A binary with updates disabled must be replaced before it can receive updates.
+
 - `runtimeVersion.policy` is `fingerprint`. EAS generates a native runtime fingerprint for each build and update; a binary only loads matching updates. Adding native modules, changing native configuration or upgrading the Expo SDK requires a new native build. Ordinary compatible JavaScript, UI and bundled asset changes can ship over the air. Backend deployment and web deployment remain separate.
 
 - Build profile: development; Update channel: development; EAS environment: development; Backend: Local Metro/developer configuration
