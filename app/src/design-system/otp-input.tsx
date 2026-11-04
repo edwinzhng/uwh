@@ -215,7 +215,6 @@ export const OtpInput = ({
 					accessibilityState={{ disabled: isDisabled }}
 					aria-invalid={Boolean(error)}
 					value={value}
-					selection={{ start: selection, end: selection }}
 					maxLength={codeLength}
 					inputMode="numeric"
 					keyboardType="number-pad"
@@ -227,13 +226,10 @@ export const OtpInput = ({
 					onFocus={(): void => setFocused(true)}
 					onBlur={(): void => setFocused(false)}
 					onSelectionChange={(event): void =>
-						setSelection(
-							Math.min(event.nativeEvent.selection.start, value.length),
-						)
+						setSelection(event.nativeEvent.selection.start)
 					}
 					onChangeText={(next): void => {
 						const digits = next.replace(/\D/g, "").slice(0, codeLength);
-						setSelection(digits.length);
 						onValueChange(digits);
 						if (digits.length === codeLength && digits !== value) {
 							onComplete?.(digits);

@@ -30,10 +30,7 @@ export const PageReveal = ({
 	const motionEnabled = useMotion();
 	const nested = useContext(PageRevealContext);
 	const animate =
-		motionEnabled &&
-		enabled &&
-		(!nested || !replayOnFocus) &&
-		pageMotionAllowed();
+		motionEnabled && enabled && !replayOnFocus && pageMotionAllowed();
 	const opacity = useSharedValue(animate && !nested ? 0 : 1);
 	const reveal = useCallback((): void => {
 		cancelAnimation(opacity);
