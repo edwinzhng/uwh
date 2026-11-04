@@ -808,7 +808,7 @@ export const productFlows: ProductFlow[] = [
 		description:
 			"Read a published version and explicitly accept it before continuing.",
 		entry: "Sign in → Required club terms",
-		screen: "/terms?reviewAccount=taylor",
+		screen: "/club-terms?reviewAccount=taylor",
 		status: "added",
 	},
 ];

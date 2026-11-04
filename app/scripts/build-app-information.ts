@@ -1,4 +1,3 @@
-import { mkdir } from "node:fs/promises";
 import { appPolicies } from "../src/domain/app-policies";
 
 const root = new URL("../public", import.meta.url).pathname;
@@ -14,10 +13,9 @@ const render = (
 	content: string,
 	policy = false,
 ): string =>
-	`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="${escapeHtml(intro)}"><title>${escapeHtml(title)} | UWH Club</title><link rel="stylesheet" href="/uwh-club/styles.css"></head><body><main><header><a href="/uwh-club">UWH Club</a><h1>${escapeHtml(title)}</h1>${policy ? "<p>Effective: November 3, 2026 · Operated by Calgary Underwater Hockey Club</p>" : ""}<p>${escapeHtml(intro)}</p></header>${content}<footer><nav aria-label="UWH Club information"><a href="/">Open app</a><a href="/uwh-club/privacy">Privacy Policy</a><a href="/uwh-club/terms">Terms of Use</a><a href="mailto:hello@calgaryuwh.com">Contact</a></nav></footer></main></body></html>`;
-await mkdir(`${root}/uwh-club`, { recursive: true });
+	`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="${escapeHtml(intro)}"><title>${escapeHtml(title)} | UWH Club</title><link rel="stylesheet" href="/app-information.css"></head><body><main><header><a href="/support">UWH Club</a><h1>${escapeHtml(title)}</h1>${policy ? "<p>Effective: November 3, 2026 · Operated by Calgary Underwater Hockey Club</p>" : ""}<p>${escapeHtml(intro)}</p></header>${content}<footer><nav aria-label="UWH Club information"><a href="/">Open app</a><a href="/support">Support</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Use</a><a href="mailto:hello@calgaryuwh.com">Contact</a></nav></footer></main></body></html>`;
 await Bun.write(
-	`${root}/uwh-club.html`,
+	`${root}/support.html`,
 	render(
 		"UWH Club",
 		"Underwater hockey, organized.",
@@ -26,7 +24,7 @@ await Bun.write(
 );
 for (const page of appPolicies)
 	await Bun.write(
-		`${root}/uwh-club/${page.slug}.html`,
+		`${root}/${page.slug}.html`,
 		render(
 			page.title,
 			page.intro,

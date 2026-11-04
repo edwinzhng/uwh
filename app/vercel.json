@@ -6,6 +6,15 @@
 	"outputDirectory": "dist",
 	"cleanUrls": true,
 	"bunVersion": "1.x",
+	"redirects": [
+		{ "source": "/uwh-club", "destination": "/support", "permanent": true },
+		{
+			"source": "/uwh-club/privacy",
+			"destination": "/privacy",
+			"permanent": true
+		},
+		{ "source": "/uwh-club/terms", "destination": "/terms", "permanent": true }
+	],
 	"rewrites": [
 		{
 			"source": "/api/auth/:path*",
