@@ -18,7 +18,6 @@ import { signupState } from "../domain/event-time";
 import { householdMembers } from "../domain/home";
 import { venueName } from "../domain/venue";
 import { ResponseControl } from "./response-control";
-import { SignupWindow } from "./signup-window";
 import { useEventNow } from "./use-event-now";
 
 export const HomePractice = ({
@@ -69,7 +68,6 @@ export const HomePractice = ({
 			action={
 				event && people.length ? (
 					<Stack gap="md">
-						{open ? <SignupWindow event={event} /> : undefined}
 						{people.map((person) => (
 							<Surface key={person.id} variant="subtle" padding="sm">
 								<Stack gap="xs">

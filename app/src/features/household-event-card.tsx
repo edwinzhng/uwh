@@ -24,7 +24,6 @@ import { EventAttendeesPreview } from "./event-attendees-preview";
 import { EventPreviewActions } from "./event-preview-actions";
 import { ResponseControl } from "./response-control";
 import { SessionReflectionAction } from "./session-reflection-action";
-import { SignupWindow } from "./signup-window";
 import { useEventNow } from "./use-event-now";
 
 export const HouseholdEventCard = ({
@@ -156,19 +155,9 @@ export const HouseholdEventCard = ({
 					<Text variant="caption" tone="secondary">
 						{reason}
 					</Text>
-				) : (
-					<>
-						{open ? <SignupWindow event={event} /> : undefined}
-						{event.parts?.length && open ? (
-							<ResponseControl
-								event={event}
-								personId={person.id}
-								hideLabel
-								quick
-							/>
-						) : undefined}
-					</>
-				)}
+				) : event.parts?.length && open ? (
+					<ResponseControl event={event} personId={person.id} hideLabel quick />
+				) : undefined}
 				{past ? <SessionReflectionAction event={event} /> : undefined}
 			</Stack>
 		</Surface>
