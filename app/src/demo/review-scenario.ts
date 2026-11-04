@@ -4,6 +4,23 @@ export const reviewScenarioData = (
 	data: AppData,
 	scenario?: string,
 ): AppData => {
+	if (scenario === "home-cards")
+		return {
+			...data,
+			feedback: [
+				...data.feedback,
+				{
+					id: "review-home-shoutout",
+					kind: "shoutout",
+					category: "mvp",
+					personId: "alex",
+					authorId: "casey",
+					body: "You made the team better. Thanks for always finding the next pass.",
+					visibility: "published",
+					date: data.notices.at(0)?.date ?? "2026-11-04",
+				},
+			],
+		};
 	if (scenario === "quiet")
 		return {
 			...data,

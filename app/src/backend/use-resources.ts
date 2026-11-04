@@ -1,12 +1,13 @@
 import { useAuthToken } from "@convex-dev/auth/react";
 import {
+	type RequestForQueries,
 	useMutation,
 	usePaginatedQuery,
 	useQueries,
 	useQuery,
 } from "convex/react";
 import { atom, useAtom } from "jotai";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Linking } from "react-native";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -123,16 +124,16 @@ export const useLiveResources = (
 		api.resources.details,
 		id && !options.optionalDetail ? { id: id as Id<"resources"> } : "skip",
 	);
-	const optional: { resource?: Detail | Error } = useQueries(
-		id && options.optionalDetail
-			? {
-					resource: {
-						query: api.resources.details,
-						args: { id: id as Id<"resources"> },
-					},
-				}
-			: {},
-	);
+	const optionalQueries = useMemo((): RequestForQueries => {
+		if (!id || !options.optionalDetail) return {};
+		return {
+			resource: {
+				query: api.resources.details,
+				args: { id: id as Id<"resources"> },
+			},
+		};
+	}, [id, options.optionalDetail]);
+	const optional: { resource?: Detail | Error } = useQueries(optionalQueries);
 	const optionalDetail = optional.resource;
 	const detailError =
 		optionalDetail instanceof Error

@@ -1,5 +1,11 @@
-import { useAction, useMutation, useQuery } from "convex/react";
-import { useRef } from "react";
+import {
+	type RequestForQueries,
+	useAction,
+	useMutation,
+	useQueries,
+} from "convex/react";
+import type { FunctionReturnType } from "convex/server";
+import { useMemo, useRef } from "react";
 import { Linking } from "react-native";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -19,7 +25,14 @@ export type YoutubeUploader = {
 export const useYoutubeUploads = (token?: string): YoutubeUploader => {
 	const { account } = useApp();
 	const canManage = account.admin || account.coachPrograms.length > 0;
-	const status = useQuery(api.youtube.status, canManage ? {} : "skip");
+	const queries = useMemo((): RequestForQueries => {
+		if (!canManage) return {};
+		return { status: { query: api.youtube.status, args: {} } };
+	}, [canManage]);
+	const result: {
+		status?: FunctionReturnType<typeof api.youtube.status> | Error;
+	} = useQueries(queries);
+	const status = result.status instanceof Error ? undefined : result.status;
 	const authorize = useAction(api.youtube_actions.authorize);
 	const reserve = useMutation(api.youtube.reserve);
 	const position = useAction(api.youtube_actions.position);

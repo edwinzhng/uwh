@@ -2,7 +2,13 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { atom, useAtom } from "jotai";
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { ContextPicker, GlassPanel, TabContent } from "../design-system";
+import {
+	ContextPicker,
+	GlassPanel,
+	HomeCardTreatmentContext,
+	homeCardTreatment,
+	TabContent,
+} from "../design-system";
 import { canCoach } from "../domain/app-rules";
 import { nextCoachingEvent } from "../domain/home";
 import { ClubShell } from "./club-shell";
@@ -15,7 +21,15 @@ const homeWorkspaceAtom = atom<Record<string, "personal" | "coaching">>({});
 export const HomeScreen = (): ReactElement => {
 	const { data, account } = useApp();
 	const router = useRouter();
-	const params = useLocalSearchParams<{ view?: string }>();
+	const params = useLocalSearchParams<{
+		view?: string;
+		reviewCards?: string;
+	}>();
+	const treatment = homeCardTreatment(
+		process.env.EXPO_PUBLIC_REVIEW_MODE === "true"
+			? params.reviewCards
+			: undefined,
+	);
 	const [workspaces, setWorkspaces] = useAtom(homeWorkspaceAtom);
 	const workspace =
 		canCoach(account) &&
@@ -55,7 +69,9 @@ export const HomeScreen = (): ReactElement => {
 				{workspace === "coaching" ? (
 					<CoachDashboard nextPractice={coaching} />
 				) : (
-					<HomeSummary now={now} />
+					<HomeCardTreatmentContext value={treatment}>
+						<HomeSummary now={now} />
+					</HomeCardTreatmentContext>
 				)}
 			</TabContent>
 		</ClubShell>

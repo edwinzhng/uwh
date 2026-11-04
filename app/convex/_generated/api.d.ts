@@ -96,6 +96,7 @@ import type * as local_migration from "../local_migration.js";
 import type * as local_migration_media from "../local_migration_media.js";
 import type * as local_migration_monday from "../local_migration_monday.js";
 import type * as local_migration_schema from "../local_migration_schema.js";
+import type * as local_production_checks from "../local_production_checks.js";
 import type * as local_resource_checks from "../local_resource_checks.js";
 import type * as local_social from "../local_social.js";
 import type * as local_workspace from "../local_workspace.js";
@@ -292,6 +293,7 @@ declare const fullApi: ApiFromModules<{
   local_migration_media: typeof local_migration_media;
   local_migration_monday: typeof local_migration_monday;
   local_migration_schema: typeof local_migration_schema;
+  local_production_checks: typeof local_production_checks;
   local_resource_checks: typeof local_resource_checks;
   local_social: typeof local_social;
   local_workspace: typeof local_workspace;

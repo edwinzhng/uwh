@@ -1,12 +1,15 @@
-import { type ReactElement, type ReactNode, useState } from "react";
+import { type ReactElement, type ReactNode, useContext, useState } from "react";
 import { Pressable, View } from "react-native";
 import { CardAtmosphere } from "./card-atmosphere";
 import { CardContentContext } from "./card-content-context";
 import { DashedBorder } from "./dashed-border";
 import { useButtonHaptics } from "./haptics";
+import { HomeCardBackground } from "./home-card-background";
+import { HomeCardTreatmentContext } from "./home-card-treatment";
 import { Icon, type IconName } from "./icon";
 import { Text } from "./text";
 import { useTheme } from "./theme";
+import { ThemeScope } from "./theme-scope";
 import {
 	type CategoryColor,
 	corners,
@@ -16,21 +19,7 @@ import {
 } from "./tokens";
 import { WatercolorShader } from "./watercolor-shader";
 
-export const SummaryCard = ({
-	title,
-	titleVariant = "overline",
-	icon,
-	category = "sky",
-	headerTexture,
-	variant = "default",
-	metadata,
-	children,
-	onPress,
-	accessibilityLabel,
-	action,
-	borderStyle = "solid",
-	compact = false,
-}: {
+type Props = {
 	title: string;
 	compact?: boolean;
 	titleVariant?: "overline" | "h3";
@@ -45,8 +34,40 @@ export const SummaryCard = ({
 	accessibilityLabel?: string;
 	action?: ReactNode;
 	borderStyle?: "solid" | "dashed";
-}): ReactElement => {
+};
+
+export const SummaryCard = (props: Props): ReactElement => {
+	const treatment = useContext(HomeCardTreatmentContext);
+	return treatment === "spotlight" && props.icon === "megaphone" ? (
+		<ThemeScope appearance="light">
+			<SummaryCardContent {...props} />
+		</ThemeScope>
+	) : (
+		<SummaryCardContent {...props} />
+	);
+};
+
+const SummaryCardContent = ({
+	title,
+	titleVariant = "overline",
+	icon,
+	category = "sky",
+	headerTexture,
+	variant = "default",
+	metadata,
+	children,
+	onPress,
+	accessibilityLabel,
+	action,
+	borderStyle = "solid",
+	compact = false,
+}: Props): ReactElement => {
 	const theme = useTheme();
+	const treatment = useContext(HomeCardTreatmentContext);
+	const announcement = icon === "megaphone";
+	const cardTreatment =
+		treatment === "spotlight" && !announcement ? "current" : treatment;
+	const textureCategory = announcement ? "amber" : category;
 	const haptic = useButtonHaptics();
 	const [focused, setFocused] = useState(false);
 	const [pressed, setPressed] = useState(false);
@@ -56,10 +77,16 @@ export const SummaryCard = ({
 	const background = unmarked
 		? unmarkedColors.background
 		: theme.background.card;
-	const interactiveBackground = pressed ? theme.background.pressed : background;
-	const texture = headerTexture ? (
-		<WatercolorShader category={category} seed={`practice-header:${title}`} />
-	) : undefined;
+	const interactiveBackground =
+		cardTreatment !== "current"
+			? "transparent"
+			: pressed
+				? theme.background.pressed
+				: background;
+	const texture =
+		headerTexture && cardTreatment === "current" ? (
+			<WatercolorShader category={category} seed={`practice-header:${title}`} />
+		) : undefined;
 	const content = (
 		<CardContentContext value={!section}>
 			<View style={{ gap: space.xs, minWidth: 0 }}>
@@ -107,6 +134,13 @@ export const SummaryCard = ({
 					backgroundColor: section ? "transparent" : background,
 				}}
 			>
+				{cardTreatment !== "current" && !section ? (
+					<HomeCardBackground
+						treatment={cardTreatment}
+						category={textureCategory}
+						seed={`home:${title}`}
+					/>
+				) : undefined}
 				{onPress ? (
 					<Pressable
 						accessibilityRole="button"
@@ -130,7 +164,10 @@ export const SummaryCard = ({
 						}}
 					>
 						{texture}
-						{!headerTexture && !section && !unmarked ? (
+						{cardTreatment === "current" &&
+						!headerTexture &&
+						!section &&
+						!unmarked ? (
 							<CardAtmosphere />
 						) : undefined}
 						{content}
@@ -139,11 +176,17 @@ export const SummaryCard = ({
 					<View
 						style={{
 							padding: section ? 0 : compact ? space.sm : space.md,
-							backgroundColor: section ? "transparent" : background,
+							backgroundColor:
+								section || cardTreatment !== "current"
+									? "transparent"
+									: background,
 						}}
 					>
 						{texture}
-						{!headerTexture && !section && !unmarked ? (
+						{cardTreatment === "current" &&
+						!headerTexture &&
+						!section &&
+						!unmarked ? (
 							<CardAtmosphere />
 						) : undefined}
 						{content}

@@ -59,6 +59,10 @@ export { Grid } from "./grid";
 export { hapticsAvailable, hapticsEnabledAtom } from "./haptics";
 export { HistorySection } from "./history-section";
 export type { HistoryControlTreatment } from "./history-section-props";
+export {
+	HomeCardTreatmentContext,
+	homeCardTreatment,
+} from "./home-card-treatment";
 export { HomeFitnessLayout } from "./home-fitness-layout";
 export { Icon, type IconName } from "./icon";
 export { IconButton } from "./icon-button";
