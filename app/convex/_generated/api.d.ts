@@ -31,6 +31,7 @@ import type * as calendar_tokens from "../calendar_tokens.js";
 import type * as chat_appearance from "../chat_appearance.js";
 import type * as chat_policy from "../chat_policy.js";
 import type * as chat_practice from "../chat_practice.js";
+import type * as client_errors from "../client_errors.js";
 import type * as club from "../club.js";
 import type * as coaching_hours from "../coaching_hours.js";
 import type * as coaching_hours_schema from "../coaching_hours_schema.js";
@@ -220,6 +221,7 @@ declare const fullApi: ApiFromModules<{
   chat_appearance: typeof chat_appearance;
   chat_policy: typeof chat_policy;
   chat_practice: typeof chat_practice;
+  client_errors: typeof client_errors;
   club: typeof club;
   coaching_hours: typeof coaching_hours;
   coaching_hours_schema: typeof coaching_hours_schema;
