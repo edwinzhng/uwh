@@ -8,6 +8,7 @@ import {
 	inboxContent,
 	inboxRoute,
 } from "../src/domain/inbox";
+import { defaultProgramRsvp } from "../src/domain/program-rsvp";
 
 const player: Member = {
 	id: "child",
@@ -179,6 +180,19 @@ describe("durable inbox authorization", (): void => {
 			},
 		};
 		expect(inboxContent(source, value, "delivery")?.target.kind).toBe("event");
+		expect(
+			inboxContent(
+				source,
+				{
+					...value,
+					event: {
+						...(value.event ?? sampleEvent),
+						programRsvp: { ...defaultProgramRsvp(), notifyOnOpen: false },
+					},
+				},
+				"delivery",
+			),
+		).toBeUndefined();
 		const answered: InboxContext = {
 			...value,
 			now: 3000,

@@ -315,6 +315,8 @@ export const inboxContent = (
 				return undefined;
 		} else if (
 			event.cancelled ||
+			(source.eventPhase === "open" &&
+				event.programRsvp?.notifyOnOpen === false) ||
 			!event.closesAt ||
 			context.now >= event.closesAt ||
 			(event.opensAt && context.now < event.opensAt) ||

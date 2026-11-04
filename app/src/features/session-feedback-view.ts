@@ -15,7 +15,7 @@ export const sessionFeedbackActions = (
 		? [{ id: "self" as const, label: "Rate yourself" }]
 		: []),
 	...(canCoachMember(account, member)
-		? [{ id: "note" as const, label: "Add feedback" }]
+		? [{ id: "note" as const, label: "Feedback" }]
 		: []),
 ];
 

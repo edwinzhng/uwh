@@ -1,7 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import type { ReactElement } from "react";
 import { StyleSheet, View } from "react-native";
-import { LoadingBackdrop } from "./loading-backdrop";
 import { MaterialTexture } from "./material-texture";
 import { useTheme } from "./theme";
 export const ChatBackdrop = (): ReactElement => {
@@ -49,9 +48,6 @@ export const ChatBackdrop = (): ReactElement => {
 				end={{ x: 0.9, y: 1 }}
 				style={StyleSheet.absoluteFill}
 			/>
-			<View style={[StyleSheet.absoluteFill, { opacity: 0.12 }]}>
-				<LoadingBackdrop canvas="transparent" line={theme.text.secondary} />
-			</View>
 		</View>
 	);
 };

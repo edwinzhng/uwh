@@ -1,4 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { usePathname } from "expo-router";
 import { useAtomValue } from "jotai";
 import type { ReactElement } from "react";
 import { StyleSheet, View } from "react-native";
@@ -12,6 +13,8 @@ import { pageMaterialOpacity } from "./tokens";
 
 export const PageMaterialBackground = (): ReactElement | undefined => {
 	const theme = useTheme();
+	const pathname = usePathname();
+	const showGrid = pathname !== "/messages" && pathname !== "/conversation";
 	const material = useAtomValue(cardMaterialAtom);
 
 	return (
@@ -48,15 +51,17 @@ export const PageMaterialBackground = (): ReactElement | undefined => {
 				end={{ x: 0.85, y: 1 }}
 				style={StyleSheet.absoluteFill}
 			/>
-			<View
-				style={[StyleSheet.absoluteFill, { opacity: 0.12 }]}
-				pointerEvents="none"
-				accessible={false}
-				accessibilityElementsHidden
-				importantForAccessibility="no-hide-descendants"
-			>
-				<LoadingBackdrop canvas="transparent" line={theme.text.secondary} />
-			</View>
+			{showGrid ? (
+				<View
+					style={[StyleSheet.absoluteFill, { opacity: 0.12 }]}
+					pointerEvents="none"
+					accessible={false}
+					accessibilityElementsHidden
+					importantForAccessibility="no-hide-descendants"
+				>
+					<LoadingBackdrop canvas="transparent" line={theme.text.secondary} />
+				</View>
+			) : undefined}
 		</>
 	);
 };

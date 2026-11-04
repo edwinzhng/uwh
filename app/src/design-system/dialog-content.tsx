@@ -38,6 +38,7 @@ import {
 } from "./dialog-state";
 import { GlassBackdrop } from "./glass-backdrop";
 import { previewGlassColors, useGlassPreview } from "./glass-preview-context";
+import { HeaderBackdrop } from "./header-backdrop";
 import { IconButton } from "./icon-button";
 import { LoadingScope } from "./loading-scope";
 import { materialColors } from "./materials";
@@ -274,14 +275,7 @@ export const DialogContent = ({
 						dragTouchStyle,
 					]}
 				>
-					{scrollable && !hideHeader ? (
-						<GlassBackdrop
-							material="floating"
-							showRim={false}
-							softEdge
-							uniform
-						/>
-					) : undefined}
+					{scrollable && !hideHeader ? <HeaderBackdrop /> : undefined}
 					{isSheet && !preview ? (
 						<View
 							accessible={false}

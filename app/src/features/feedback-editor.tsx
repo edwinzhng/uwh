@@ -12,14 +12,12 @@ import { useFormTask } from "./use-form-task";
 
 export const FeedbackEditor = ({
 	personId,
-	collapseLabelOnNarrow,
 	eventId,
 	existing,
 	isOpen: controlledOpen,
 	onOpenChange,
 }: {
 	personId: string;
-	collapseLabelOnNarrow?: boolean;
 	eventId?: string;
 	existing?: CoachingFeedback;
 } & (
@@ -81,9 +79,8 @@ export const FeedbackEditor = ({
 			{controlledOpen === undefined ? (
 				<Button
 					compact
-					collapseLabelOnNarrow={collapseLabelOnNarrow}
-					label={existing ? "Edit feedback" : "Add feedback"}
-					accessibilityLabel={`${existing ? "Edit" : "Add"} feedback for ${memberName(data, personId)}`}
+					label="Feedback"
+					accessibilityLabel={`Feedback for ${memberName(data, personId)}`}
 					roleTone="coach"
 					prefix={existing ? "edit" : "plus"}
 					variant="secondary"

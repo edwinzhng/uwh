@@ -68,6 +68,14 @@ export const ProgramEditor = ({
 	const count = draft.schedule
 		? programDates(draft.schedule).filter((date) => date >= today).length
 		: 0;
+	const existingDate = data.events.find(
+		(event) => event.program === draft.id && !event.cancelled,
+	)?.date;
+	const weekday =
+		draft.schedule?.weekday ??
+		(existingDate
+			? new Date(`${existingDate}T12:00:00Z`).getUTCDay() || 7
+			: undefined);
 	const save = async (): Promise<void> => {
 		if (
 			await task.submit(
@@ -212,6 +220,7 @@ export const ProgramEditor = ({
 					/>
 				) : (
 					<ProgramRsvpFields
+						weekday={weekday}
 						value={draft.rsvp}
 						onChange={(rsvp): void => setDraft({ ...draft, rsvp })}
 						disabled={task.busy}

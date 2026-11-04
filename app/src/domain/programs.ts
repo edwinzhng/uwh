@@ -63,6 +63,8 @@ export const programDraft = (program: ClubProgram): ProgramDraft => ({
 	rsvp: {
 		openRule: program.rsvp.openRule,
 		openWeekday: program.rsvp.openWeekday,
+		openWeeks: program.rsvp.openWeeks,
+		notifyOnOpen: program.rsvp.notifyOnOpen,
 		openDays: program.rsvp.openDays,
 		openTime: program.rsvp.openTime,
 		closeDays: program.rsvp.closeDays,
@@ -163,6 +165,15 @@ export const validateProgram = (
 	);
 	const error = validateEvent(event);
 	if (error) return error;
+	if (draft.rsvp.openRule === "weekly" && draft.rsvp.openWeeks !== undefined) {
+		const window = applyProgramWindow(
+			{ ...event, id: draft.id, cancelled: false, signup: "open" },
+			draft,
+			0,
+		);
+		if ((window.opensAt ?? 0) >= (window.closesAt ?? 0))
+			return "RSVP must open before it closes.";
+	}
 	if (
 		clubTimestamp(schedule.startDate, draft.rsvp.closeTime, data.timeZone) -
 			draft.rsvp.closeDays * 86400000 >

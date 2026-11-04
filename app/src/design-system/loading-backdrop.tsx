@@ -35,6 +35,7 @@ export const LoadingBackdrop = ({
 							fill="none"
 							stroke={line}
 							strokeWidth={geometry.border}
+							strokeOpacity={0.45}
 						/>
 					</Pattern>
 				</Defs>

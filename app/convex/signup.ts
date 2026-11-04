@@ -60,7 +60,7 @@ export const scheduleSignup = async (
 					Math.max(reminderAt, event.opensAt ?? 0),
 				);
 		}
-		if (opensAt !== undefined)
+		if (opensAt !== undefined && event.programRsvp?.notifyOnOpen !== false)
 			await enqueue(
 				ctx,
 				{

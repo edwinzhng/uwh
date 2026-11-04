@@ -6,131 +6,148 @@ import {
 	Stack,
 	Text,
 	TimeSelector,
+	Toggle,
 } from "../design-system";
+import { programOpeningSchedule } from "../domain/program-rsvp";
 import type { ProgramRsvp } from "../domain/programs";
 
 export const ProgramRsvpFields = ({
 	value,
 	onChange,
 	disabled,
+	weekday = 1,
 }: {
 	value: ProgramRsvp;
 	onChange: (rsvp: ProgramRsvp) => void;
 	disabled: boolean;
-}): ReactElement => (
-	<Stack>
-		<Select
-			label="Registration opening"
-			value={value.openRule ?? "before-event"}
-			options={[
-				{ value: "before-event", label: "Before each event" },
-				{ value: "weekly", label: "Weekly" },
-			]}
-			onValueChange={(openRule): void => {
-				if (openRule)
-					onChange({
-						...value,
-						openRule,
-						openWeekday:
-							openRule === "weekly" ? (value.openWeekday ?? 7) : undefined,
-						openDays:
-							openRule === "weekly"
-								? Math.max(14, value.openDays)
-								: value.openDays,
-					});
-			}}
-			isDisabled={disabled}
-		/>
-		{value.openRule === "weekly" ? (
+	weekday?: number;
+}): ReactElement => {
+	const season =
+		value.openRule === "season" ||
+		(value.openRule !== "weekly" && value.openDays === 0);
+	const { weekday: openingDay, weeks } = programOpeningSchedule(value, weekday);
+	const scheduled = {
+		...value,
+		openRule: "weekly",
+		openWeekday: openingDay,
+		openWeeks: weeks,
+	} satisfies ProgramRsvp;
+	return (
+		<Stack>
 			<Select
-				label="Opening day"
-				value={String(value.openWeekday ?? 7)}
+				label="Registration opening"
+				value={season ? "season" : "weekly"}
 				options={[
-					{ value: "7", label: "Sunday" },
-					{ value: "1", label: "Monday" },
-					{ value: "2", label: "Tuesday" },
-					{ value: "3", label: "Wednesday" },
-					{ value: "4", label: "Thursday" },
-					{ value: "5", label: "Friday" },
-					{ value: "6", label: "Saturday" },
+					{ value: "season", label: "Full season · open now" },
+					{ value: "weekly", label: "Scheduled opening" },
 				]}
-				onValueChange={(day): void => {
-					if (day) onChange({ ...value, openWeekday: Number(day) });
+				onValueChange={(rule): void => {
+					if (rule === "season")
+						onChange({
+							...value,
+							openRule: "season",
+							openDays: 0,
+							openWeeks: undefined,
+						});
+					else if (rule === "weekly")
+						onChange({ ...scheduled, openWeeks: Math.max(1, weeks) });
 				}}
 				isDisabled={disabled}
 			/>
-		) : undefined}
-		<Grid gap="md">
+			{!season ? (
+				<>
+					<Grid gap="md">
+						<Select
+							label="Day of week"
+							value={String(openingDay)}
+							options={[
+								"Monday",
+								"Tuesday",
+								"Wednesday",
+								"Thursday",
+								"Friday",
+								"Saturday",
+								"Sunday",
+							].map((label, index) => ({ value: String(index + 1), label }))}
+							onValueChange={(day): void => {
+								if (day) onChange({ ...scheduled, openWeekday: Number(day) });
+							}}
+							isDisabled={disabled}
+						/>
+						<Field
+							label="Weeks before"
+							inputMode="numeric"
+							value={String(weeks)}
+							onValueChange={(input): void =>
+								onChange({ ...scheduled, openWeeks: Number(input) })
+							}
+							isDisabled={disabled}
+						/>
+						<TimeSelector
+							label="Opening time"
+							value={value.openTime}
+							onValueChange={(time): void =>
+								onChange({ ...scheduled, openTime: time ?? "" })
+							}
+							isDisabled={disabled}
+						/>
+					</Grid>
+					<Text variant="caption" tone="secondary">
+						Weeks run Monday–Sunday in the club’s time zone.
+					</Text>
+				</>
+			) : undefined}
+			{!season ? (
+				<Toggle
+					label="Send notification when registration opens"
+					value={value.notifyOnOpen !== false}
+					onValueChange={(notifyOnOpen): void =>
+						onChange({ ...value, notifyOnOpen })
+					}
+					isDisabled={disabled}
+				/>
+			) : undefined}
+			<Grid gap="md">
+				<Field
+					label="RSVP closes · days before"
+					inputMode="numeric"
+					value={String(value.closeDays)}
+					onValueChange={(days): void =>
+						onChange({ ...value, closeDays: Number(days) })
+					}
+					isDisabled={disabled}
+				/>
+				<TimeSelector
+					label="Closing time"
+					value={value.closeTime}
+					onValueChange={(time): void =>
+						onChange({ ...value, closeTime: time ?? "" })
+					}
+					isDisabled={disabled}
+				/>
+			</Grid>
 			<Field
-				label={
-					value.openRule === "weekly"
-						? "Open events less than · days away"
-						: "RSVP opens · days before"
-				}
+				label="Reminder · days before"
 				inputMode="numeric"
-				value={String(value.openDays)}
+				value={String(value.reminderDays)}
 				onValueChange={(days): void =>
-					onChange({ ...value, openDays: Number(days) })
+					onChange({ ...value, reminderDays: Number(days) })
 				}
 				isDisabled={disabled}
 			/>
-			<TimeSelector
-				label="Opening time"
-				isDisabled={disabled}
-				value={value.openTime}
-				onValueChange={(time): void =>
-					onChange({ ...value, openTime: time ?? "" })
-				}
-			/>
-		</Grid>
-		<Text variant="caption" tone="secondary">
-			{value.openRule === "weekly"
-				? "Uses calendar days and the club’s time zone."
-				: "0 days opens immediately when a session is created."}
-		</Text>
-		<Grid gap="md">
-			<Field
-				label="RSVP closes · days before"
-				inputMode="numeric"
-				value={String(value.closeDays)}
-				onValueChange={(days): void =>
-					onChange({ ...value, closeDays: Number(days) })
-				}
+			<Select
+				label="If a roster member has not answered at closing"
+				value={value.defaultResponse}
+				options={[
+					{ value: "unavailable", label: "Mark unavailable" },
+					{ value: "none", label: "Leave unanswered" },
+					{ value: "going", label: "Mark going · respect capacity" },
+				]}
+				onValueChange={(defaultResponse): void => {
+					if (defaultResponse) onChange({ ...value, defaultResponse });
+				}}
 				isDisabled={disabled}
 			/>
-			<TimeSelector
-				label="Closing time"
-				isDisabled={disabled}
-				value={value.closeTime}
-				onValueChange={(time): void =>
-					onChange({ ...value, closeTime: time ?? "" })
-				}
-			/>
-		</Grid>
-		<Field
-			label="Reminder · days before"
-			inputMode="numeric"
-			value={String(value.reminderDays)}
-			onValueChange={(days): void =>
-				onChange({ ...value, reminderDays: Number(days) })
-			}
-			isDisabled={disabled}
-		/>
-		<Select
-			label="If a roster member has not answered at closing"
-			value={value.defaultResponse}
-			options={[
-				{ value: "none", label: "Leave unanswered" },
-				{ value: "going", label: "Mark going · respect capacity" },
-				{ value: "unavailable", label: "Mark unavailable" },
-			]}
-			onValueChange={(defaultResponse): void => {
-				if (defaultResponse) onChange({ ...value, defaultResponse });
-			}}
-			isDisabled={disabled}
-		/>
-		<Text variant="small" tone="secondary">
-			Explicit answers and individual time overrides are preserved.
-		</Text>
-	</Stack>
-);
+		</Stack>
+	);
+};

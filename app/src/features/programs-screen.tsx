@@ -6,12 +6,9 @@ import {
 	Button,
 	Dialog,
 	EmptyState,
-	List,
-	ListItem,
-	Row,
-	Select,
+	NavigationCard,
 	Stack,
-	Surface,
+	Tabs,
 	Text,
 } from "../design-system";
 import {
@@ -69,93 +66,95 @@ export const ProgramsScreen = (): ReactElement => {
 		});
 	};
 	return (
-		<ClubShell title="Programs" subtitle="Schedules and rosters">
-			<Stack>
-				<Row justify="between" wrap>
-					<Select
-						label="Show programs"
-						value={filter}
-						options={[
-							{ value: "active", label: "Active" },
-							{ value: "archived", label: "Archived" },
-						]}
-						onValueChange={(value): void => {
-							if (value) setFilter(value);
-						}}
+		<ClubShell
+			title="Programs"
+			actionPlacement="inline"
+			action={
+				account.admin ? (
+					<Button
+						label="New program"
+						prefix="plus"
+						onPress={(): void => setEditing("new")}
 					/>
-					{account.admin ? (
-						<Button
-							label="New program"
-							prefix="plus"
-							onPress={(): void => setEditing("new")}
-						/>
-					) : undefined}
-				</Row>
-				<Surface variant="plain">
-					<List>
-						{programs.map((program) => (
-							<ListItem
-								key={program.id}
-								title={program.name}
-								description={`${data.members.filter((member) => !member.archived && member.programs.includes(program.id)).length} members · ${program.schedule ? `${program.schedule.start}–${program.schedule.end} · ${program.schedule.venue}` : "No standing schedule"}`}
-								trailing={
-									<Row>
-										<Badge
-											label={program.archived ? "Archived" : program.status}
-										/>
-										{account.admin ? (
-											<ActionMenu
-												label={`Actions for ${program.name}`}
-												groups={[
-													{
-														id: "program",
-														items: [
-															{
-																id: "edit",
-																label: "Edit program",
-																onSelect: (): void => setEditing(program),
-															},
-															{
-																id: "delete",
-																label: "Delete unused program",
-																tone: "danger",
-																onSelect: (): void => {
-																	task.clear();
-																	setDeleting(program);
-																},
-																isDisabled: task.busy,
-															},
-															{
-																id: "archive",
-																label: program.archived ? "Restore" : "Archive",
-																onSelect: (): void => {
-																	void archive(program);
-																},
-																isDisabled: task.busy,
-															},
-														],
+				) : undefined
+			}
+		>
+			<Stack>
+				<Tabs
+					label="Programs"
+					value={filter}
+					options={[
+						{ value: "active", label: "Active" },
+						{ value: "archived", label: "Archived" },
+					]}
+					onValueChange={setFilter}
+				/>
+				{programs.map((program) => (
+					<NavigationCard
+						key={program.id}
+						title={program.name}
+						icon="layers"
+						label={account.admin ? `Edit ${program.name}` : program.name}
+						description={`${data.members.filter((member) => !member.archived && member.programs.includes(program.id)).length} members · ${program.schedule ? `${program.schedule.start}–${program.schedule.end} · ${program.schedule.venue}` : "No standing schedule"}`}
+						onPress={(): void => {
+							if (account.admin) setEditing(program);
+						}}
+						trailing={
+							<Badge label={program.archived ? "Archived" : program.status} />
+						}
+						accessory={
+							account.admin ? (
+								<ActionMenu
+									label={`Actions for ${program.name}`}
+									icon="more"
+									groups={[
+										{
+											id: "program",
+											items: [
+												{
+													id: "edit",
+													label: "Edit program",
+													onSelect: (): void => setEditing(program),
+												},
+												{
+													id: "archive",
+													label: program.archived ? "Restore" : "Archive",
+													onSelect: (): void => {
+														void archive(program);
 													},
-												]}
-											/>
-										) : undefined}
-									</Row>
-								}
-							/>
-						))}
-						{!programs.length ? (
-							<EmptyState
-								title="No programs"
-								description={
-									filter === "archived"
-										? "Archived programs keep their history."
-										: "Create a program to set its roster and weekly schedule."
-								}
-							/>
-						) : undefined}
-					</List>
-				</Surface>
+													isDisabled: task.busy,
+												},
+												{
+													id: "delete",
+													label: "Delete unused program",
+													tone: "danger",
+													onSelect: (): void => {
+														task.clear();
+														setDeleting(program);
+													},
+													isDisabled: task.busy,
+												},
+											],
+										},
+									]}
+								/>
+							) : undefined
+						}
+					/>
+				))}
+				{!programs.length ? (
+					<EmptyState
+						title="No programs"
+						description={
+							filter === "archived"
+								? "Archived programs keep their history."
+								: "Create a program to set its roster and weekly schedule."
+						}
+					/>
+				) : undefined}
 				{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
 			</Stack>
+
 			{editing ? (
 				<ProgramEditor
 					program={editing === "new" ? undefined : editing}

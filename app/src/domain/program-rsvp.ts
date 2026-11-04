@@ -3,8 +3,10 @@ import { addDays } from "./calendar-dates";
 import { canRegister } from "./event-eligibility";
 import { clubTimestamp, signupState } from "./event-time";
 export type ProgramRsvp = {
-	openRule?: "before-event" | "weekly";
+	openRule?: "before-event" | "weekly" | "season";
 	openWeekday?: number;
+	openWeeks?: number;
+	notifyOnOpen?: boolean;
 	openDays: number;
 	openTime: string;
 	closeDays: number;
@@ -18,9 +20,34 @@ export const defaultProgramRsvp = (): ProgramRsvp => ({
 	closeDays: 0,
 	closeTime: "18:00",
 	reminderDays: 1,
-	defaultResponse: "none",
+	defaultResponse: "unavailable",
 });
+export const programOpeningSchedule = (
+	rsvp: ProgramRsvp,
+	eventWeekday: number,
+): { weekday: number; weeks: number } => {
+	const weekday =
+		rsvp.openWeekday ??
+		((((eventWeekday - rsvp.openDays - 1) % 7) + 7) % 7) + 1;
+	const earliestWeekday = ((((eventWeekday - rsvp.openDays) % 7) + 7) % 7) + 1;
+	const daysBefore =
+		rsvp.openRule === "weekly"
+			? rsvp.openDays - 1 - ((weekday - earliestWeekday + 7) % 7)
+			: rsvp.openDays;
+	return {
+		weekday,
+		weeks:
+			rsvp.openWeeks ?? Math.max(0, (daysBefore - eventWeekday + weekday) / 7),
+	};
+};
 export const validateProgramRsvp = (rsvp: ProgramRsvp): string | undefined => {
+	if (
+		rsvp.openWeeks !== undefined &&
+		(!Number.isInteger(rsvp.openWeeks) ||
+			rsvp.openWeeks < 0 ||
+			rsvp.openWeeks > 52)
+	)
+		return "Choose 0–52 weeks before the session.";
 	if (
 		rsvp.openRule === "weekly" &&
 		(!Number.isInteger(rsvp.openWeekday) ||
@@ -28,7 +55,11 @@ export const validateProgramRsvp = (rsvp: ProgramRsvp): string | undefined => {
 			(rsvp.openWeekday ?? 0) > 7)
 	)
 		return "Choose a registration opening weekday.";
-	if (rsvp.openRule === "weekly" && rsvp.openDays <= rsvp.closeDays + 7)
+	if (
+		rsvp.openRule === "weekly" &&
+		rsvp.openWeeks === undefined &&
+		rsvp.openDays <= rsvp.closeDays + 7
+	)
 		return "Use a weekly window at least 8 days longer than the closing offset.";
 	if (
 		![rsvp.openDays, rsvp.closeDays, rsvp.reminderDays].every(
@@ -43,6 +74,8 @@ export const validateProgramRsvp = (rsvp: ProgramRsvp): string | undefined => {
 	)
 		return "Choose valid RSVP times.";
 	if (
+		rsvp.openRule !== "season" &&
+		rsvp.openWeeks === undefined &&
 		rsvp.openDays > 0 &&
 		(rsvp.openDays < rsvp.closeDays ||
 			(rsvp.openDays === rsvp.closeDays && rsvp.openTime >= rsvp.closeTime))
@@ -122,16 +155,30 @@ export const applyProgramWindow = (
 		earliestDate,
 		((program.rsvp.openWeekday ?? 7) - weekday + 7) % 7,
 	);
+	const eventWeekday = new Date(`${event.date}T12:00:00Z`).getUTCDay() || 7;
+	const scheduledOpening =
+		program.rsvp.openWeeks === undefined
+			? openingDate
+			: addDays(
+					event.date,
+					1 -
+						eventWeekday -
+						program.rsvp.openWeeks * 7 +
+						(program.rsvp.openWeekday ?? 7) -
+						1,
+				);
 	const opensAt =
-		program.rsvp.openRule === "weekly"
-			? clubTimestamp(openingDate, program.rsvp.openTime, event.timeZone)
-			: program.rsvp.openDays > 0
-				? clubTimestamp(
-						addDays(event.date, -program.rsvp.openDays),
-						program.rsvp.openTime,
-						event.timeZone,
-					)
-				: now;
+		program.rsvp.openRule === "season"
+			? now
+			: program.rsvp.openRule === "weekly"
+				? clubTimestamp(scheduledOpening, program.rsvp.openTime, event.timeZone)
+				: program.rsvp.openDays > 0
+					? clubTimestamp(
+							addDays(event.date, -program.rsvp.openDays),
+							program.rsvp.openTime,
+							event.timeZone,
+						)
+					: now;
 	const closesAt = Math.min(
 		clubTimestamp(
 			addDays(event.date, -program.rsvp.closeDays),

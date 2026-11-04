@@ -117,7 +117,6 @@ export const SessionPeople = ({
 																/>
 																{canCoach(account, event.program) ? (
 																	<FeedbackEditor
-																		collapseLabelOnNarrow
 																		personId={member.id}
 																		eventId={event.id}
 																	/>

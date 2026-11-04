@@ -28,7 +28,6 @@ export const HomeScreen = (): ReactElement => {
 	return (
 		<ClubShell
 			title="Summary"
-			roleTone={workspace === "coaching" ? "coach" : undefined}
 			toolbarCenter={
 				canCoach(account) ? (
 					<GlassPanel padding="none" shape="pill" interactive>

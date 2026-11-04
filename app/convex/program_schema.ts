@@ -1,8 +1,16 @@
 import { v } from "convex/values";
 
 export const programRsvpValue = v.object({
-	openRule: v.optional(v.union(v.literal("before-event"), v.literal("weekly"))),
+	openRule: v.optional(
+		v.union(
+			v.literal("before-event"),
+			v.literal("weekly"),
+			v.literal("season"),
+		),
+	),
 	openWeekday: v.optional(v.number()),
+	openWeeks: v.optional(v.number()),
+	notifyOnOpen: v.optional(v.boolean()),
 	openDays: v.number(),
 	openTime: v.string(),
 	closeDays: v.number(),
