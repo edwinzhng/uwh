@@ -20,6 +20,7 @@ import { CompactPageHeading } from "./compact-page-heading";
 import { HeaderBackdrop } from "./header-backdrop";
 import { nativeTabsAvailable } from "./native-navigation";
 import { nativeHeaderRoute } from "./native-navigation-model";
+import { PageMaterialBackground } from "./page-material-background";
 import { PageReady } from "./page-ready";
 import { PageReveal } from "./page-reveal";
 import { PageTitle } from "./page-title";
@@ -290,6 +291,7 @@ export const AppLayout = ({
 			importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
 			style={{ flex: 1, opacity: visible ? 1 : 0 }}
 		>
+			{Platform.OS !== "web" ? <PageMaterialBackground /> : undefined}
 			{nativeHeader && title ? (
 				<RouterStack.Screen
 					options={{

@@ -6,6 +6,7 @@ import {
 } from "expo-router/react-navigation";
 import { StatusBar } from "expo-status-bar";
 import { type ReactElement, type ReactNode, useMemo } from "react";
+import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
 	initialWindowMetrics,
@@ -60,7 +61,7 @@ export const DesignProvider = ({
 					<MotionProvider>
 						<ThemeProvider value={navigationTheme}>
 							<CardMaterialProvider>
-								<PageMaterialBackground />
+								{Platform.OS === "web" ? <PageMaterialBackground /> : undefined}
 								<StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
 								<AppTitle />
 								<PopupStyles />

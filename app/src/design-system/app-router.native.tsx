@@ -6,6 +6,8 @@ import { useTheme } from "./theme";
 import { motion } from "./tokens";
 import { useMotion } from "./use-motion";
 
+const headerBackground = (): ReactElement => <HeaderBackdrop />;
+
 export const AppRouter = (): ReactElement => {
 	const theme = useTheme();
 	const animate = useMotion();
@@ -31,8 +33,7 @@ export const AppRouter = (): ReactElement => {
 					headerShown: nativeHeaderRoute(route.name),
 					headerBackButtonDisplayMode: "generic",
 					headerTransparent: true,
-					headerBackground: (): ReactElement => <HeaderBackdrop />,
-					headerTitle: "",
+					headerBackground,
 					headerTintColor: theme.text.primary,
 					headerStyle: { backgroundColor: "transparent" },
 					headerShadowVisible: false,

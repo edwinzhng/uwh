@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import { IconButton, Stack, Tabs, ToolbarGroup } from "../design-system";
-import { clubPrograms } from "../domain/programs";
+import { accessiblePrograms } from "../domain/accessible-programs";
 import { CalendarExportButton } from "./calendar-export-button";
 import { ClubShell } from "./club-shell";
 import { EventEditor } from "./event-editor";
@@ -19,7 +19,7 @@ export const AgendaScreen = (): ReactElement => {
 	const [create, setCreate] = useState(review === "create-event");
 	const now = useClubNow();
 	const today = useClubToday();
-	const programs = clubPrograms(data).filter((program) => !program.archived);
+	const programs = accessiblePrograms(data, account);
 	const programId = programs.some((program) => program.id === params.program)
 		? params.program
 		: undefined;
