@@ -56,7 +56,11 @@ export const EventSummary = ({
 					{weekday} {day} {month}
 				</Text>
 			) : undefined}
-			<Text variant={compact ? "overline" : "caption"} tone="secondary">
+			<Text
+				variant={compact ? "overline" : "caption"}
+				weight="regular"
+				tone="secondary"
+			>
 				{metadata}
 			</Text>
 		</Stack>
