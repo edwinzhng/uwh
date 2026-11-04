@@ -172,6 +172,17 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 	const backend = useMemo<Backend>(
 		() => ({
 			social,
+			requestEmailCode: async (email): Promise<void> => {
+				await auth.signIn("email-code", { email: email.trim().toLowerCase() });
+			},
+			completeEmailCode: async (email, code): Promise<void> => {
+				const result = await auth.signIn("email-code", {
+					email: email.trim().toLowerCase(),
+					code,
+				});
+				if (!result.signingIn)
+					throw new Error("Invalid or expired code. Request a new code.");
+			},
 			requestEmailSignIn: async (email): Promise<void> => {
 				await auth.signIn("email-link", {
 					email: email.trim().toLowerCase(),

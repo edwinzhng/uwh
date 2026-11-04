@@ -2,10 +2,12 @@ import type { ReactElement } from "react";
 import { useBackend } from "../backend/context";
 import { Button, Stack, Text } from "../design-system";
 import { providerName, socialProviders } from "../domain/social-auth";
+import { AuthForm } from "./auth-form";
 import { useTask } from "./use-task";
 
 export const VerifyAccount = (): ReactElement => {
-	const social = useBackend().social;
+	const backend = useBackend();
+	const social = backend.social;
 	const task = useTask();
 	return (
 		<Stack gap="sm">
@@ -38,6 +40,9 @@ export const VerifyAccount = (): ReactElement => {
 								}}
 							/>
 						))}
+					{backend.accountInfo?.email ? (
+						<AuthForm verificationEmail={backend.accountInfo.email} />
+					) : undefined}
 				</>
 			)}
 			{task.error ? (

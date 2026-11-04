@@ -18,12 +18,7 @@ const ReviewAuth = (): ReactElement => {
 						: "Sign in"
 			}
 		>
-			<AuthForm
-				key={mode}
-				initialStep={
-					mode === "signUp" ? "signUp" : mode === "reset" ? "reset" : "signIn"
-				}
-			/>
+			<AuthForm key={mode} />
 		</AuthLayout>
 	) : (
 		<Redirect href="/" />

@@ -1,11 +1,6 @@
 import assert from "node:assert/strict";
 import { ConvexHttpClient } from "convex/browser";
 import { api, internal } from "../convex/_generated/api";
-import {
-	type AuthFields,
-	authParameters,
-	validateAuthStep,
-} from "../src/features/auth-form-state";
 import { localRun } from "./local-checks";
 import { localCode } from "./test-auth";
 import { createVerificationRun } from "./verification-fixtures";
@@ -26,30 +21,24 @@ try {
 	);
 	const recovery = new ConvexHttpClient(url, { logger: false });
 	const password = `${crypto.randomUUID()}Aa1!`;
-	const fields: AuthFields = {
-		email: account.email,
-		name: account.name,
-		password,
-		confirmation: password,
-		code: "",
-	};
-	const emailRequest = authParameters("reset", fields);
-	assert(emailRequest);
+	const emailRequest = { flow: "reset", email: account.email };
 	await recovery.action(api.auth.signIn, {
 		provider: "password",
 		params: emailRequest,
 	});
 	const code = await localCode(account.email);
-	const completed = { ...fields, code };
-	assert.equal(validateAuthStep("resetCode", completed), undefined);
-	assert.equal(authParameters("resetCode", completed), undefined);
 	assert.equal(
 		await fixture.client
 			.query(api.account.current, {})
 			.then((value) => value?.id),
 		account.id,
 	);
-	const finalRequest = authParameters("resetPassword", completed);
+	const finalRequest = {
+		flow: "reset-verification",
+		email: account.email,
+		newPassword: password,
+		code,
+	};
 	assert(finalRequest);
 	await assert.rejects(
 		recovery.action(api.auth.signIn, {
@@ -105,7 +94,7 @@ try {
 	assert(newLogin.tokens);
 	fixture.client.setAuth(newLogin.tokens.token);
 	console.log(
-		"Reset flow verified: separate local code step, atomic code/password verification, invalid-code credential preservation, session rotation and one-use code. Fictional account cleanup follows.",
+		"Legacy password compatibility verified: atomic code/password verification, invalid-code credential preservation, session rotation and one-use code. Fictional account cleanup follows.",
 	);
 } finally {
 	await run.close();

@@ -54,3 +54,28 @@ export const authSignInEmail = (): ReturnType<typeof Email> =>
 				purpose: "sign-in",
 			}),
 	});
+
+export const authSignInCode = (): ReturnType<typeof Email> =>
+	Email({
+		id: "email-code",
+		maxAge: 600,
+		generateVerificationToken: async (): Promise<string> =>
+			generateRandomString(
+				{
+					read: (bytes): void => {
+						crypto.getRandomValues(bytes);
+					},
+				},
+				"0123456789",
+				6,
+			),
+		sendVerificationRequest: async (
+			{ identifier, token },
+			ctx?: ActionCtx,
+		): Promise<void> =>
+			deliverAuthEmail(ctx, {
+				email: identifier.trim().toLowerCase(),
+				token,
+				purpose: "sign-in-code",
+			}),
+	});

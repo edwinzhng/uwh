@@ -1,12 +1,12 @@
-- Email links, Google and Apple sign-in are implemented in the production app. Neither provider is configured on the current local backend. Signup and sign-in omit an unavailable provider. Existing accounts retain their working sign-in method. See [production readiness](PRODUCTION-READINESS.md) for launch gaps.
+- The sign-in screen offers Google, Apple and a six-digit email code. Email codes expire after ten minutes and require the matching email; resends have a one-minute cooldown. Unavailable OAuth providers are omitted. Legacy password and email-link endpoints remain for older installed apps; the current interface does not ask users to know or reset an old password.
 
-- Sign in or create an account with Google, Apple, email and password, or a one-time email link.
+- New and existing users share the same sign-in flow. Verified email matches preserve existing accounts, profile names, household links, memberships and roles. Authentication does not migrate an unimported legacy roster or merge conflicting identities.
 - Open **Profile menu → Account settings → Account & security → Connected accounts** to connect or disconnect Google or Apple.
 - A provider with the same verified email uses the existing account. To connect a different address, including Apple’s private relay address, sign in to your existing account and use **Connect**.
 - Connections preserve the account’s name, primary email, club membership, roles, player profile and children. Provider names never overwrite a name you edited in the app.
 - Accounts that already have separate club records or other sign-in methods cannot be merged through this screen. That requires a deliberate data migration.
 - The last working sign-in method cannot be disconnected. Disconnecting signs out other devices. A provider proving the same verified primary email can reconnect on a later sign-in; disconnecting is not a ban on that provider or a revocation of its external consent.
-- Password-free accounts verify a connected provider before deleting the account. Verification lasts five minutes and is bound to the current session. Owner-transfer requirements still apply.
+- Account deletion accepts a sign-in completed within five minutes, a fresh email-code sign-in for the current account, or verification through a connected OAuth provider. Refreshing an old session does not renew this verification window. Owner-transfer requirements still apply.
 - Invitation links survive sign-in. An invitation accepts either the primary verified email or a currently connected provider’s verified email. Apple relay users invited at a different address should first join with the invited email, then connect Apple.
 
 - Set credentials on the **Convex backend**, never in `EXPO_PUBLIC_*` variables. Set `SITE_URL` to the app’s web origin and keep `EXPO_PUBLIC_CONVEX_URL` and `EXPO_PUBLIC_CONVEX_SITE_URL` pointed at the same deployment.
@@ -53,3 +53,5 @@
 - Google Branding now has the app-domain homepage, privacy policy, and terms URLs above, plus authorized domain `calgaryuwh.com`; Google confirmed the changes were saved. Both personal Google test accounts remain configured. The user confirmed publication, and Google Audience now reports In production. Completed native provider sign-in remains a device acceptance check.
 
 - The Vercel app proxies `/api/auth/*` to production HTTP actions with caching disabled. To use the branded OAuth origin, register `https://app.calgaryuwh.com/api/auth/callback/google` and `https://app.calgaryuwh.com/api/auth/callback/apple` with their providers, then set backend `CUSTOM_AUTH_SITE_URL=https://app.calgaryuwh.com`. Keep existing provider callbacks during rollout. This changes OAuth URLs only; retain `CONVEX_SITE_URL`, the token issuer and the frontend Convex API URL. Remove `CUSTOM_AUTH_SITE_URL` to restore the default OAuth origin. Both branded provider callbacks and the production override are configured. The proxy preserves secure, HTTP-only, host-only OAuth cookies; completed native sign-in remains a device acceptance check.
+
+- New sessions last at most 365 days, with refresh access expiring after 90 days without activity. Refresh preserves the original session expiry. Previously issued sessions keep their stored expiry until the user signs in again; no existing sessions or credentials are deleted during rollout.

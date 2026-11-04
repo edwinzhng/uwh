@@ -11,13 +11,11 @@ export const DeleteAccountAction = (): ReactElement | undefined => {
 	const user = backend.accountInfo;
 	const task = useTask();
 	const [open, setOpen] = useState(false);
-	const [password, setPassword] = useState("");
 	const [confirmed, setConfirmed] = useState("");
 	const [transferTo, setTransferTo] = useState<Id<"users">>();
 	if (!user) return undefined;
 	const changeOpen = (value: boolean): void => {
 		if (task.busy) return;
-		setPassword("");
 		setConfirmed("");
 		setTransferTo(undefined);
 		task.clear();
@@ -43,20 +41,14 @@ export const DeleteAccountAction = (): ReactElement | undefined => {
 						isLoading={task.busy}
 						validationError={
 							confirmed !== "DELETE" ||
-							(user.hasPassword
-								? !password
-								: !backend.social?.info?.reauthenticated) ||
+							!backend.social?.info?.reauthenticated ||
 							(user.mustTransfer && !transferTo)
 								? "Check the required fields"
 								: undefined
 						}
 						onPress={(): void => {
 							void task.run(async (): Promise<void> => {
-								await backend.deleteAccount?.(
-									user.hasPassword ? password : undefined,
-									transferTo,
-								);
-								setPassword("");
+								await backend.deleteAccount?.(undefined, transferTo);
 								await backend.signOut?.();
 							});
 						}}
@@ -103,18 +95,7 @@ export const DeleteAccountAction = (): ReactElement | undefined => {
 							will also be deleted.
 						</Text>
 					) : undefined}
-					{user.hasPassword ? (
-						<Field
-							label="Password"
-							secure
-							autoComplete="current-password"
-							isDisabled={task.busy}
-							value={password}
-							onValueChange={setPassword}
-						/>
-					) : (
-						<VerifyAccount />
-					)}
+					<VerifyAccount />
 					<Field
 						label="Type DELETE to confirm"
 						isDisabled={task.busy}

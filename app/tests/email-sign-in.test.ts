@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import {
 	signInEmailError,
+	validEmailSignInCode,
 	validEmailSignInToken,
 } from "../src/domain/email-sign-in";
 import { authRedirect } from "../src/domain/social-auth";
@@ -33,4 +34,11 @@ test("email links allow only the app callback or same-site destinations", (): vo
 		"javascript:alert(1)",
 	])
 		expect(() => authRedirect(target, "https://club.example")).toThrow();
+});
+
+test("email codes accept exactly six digits, including leading zeroes", (): void => {
+	for (const value of ["000001", "123456", " 012345 "])
+		expect(validEmailSignInCode(value)).toBe(true);
+	for (const value of ["", "12345", "1234567", "12a456", "123 45"])
+		expect(validEmailSignInCode(value)).toBe(false);
 });

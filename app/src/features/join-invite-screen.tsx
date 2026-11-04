@@ -54,7 +54,7 @@ const LiveJoinInviteScreen = (): ReactElement => {
 						<Text variant="small" tone="secondary">
 							Use the email address that received this invite.
 						</Text>
-						<AuthForm initialStep="signUp" />
+						<AuthForm />
 					</>
 				) : (
 					<>

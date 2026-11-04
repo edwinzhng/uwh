@@ -2,13 +2,15 @@ import Apple from "@auth/core/providers/apple";
 import Google from "@auth/core/providers/google";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
+import { authSessionPolicy } from "../src/domain/auth-session-policy";
 import { authRedirect } from "../src/domain/social-auth";
-import { authEmail, authSignInEmail } from "./auth_email";
+import { authEmail, authSignInCode, authSignInEmail } from "./auth_email";
 import { withPasswordErrors } from "./auth_errors";
 import { saveAuthUser } from "./auth_users";
 import { socialEnabled } from "./social_config";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
+	session: authSessionPolicy,
 	callbacks: {
 		createOrUpdateUser: saveAuthUser,
 		redirect: async ({ redirectTo }): Promise<string> =>
@@ -16,6 +18,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
 	},
 	providers: [
 		authSignInEmail(),
+		authSignInCode(),
 		...(socialEnabled("google")
 			? [
 					Google({

@@ -29,6 +29,11 @@ type ConnectedAccountsInfo = {
 const verificationExpiration = async (ctx: QueryCtx): Promise<number> => {
 	const sessionId = await getAuthSessionId(ctx);
 	if (!sessionId) return 0;
+	const session = await ctx.db.get(sessionId);
+	const freshSessionExpiration =
+		session && session.userId === (await getAuthUserId(ctx))
+			? session._creationTime + 5 * 60000
+			: 0;
 	const requests = await ctx.db
 		.query("accountConnections")
 		.withIndex("by_session", (q) => q.eq("sessionId", sessionId))
@@ -37,7 +42,10 @@ const verificationExpiration = async (ctx: QueryCtx): Promise<number> => {
 		.filter(
 			(request) => request.purpose === "verify" && request.state === "complete",
 		)
-		.reduce((latest, request) => Math.max(latest, request.expiresAt), 0);
+		.reduce(
+			(latest, request) => Math.max(latest, request.expiresAt),
+			freshSessionExpiration,
+		);
 };
 
 export const recentVerification = async (ctx: QueryCtx): Promise<boolean> =>
@@ -46,7 +54,9 @@ export const recentVerification = async (ctx: QueryCtx): Promise<boolean> =>
 const usable = (account: Doc<"authAccounts">): boolean =>
 	account.provider === "password"
 		? Boolean(account.secret && account.emailVerified)
-		: isSocialProvider(account.provider) && socialEnabled(account.provider);
+		: account.provider === "email-code" || account.provider === "email-link"
+			? Boolean(account.emailVerified)
+			: isSocialProvider(account.provider) && socialEnabled(account.provider);
 
 export const list = query({
 	args: {},

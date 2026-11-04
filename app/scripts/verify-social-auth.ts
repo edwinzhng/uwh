@@ -265,9 +265,9 @@ try {
 		}),
 		/unavailable/,
 	);
-	await assert.rejects(
-		apple.client.action(api.account_actions.deleteAccount, {}),
-		/Verify your identity/,
+	assert.equal(
+		(await apple.client.query(api.connected_accounts.list, {})).reauthenticated,
+		true,
 	);
 	const expired = await request(owner, "apple", "link", true);
 	const appleProof = await session(apple.userId, apple.email);

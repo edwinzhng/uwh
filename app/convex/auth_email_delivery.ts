@@ -11,7 +11,7 @@ export const deliverAuthEmail = async (
 	}: {
 		email: string;
 		token: string;
-		purpose: "verify" | "reset" | "sign-in";
+		purpose: "verify" | "reset" | "sign-in" | "sign-in-code";
 		url?: string;
 	},
 ): Promise<void> => {
@@ -41,9 +41,11 @@ export const deliverAuthEmail = async (
 			subject:
 				purpose === "sign-in"
 					? "Your UWH Club sign-in link"
-					: purpose === "verify"
-						? "Verify your UWH Club email"
-						: "Reset your UWH Club password",
+					: purpose === "sign-in-code"
+						? "Your UWH Club sign-in code"
+						: purpose === "verify"
+							? "Verify your UWH Club email"
+							: "Reset your UWH Club password",
 			text:
 				purpose === "sign-in"
 					? `Sign in to UWH Club:\n\n${url}\n\nThis link works once and expires in 10 minutes. If you didn’t request it, ignore this email.`

@@ -9,6 +9,8 @@ import type { SocialAuthService } from "./use-social-auth";
 
 export type Backend = {
 	social?: SocialAuthService;
+	requestEmailCode?: (email: string) => Promise<void>;
+	completeEmailCode?: (email: string, code: string) => Promise<void>;
 	requestEmailSignIn?: (email: string) => Promise<void>;
 	completeEmailSignIn?: (code: string) => Promise<void>;
 	invites?: InviteService;
