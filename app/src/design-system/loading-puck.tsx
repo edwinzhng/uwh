@@ -32,6 +32,7 @@ export const LoadingPuck = ({
 		| {
 				dispose: () => void;
 				draw: () => void;
+				pause: () => void;
 		  }
 		| undefined
 	>(undefined);
@@ -63,6 +64,7 @@ export const LoadingPuck = ({
 		};
 		lifecycle.current?.dispose();
 		lifecycle.current = {
+			pause: (): void => cancelAnimationFrame(state.frame),
 			draw: (): void => {
 				cancelAnimationFrame(state.frame);
 				state.last = performance.now();
@@ -84,7 +86,8 @@ export const LoadingPuck = ({
 	}, [appearance, theme.mode, canAnimate, active]);
 	useRenderActivity((isActive): void => {
 		preferences.current.animate = canAnimate && isActive;
-		lifecycle.current?.draw();
+		if (preferences.current.animate) lifecycle.current?.draw();
+		else lifecycle.current?.pause();
 	});
 	useEffect(
 		() => (): void => {

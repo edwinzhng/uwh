@@ -1,4 +1,5 @@
 import { watercolorFragment } from "./watercolor-fragment";
+import { watercolorRenderSize } from "./watercolor-render-size";
 
 export type WatercolorFrame = {
 	time: number;
@@ -8,6 +9,12 @@ export type WatercolorFrame = {
 	base: string;
 	pigment: string;
 	ground: string;
+};
+type Target = {
+	framebuffer: WebGLFramebuffer;
+	texture: WebGLTexture;
+	width: number;
+	height: number;
 };
 
 export const createWatercolorRenderer = (
@@ -25,37 +32,45 @@ export const createWatercolorRenderer = (
 		}
 		return shader;
 	};
-	const vertex = compile(
-		gl.VERTEX_SHADER,
-		"attribute vec2 position; void main(){gl_Position=vec4(position,0.,1.);}",
-	);
-	const fragment = compile(
-		gl.FRAGMENT_SHADER,
+	const program = (fragmentSource: string): WebGLProgram => {
+		const shader = gl.createProgram();
+		if (!shader) throw new Error("Watercolor renderer unavailable.");
+		const vertex = compile(
+			gl.VERTEX_SHADER,
+			"attribute vec2 position; varying vec2 uv; void main(){uv=position*.5+.5;gl_Position=vec4(position,0.,1.);}",
+		);
+		const fragment = compile(gl.FRAGMENT_SHADER, fragmentSource);
+		gl.attachShader(shader, vertex);
+		gl.attachShader(shader, fragment);
+		gl.linkProgram(shader);
+		gl.deleteShader(vertex);
+		gl.deleteShader(fragment);
+		if (!gl.getProgramParameter(shader, gl.LINK_STATUS)) {
+			gl.deleteProgram(shader);
+			throw new Error("Watercolor shader could not link.");
+		}
+		return shader;
+	};
+	const material = program(
 		watercolorFragment
 			.replace("#version 300 es", "")
 			.replace("out vec4 fragColor;", "")
 			.replace("fragColor=", "gl_FragColor="),
 	);
-	const program = gl.createProgram();
+	const copy = program(
+		"precision mediump float; varying vec2 uv; uniform sampler2D image; void main(){gl_FragColor=texture2D(image,uv);}",
+	);
 	const buffer = gl.createBuffer();
-	if (!program || !buffer) throw new Error("Watercolor renderer unavailable.");
-	gl.attachShader(program, vertex);
-	gl.attachShader(program, fragment);
-	gl.linkProgram(program);
-	gl.deleteShader(vertex);
-	gl.deleteShader(fragment);
-	if (!gl.getProgramParameter(program, gl.LINK_STATUS))
-		throw new Error("Watercolor shader could not link.");
-	gl.useProgram(program);
+	if (!buffer) throw new Error("Watercolor geometry unavailable.");
 	gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 	gl.bufferData(
 		gl.ARRAY_BUFFER,
 		new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
 		gl.STATIC_DRAW,
 	);
-	const position = gl.getAttribLocation(program, "position");
-	gl.enableVertexAttribArray(position);
-	gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+	const materialPosition = gl.getAttribLocation(material, "position");
+	const copyPosition = gl.getAttribLocation(copy, "position");
+	const image = gl.getUniformLocation(copy, "image");
 	const uniforms = Object.fromEntries(
 		[
 			"resolution",
@@ -66,8 +81,59 @@ export const createWatercolorRenderer = (
 			"base",
 			"pigment",
 			"ground",
-		].map((name) => [name, gl.getUniformLocation(program, `u_${name}`)]),
+		].map((name) => [name, gl.getUniformLocation(material, `u_${name}`)]),
 	);
+	const state: { target?: Target } = {};
+	const discardTarget = (): void => {
+		if (!state.target) return;
+		gl.deleteFramebuffer(state.target.framebuffer);
+		gl.deleteTexture(state.target.texture);
+		state.target = undefined;
+	};
+	const target = (width: number, height: number): Target => {
+		if (state.target?.width === width && state.target.height === height)
+			return state.target;
+		discardTarget();
+		const framebuffer = gl.createFramebuffer();
+		const texture = gl.createTexture();
+		if (!framebuffer || !texture)
+			throw new Error("Watercolor surface unavailable.");
+		gl.bindTexture(gl.TEXTURE_2D, texture);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texImage2D(
+			gl.TEXTURE_2D,
+			0,
+			gl.RGBA,
+			width,
+			height,
+			0,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			null,
+		);
+		gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+		gl.framebufferTexture2D(
+			gl.FRAMEBUFFER,
+			gl.COLOR_ATTACHMENT0,
+			gl.TEXTURE_2D,
+			texture,
+			0,
+		);
+		if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE)
+			throw new Error("Watercolor surface is incomplete.");
+		state.target = { framebuffer, texture, width, height };
+		return state.target;
+	};
+	const activateProgram = gl.useProgram.bind(gl);
+	const quad = (shader: WebGLProgram, position: number): void => {
+		activateProgram(shader);
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+		gl.enableVertexAttribArray(position);
+		gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+	};
 	const color = (name: string, hex: string): void =>
 		gl.uniform3f(
 			uniforms[name] ?? null,
@@ -77,12 +143,18 @@ export const createWatercolorRenderer = (
 		);
 	return {
 		draw: (frame): void => {
-			gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-			gl.uniform2f(
-				uniforms.resolution ?? null,
-				gl.drawingBufferWidth,
-				gl.drawingBufferHeight,
-			);
+			const width = gl.drawingBufferWidth;
+			const height = gl.drawingBufferHeight;
+			if (width < 1 || height < 1) return;
+			const size = watercolorRenderSize(width, height);
+			const surface = target(size.width, size.height);
+			gl.disable(gl.SCISSOR_TEST);
+			gl.disable(gl.DEPTH_TEST);
+			gl.disable(gl.BLEND);
+			gl.bindFramebuffer(gl.FRAMEBUFFER, surface.framebuffer);
+			gl.viewport(0, 0, surface.width, surface.height);
+			quad(material, materialPosition);
+			gl.uniform2f(uniforms.resolution ?? null, surface.width, surface.height);
 			gl.uniform1f(uniforms.time ?? null, frame.time);
 			gl.uniform1f(uniforms.seed ?? null, frame.seed);
 			gl.uniform1f(uniforms.grain ?? null, frame.grain);
@@ -91,10 +163,19 @@ export const createWatercolorRenderer = (
 			color("pigment", frame.pigment);
 			color("ground", frame.ground);
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+			gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+			gl.viewport(0, 0, width, height);
+			quad(copy, copyPosition);
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, surface.texture);
+			gl.uniform1i(image, 0);
+			gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 		},
 		dispose: (): void => {
+			discardTarget();
 			gl.deleteBuffer(buffer);
-			gl.deleteProgram(program);
+			gl.deleteProgram(material);
+			gl.deleteProgram(copy);
 		},
 	};
 };

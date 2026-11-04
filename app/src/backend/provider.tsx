@@ -39,12 +39,14 @@ import {
 	Text,
 } from "../design-system";
 import type { AppAction } from "../domain/app-types";
+import { localAccountToolsAllowed } from "../domain/local-account-tools";
 import { AccountGate } from "../features/account-gate";
 import { AuthCallbackScreen } from "../features/auth-callback-screen";
 import { ConnectAccountScreen } from "../features/connect-account-screen";
 import { DeleteAccountScreen } from "../features/delete-account-screen";
 import { EmailSignInScreen } from "../features/email-sign-in-screen";
 import { JoinInviteScreen } from "../features/join-invite-screen";
+import { LocalAccountSignIn } from "../features/local-account-sign-in";
 import { PublicScheduleScreen } from "../features/public-schedule-screen";
 import { TermsGate } from "../features/terms-gate";
 import { callbackAddress, handlesAuthCode } from "./auth-browser";
@@ -420,7 +422,15 @@ export const BackendProvider = ({
 			storage={tokenStorage}
 			shouldHandleCode={handlesAuthCode}
 		>
-			<LiveBridge>{children}</LiveBridge>
+			{path === "/local-login" &&
+			localAccountToolsAllowed(
+				process.env.EXPO_PUBLIC_LOCAL_ACCOUNT_TOOLS,
+				url,
+			) ? (
+				<LocalAccountSignIn />
+			) : (
+				<LiveBridge>{children}</LiveBridge>
+			)}
 		</ConvexAuthProvider>
 	) : path === "/otp-test" || process.env.EXPO_PUBLIC_DEMO_MODE === "true" ? (
 		<PreviewProvider

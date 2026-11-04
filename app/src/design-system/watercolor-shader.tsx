@@ -29,6 +29,8 @@ export const WatercolorShader = ({
 	const motion = useMotion();
 	const palette = categoryPalette[theme.mode][category];
 	const [size, setSize] = useState({ width: 0, height: 0 });
+	const phase = useRef(0);
+	const surface = useRef("0:0");
 	const preferences = useRef({
 		active: active && motion,
 		tuning,
@@ -38,17 +40,18 @@ export const WatercolorShader = ({
 	});
 
 	const lifecycle = useRef<
-		{ draw: () => void; dispose: () => void } | undefined
+		{ draw: () => void; pause: () => void; dispose: () => void } | undefined
 	>(undefined);
 	const onContextCreate = useCallback((gl: ExpoWebGLRenderingContext): void => {
 		const renderer = createWatercolorRenderer(gl);
-		const state = { frame: 0, time: 0, last: performance.now() };
+		const state = { frame: 0, time: phase.current, last: performance.now() };
 		const render = (now: number): void => {
 			const current = preferences.current;
 			if (current.active)
 				state.time +=
 					(Math.min(now - state.last, 100) / 1000) * current.tuning.speed;
 			state.last = now;
+			phase.current = state.time;
 			renderer.draw({
 				time: state.time,
 				seed: current.seed,
@@ -64,6 +67,7 @@ export const WatercolorShader = ({
 		};
 		lifecycle.current?.dispose();
 		lifecycle.current = {
+			pause: (): void => cancelAnimationFrame(state.frame),
 			draw: (): void => {
 				cancelAnimationFrame(state.frame);
 				state.last = performance.now();
@@ -88,7 +92,8 @@ export const WatercolorShader = ({
 	}, [active, motion, tuning, palette, theme.background.card, seed, category]);
 	useRenderActivity((isActive): void => {
 		preferences.current.active = motion && isActive;
-		lifecycle.current?.draw();
+		if (preferences.current.active) lifecycle.current?.draw();
+		else lifecycle.current?.pause();
 	});
 	useEffect(
 		() => (): void => {
@@ -97,10 +102,8 @@ export const WatercolorShader = ({
 		},
 		[],
 	);
-	const scale = Math.min(
-		1,
-		Math.sqrt(80000 / Math.max(1, size.width * size.height)) / PixelRatio.get(),
-	);
+
+	const surfaceKey = `${Math.round(size.width * PixelRatio.get())}:${Math.round(size.height * PixelRatio.get())}`;
 	return (
 		<View
 			pointerEvents="none"
@@ -108,6 +111,12 @@ export const WatercolorShader = ({
 			importantForAccessibility="no-hide-descendants"
 			onLayout={({ nativeEvent }): void => {
 				const { width, height } = nativeEvent.layout;
+				const nextSurface = `${Math.round(width * PixelRatio.get())}:${Math.round(height * PixelRatio.get())}`;
+				if (nextSurface !== surface.current) {
+					surface.current = nextSurface;
+					lifecycle.current?.dispose();
+					lifecycle.current = undefined;
+				}
 				setSize((previous) =>
 					previous.width === width && previous.height === height
 						? previous
@@ -121,15 +130,12 @@ export const WatercolorShader = ({
 		>
 			{size.width > 0 && size.height > 0 ? (
 				<GLView
+					key={surfaceKey}
 					msaaSamples={0}
-					onContextCreate={onContextCreate}
-					style={{
-						width: size.width * scale,
-						height: size.height * scale,
-						transform: [{ scale: 1 / scale }],
-						transformOrigin: "top left",
-						opacity: tuning.intensity,
+					onContextCreate={(gl): void => {
+						if (surface.current === surfaceKey) onContextCreate(gl);
 					}}
+					style={[StyleSheet.absoluteFill, { opacity: tuning.intensity }]}
 				/>
 			) : undefined}
 		</View>
