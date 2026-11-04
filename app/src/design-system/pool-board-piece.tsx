@@ -140,7 +140,7 @@ export const PoolPiece = ({
 					borderRadius: geometry.touch / 2,
 					borderWidth: selected ? geometry.focus : geometry.border,
 					borderStyle: spot.person ? "solid" : "dashed",
-					borderColor: selected ? theme.focus : theme.border,
+					borderColor: selected ? theme.focus : theme.controlBorder,
 					backgroundColor: selected
 						? theme.background.selected
 						: theme.background.card,
@@ -149,7 +149,12 @@ export const PoolPiece = ({
 				}}
 			>
 				{spot.person ? (
-					<Avatar compact name={spot.person.name} personId={spot.person.id} />
+					<Avatar
+						bright
+						compact
+						name={spot.person.name}
+						personId={spot.person.id}
+					/>
 				) : (
 					<Text
 						style={{
@@ -205,8 +210,8 @@ export const PoolPiece = ({
 					numberOfLines={1}
 					style={{
 						...typography.navigation,
-						fontFamily: font.regular,
-						color: theme.text.secondary,
+						fontFamily: font.semibold,
+						color: theme.text.primary,
 						textAlign: "center",
 					}}
 				>

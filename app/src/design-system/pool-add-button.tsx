@@ -24,9 +24,11 @@ export const PoolAddButton = ({
 				justifyContent: "center",
 				borderRadius: corners.pill,
 				borderWidth: geometry.border,
-				borderStyle: "dotted",
-				borderColor: theme.border,
-				backgroundColor: pressed ? theme.background.pressed : "transparent",
+				borderStyle: "solid",
+				borderColor: theme.controlBorder,
+				backgroundColor: pressed
+					? theme.background.pressed
+					: theme.background.card,
 			})}
 		>
 			<Icon name="plus" size="sm" />

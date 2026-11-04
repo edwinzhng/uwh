@@ -20,7 +20,6 @@ export const TeamCaptain = ({
 		<Select
 			hideLabel
 			compact
-			appearance="context"
 			label={`${side === "black" ? "Black" : "White"} captain`}
 			value={personId ?? "none"}
 			options={[

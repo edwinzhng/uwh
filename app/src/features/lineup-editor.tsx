@@ -48,13 +48,11 @@ export const LineupEditor = ({
 	plan,
 	onRegenerate,
 	canRegenerate,
-	overlayOpen,
 	resetRevision,
 }: {
 	plan: TeamPlan;
 	onRegenerate: () => void;
 	canRegenerate: boolean;
-	overlayOpen: boolean;
 	resetRevision?: number;
 }): ReactElement => {
 	const { data, account, workspaceId, source, dispatch } = useApp();
@@ -342,16 +340,7 @@ export const LineupEditor = ({
 									: "Youth"
 						}
 					>
-						<PoolBoardGroup
-							active={
-								!overlayOpen &&
-								!rotation &&
-								!confirmSave &&
-								!discarding &&
-								!regenerating &&
-								publishRevision === undefined
-							}
-						>
+						<PoolBoardGroup>
 							<PoolBoardColumns>
 								{(["black", "white"] as const).map((team) => (
 									<TeamPool

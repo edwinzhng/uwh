@@ -188,29 +188,38 @@ export const PoolBoard = ({
 			<Animated.View style={[{ gap: space.sm }, activeStyle]}>
 				<View
 					style={{
-						flexDirection: "row",
-						alignItems: "center",
-						justifyContent: "space-between",
-						gap: space.xs,
-						flexWrap: "wrap",
+						gap: space.sm,
+						padding: space.sm,
+						borderRadius: corners.panel,
+						backgroundColor: theme.background.card,
 					}}
 				>
-					<Text
+					<View
 						style={{
-							...typography.label,
-							fontFamily: font.semibold,
-							color: theme.text.primary,
+							flexDirection: "row",
+							alignItems: "center",
+							justifyContent: "space-between",
+							gap: space.xs,
+							flexWrap: "wrap",
 						}}
 					>
-						{label}
-					</Text>
-					{headerAction ? (
-						<View style={{ maxWidth: "100%", minWidth: 0, flexShrink: 1 }}>
-							{headerAction}
-						</View>
-					) : undefined}
+						<Text
+							style={{
+								...typography.label,
+								fontFamily: font.semibold,
+								color: theme.text.primary,
+							}}
+						>
+							{label}
+						</Text>
+						{headerAction ? (
+							<View style={{ maxWidth: "100%", minWidth: 0, flexShrink: 1 }}>
+								{headerAction}
+							</View>
+						) : undefined}
+					</View>
+					{summary}
 				</View>
-				{summary}
 				<View
 					ref={board}
 					collapsable={false}

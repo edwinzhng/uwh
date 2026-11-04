@@ -15,7 +15,7 @@ const StrengthLabel = ({
 }): ReactElement => {
 	const summary = profiles ? teamStrength(people, profiles) : undefined;
 	return (
-		<Text variant="caption" tone="secondary">
+		<Text variant="caption">
 			{summary
 				? `Score · ${summary.scored ? summary.total : "—"}${summary.scored < summary.count ? ` · ${summary.scored}/${summary.count} rated` : ""}`
 				: "Score · —"}

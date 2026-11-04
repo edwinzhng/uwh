@@ -122,7 +122,6 @@ export const TeamPool = ({
 								<Select
 									hideLabel
 									compact
-									appearance="context"
 									label={`${side === "black" ? "Black" : "White"} referee`}
 									value={referee?.personId ?? "none"}
 									options={[

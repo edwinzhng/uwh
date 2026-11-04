@@ -15,6 +15,7 @@ export const Avatar = ({
 	personId,
 	icon,
 	initials = false,
+	bright = false,
 }: {
 	name: string;
 	compact?: boolean;
@@ -24,6 +25,7 @@ export const Avatar = ({
 	personId?: string;
 	icon?: IconName;
 	initials?: boolean;
+	bright?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
 	const source = useContext(AvatarSourceContext);
@@ -41,7 +43,7 @@ export const Avatar = ({
 		};
 	}, [uri, photoId, source]);
 	const resolvedUri = uri ?? (loaded?.id === photoId ? loaded?.uri : undefined);
-	const colors = avatarColors(name, theme.mode);
+	const colors = avatarColors(name, bright ? "light" : theme.mode);
 	const [failedUri, setFailedUri] = useState<string>();
 	const size = large
 		? geometry.avatar * 2

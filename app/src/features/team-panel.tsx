@@ -129,7 +129,6 @@ const TeamPanelContent = ({
 					canRegenerate={
 						canGenerate && eventAttendees(data, event.id, partId).length >= 2
 					}
-					overlayOpen={options}
 					resetRevision={
 						generated?.eventId === event.id && generated.partId === partId
 							? generated.revision
@@ -207,7 +206,7 @@ const TeamPanelContent = ({
 														: "Youth"
 											}
 										>
-											<PoolBoardGroup active={!options}>
+											<PoolBoardGroup>
 												<PoolBoardColumns>
 													{(["black", "white"] as const).map((side) => (
 														<TeamPool

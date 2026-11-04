@@ -4,15 +4,9 @@ import {
 	type ReactNode,
 	useMemo,
 	useRef,
-	useState,
 } from "react";
 import { View } from "react-native";
-import {
-	runOnJS,
-	type SharedValue,
-	useAnimatedReaction,
-	useSharedValue,
-} from "react-native-reanimated";
+import { type SharedValue, useSharedValue } from "react-native-reanimated";
 import { LineupBackdrop } from "./lineup-backdrop";
 import type { PoolBoardDrag } from "./pool-board-layout";
 import { useTheme } from "./theme";
@@ -30,21 +24,12 @@ export const PoolBoardContext = createContext<
 >(undefined);
 export const PoolBoardGroup = ({
 	children,
-	active = true,
 }: {
 	children: ReactNode;
-	active?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
 	const targets = useRef(new Map<string, DropTarget>());
 	const drag = useSharedValue<PoolBoardDrag | undefined>(undefined);
-	const [dragging, setDragging] = useState(false);
-	useAnimatedReaction(
-		() => drag.get() !== undefined,
-		(moving, previous): void => {
-			if (moving !== previous) runOnJS(setDragging)(moving);
-		},
-	);
 	const value = useMemo(
 		() => ({
 			register: (id: string, target: DropTarget): void => {
@@ -75,7 +60,7 @@ export const PoolBoardGroup = ({
 					backgroundColor: theme.background.secondary,
 				}}
 			>
-				<LineupBackdrop active={active && !dragging} />
+				<LineupBackdrop />
 				{children}
 			</View>
 		</PoolBoardContext.Provider>
