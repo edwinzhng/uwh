@@ -23,7 +23,7 @@ export const personalFitnessRows = (
 	state: FitnessState,
 	account: Account,
 	person: Member,
-	seasonId: string,
+	seasonId?: string,
 ): PersonalFitnessRow[] => {
 	if (!canReadProgress(account, person)) return [];
 	return state.tests
@@ -33,7 +33,7 @@ export const personalFitnessRows = (
 					(entry) =>
 						entry.personId === person.id &&
 						entry.testId === test._id &&
-						entry.seasonId === seasonId,
+						(!seasonId || entry.seasonId === seasonId),
 				)
 				.slice()
 				.sort(

@@ -65,23 +65,19 @@ export const HouseholdEventCard = ({
 	if (past && compactPast)
 		return (
 			<Surface density="compact">
-				<Row gap="sm">
-					<Stack grow>
-						<EventSummary
-							title={event.title}
-							weekday={date.weekday}
-							day={date.day}
-							month={date.month}
-							dateLabel={formatDate(event.date)}
-							time={eventTimeRange(event.start, event.end)}
-							venue={venueName(event.venue)}
-							href={{ pathname: "/session", params: { event: event.id } }}
-							dateLayout={dateLayout}
-							compact
-						/>
-					</Stack>
-					<SessionReflectionAction event={event} />
-				</Row>
+				<EventSummary
+					title={event.title}
+					weekday={date.weekday}
+					day={date.day}
+					month={date.month}
+					dateLabel={formatDate(event.date)}
+					time={eventTimeRange(event.start, event.end)}
+					venue={venueName(event.venue)}
+					href={{ pathname: "/session", params: { event: event.id } }}
+					dateLayout={dateLayout}
+					compact
+					actions={<SessionReflectionAction event={event} />}
+				/>
 			</Surface>
 		);
 	return (

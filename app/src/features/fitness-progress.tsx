@@ -42,7 +42,7 @@ export const FitnessProgress = ({
 		>
 			{({ roster: page, trends }) => (
 				<Stack>
-					{selected.length ? (
+					{selected.length && test.unit !== "pass_fail" ? (
 						<Stack gap="sm">
 							<SectionHeading
 								action={

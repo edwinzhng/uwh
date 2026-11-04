@@ -14,7 +14,6 @@ import {
 import type { Member } from "../domain/app-types";
 import { PersonalFitnessCards } from "./personal-fitness-cards";
 import { PersonalFitnessSummary } from "./personal-fitness-summary";
-import { SeasonSelect } from "./season-select";
 import { useSeason } from "./use-season";
 
 export const PersonalFitness = ({
@@ -52,13 +51,12 @@ export const PersonalFitness = ({
 				>
 					Fitness tests
 				</SectionHeading>
-			) : (
-				<SeasonSelect />
-			)}
+			) : undefined}
 			<PersonalFitnessData
 				key={`${member.id}:${seasonId}`}
 				member={member}
-				seasonId={seasonId}
+				allTests={full}
+				seasonId={full ? undefined : seasonId}
 			>
 				{({ rows, loading, more, loadingMore, loadMore }) => (
 					<Stack gap="sm">
@@ -74,7 +72,7 @@ export const PersonalFitness = ({
 								description={more ? "Checking earlier results…" : undefined}
 							/>
 						) : full ? (
-							<PersonalFitnessCards rows={rows} />
+							<PersonalFitnessCards rows={rows} personId={member.id} />
 						) : (
 							<PersonalFitnessSummary
 								rows={rows}

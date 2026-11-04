@@ -1,6 +1,6 @@
 import { usePaginatedQuery } from "convex/react";
 import { useAtomValue } from "jotai";
-import type { ReactElement, ReactNode } from "react";
+import { type ReactElement, type ReactNode, useEffect } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
 import { previewFitnessAtom } from "../demo/fitness-state";
@@ -19,12 +19,14 @@ type Result = {
 };
 type Props = {
 	member: Member;
-	seasonId: string;
+	seasonId?: string;
+	allTests?: boolean;
 	children: (result: Result) => ReactNode;
 };
 const LivePersonalFitness = ({
 	member,
 	seasonId,
+	allTests = false,
 	children,
 }: Props): ReactElement => {
 	const result = usePaginatedQuery(
@@ -32,6 +34,9 @@ const LivePersonalFitness = ({
 		{ personId: member.id, seasonId },
 		{ initialNumItems: 8 },
 	);
+	useEffect((): void => {
+		if (allTests && result.status === "CanLoadMore") result.loadMore(8);
+	}, [allTests, result.status, result.loadMore]);
 	return (
 		<>
 			{children({
@@ -66,10 +71,15 @@ const PreviewPersonalFitness = ({
 export const PersonalFitnessData = ({
 	member,
 	seasonId,
+	allTests,
 	children,
 }: Props): ReactElement =>
 	useApp().source === "convex" ? (
-		<LivePersonalFitness member={member} seasonId={seasonId}>
+		<LivePersonalFitness
+			member={member}
+			seasonId={seasonId}
+			allTests={allTests}
+		>
 			{children}
 		</LivePersonalFitness>
 	) : (

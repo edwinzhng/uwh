@@ -6,7 +6,6 @@ import {
 
 test("native detail pages keep native back controls without exposing a fifth primary tab", (): void => {
 	for (const name of [
-		"account",
 		"account-settings",
 		"session",
 		"member",
@@ -17,6 +16,7 @@ test("native detail pages keep native back controls without exposing a fifth pri
 	for (const name of [
 		"",
 		"(tabs)",
+		"account",
 		"join",
 		"auth-callback",
 		"review-auth",

@@ -18,7 +18,7 @@ export const EventSummary = ({
 	venue,
 	href,
 	dateLayout = "rail",
-	compact = false,
+	compact = true,
 	status,
 	actions,
 }: {
@@ -56,11 +56,7 @@ export const EventSummary = ({
 					{weekday} {day} {month}
 				</Text>
 			) : undefined}
-			<Text
-				variant={compact ? "overline" : "caption"}
-				tone="secondary"
-				lines={2}
-			>
+			<Text variant={compact ? "overline" : "caption"} tone="secondary">
 				{metadata}
 			</Text>
 		</Stack>
@@ -68,8 +64,7 @@ export const EventSummary = ({
 	return (
 		<View
 			style={{
-				flexDirection: "row",
-				alignItems: "flex-start",
+				flexDirection: "column",
 				gap: space.xs,
 				minWidth: 0,
 			}}
@@ -137,7 +132,9 @@ export const EventSummary = ({
 					</Pressable>
 				</Link>
 			</View>
-			{actions ? <View style={{ flexShrink: 0 }}>{actions}</View> : undefined}
+			{actions ? (
+				<View style={{ alignSelf: "flex-end" }}>{actions}</View>
+			) : undefined}
 		</View>
 	);
 };

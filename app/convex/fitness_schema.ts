@@ -44,6 +44,7 @@ export const fitnessTables = {
 	})
 		.index("by_session_person", ["sessionId", "personId"])
 		.index("by_person_date", ["testId", "seasonId", "personId", "date"])
+		.index("by_test_person_date", ["testId", "personId", "date"])
 		.index("by_person_value", ["testId", "seasonId", "personId", "value"])
 		.index("by_club_person", ["clubId", "personId"])
 		.index("by_club_person_date", ["clubId", "personId", "date"])
@@ -58,6 +59,7 @@ export const fitnessTables = {
 		best: v.number(),
 	})
 		.index("by_test_season_person", ["testId", "seasonId", "personId"])
+		.index("by_test_person", ["testId", "personId"])
 		.index("by_test_season_best", ["testId", "seasonId", "best"])
 		.index("by_club_person", ["clubId", "personId"])
 		.index("by_club", ["clubId"]),

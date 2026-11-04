@@ -174,10 +174,60 @@ export const logContext = query({
 	},
 });
 
+export const personalHistory = query({
+	args: {
+		testId: v.id("fitnessTests"),
+		personId: v.string(),
+		paginationOpts: paginationOptsValidator,
+	},
+	handler: async (
+		ctx,
+		{ testId, personId, paginationOpts },
+	): Promise<PaginationResult<PersonalFitnessRow["history"][number]>> => {
+		const actor = await requireMember(ctx);
+		const [test, member] = await Promise.all([
+			ctx.db.get(testId),
+			ctx.db
+				.query("members")
+				.withIndex("by_club_and_key", (q) =>
+					q.eq("clubId", actor.clubId).eq("value.id", personId),
+				)
+				.unique(),
+		]);
+		if (
+			!test ||
+			test.clubId !== actor.clubId ||
+			!member ||
+			!canReadProgress(accountFor(actor), member.value)
+		)
+			throw new Error("These fitness results are private.");
+		const page = await ctx.db
+			.query("fitnessResults")
+			.withIndex("by_test_person_date", (q) =>
+				q.eq("testId", testId).eq("personId", personId),
+			)
+			.order("desc")
+			.paginate({
+				...paginationOpts,
+				numItems: Math.min(25, paginationOpts.numItems),
+				maximumRowsRead: 100,
+			});
+		return {
+			...page,
+			page: page.page.map(({ sessionId, date, value, notes }) => ({
+				sessionId,
+				date,
+				value,
+				notes,
+			})),
+		};
+	},
+});
+
 export const personal = query({
 	args: {
 		personId: v.string(),
-		seasonId: v.string(),
+		seasonId: v.optional(v.string()),
 		paginationOpts: paginationOptsValidator,
 	},
 	handler: async (ctx, args): Promise<PaginationResult<PersonalFitnessRow>> => {
@@ -200,27 +250,54 @@ export const personal = query({
 			});
 		const rows = await Promise.all(
 			tests.page.map(async (test): Promise<PersonalFitnessRow> => {
-				const [history, stats] = await Promise.all([
-					ctx.db
-						.query("fitnessResults")
-						.withIndex("by_person_date", (q) =>
-							q
-								.eq("testId", test._id)
-								.eq("seasonId", args.seasonId)
-								.eq("personId", args.personId),
-						)
+				const seasonId = args.seasonId;
+				const [history, summaries] = await Promise.all([
+					(seasonId
+						? ctx.db
+								.query("fitnessResults")
+								.withIndex("by_person_date", (q) =>
+									q
+										.eq("testId", test._id)
+										.eq("seasonId", seasonId)
+										.eq("personId", args.personId),
+								)
+						: ctx.db
+								.query("fitnessResults")
+								.withIndex("by_test_person_date", (q) =>
+									q.eq("testId", test._id).eq("personId", args.personId),
+								)
+					)
 						.order("desc")
 						.take(101),
-					ctx.db
-						.query("fitnessStats")
-						.withIndex("by_test_season_person", (q) =>
-							q
-								.eq("testId", test._id)
-								.eq("seasonId", args.seasonId)
-								.eq("personId", args.personId),
-						)
-						.unique(),
+					(seasonId
+						? ctx.db
+								.query("fitnessStats")
+								.withIndex("by_test_season_person", (q) =>
+									q
+										.eq("testId", test._id)
+										.eq("seasonId", seasonId)
+										.eq("personId", args.personId),
+								)
+						: ctx.db
+								.query("fitnessStats")
+								.withIndex("by_test_person", (q) =>
+									q.eq("testId", test._id).eq("personId", args.personId),
+								)
+					).collect(),
 				]);
+				const stats = summaries.length
+					? {
+							count: summaries.reduce((total, entry) => total + entry.count, 0),
+							total: summaries.reduce((total, entry) => total + entry.total, 0),
+							best: summaries.reduce(
+								(best, entry) =>
+									fitnessLowerIsBetter(test)
+										? Math.min(best, entry.best)
+										: Math.max(best, entry.best),
+								summaries.at(0)?.best ?? 0,
+							),
+						}
+					: undefined;
 				return {
 					test: {
 						_id: test._id,

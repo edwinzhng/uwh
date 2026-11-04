@@ -10,6 +10,7 @@ const routes: Record<
 		label: string;
 	}
 > = {
+	"/account": { parent: "/", parentLabel: "Home", label: "Account" },
 	"/club-terms": { parent: "/account", parentLabel: "Account", label: "Terms" },
 	"/programs": { parent: "/club", parentLabel: "Club", label: "Programs" },
 	"/resources": { parent: "/club", parentLabel: "Club", label: "Files" },

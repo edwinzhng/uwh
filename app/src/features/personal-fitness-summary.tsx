@@ -3,6 +3,7 @@ import { type ReactElement, useState } from "react";
 import { useActivePerson } from "../demo/app-state";
 import {
 	Dialog,
+	Icon,
 	List,
 	ListItem,
 	Row,
@@ -13,6 +14,7 @@ import {
 import { formatFitnessValue } from "../domain/fitness";
 import {
 	fitnessChange,
+	latestIsPersonalBest,
 	type PersonalFitnessRow,
 } from "../domain/personal-fitness";
 import { FitnessChangeIndicator } from "./fitness-change-indicator";
@@ -74,7 +76,16 @@ export const PersonalFitnessSummary = ({
 												</Text>
 											</Row>
 											<Row justify="end">
-												<FitnessChangeIndicator row={row} />
+												{latestIsPersonalBest(row) ? (
+													<Row gap="xxs">
+														<Icon name="star" tone="success" size="sm" />
+														<Text variant="caption" tone="success">
+															Personal best
+														</Text>
+													</Row>
+												) : (
+													<FitnessChangeIndicator row={row} />
+												)}
 											</Row>
 										</Stack>
 									</Row>
@@ -107,7 +118,7 @@ export const PersonalFitnessSummary = ({
 					}}
 					footer={false}
 				>
-					<PersonalFitnessDetail row={selected} />
+					<PersonalFitnessDetail row={selected} personId={personId} />
 				</Dialog>
 			) : undefined}
 		</>

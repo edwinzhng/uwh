@@ -1,7 +1,7 @@
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { useActivePerson } from "../demo/app-state";
-import { SectionNavigation, Stack, TabContent } from "../design-system";
+import { Stack, TabContent, Tabs } from "../design-system";
 import {
 	accountSection,
 	accountSectionParams,
@@ -36,27 +36,15 @@ export const AccountScreen = (): ReactElement => {
 			title="Account"
 			subtitle={person.name}
 			tabs={
-				<SectionNavigation
+				<Tabs
 					page
 					hideLabel
 					label="Account"
 					value={tab}
 					onValueChange={(value): void =>
-						router.setParams({ tab: value, feedback: undefined })
+						router.setParams(accountSectionParams(value))
 					}
-					compactNavigation={{
-						value: accountSection(tab, params.feedback),
-						options: accountSections,
-						onValueChange: (section): void =>
-							router.setParams(accountSectionParams(section)),
-					}}
-					options={[
-						{ value: "membership", label: "Membership" },
-						{ value: "fitness", label: "Fitness" },
-						{ value: "goals", label: "Goals & reflections" },
-						{ value: "feedback", label: "Feedback" },
-						{ value: "attendance", label: "Attendance" },
-					]}
+					options={accountSections}
 				/>
 			}
 		>

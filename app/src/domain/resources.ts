@@ -328,20 +328,24 @@ export const resourceFileIds = (resource: ResourceDraft): string[] =>
 		(id) => (id ? [id] : []),
 	);
 export const youtubeThumbnail = (value?: string): string | undefined => {
-	const url = value && resourceUrl(value) ? new URL(value) : undefined;
-	const host = url?.hostname.toLowerCase();
-	const id =
-		host === "youtu.be"
-			? url?.pathname.slice(1)
-			: host === "youtube.com" ||
-					host === "www.youtube.com" ||
-					host === "m.youtube.com"
-				? (url?.searchParams.get("v") ??
-					url?.pathname.match(/^\/(?:shorts|embed)\/([^/]+)$/)?.at(1))
-				: undefined;
-	return id && /^[\w-]{11}$/.test(id)
-		? `https://img.youtube.com/vi/${id}/hqdefault.jpg`
-		: undefined;
+	try {
+		const url = value && resourceUrl(value) ? new URL(value) : undefined;
+		const host = url?.hostname.toLowerCase();
+		const id =
+			host === "youtu.be"
+				? url?.pathname.slice(1)
+				: host === "youtube.com" ||
+						host === "www.youtube.com" ||
+						host === "m.youtube.com"
+					? (url?.searchParams.get("v") ??
+						url?.pathname.match(/^\/(?:shorts|embed)\/([^/]+)$/)?.at(1))
+					: undefined;
+		return id && /^[\w-]{11}$/.test(id)
+			? `https://img.youtube.com/vi/${id}/hqdefault.jpg`
+			: undefined;
+	} catch {
+		return undefined;
+	}
 };
 export const resourceByteRange = (
 	header: string | null,

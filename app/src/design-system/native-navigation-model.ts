@@ -1,3 +1,5 @@
+import { isPrimaryDestination } from "../domain/page-navigation";
+
 const headerlessRoutes = [
 	"(tabs)",
 	"join",
@@ -7,7 +9,9 @@ const headerlessRoutes = [
 ];
 
 export const nativeHeaderRoute = (name: string): boolean =>
-	Boolean(name) && !headerlessRoutes.includes(name);
+	Boolean(name) &&
+	!isPrimaryDestination(`/${name}`) &&
+	!headerlessRoutes.includes(name);
 
 const routeTitles: Record<string, string> = {
 	"(tabs)": "Home",

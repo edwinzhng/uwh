@@ -1,9 +1,9 @@
-import type { ReactElement } from "react";
+import { type ReactElement, useId, useState } from "react";
 import {
+	Area,
+	AreaChart,
 	CartesianGrid,
 	Legend,
-	Line,
-	LineChart,
 	ResponsiveContainer,
 	Tooltip,
 	XAxis,
@@ -12,8 +12,10 @@ import {
 import { chartEasing } from "./chart-animation";
 import { chartPalette } from "./chart-palette";
 import { useTheme } from "./theme";
-import { corners, font, geometry, motion, space, typography } from "./tokens";
+import { font, geometry, motion, space, typography } from "./tokens";
+import { trendDates, trendDomain, trendPosition } from "./trend-chart-model";
 import type { TrendChartProps } from "./trend-chart-props";
+import { TrendTooltip } from "./trend-tooltip.web";
 import { useMotion } from "./use-motion";
 export const TrendChart = ({
 	series,
@@ -22,12 +24,12 @@ export const TrendChart = ({
 }: TrendChartProps): ReactElement => {
 	const theme = useTheme();
 	const animate = useMotion();
+	const id = useId().replace(/[^a-zA-Z0-9]/g, "");
+	const [width, setWidth] = useState(320);
 	const colors = [...chartPalette.series, theme.colorScales.pending.muted];
-	const dates = [
-		...new Set(
-			series.flatMap((entry) => entry.points.map((point) => point.date)),
-		),
-	].sort();
+	const dates = trendDates(series);
+	const plotWidth = Math.max(1, width - space.xxl - space.sm * 2);
+	const horizontalPadding = plotWidth * trendPosition(0, dates.length);
 	const values = series.map(
 		(entry) => new Map(entry.points.map((point) => [point.date, point.value])),
 	);
@@ -49,12 +51,39 @@ export const TrendChart = ({
 				fontSize: typography.caption.fontSize,
 			}}
 		>
-			<ResponsiveContainer width="100%" height="100%">
-				<LineChart
+			<ResponsiveContainer
+				width="100%"
+				height="100%"
+				onResize={(width): void => setWidth(width)}
+			>
+				<AreaChart
 					data={data}
 					accessibilityLayer
 					margin={{ top: space.sm, right: space.sm, bottom: 0, left: space.sm }}
 				>
+					<defs>
+						{series.map((entry, index) => (
+							<linearGradient
+								key={entry.id}
+								id={`${id}-${index}`}
+								x1="0"
+								y1="0"
+								x2="0"
+								y2="1"
+							>
+								<stop
+									offset="0%"
+									stopColor={colors.at(index % colors.length)}
+									stopOpacity={0.25}
+								/>
+								<stop
+									offset="100%"
+									stopColor={colors.at(index % colors.length)}
+									stopOpacity={0.02}
+								/>
+							</linearGradient>
+						))}
+					</defs>
 					<CartesianGrid
 						vertical={false}
 						stroke={theme.border}
@@ -62,6 +91,7 @@ export const TrendChart = ({
 					/>
 					<XAxis
 						dataKey="date"
+						padding={{ left: horizontalPadding, right: horizontalPadding }}
 						tickFormatter={(date: string): string => date.slice(5)}
 						axisLine={false}
 						tickLine={false}
@@ -69,7 +99,7 @@ export const TrendChart = ({
 						tick={{ fill: theme.text.secondary }}
 					/>
 					<YAxis
-						domain={maximum === undefined ? undefined : [0, maximum]}
+						domain={trendDomain(series, maximum)}
 						tickFormatter={formatValue}
 						axisLine={false}
 						tickLine={false}
@@ -77,21 +107,22 @@ export const TrendChart = ({
 						tick={{ fill: theme.text.secondary }}
 					/>
 					<Tooltip
-						formatter={(value): string => formatValue(Number(value))}
-						contentStyle={{
-							background: theme.background.primary,
-							border: `${geometry.border}px solid ${theme.border}`,
-							borderRadius: corners.panel,
-							color: theme.text.primary,
-						}}
+						cursor={false}
+						content={(props): ReactElement => (
+							<TrendTooltip {...props} formatValue={formatValue} />
+						)}
 					/>
-					<Legend iconType="circle" iconSize={space.xs} />
+					{series.length > 1 ? (
+						<Legend iconType="circle" iconSize={space.xs} />
+					) : undefined}
 					{series.map((entry, index) => (
-						<Line
+						<Area
 							key={entry.id}
 							name={entry.label}
 							dataKey={`series${index}`}
 							stroke={colors.at(index % colors.length)}
+							fill={`url(#${id}-${index})`}
+							type="monotone"
 							strokeWidth={geometry.focus}
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -103,7 +134,7 @@ export const TrendChart = ({
 							animationEasing={chartEasing}
 						/>
 					))}
-				</LineChart>
+				</AreaChart>
 			</ResponsiveContainer>
 		</div>
 	);

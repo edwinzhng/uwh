@@ -95,7 +95,7 @@ export const AppLayout = ({
 			: getDefaultHeaderHeight(dimensions, false, insets.top)
 		: 0;
 	const bottomClearance =
-		nativeNavigation && !nativeHeader
+		nativeNavigation && segments.at(0) === "(tabs)"
 			? geometry.tab + insets.bottom
 			: insets.bottom;
 	const wide = width >= geometry.wide && !nativeNavigation;
@@ -112,7 +112,9 @@ export const AppLayout = ({
 		<ToolbarGroup label="Back navigation">{back}</ToolbarGroup>
 	) : undefined;
 	const toolbarBack =
-		denseHeader && headerLayout !== "compact" ? glassBack : undefined;
+		compactRoot || (denseHeader && headerLayout !== "compact")
+			? glassBack
+			: undefined;
 	const [toolbarHeight, setToolbarHeight] = useState(
 		geometry.touch + space.xs * 2,
 	);
@@ -188,9 +190,8 @@ export const AppLayout = ({
 			</Row>
 		) : undefined
 	) : compactRoot ? (
-		back || subtitle || titleAccessory ? (
+		subtitle || titleAccessory ? (
 			<Stack gap="xs">
-				{back}
 				{subtitle ? <Text variant="label">{subtitle}</Text> : undefined}
 				{titleAccessory}
 			</Stack>
