@@ -25,11 +25,10 @@ export const HomeScreen = (): ReactElement => {
 		view?: string;
 		reviewCards?: string;
 	}>();
-	const treatment = homeCardTreatment(
-		process.env.EXPO_PUBLIC_REVIEW_MODE === "true"
-			? params.reviewCards
-			: undefined,
-	);
+	const treatment =
+		process.env.EXPO_PUBLIC_REVIEW_MODE === "true" && params.reviewCards
+			? homeCardTreatment(params.reviewCards)
+			: undefined;
 	const [workspaces, setWorkspaces] = useAtom(homeWorkspaceAtom);
 	const workspace =
 		canCoach(account) &&

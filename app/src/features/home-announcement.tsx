@@ -4,9 +4,8 @@ import { type ReactElement, useEffect } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp, useAppStatus } from "../demo/app-state";
 import {
-	Button,
 	featureIdentity,
-	Row,
+	IconButton,
 	SummaryCard,
 	Text,
 } from "../design-system";
@@ -28,22 +27,20 @@ const AnnouncementContent = ({
 		<SummaryCard
 			title="Announcement"
 			compact
+			treatment="spotlight"
 			icon={featureIdentity.announcements.icon}
 			category="coral"
 			metadata={formatDate(notice.date)}
 			onPress={(): void => router.push("/announcements")}
-			action={
-				<Row wrap>
-					<Button
-						label="Dismiss"
-						variant="ghost"
-						compact
-						isLoading={busy}
-						onPress={(): void => {
-							void dispatch({ type: "dismiss-notice", noticeId: notice.id });
-						}}
-					/>
-				</Row>
+			trailingAction={
+				<IconButton
+					icon="close"
+					label={`Dismiss announcement: ${notice.title}`}
+					isDisabled={busy}
+					onPress={(): void => {
+						void dispatch({ type: "dismiss-notice", noticeId: notice.id });
+					}}
+				/>
 			}
 		>
 			<Text weight="medium" lines={2}>

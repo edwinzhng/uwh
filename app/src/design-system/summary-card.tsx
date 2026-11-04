@@ -5,7 +5,10 @@ import { CardContentContext } from "./card-content-context";
 import { DashedBorder } from "./dashed-border";
 import { useButtonHaptics } from "./haptics";
 import { HomeCardBackground } from "./home-card-background";
-import { HomeCardTreatmentContext } from "./home-card-treatment";
+import {
+	type HomeCardTreatment,
+	HomeCardTreatmentContext,
+} from "./home-card-treatment";
 import { Icon, type IconName } from "./icon";
 import { Text } from "./text";
 import { useTheme } from "./theme";
@@ -17,6 +20,7 @@ import {
 	space,
 	unmarkedCardColors,
 } from "./tokens";
+import { TonalWatercolor } from "./tonal-watercolor";
 import { WatercolorShader } from "./watercolor-shader";
 
 type Props = {
@@ -25,7 +29,8 @@ type Props = {
 	titleVariant?: "overline" | "h3";
 	icon?: IconName;
 	category?: CategoryColor;
-	headerTexture?: "watercolor";
+	headerTexture?: "watercolor" | "watercolor-tonal";
+	treatment?: HomeCardTreatment;
 	variant?: "default" | "metric" | "section";
 	tone?: "default" | "brand" | "recognition";
 	metadata?: string;
@@ -33,11 +38,13 @@ type Props = {
 	onPress?: () => void;
 	accessibilityLabel?: string;
 	action?: ReactNode;
+	trailingAction?: ReactNode;
 	borderStyle?: "solid" | "dashed";
 };
 
 export const SummaryCard = (props: Props): ReactElement => {
-	const treatment = useContext(HomeCardTreatmentContext);
+	const treatment =
+		useContext(HomeCardTreatmentContext) ?? props.treatment ?? "current";
 	return treatment === "spotlight" && props.icon === "megaphone" ? (
 		<ThemeScope appearance="light">
 			<SummaryCardContent {...props} />
@@ -53,17 +60,20 @@ const SummaryCardContent = ({
 	icon,
 	category = "sky",
 	headerTexture,
+	treatment: explicitTreatment,
 	variant = "default",
 	metadata,
 	children,
 	onPress,
 	accessibilityLabel,
 	action,
+	trailingAction,
 	borderStyle = "solid",
 	compact = false,
 }: Props): ReactElement => {
 	const theme = useTheme();
-	const treatment = useContext(HomeCardTreatmentContext);
+	const treatment =
+		useContext(HomeCardTreatmentContext) ?? explicitTreatment ?? "current";
 	const announcement = icon === "megaphone";
 	const cardTreatment =
 		treatment === "spotlight" && !announcement ? "current" : treatment;
@@ -85,13 +95,29 @@ const SummaryCardContent = ({
 				: background;
 	const texture =
 		headerTexture && cardTreatment === "current" ? (
-			<WatercolorShader category={category} seed={`practice-header:${title}`} />
+			headerTexture === "watercolor-tonal" ? (
+				<TonalWatercolor
+					category={category}
+					seed={`practice-header:${title}`}
+				/>
+			) : (
+				<WatercolorShader
+					category={category}
+					seed={`practice-header:${title}`}
+				/>
+			)
 		) : undefined;
 	const content = (
 		<CardContentContext value={!section}>
 			<View style={{ gap: space.xs, minWidth: 0 }}>
 				<View
-					style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}
+					style={{
+						flexDirection: "row",
+						alignItems: "center",
+						gap: space.xs,
+						paddingEnd: trailingAction ? geometry.touch : undefined,
+						minHeight: trailingAction ? geometry.touch - space.sm : undefined,
+					}}
 				>
 					{icon ? (
 						<Icon name={icon} size="sm" color={theme.text.secondary} />
@@ -101,7 +127,7 @@ const SummaryCardContent = ({
 							{title}
 						</Text>
 					</View>
-					{onPress ? (
+					{onPress && !trailingAction ? (
 						<Icon name="chevron" size="sm" color={theme.text.secondary} />
 					) : undefined}
 				</View>
@@ -206,6 +232,13 @@ const SummaryCardContent = ({
 					</View>
 				) : undefined}
 				{unmarked ? <DashedBorder color={unmarkedColors.border} /> : undefined}
+				{trailingAction ? (
+					<View
+						style={{ position: "absolute", top: space.xxs, end: space.xxs }}
+					>
+						{trailingAction}
+					</View>
+				) : undefined}
 			</View>
 		</View>
 	);

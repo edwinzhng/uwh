@@ -43,7 +43,7 @@ export const HomePractice = ({
 			icon="calendar"
 			tone={event ? "brand" : "default"}
 			category="sky"
-			headerTexture={event ? "watercolor" : undefined}
+			headerTexture={event ? "watercolor-tonal" : undefined}
 			borderStyle={
 				event &&
 				people.length &&

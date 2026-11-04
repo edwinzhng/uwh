@@ -1,6 +1,7 @@
 - Use public design-system components; keep styling and platform controls in their shared owners.
 - Keep routes thin and components focused. Hooks own reusable query/controller logic.
 - Convex owns server state; Jotai owns shared client state; local state owns ephemeral edits.
+- Memoize request maps passed to Convex `useQueries`, including empty maps; changing their identity during render can create a subscription render loop.
 - Derive state rather than synchronizing duplicate copies through effects.
 - Production renders real authorized data or honest signed-out/loading/empty/error states.
 - Fixtures are isolated review data, never a fallback for a failed live backend.

@@ -38,6 +38,8 @@ bun run update:production --message "Describe the verified change"
 
 - A Git push alone does not publish an OTA update. The commands publish the current working tree; review its changes first. Use the same EAS environment for the build and update. If no installed binary matches the new runtime fingerprint, distribute a new native build.
 
+- After publishing, compare each update's runtime with the distributed binary's build metadata. Request the production manifest for that exact platform/runtime and verify the new update ID before claiming delivery. A successful publish for a newer runtime does not update older installations. Backport only after checking native dependencies and configuration for compatibility; preserve the default fingerprint policy for new builds.
+
 - Use the EAS dashboard or `bunx eas-cli@27.3.0 update:rollback` to select the latest group to reverse for its branch and runtime. The CLI republishes the preceding group, or publishes a rollback to the embedded binary update if no earlier group exists. Keep Expo's embedded-update and error-recovery protections enabled. An app that already downloaded a release may need a restart to receive a rollback.
 
 - Local public/native configuration resolves the Expo update URL, launch checks, zero network wait, and fingerprint policy. iOS Expo.plist and Android manifest introspection contain the update client configuration. Fingerprint generation succeeds for both platforms. The remote preview and production channels and their backend environment settings were created and checked separately.

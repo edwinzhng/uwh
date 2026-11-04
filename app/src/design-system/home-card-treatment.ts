@@ -13,5 +13,6 @@ export const homeCardTreatment = (value?: string): HomeCardTreatment =>
 	homeCardTreatments.find((option) => option.value === value)?.value ??
 	"current";
 
-export const HomeCardTreatmentContext =
-	createContext<HomeCardTreatment>("current");
+export const HomeCardTreatmentContext = createContext<
+	HomeCardTreatment | undefined
+>(undefined);
