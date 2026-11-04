@@ -28,6 +28,7 @@ export { ContentRow } from "./content-row";
 export { ContextActionMenu } from "./context-action-menu";
 export type { ContextMenuControls } from "./context-menu-props";
 export { ContextPicker } from "./context-picker";
+export { ControlOptionsScreen } from "./control-options-screen";
 export { createMediaAsset } from "./create-media-asset";
 export { DatePicker } from "./date-picker";
 export { DesktopNavigation } from "./desktop-navigation";

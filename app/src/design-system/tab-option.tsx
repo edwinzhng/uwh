@@ -4,8 +4,9 @@ import { type RoleTone, roleGlow } from "./role-glow";
 import { useRoleTone } from "./role-scope";
 import { RoleTabMarker } from "./role-tab-marker";
 import { useRoleTabTreatment } from "./role-tab-treatment";
+import { tabAppearance, useTabAppearance } from "./tab-appearance";
 import { useTheme } from "./theme";
-import { corners, font, geometry, space, typography } from "./tokens";
+import { font, geometry, space, typography } from "./tokens";
 export type TabOptionProps = {
 	label: string;
 	roleTone?: RoleTone;
@@ -25,6 +26,8 @@ export const TabOption = ({
 	onFocus,
 }: TabOptionProps): ReactElement => {
 	const theme = useTheme();
+	const appearance = useTabAppearance();
+	const styles = tabAppearance(appearance, theme);
 	const treatment = useRoleTabTreatment();
 	const roleTone = useRoleTone(explicitRole);
 	const [focused, setFocused] = useState(false);
@@ -52,15 +55,20 @@ export const TabOption = ({
 				alignItems: "center",
 				gap: space.xs,
 				justifyContent: "center",
-				paddingHorizontal: space.xs,
-				borderRadius: corners.control,
+				paddingHorizontal: styles.optionPadding,
+				borderRadius: styles.radius,
+				borderWidth: appearance === "outline" ? geometry.border : 0,
+				borderColor:
+					appearance === "outline" && selected
+						? theme.controlBorder
+						: theme.border,
 				boxShadow:
 					roleTone && treatment === "glow"
 						? roleGlow(roleTone, theme.mode, true)
 						: undefined,
 				backgroundColor:
-					selected && !indicatorReady
-						? theme.background.selected
+					selected && !indicatorReady && appearance !== "underline"
+						? styles.selected
 						: "transparent",
 				opacity: disabled
 					? geometry.disabledOpacity

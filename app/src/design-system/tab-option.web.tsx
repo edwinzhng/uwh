@@ -3,9 +3,10 @@ import { roleGlow } from "./role-glow";
 import { useRoleTone } from "./role-scope";
 import { RoleTabMarker } from "./role-tab-marker";
 import { useRoleTabTreatment } from "./role-tab-treatment";
+import { tabAppearance, useTabAppearance } from "./tab-appearance";
 import type { TabOptionProps } from "./tab-option";
 import { useTheme } from "./theme";
-import { control, corners, font, geometry, space } from "./tokens";
+import { control, font, geometry, space } from "./tokens";
 export const TabOption = ({
 	label,
 	roleTone: explicitRole,
@@ -16,6 +17,8 @@ export const TabOption = ({
 	onFocus,
 }: TabOptionProps): ReactElement => {
 	const theme = useTheme();
+	const appearance = useTabAppearance();
+	const styles = tabAppearance(appearance, theme);
 	const treatment = useRoleTabTreatment();
 	const roleTone = useRoleTone(explicitRole);
 	return (
@@ -64,13 +67,17 @@ export const TabOption = ({
 				display: "flex",
 				alignItems: "center",
 				gap: space.xs,
-				padding: `0 ${space.xs}px`,
-				border: 0,
+				padding: `0 ${styles.optionPadding}px`,
+				border:
+					appearance === "outline"
+						? `${geometry.border}px solid ${selected ? theme.controlBorder : theme.border}`
+						: 0,
+				whiteSpace: "nowrap",
 				background:
-					selected && !indicatorReady
-						? theme.background.selected
+					selected && !indicatorReady && appearance !== "underline"
+						? styles.selected
 						: "transparent",
-				borderRadius: corners.control,
+				borderRadius: styles.radius,
 				boxShadow:
 					roleTone && treatment === "glow"
 						? roleGlow(roleTone, theme.mode, true)

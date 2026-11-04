@@ -7,7 +7,10 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { type ReactElement, type ReactNode, useMemo } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import {
+	initialWindowMetrics,
+	SafeAreaProvider,
+} from "react-native-safe-area-context";
 import { ActionToaster } from "./action-toaster";
 import { AppTitle } from "./app-title";
 import { CardMaterialProvider } from "./card-material-provider";
@@ -52,7 +55,7 @@ export const DesignProvider = ({
 		<GestureHandlerRootView
 			style={{ flex: 1, backgroundColor: theme.background.canvas }}
 		>
-			<SafeAreaProvider>
+			<SafeAreaProvider initialMetrics={initialWindowMetrics}>
 				<MaterialAccessibilityProvider>
 					<MotionProvider>
 						<ThemeProvider value={navigationTheme}>

@@ -1,5 +1,8 @@
 import { Stack as RouterStack, useIsFocused, useSegments } from "expo-router";
-import { HeaderHeightContext } from "expo-router/react-navigation";
+import {
+	getDefaultHeaderHeight,
+	HeaderHeightContext,
+} from "expo-router/react-navigation";
 import { type ReactElement, type ReactNode, useContext, useState } from "react";
 import {
 	KeyboardAvoidingView,
@@ -17,6 +20,7 @@ import { CompactPageHeading } from "./compact-page-heading";
 import { HeaderBackdrop } from "./header-backdrop";
 import { nativeTabsAvailable } from "./native-navigation";
 import { nativeHeaderRoute } from "./native-navigation-model";
+import { PageReady } from "./page-ready";
 import { PageReveal } from "./page-reveal";
 import { PageTitle } from "./page-title";
 import { PaginationScrollView as ScrollView } from "./pagination-scroll-view";
@@ -28,6 +32,7 @@ import { ToolbarGroup } from "./toolbar-group";
 import { useKeyboardVisible } from "./use-keyboard-visible";
 
 type Props = {
+	loading?: boolean;
 	children: ReactNode;
 	title?: string;
 	tabs?: ReactNode;
@@ -50,6 +55,7 @@ type Props = {
 	headerLayout?: "current" | "compact" | "integrated" | "content";
 };
 export const AppLayout = ({
+	loading,
 	children,
 	title,
 	tabs,
@@ -74,13 +80,19 @@ export const AppLayout = ({
 	const chatSidebar = useChatSidebar();
 	const focused = useIsFocused();
 	const visible = Platform.OS !== "web" || focused;
-	const { width } = useWindowDimensions();
+	const dimensions = useWindowDimensions();
+	const { width } = dimensions;
 	const insets = useSafeAreaInsets();
 	const segments = useSegments();
 	const nativeNavigation = nativeTabsAvailable();
 	const nativeHeader =
 		Platform.OS !== "web" && nativeHeaderRoute(segments.at(0) ?? "");
-	const headerHeight = useContext(HeaderHeightContext) ?? 0;
+	const measuredHeaderHeight = useContext(HeaderHeightContext);
+	const headerHeight = nativeHeader
+		? measuredHeaderHeight && measuredHeaderHeight > 0
+			? measuredHeaderHeight
+			: getDefaultHeaderHeight(dimensions, false, insets.top)
+		: 0;
 	const bottomClearance =
 		nativeNavigation && !nativeHeader
 			? geometry.tab + insets.bottom
@@ -402,125 +414,130 @@ export const AppLayout = ({
 							</ToolbarGroup>
 						</View>
 					) : undefined}
-					<PageReveal
-						fill
-						gap="none"
-						enabled={transition !== "instant" && !nativeHeader}
+					<PageReady
+						loading={loading}
+						layoutKey={`${headerHeight}:${toolbarHeight}:${width}`}
 					>
-						{compactRoot && title ? <PageTitle title={title} /> : undefined}
-						{workspace && heading ? (
-							<View
-								style={{
-									paddingTop: nativeHeader ? headerHeight : toolbarClearance,
-									paddingHorizontal: nativeHeader ? space.md : 0,
-								}}
-							>
-								{heading}
-							</View>
-						) : undefined}
-						{scrollable ? (
-							<ScrollView
-								contentInsetAdjustmentBehavior="never"
-								automaticallyAdjustContentInsets={false}
-								keyboardShouldPersistTaps="handled"
-								keyboardDismissMode="on-drag"
-								contentContainerStyle={{
-									paddingHorizontal: wide ? space.lg : space.md,
-									paddingTop:
-										(workspace && heading ? 0 : toolbarClearance) +
-										(nativeHeader && !workspace ? headerHeight : 0) +
-										(denseHeader
-											? space.xs
-											: workspace
-												? space.sm
-												: wide
-													? pagePadding
-													: space.md),
-									paddingBottom:
-										(floatingAction ? geometry.touch + space.md : 0) +
-										(nativeNavigation
-											? pagePadding + bottomClearance
-											: wide || footer || keyboard
-												? pagePadding
-												: geometry.tab +
-													pagePadding +
-													space.sm +
-													insets.bottom),
-								}}
-							>
+						<PageReveal
+							fill
+							gap="none"
+							enabled={transition !== "instant" && !nativeHeader}
+						>
+							{compactRoot && title ? <PageTitle title={title} /> : undefined}
+							{workspace && heading ? (
 								<View
 									style={{
+										paddingTop: nativeHeader ? headerHeight : toolbarClearance,
+										paddingHorizontal: nativeHeader ? space.md : 0,
+									}}
+								>
+									{heading}
+								</View>
+							) : undefined}
+							{scrollable ? (
+								<ScrollView
+									contentInsetAdjustmentBehavior="never"
+									automaticallyAdjustContentInsets={false}
+									keyboardShouldPersistTaps="handled"
+									keyboardDismissMode="on-drag"
+									contentContainerStyle={{
+										paddingHorizontal: wide ? space.lg : space.md,
+										paddingTop:
+											(workspace && heading ? 0 : toolbarClearance) +
+											(nativeHeader && !workspace ? headerHeight : 0) +
+											(denseHeader
+												? space.xs
+												: workspace
+													? space.sm
+													: wide
+														? pagePadding
+														: space.md),
+										paddingBottom:
+											(floatingAction ? geometry.touch + space.md : 0) +
+											(nativeNavigation
+												? pagePadding + bottomClearance
+												: wide || footer || keyboard
+													? pagePadding
+													: geometry.tab +
+														pagePadding +
+														space.sm +
+														insets.bottom),
+									}}
+								>
+									<View
+										style={{
+											width: "100%",
+											maxWidth: geometry.content,
+											alignSelf: "center",
+											gap: compactRoot || denseHeader ? space.md : space.xl,
+										}}
+									>
+										{!workspace ? heading : undefined}
+										{pageControls}
+										{children}
+									</View>
+								</ScrollView>
+							) : (
+								<View
+									style={{
+										flex: 1,
+										minHeight: 0,
 										width: "100%",
-										maxWidth: geometry.content,
+										maxWidth: workspace ? undefined : geometry.content,
 										alignSelf: "center",
-										gap: compactRoot || denseHeader ? space.md : space.xl,
+										paddingHorizontal: workspace
+											? space.none
+											: wide
+												? space.lg
+												: space.md,
+										paddingTop:
+											(workspace && heading ? 0 : toolbarClearance) +
+											(nativeHeader && (!workspace || workspaceTitle)
+												? headerHeight
+												: 0) +
+											(workspace ? space.none : wide ? pagePadding : space.md),
+										paddingBottom: workspace ? space.none : pagePadding,
+										gap: workspace ? space.none : space.md,
 									}}
 								>
 									{!workspace ? heading : undefined}
 									{pageControls}
 									{children}
 								</View>
-							</ScrollView>
-						) : (
-							<View
-								style={{
-									flex: 1,
-									minHeight: 0,
-									width: "100%",
-									maxWidth: workspace ? undefined : geometry.content,
-									alignSelf: "center",
-									paddingHorizontal: workspace
-										? space.none
-										: wide
-											? space.lg
-											: space.md,
-									paddingTop:
-										(workspace && heading ? 0 : toolbarClearance) +
-										(nativeHeader && (!workspace || workspaceTitle)
-											? headerHeight
-											: 0) +
-										(workspace ? space.none : wide ? pagePadding : space.md),
-									paddingBottom: workspace ? space.none : pagePadding,
-									gap: workspace ? space.none : space.md,
-								}}
-							>
-								{!workspace ? heading : undefined}
-								{pageControls}
-								{children}
-							</View>
-						)}
+							)}
 
-						{footer ? (
-							<View
-								style={{
-									paddingHorizontal: workspace
-										? space.xs
-										: wide
-											? space.lg
-											: space.md,
-									paddingTop: workspace ? space.xs : space.md,
-									paddingBottom: workspace
-										? Math.max(space.xs, insets.bottom)
-										: nativeNavigation
-											? Math.max(space.md, bottomClearance)
-											: keyboard || wide
-												? space.xs
-												: geometry.tab + space.lg + insets.bottom,
-									backgroundColor: "transparent",
-								}}
-							>
+							{footer ? (
 								<View
 									style={{
-										width: "100%",
-										maxWidth: workspace ? undefined : geometry.content,
-										alignSelf: "center",
+										paddingHorizontal: workspace
+											? space.xs
+											: wide
+												? space.lg
+												: space.md,
+										paddingTop: workspace ? space.xs : space.md,
+										paddingBottom: workspace
+											? Math.max(space.xs, insets.bottom)
+											: nativeNavigation
+												? Math.max(space.md, bottomClearance)
+												: keyboard || wide
+													? space.xs
+													: geometry.tab + space.lg + insets.bottom,
+										backgroundColor: "transparent",
 									}}
 								>
-									{footer}
+									<View
+										style={{
+											width: "100%",
+											maxWidth: workspace ? undefined : geometry.content,
+											alignSelf: "center",
+										}}
+									>
+										{footer}
+									</View>
 								</View>
-							</View>
-						) : undefined}
-					</PageReveal>
+							) : undefined}
+						</PageReveal>
+					</PageReady>
 					{floatingAction ? (
 						<View
 							pointerEvents="box-none"

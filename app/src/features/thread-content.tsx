@@ -77,6 +77,7 @@ export const ThreadContent = ({
 	);
 	return (
 		<ClubShell
+			contentLoading={loading}
 			presentation="workspace"
 			action={<ThreadParticipantsHeader thread={thread} />}
 			title={thread.title}

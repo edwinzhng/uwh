@@ -19,6 +19,7 @@ import { NotificationsMenu } from "./notifications-menu";
 import { hasRouteBack, RouteBack } from "./route-back";
 
 type Props = {
+	contentLoading?: boolean;
 	children: ReactNode;
 	roleTone?: RoleTone;
 	title?: string;
@@ -36,6 +37,7 @@ type Props = {
 	presentation?: "page" | "workspace";
 };
 export const ClubShell = ({
+	contentLoading = false,
 	children,
 	roleTone,
 	title,
@@ -67,6 +69,7 @@ export const ClubShell = ({
 	return (
 		<LoadingScope>
 			<AppLayout
+				loading={Boolean(loading) || contentLoading}
 				headerLayout={headerLayout}
 				primaryDestination={isPrimaryDestination(pathname)}
 				presentation={presentation}

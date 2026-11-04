@@ -3,10 +3,11 @@ import { View } from "react-native";
 import type { RoleTone } from "./role-glow";
 import { ScrollArea, type ScrollAreaHandle } from "./scroll-area";
 import { SelectionIndicator } from "./selection-indicator";
+import { tabAppearance, useTabAppearance } from "./tab-appearance";
 import { type TabSize, tabFrame, tabScrollRange } from "./tab-layout";
 import { TabOption } from "./tab-option";
 import { useTheme } from "./theme";
-import { corners, space } from "./tokens";
+import { space } from "./tokens";
 import { useControlSelection } from "./use-control-selection";
 
 type Props<T extends string> = {
@@ -29,6 +30,8 @@ export const Tabs = <T extends string>({
 	onValueChange,
 }: Props<T>): ReactElement => {
 	const theme = useTheme();
+	const appearance = useTabAppearance();
+	const treatment = tabAppearance(appearance, theme);
 	const { selectedValue, selectValue } = useControlSelection(
 		value,
 		onValueChange,
@@ -36,8 +39,8 @@ export const Tabs = <T extends string>({
 	const scroll = useRef<ScrollAreaHandle>(null);
 	const [scrollWidth, setScrollWidth] = useState(0);
 	const [rowWidth, setRowWidth] = useState(0);
-	const inset = space.xs;
-	const gap = space.xxs;
+	const inset = treatment.inset;
+	const gap = treatment.gap;
 	const [sizes, setSizes] = useState<Partial<Record<T, TabSize>>>({});
 	const measurements = useMemo(
 		() =>
@@ -75,8 +78,8 @@ export const Tabs = <T extends string>({
 				minWidth: 0,
 				maxWidth: "100%",
 				alignSelf: "flex-start",
-				backgroundColor: theme.background.secondary,
-				borderRadius: corners.control + space.xs,
+				backgroundColor: treatment.background,
+				borderRadius: treatment.radius + inset,
 				overflow: "hidden",
 			}}
 		>
@@ -101,12 +104,21 @@ export const Tabs = <T extends string>({
 					style={{ padding: inset }}
 				>
 					<View style={{ flexDirection: "row", gap }}>
-						{frame ? (
+						{frame && appearance !== "outline" ? (
 							<SelectionIndicator
-								frame={frame}
+								frame={
+									appearance === "underline"
+										? {
+												...frame,
+												y: frame.height - space.xxs,
+												height: space.xxs,
+											}
+										: frame
+								}
 								value={selectedValue}
-								color={theme.background.selected}
-								radius={corners.control}
+								color={treatment.selected}
+								radius={treatment.radius}
+								borderColor={treatment.selectedBorder}
 							/>
 						) : undefined}
 						{options.map((option) => (
@@ -127,7 +139,9 @@ export const Tabs = <T extends string>({
 									label={option.label}
 									roleTone={option.roleTone}
 									selected={selectedValue === option.value}
-									indicatorReady={frame !== undefined}
+									indicatorReady={
+										frame !== undefined && appearance !== "outline"
+									}
 									disabled={option.isDisabled}
 									onPress={(): void => {
 										selectValue(option.value);
