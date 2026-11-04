@@ -1,0 +1,16 @@
+**/node_modules
+**/.convex
+**/.expo
+**/.next
+**/dist
+**/.env*
+**/*.p8
+**/*.p12
+**/*.pem
+**/*.mobileprovision
+app/ios
+app/android
+data
+output
+legacy
+.git

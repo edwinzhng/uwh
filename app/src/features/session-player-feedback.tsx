@@ -36,6 +36,8 @@ export const SessionPlayerFeedback = ({
 							<Stack grow gap="none">
 								<ListItem
 									title={person.name}
+									titleLines={2}
+									showChevron={false}
 									avatar={person.name}
 									avatarId={person.id}
 									onPress={(): void =>
@@ -54,6 +56,7 @@ export const SessionPlayerFeedback = ({
 							</Stack>
 							<ResponsiveButtonControl
 								prefix="plus"
+								collapseBelow={480}
 								label="Give feedback"
 								variant="secondary"
 								compact
