@@ -37,6 +37,7 @@ import {
 	validateResourceComment,
 } from "../domain/resources";
 import { readImageBytes } from "./image-bytes";
+import { useYoutubeUploads, type YoutubeUploader } from "./use-youtube-uploads";
 
 type Detail = {
 	resource: Resource;
@@ -44,6 +45,7 @@ type Detail = {
 	limited: boolean;
 };
 export type ResourceState = {
+	youtube?: YoutubeUploader;
 	items: Resource[];
 	loading: boolean;
 	loadingMore: boolean;
@@ -105,6 +107,7 @@ export const useLiveResources = (
 	options: { optionalDetail?: boolean } = {},
 ): ResourceState => {
 	const token = useAuthToken() ?? undefined;
+	const youtube = useYoutubeUploads(token);
 	const list = usePaginatedQuery(
 		api.resources.list,
 		id
@@ -140,6 +143,7 @@ export const useLiveResources = (
 	const comment = useMutation(api.resources.comment);
 	const removeComment = useMutation(api.resources.removeComment);
 	return {
+		youtube,
 		items: list.results,
 		loading: id
 			? options.optionalDetail

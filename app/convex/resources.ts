@@ -38,6 +38,7 @@ import {
 	resourceKind,
 } from "./resources_schema";
 import { hasAcceptedTerms, requireAcceptedTerms } from "./terms_access";
+import { bindYoutubeResource } from "./youtube_cleanup";
 
 const actorFor = async (
 	ctx: QueryCtx,
@@ -338,6 +339,14 @@ export const save = mutation({
 				archived: false,
 			}));
 		if (previous) await ctx.db.patch(previous._id, fields);
+		await bindYoutubeResource(
+			ctx,
+			actor.clubId,
+			actor.userId,
+			resourceId,
+			fields.url,
+			previous?.url,
+		);
 		for (const file of files)
 			if (file) await ctx.db.patch(file._id, { resourceId });
 		for (const fileId of previous

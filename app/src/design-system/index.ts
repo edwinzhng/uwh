@@ -37,6 +37,7 @@ export { Disclosure, type DisclosureTrigger } from "./disclosure";
 export { Divider } from "./divider";
 export { DocumentPreview } from "./document-preview";
 export { EditableAvatar } from "./editable-avatar";
+export { EditorialQuote } from "./editorial-quote";
 export { EmojiPicker } from "./emoji-picker";
 export { EmptyState } from "./empty-state";
 export { EventResponseRow } from "./event-response-row";

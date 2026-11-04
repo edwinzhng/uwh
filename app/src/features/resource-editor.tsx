@@ -4,6 +4,10 @@ import {
 	type PickedResourceFile,
 	pickResourceFile,
 } from "../backend/pick-resource-file";
+import {
+	type PickedYoutubeVideo,
+	pickYoutubeVideo,
+} from "../backend/pick-youtube-video";
 import type { ResourceState } from "../backend/use-resources";
 import { useApp } from "../demo/app-state";
 import {
@@ -32,6 +36,7 @@ import { ResourceProgramPicker } from "./resource-program-picker";
 import { useFormTask } from "./use-form-task";
 import { useOperationKey } from "./use-operation-key";
 import { useReviewFlow } from "./use-review-flow";
+import { YoutubeUploadStatus } from "./youtube-upload-status";
 
 const audienceOptions: { value: ResourceAudience; label: string }[] = [
 	{ value: "club", label: "Club" },
@@ -84,11 +89,14 @@ export const ResourceEditor = ({
 			]
 		: audienceOptions;
 	const [url, setUrl] = useState(previous?.url ?? "");
-	const [source, setSource] = useState<"link" | "upload">(
+	const [source, setSource] = useState<"link" | "upload" | "youtube">(
 		previous?.fileId || review === "video-upload" ? "upload" : "link",
 	);
 	const [picked, setPicked] = useState<PickedResourceFile>();
 	const [uploaded, setUploaded] = useState<ResourceFile>();
+	const [youtubeUrl, setYoutubeUrl] = useState<string>();
+	const [youtubeVideo, setYoutubeVideo] = useState<PickedYoutubeVideo>();
+	const [uploadProgress, setUploadProgress] = useState<number>();
 	const [thumbnail, setThumbnail] = useState<PickedResourceFile>();
 	const [thumbnailUpload, setThumbnailUpload] = useState<ResourceFile>();
 	const [thumbnailRemoved, setThumbnailRemoved] = useState(false);
@@ -112,7 +120,12 @@ export const ResourceEditor = ({
 		audience,
 		personIds,
 		programIds: audience === "programs" ? programIds : undefined,
-		url: source === "link" ? url.trim() || undefined : undefined,
+		url:
+			source === "link"
+				? url.trim() || undefined
+				: source === "youtube"
+					? youtubeUrl
+					: undefined,
 		fileId: source === "upload" ? fileId : undefined,
 		category: kind === "document" ? (previous?.category ?? "other") : undefined,
 		sessionNumber: kind === "video" ? previous?.sessionNumber : undefined,
@@ -134,16 +147,32 @@ export const ResourceEditor = ({
 	const save = async (): Promise<void> => {
 		await task.submit(
 			(): string | undefined =>
-				validateResource({
-					...draft,
-					fileId:
-						source === "upload" && picked ? "pending-primary" : draft.fileId,
-					thumbnailFileId:
-						kind === "video" && thumbnail
-							? "pending-thumbnail"
-							: draft.thumbnailFileId,
-				}),
+				source === "youtube" && !state.youtube?.channelName
+					? "Ask an administrator to connect the club's YouTube channel."
+					: source === "youtube" && !youtubeVideo
+						? "Choose a video to upload."
+						: validateResource({
+								...draft,
+								url:
+									source === "youtube" && youtubeVideo
+										? "https://www.youtube.com/watch?v=pending0000"
+										: draft.url,
+								fileId:
+									source === "upload" && picked
+										? "pending-primary"
+										: draft.fileId,
+								thumbnailFileId:
+									kind === "video" && thumbnail
+										? "pending-thumbnail"
+										: draft.thumbnailFileId,
+							}),
 			async (): Promise<void> => {
+				const videoUrl =
+					source === "youtube" && youtubeVideo && state.youtube
+						? (youtubeUrl ??
+							(await state.youtube.upload(youtubeVideo, setUploadProgress)))
+						: undefined;
+				if (videoUrl) setYoutubeUrl(videoUrl);
 				const [file, thumbFile] = await Promise.all([
 					source === "upload"
 						? uploadPicked(picked, uploaded, kind, setUploaded)
@@ -162,7 +191,7 @@ export const ResourceEditor = ({
 					title: draft.title.trim(),
 					description: draft.description.trim(),
 					personIds: draft.personIds.slice().sort(),
-					url: draft.url ? resourceUrl(draft.url) : undefined,
+					url: videoUrl ?? (draft.url ? resourceUrl(draft.url) : undefined),
 					fileId: source === "upload" ? (file?.id ?? fileId) : undefined,
 					thumbnailFileId:
 						kind === "video" ? (thumbFile?.id ?? thumbnailFileId) : undefined,
@@ -186,10 +215,21 @@ export const ResourceEditor = ({
 	};
 	const pick = async (): Promise<void> => {
 		await task.run(async (): Promise<void> => {
+			if (source === "youtube") {
+				const video = await pickYoutubeVideo();
+				if (!video) return;
+				setYoutubeVideo(video);
+				setYoutubeUrl(undefined);
+				setUploadProgress(undefined);
+				if (!title.trim()) setTitle(video.name.replace(/\.[^.]+$/, ""));
+				return;
+			}
 			const file = await pickResourceFile(kind);
 			if (!file) return;
 			setPicked(file);
 			setUploaded(undefined);
+			setYoutubeUrl(undefined);
+			setUploadProgress(undefined);
 			if (!title.trim()) setTitle(file.name.replace(/\.[^.]+$/, ""));
 			if (kind === "video") {
 				changeThumbnail(undefined);
@@ -309,6 +349,9 @@ export const ResourceEditor = ({
 						isDisabled={disabled}
 						options={[
 							{ value: "link", label: "Supported link" },
+							...(kind === "video" && state.youtube
+								? [{ value: "youtube", label: "Upload to YouTube" }]
+								: []),
 							{
 								value: "upload",
 								label: kind === "video" ? "Upload video" : "Upload document",
@@ -316,7 +359,16 @@ export const ResourceEditor = ({
 						]}
 						onValueChange={(value): void => {
 							if (value) {
+								if (
+									value !== "link" &&
+									value !== "upload" &&
+									value !== "youtube"
+								)
+									return;
 								setSource(value);
+								setPicked(undefined);
+								setYoutubeUrl(undefined);
+								setUploadProgress(undefined);
 								task.clear();
 							}
 						}}
@@ -333,27 +385,45 @@ export const ResourceEditor = ({
 						/>
 					) : (
 						<Stack gap="xs">
+							{source === "youtube" && state.youtube ? (
+								<YoutubeUploadStatus
+									youtube={state.youtube}
+									admin={account.admin}
+									disabled={disabled}
+									progress={uploadProgress}
+									onConnect={(): void => {
+										void task.run(async (): Promise<void> => {
+											await state.youtube?.connect();
+										});
+									}}
+								/>
+							) : undefined}
 							<Row>
 								<Button
 									label={
-										picked || previous?.fileName
+										picked || youtubeVideo || previous?.fileName
 											? `Replace ${kind}`
 											: `Choose ${kind}`
 									}
 									prefix="plus"
 									variant="secondary"
-									isDisabled={disabled}
+									isDisabled={
+										disabled ||
+										(source === "youtube" && !state.youtube?.channelName)
+									}
 									onPress={(): void => {
 										void pick();
 									}}
 								/>
 							</Row>
 							<Text variant="small" tone="secondary">
-								{picked?.name ??
+								{(source === "youtube" ? youtubeVideo?.name : picked?.name) ??
 									previous?.fileName ??
-									(kind === "video"
-										? "MP4, MOV or WebM · up to 50 MB"
-										: "PDF, images, DOCX, XLSX, PPTX, OpenDocument, CSV or text · up to 10 MB")}
+									(source === "youtube"
+										? "MP4, MOV or WebM · up to 1 GB"
+										: kind === "video"
+											? "MP4, MOV or WebM · up to 50 MB"
+											: "PDF, images, DOCX, XLSX, PPTX, OpenDocument, CSV or text · up to 10 MB")}
 							</Text>
 						</Stack>
 					)}

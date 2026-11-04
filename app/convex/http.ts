@@ -13,8 +13,24 @@ import {
 	preflight as resourcePreflight,
 	upload as uploadResource,
 } from "./resource_http";
+import {
+	callback as youtubeCallback,
+	chunk as youtubeChunk,
+	preflight as youtubePreflight,
+} from "./youtube_http";
 
 const http = httpRouter();
+http.route({
+	path: "/youtube/callback",
+	method: "GET",
+	handler: youtubeCallback,
+});
+http.route({ path: "/youtube/upload", method: "POST", handler: youtubeChunk });
+http.route({
+	path: "/youtube/upload",
+	method: "OPTIONS",
+	handler: youtubePreflight,
+});
 auth.addHttpRoutes(http);
 http.route({ path: "/calendar.ics", method: "GET", handler: calendarFeed });
 http.route({

@@ -190,6 +190,12 @@ import type * as web_push_schema from "../web_push_schema.js";
 import type * as web_push_store from "../web_push_store.js";
 import type * as web_push_transport from "../web_push_transport.js";
 import type * as website from "../website.js";
+import type * as youtube from "../youtube.js";
+import type * as youtube_actions from "../youtube_actions.js";
+import type * as youtube_api from "../youtube_api.js";
+import type * as youtube_cleanup from "../youtube_cleanup.js";
+import type * as youtube_http from "../youtube_http.js";
+import type * as youtube_schema from "../youtube_schema.js";
 
 import type {
   ApiFromModules,
@@ -380,6 +386,12 @@ declare const fullApi: ApiFromModules<{
   web_push_store: typeof web_push_store;
   web_push_transport: typeof web_push_transport;
   website: typeof website;
+  youtube: typeof youtube;
+  youtube_actions: typeof youtube_actions;
+  youtube_api: typeof youtube_api;
+  youtube_cleanup: typeof youtube_cleanup;
+  youtube_http: typeof youtube_http;
+  youtube_schema: typeof youtube_schema;
 }>;
 
 /**

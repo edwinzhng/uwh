@@ -1,9 +1,10 @@
-import type { ReactElement, ReactNode } from "react";
-import { useWindowDimensions } from "react-native";
+import { type ReactElement, type ReactNode, useState } from "react";
+import { useWindowDimensions, View } from "react-native";
 import { Avatar } from "./avatar";
 import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
+import { space } from "./tokens";
 
 type Props = {
 	title: string;
@@ -12,6 +13,8 @@ type Props = {
 	control?: ReactNode;
 	metadata?: ReactNode;
 	titleVariant?: "label" | "small";
+	titleLines?: 1 | 2 | 3;
+	controlLayout?: "inline" | "responsive";
 };
 export const ContentRow = ({
 	title,
@@ -20,14 +23,20 @@ export const ContentRow = ({
 	control,
 	metadata,
 	titleVariant = "label",
+	titleLines = 2,
+	controlLayout = "inline",
 }: Props): ReactElement => {
-	const { width } = useWindowDimensions();
-	const separateActions = Boolean(metadata) && width < 400;
+	const { width, fontScale } = useWindowDimensions();
+	const [contentWidth, setContentWidth] = useState(0);
+	const separateActions =
+		controlLayout === "responsive"
+			? contentWidth < 600 * fontScale
+			: Boolean(metadata) && width < 400;
 	const identityBlock = (
 		<Stack gap="none" grow>
 			<Row gap="xs">
 				<Stack grow gap="none">
-					<Text variant={titleVariant} lines={2}>
+					<Text variant={titleVariant} lines={titleLines}>
 						{title}
 					</Text>
 				</Stack>
@@ -40,16 +49,24 @@ export const ContentRow = ({
 			) : undefined}
 		</Stack>
 	);
-	return separateActions ? (
-		<Stack gap="xs">
-			{identityBlock}
-			<Row>{control}</Row>
-		</Stack>
-	) : (
-		<Row align="center">
-			{identity ? <Avatar name={identity} /> : undefined}
-			{identityBlock}
+	return (
+		<View
+			onLayout={(event): void =>
+				setContentWidth(event.nativeEvent.layout.width)
+			}
+			style={{
+				flexDirection: separateActions ? "column" : "row",
+				alignItems: separateActions ? "stretch" : "center",
+				gap: space.sm,
+			}}
+		>
+			<View style={{ flex: separateActions ? undefined : 1, minWidth: 0 }}>
+				<Row>
+					{identity ? <Avatar name={identity} /> : undefined}
+					{identityBlock}
+				</Row>
+			</View>
 			{control}
-		</Row>
+		</View>
 	);
 };

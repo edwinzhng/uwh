@@ -4,6 +4,11 @@ export const expire = internalMutation({
 	args: {},
 	handler: async (ctx): Promise<void> => {
 		for (const row of await ctx.db
+			.query("youtubeAuthorizations")
+			.withIndex("by_expiration", (q) => q.lt("expiresAt", Date.now()))
+			.take(100))
+			await ctx.db.delete(row._id);
+		for (const row of await ctx.db
 			.query("accountConnections")
 			.withIndex("by_expiration", (q) => q.lt("expiresAt", Date.now()))
 			.take(100))

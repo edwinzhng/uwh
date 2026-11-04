@@ -47,8 +47,10 @@ import {
 	trackerValuesValue,
 } from "./validators";
 import { webPushTables } from "./web_push_schema";
+import { youtubeTables } from "./youtube_schema";
 
 export default defineSchema({
+	...youtubeTables,
 	websiteLoginAttempts: defineTable({ fingerprint: v.string() }).index(
 		"by_fingerprint",
 		["fingerprint"],

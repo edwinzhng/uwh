@@ -35,6 +35,7 @@
 		"verify:attendance-reports": "bun scripts/verify-attendance-reports.ts",
 		"verify:coaching-scale": "bun scripts/verify-coaching-scale.ts",
 		"verify:resources": "bun scripts/verify-resources.ts",
+		"verify:youtube": "bun scripts/verify-youtube.ts",
 		"verify:weekly-coaches": "bun scripts/verify-coaching-schedule.ts",
 		"verify:lineup": "bun scripts/verify-lineup.ts",
 		"verify:development": "bun scripts/verify-development.ts",

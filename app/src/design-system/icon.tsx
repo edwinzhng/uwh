@@ -15,6 +15,7 @@ import ChevronDown from "lucide-react-native/icons/chevron-down";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
 import CircleHelp from "lucide-react-native/icons/circle-question-mark";
 import ClipboardCheck from "lucide-react-native/icons/clipboard-check";
+import ClipboardPen from "lucide-react-native/icons/clipboard-pen";
 import Clock3 from "lucide-react-native/icons/clock-3";
 import Copy from "lucide-react-native/icons/copy";
 import CreditCard from "lucide-react-native/icons/credit-card";
@@ -74,6 +75,7 @@ const icons = {
 	moderation: ShieldCheck,
 	equipment: Backpack,
 	attendance: ClipboardCheck,
+	feedback: ClipboardPen,
 	crocodile: Shield,
 	activity: Activity,
 	star: Star,

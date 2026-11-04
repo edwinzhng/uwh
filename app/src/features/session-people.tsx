@@ -73,6 +73,8 @@ export const SessionPeople = ({
 												{index > 0 ? <Divider /> : undefined}
 												<ContentRow
 													title={member.name}
+													titleLines={1}
+													controlLayout={staff ? "responsive" : "inline"}
 													identity={staff ? undefined : member.name}
 													metadata={
 														staff ? (
@@ -94,7 +96,7 @@ export const SessionPeople = ({
 													}
 													control={
 														staff ? (
-															<Row gap="xs">
+															<Row gap="xs" wrap>
 																{canCoach(account, event.program) ? (
 																	<AttendanceControl
 																		eventId={event.id}

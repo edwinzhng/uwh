@@ -1,6 +1,7 @@
 import { resourceFileIds } from "../src/domain/resources";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
+import { eraseYoutube, releaseYoutubeResource } from "./youtube_cleanup";
 
 export const eraseResources = async (
 	ctx: MutationCtx,
@@ -16,6 +17,7 @@ export const eraseResources = async (
 		personIds?: string[];
 	},
 ): Promise<void> => {
+	await eraseYoutube(ctx, { userId, clubId, removeClub });
 	if (removeClub) {
 		for (const file of await ctx.db
 			.query("resourceFiles")
@@ -74,6 +76,7 @@ export const eraseResources = async (
 				.collect())
 				await ctx.db.delete(comment._id);
 			await ctx.db.delete(resource._id);
+			await releaseYoutubeResource(ctx, clubId, resource._id);
 		} else if (
 			resource.authorId === userId ||
 			remaining.length !== resource.personIds.length

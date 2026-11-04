@@ -4,7 +4,7 @@ export const featureIdentity = {
 	members: { icon: "users", category: "coral" },
 	programs: { icon: "layers", category: "sky" },
 	videos: { icon: "image", category: "violet" },
-	feedback: { icon: "message", category: "violet" },
+	feedback: { icon: "feedback", category: "violet" },
 	schedule: { icon: "calendar", category: "sky" },
 	shoutouts: { icon: "trophy", category: "amber" },
 } as const;
