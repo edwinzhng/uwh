@@ -127,10 +127,6 @@ export const ThreadContent = ({
 			}
 		>
 			<Stack grow gap="none">
-				<Stack gap="xs" padding="md">
-					<ThreadPractice threadId={thread.id} />
-					<ThreadExtras />
-				</Stack>
 				{read.error ? (
 					<Row justify="between">
 						<Text variant="caption" tone="danger">
@@ -140,6 +136,12 @@ export const ThreadContent = ({
 					</Row>
 				) : undefined}
 				<MessageTimeline
+					topOverlay={
+						<>
+							<ThreadPractice threadId={thread.id} />
+							<ThreadExtras />
+						</>
+					}
 					items={messages}
 					loading={loading}
 					loadingMore={loadingMore}

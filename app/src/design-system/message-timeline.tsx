@@ -1,14 +1,15 @@
-import { type ReactElement, useRef, useState } from "react";
+import { type ReactElement, type ReactNode, useRef, useState } from "react";
 import { FlatList, View, type ViewToken } from "react-native";
 import { Button } from "./button";
 import { EmptyState } from "./empty-state";
 import { LoadingContent } from "./loading-content";
 import { Stack } from "./stack";
-import { geometry, space } from "./tokens";
+import { geometry, layer, space } from "./tokens";
 import { useMotion } from "./use-motion";
 
 type Props<T> = {
 	items: T[];
+	topOverlay?: ReactNode;
 	renderItem: (item: T) => ReactElement;
 	loading: boolean;
 	loadingMore: boolean;
@@ -20,6 +21,7 @@ const viewability = { itemVisiblePercentThreshold: 10, minimumViewTime: 300 };
 
 export const MessageTimeline = <T extends { id: string }>({
 	items,
+	topOverlay,
 	renderItem,
 	loading,
 	loadingMore,
@@ -32,6 +34,7 @@ export const MessageTimeline = <T extends { id: string }>({
 	latest.current = { id: items.at(0)?.id, onLatestVisible };
 	const atLatest = useRef(true);
 	const [away, setAway] = useState(false);
+	const [overlayHeight, setOverlayHeight] = useState(0);
 	const viewed = useRef(
 		({ viewableItems }: { viewableItems: ViewToken<T>[] }): void => {
 			latest.current.onLatestVisible(
@@ -52,6 +55,25 @@ export const MessageTimeline = <T extends { id: string }>({
 				overflow: "hidden",
 			}}
 		>
+			{topOverlay ? (
+				<View
+					pointerEvents="box-none"
+					onLayout={({ nativeEvent }): void =>
+						setOverlayHeight(nativeEvent.layout.height)
+					}
+					style={{
+						position: "absolute",
+						top: 0,
+						left: 0,
+						right: 0,
+						zIndex: layer.sticky,
+						padding: space.md,
+						gap: space.xs,
+					}}
+				>
+					{topOverlay}
+				</View>
+			) : undefined}
 			<FlatList
 				ref={list}
 				contentInsetAdjustmentBehavior="never"
@@ -61,7 +83,10 @@ export const MessageTimeline = <T extends { id: string }>({
 				keyExtractor={(item): string => item.id}
 				renderItem={({ item }): ReactElement => renderItem(item)}
 				style={{ flex: 1 }}
-				contentContainerStyle={{ paddingTop: items.length ? space.md : 0 }}
+				contentContainerStyle={{
+					paddingTop: items.length ? space.md : topOverlay ? overlayHeight : 0,
+					paddingBottom: items.length && topOverlay ? overlayHeight : 0,
+				}}
 				keyboardShouldPersistTaps="handled"
 				keyboardDismissMode="on-drag"
 				initialNumToRender={12}
