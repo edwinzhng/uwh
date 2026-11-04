@@ -1,7 +1,11 @@
-import type { ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 import { useBackend } from "../backend/context";
 import { Button, Divider, ProviderLogo, Stack, Text } from "../design-system";
-import { providerName, socialProviders } from "../domain/social-auth";
+import {
+	providerName,
+	type SocialProvider,
+	socialProviders,
+} from "../domain/social-auth";
 import { useTask } from "./use-task";
 
 export const SocialSignIn = ({
@@ -11,6 +15,7 @@ export const SocialSignIn = ({
 }): ReactElement | undefined => {
 	const social = useBackend().social;
 	const task = useTask();
+	const [activeProvider, setActiveProvider] = useState<SocialProvider>();
 	const providers = socialProviders.filter(
 		(provider) => social?.info?.[provider],
 	);
@@ -23,10 +28,11 @@ export const SocialSignIn = ({
 					label={`Continue with ${providerName(provider)}`}
 					variant="secondary"
 					leading={<ProviderLogo provider={provider} />}
-					isDisabled={disabled}
-					isLoading={task.busy}
+					isDisabled={disabled || task.busy}
+					isLoading={task.busy && activeProvider === provider}
 					onPress={(): void => {
 						void task.run(async (): Promise<void> => {
+							setActiveProvider(provider);
 							if (!social?.info?.[provider])
 								throw new Error(
 									`${providerName(provider)} sign-in isn’t available yet. Please use email for now.`,

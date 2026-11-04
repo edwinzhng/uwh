@@ -5,5 +5,22 @@
 	"buildCommand": "bun run build:web",
 	"outputDirectory": "dist",
 	"cleanUrls": true,
-	"bunVersion": "1.x"
+	"bunVersion": "1.x",
+	"rewrites": [
+		{
+			"source": "/api/auth/:path*",
+			"destination": "https://brainy-albatross-874.convex.site/api/auth/:path*"
+		}
+	],
+	"headers": [
+		{
+			"source": "/api/auth/:path*",
+			"headers": [
+				{
+					"key": "Cache-Control",
+					"value": "no-store"
+				}
+			]
+		}
+	]
 }
