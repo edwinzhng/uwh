@@ -58,9 +58,13 @@ export const LineupBackdrop = ({
 		>
 			<Animated.Image
 				source={artwork}
-				resizeMode="stretch"
+				resizeMode="cover"
 				blurRadius={0}
-				style={[StyleSheet.absoluteFill, { opacity: 1 }, style]}
+				style={[
+					StyleSheet.absoluteFill,
+					{ width: "100%", height: "100%" },
+					style,
+				]}
 			/>
 			<LinearGradient
 				colors={

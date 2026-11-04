@@ -64,8 +64,10 @@ export const LineupPreview = ({
 												>
 													<View
 														style={{
-															width: geometry.icon,
-															height: geometry.icon,
+															minWidth: geometry.icon + space.xs,
+															minHeight: geometry.icon + space.xs,
+															paddingHorizontal: space.xxs,
+															paddingVertical: space.xxs,
 															borderRadius: corners.panel,
 															backgroundColor:
 																team.side === "black"
@@ -78,7 +80,7 @@ export const LineupPreview = ({
 																	: palette.black,
 															alignItems: "center",
 															justifyContent: "center",
-															marginBottom: space.xxs,
+															marginBottom: space.xs,
 														}}
 													>
 														<NativeText

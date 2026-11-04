@@ -86,9 +86,10 @@ export const DialogContent = ({
 }: DialogProps): ReactElement | undefined => {
 	const theme = useTheme();
 	const treatment = useGlassPreview();
-	const preview = treatment
-		? previewGlassColors(theme.mode === "dark", treatment)
-		: undefined;
+	const preview =
+		treatment && intent !== "lineup"
+			? previewGlassColors(theme.mode === "dark", treatment)
+			: undefined;
 	const insets = useSafeAreaInsets();
 	const { height, width, top } = useVisibleViewport(isOpen);
 	const animate = useMotion();
@@ -416,10 +417,9 @@ export const DialogContent = ({
 													alignSelf: "center",
 													zIndex: layer.modal,
 													borderColor: preview?.edge ?? theme.border,
-													backgroundColor:
-														intent === "lineup" || preview
-															? "transparent"
-															: theme.background.primary,
+													backgroundColor: preview
+														? "transparent"
+														: theme.background.primary,
 													borderWidth:
 														isSheet && !preview ? 0 : geometry.border,
 													borderRadius: lineupLandscape ? 0 : corners.overlay,
@@ -436,12 +436,6 @@ export const DialogContent = ({
 													<GlassBackdrop
 														material="floating"
 														radius={edgeToEdge ? undefined : corners.overlay}
-													/>
-												) : intent === "lineup" ? (
-													<GlassBackdrop
-														material="floating"
-														showRim={false}
-														radius={lineupLandscape ? 0 : corners.overlay}
 													/>
 												) : undefined}
 												{!scrollable ? header : undefined}
