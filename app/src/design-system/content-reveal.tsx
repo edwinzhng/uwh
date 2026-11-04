@@ -11,6 +11,7 @@ import { useMotion } from "./use-motion";
 export const ContentReveal = ({
 	children,
 	enabled = true,
+	delay = 0,
 	fill = false,
 	gap,
 }: ContentRevealProps): ReactElement => {
@@ -19,10 +20,11 @@ export const ContentReveal = ({
 		() =>
 			enabled && canAnimate
 				? FadeIn.duration(motion.duration.slow)
+						.delay(delay)
 						.easing(Easing.bezier(...motion.easing.out))
 						.reduceMotion(ReduceMotion.System)
 				: undefined,
-		[enabled, canAnimate],
+		[enabled, canAnimate, delay],
 	);
 	return (
 		<Animated.View

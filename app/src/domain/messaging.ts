@@ -59,10 +59,10 @@ export const conversationCategory = (
 };
 export const conversationKindLabel = (thread: Conversation): string =>
 	({
-		general: "Club channel",
-		staff: "Staff channel",
-		program: "Program channel",
-		event: "Event channel",
+		general: "Club chat",
+		staff: "Staff chat",
+		program: "Program",
+		event: "Event chat",
 		direct: "Direct message",
 		group: "Group",
 	})[conversationKind(thread)];

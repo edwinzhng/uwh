@@ -94,7 +94,7 @@ export const SessionPeople = ({
 													}
 													control={
 														staff ? (
-															<Row gap="xs" wrap>
+															<Row gap="xs">
 																<AttendanceControl
 																	eventId={event.id}
 																	personId={member.id}
@@ -115,6 +115,7 @@ export const SessionPeople = ({
 																/>
 																{canCoach(account, event.program) ? (
 																	<FeedbackEditor
+																		collapseLabelOnNarrow
 																		personId={member.id}
 																		eventId={event.id}
 																	/>

@@ -45,7 +45,7 @@ export const PublicScheduleSettings = (): ReactElement => {
 				<Stack>
 					<Field
 						label="Address"
-						placeholder="calgary-crocs"
+						placeholder="your-club"
 						value={slug ?? settings?.slug ?? ""}
 						onValueChange={setSlug}
 					/>

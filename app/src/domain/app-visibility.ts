@@ -26,6 +26,7 @@ export const visibleAppData = (data: AppData, account: Account): AppData => {
 		members: data.members.map((entry) => ({
 			...entry,
 			rating: canCoachMember(account, entry) ? entry.rating : 0,
+			ratingKnown: canCoachMember(account, entry) ? entry.ratingKnown : false,
 			registration: privatePerson(entry.id) ? entry.registration : "approved",
 			goal: canReadProgress(account, entry) ? entry.goal : "",
 			goalDetails: canReadProgress(account, entry)

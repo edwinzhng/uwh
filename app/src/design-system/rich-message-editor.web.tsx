@@ -187,9 +187,10 @@ export const RichMessageEditor = (
 				onPointerDown={(): void => {
 					if (props.embedded) setFocused(false);
 				}}
-				onFocus={(): void =>
-					setFocused(!props.embedded || !pageMotionAllowed())
-				}
+				onFocus={(): void => {
+					setFocused(!props.embedded || !pageMotionAllowed());
+					props.onFocus?.();
+				}}
 				onBlur={(): void => {
 					captureSelection();
 					setFocused(false);

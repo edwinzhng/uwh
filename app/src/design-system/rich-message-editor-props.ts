@@ -2,6 +2,7 @@ import type { RichFormatRequest } from "./rich-message-model";
 
 export type RichMessageEditorProps = {
 	embedded?: boolean;
+	onFocus?: () => void;
 	rows?: number;
 	label: string;
 	value: string;

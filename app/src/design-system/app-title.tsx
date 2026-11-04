@@ -25,7 +25,7 @@ export const AppTitle = (): ReactElement | undefined => {
 		<Head>
 			<meta name="theme-color" content={theme.background.canvas} />
 			<meta name="color-scheme" content={theme.mode} />
-			<title>{`Crocs UWH | ${name}`}</title>
+			<title>{`UWH Club | ${name}`}</title>
 		</Head>
 	);
 };

@@ -96,7 +96,7 @@ describe("concise validation copy", () => {
 		);
 	});
 
-	test("plan limits identify the failing field and links require supported secure media", (): void => {
+	test("plan limits identify the failing field and attachments require uploaded images", (): void => {
 		expect(
 			validateSessionPlan({ ...emptySessionPlan(), body: "x".repeat(20001) }),
 		).toBe("Keep the plan to 20,000 characters");
@@ -115,7 +115,7 @@ describe("concise validation copy", () => {
 					},
 				],
 			}),
-		).toContain("YouTube or Vimeo");
+		).toContain("uploaded images only");
 	});
 
 	test("stale plan errors retain both the recovery action and draft-preservation fact", (): void => {

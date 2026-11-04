@@ -1,4 +1,4 @@
-import { motionEffects } from "@calgarycrocs/design-system/tokens";
+import { motionEffects } from "@uwhclub/design-system/tokens";
 import { type ReactElement, type ReactNode, useEffect } from "react";
 import {
 	cancelAnimation,

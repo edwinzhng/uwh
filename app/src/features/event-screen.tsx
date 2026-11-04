@@ -90,6 +90,7 @@ export const EventScreen = (): ReactElement => {
 									{
 										value: "coaching",
 										label: "Coaching",
+										roleTone: "coach" as const,
 									},
 								]
 							: []),

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "@calgarycrocs/design-system/tokens";
+import { motion } from "@uwhclub/design-system/tokens";
 import { usePathname, useRouter } from "next/navigation";
 import {
 	createContext,

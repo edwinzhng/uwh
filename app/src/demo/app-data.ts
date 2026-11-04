@@ -184,7 +184,7 @@ export const initialAppData: AppData = {
 			end: "2027-08-31",
 		},
 	],
-	clubName: "Calgary Crocs",
+	clubName: "Example UWH Club",
 	members: members.map((member) => ({
 		...member,
 		programs: member.programs.includes("club")

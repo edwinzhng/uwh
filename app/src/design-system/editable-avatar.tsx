@@ -11,6 +11,7 @@ export const EditableAvatar = ({
 	name,
 	uri,
 	icon,
+	initials,
 	label,
 	isDisabled = false,
 	onPress,
@@ -18,6 +19,7 @@ export const EditableAvatar = ({
 	name: string;
 	uri?: string;
 	icon?: IconName;
+	initials?: boolean;
 	label: string;
 	isDisabled?: boolean;
 	onPress: () => void;
@@ -53,7 +55,7 @@ export const EditableAvatar = ({
 				opacity: isDisabled ? geometry.disabledOpacity : 1,
 			}}
 		>
-			<Avatar name={name} uri={uri} icon={icon} large />
+			<Avatar name={name} uri={uri} icon={icon} initials={initials} large />
 			<ToolbarHighlight active={!isDisabled && (hovered || pressed)} />
 			<View
 				pointerEvents="none"

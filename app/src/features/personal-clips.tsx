@@ -45,6 +45,7 @@ const ClipsList = ({
 							{account.admin || account.coachPrograms.length ? (
 								<Button
 									label="Add clip"
+									roleTone={account.coachPrograms.length ? "coach" : "admin"}
 									variant="secondary"
 									compact
 									onPress={(): void => open({ new: "video" })}

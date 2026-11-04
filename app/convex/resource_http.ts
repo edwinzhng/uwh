@@ -89,11 +89,17 @@ export const download = httpAction(async (ctx, request): Promise<Response> => {
 		requestedSlot !== "voice"
 	)
 		return failure("Media unavailable.", 404);
-	const file = await ctx.runQuery(internal.resources.readableFile, {
-		userId,
-		resourceId,
-		slot: requestedSlot,
-	});
+	const planImage = new URL(request.url).searchParams.get("planImage");
+	const file = planImage
+		? await ctx.runQuery(internal.resources.readablePlanImage, {
+				userId,
+				fileId: planImage,
+			})
+		: await ctx.runQuery(internal.resources.readableFile, {
+				userId,
+				resourceId,
+				slot: requestedSlot,
+			});
 	if (!file) return failure("Document unavailable.", 404);
 	const range = ((): ReturnType<typeof resourceByteRange> | false => {
 		try {

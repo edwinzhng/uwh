@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { practicePartKey } from "../src/domain/practice-parts";
+import { resourceLimits } from "../src/domain/resources";
 import {
 	canReadSharedSessionPlan,
 	emptySessionPlan,
@@ -13,8 +14,14 @@ import {
 	sessionPlanRequestPayload,
 	sharedSessionPlan,
 } from "../src/domain/session-plan";
+import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
-import { mutation, type QueryCtx, query } from "./_generated/server";
+import {
+	type MutationCtx,
+	mutation,
+	type QueryCtx,
+	query,
+} from "./_generated/server";
 import { accountFor, requireMember } from "./identity";
 import { enqueue } from "./notifications";
 import { canAccessResource, readResource } from "./resources";
@@ -186,6 +193,7 @@ export const save = mutation({
 			Date.now(),
 		);
 		await requirePlanMedia(ctx, actor, next);
+		await bindPlanImages(ctx, actor, key, next);
 		const values = {
 			...next,
 			updatedAt: next.updatedAt ?? Date.now(),
@@ -194,7 +202,7 @@ export const save = mutation({
 			eventId: input.eventId,
 			partId: input.partId,
 			updatedBy: actor.userId,
-			publishedAt: undefined,
+			publishedAt: next.publishedAt,
 		};
 		if (row) await ctx.db.patch(row._id, values);
 		else await ctx.db.insert("sessionPlans", values);
@@ -213,7 +221,7 @@ export const save = mutation({
 			partId: input.partId,
 			sourceRevision: next.revision,
 			key: `${actor.clubId}:plan:${key}:${next.revision}:saved`,
-			staffOnly: true,
+			staffOnly: !next.published,
 		});
 	},
 });
@@ -292,3 +300,53 @@ export const publish = mutation({
 		});
 	},
 });
+
+const bindPlanImages = async (
+	ctx: MutationCtx,
+	actor: Doc<"memberships">,
+	key: string,
+	plan: SessionPlanDraft,
+): Promise<void> => {
+	const previous = await ctx.db
+		.query("sessionPlans")
+		.withIndex("by_club_key", (q) =>
+			q.eq("clubId", actor.clubId).eq("key", key),
+		)
+		.unique();
+	for (const image of previous?.media ?? []) {
+		if (
+			image.source !== "image" ||
+			plan.media.some(
+				(next) => next.source === "image" && next.fileId === image.fileId,
+			)
+		)
+			continue;
+		const id = ctx.db.normalizeId("resourceFiles", image.fileId);
+		const file = id ? await ctx.db.get(id) : undefined;
+		if (file?.clubId === actor.clubId && file.sessionPlanKey === key) {
+			await ctx.db.patch(file._id, { sessionPlanKey: undefined });
+			await ctx.scheduler.runAfter(
+				resourceLimits.fileLifetime,
+				internal.resources.expireFile,
+				{ id: file._id },
+			);
+		}
+	}
+	for (const image of plan.media) {
+		if (image.source !== "image")
+			throw new Error("Plans support uploaded images only.");
+		const id = ctx.db.normalizeId("resourceFiles", image.fileId);
+		const file = id ? await ctx.db.get(id) : undefined;
+		if (
+			!file ||
+			file.clubId !== actor.clubId ||
+			file.resourceId ||
+			!["image/jpeg", "image/png", "image/webp"].includes(file.mime) ||
+			(file.sessionPlanKey
+				? file.sessionPlanKey !== key
+				: file.ownerId !== actor.userId)
+		)
+			throw new Error("Choose an image uploaded for this plan.");
+		await ctx.db.patch(file._id, { sessionPlanKey: key });
+	}
+};

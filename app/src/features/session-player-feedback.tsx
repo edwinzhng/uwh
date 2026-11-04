@@ -2,10 +2,10 @@ import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import {
-	Button,
 	EmptyState,
 	List,
 	ListItem,
+	ResponsiveButtonControl,
 	Row,
 	SectionHeading,
 	Stack,
@@ -30,44 +30,39 @@ export const SessionPlayerFeedback = ({
 		<Stack gap="sm">
 			<SectionHeading>Player feedback</SectionHeading>
 			<Surface>
-				<List>
+				<List separators="full">
 					{players.map((person) => (
-						<Stack key={person.id} gap="none">
-							<ListItem
-								title={person.name}
-								avatar={person.name}
-								avatarId={person.id}
-								description={person.goal}
-								descriptionLines={2}
-							/>
-							<Row wrap justify="end" gap="xs">
-								<Button
-									label="Profile"
-									variant="ghost"
-									compact
-									accessibilityLabel={`Profile for ${person.name}`}
+						<Row key={person.id} gap="xs">
+							<Stack grow gap="none">
+								<ListItem
+									title={person.name}
+									avatar={person.name}
+									avatarId={person.id}
 									onPress={(): void =>
 										router.push({
 											pathname: "/member",
 											params: {
 												id: person.id,
-												tab: "feedback",
+												tab: "profile",
 												event: event.id,
 											},
 										})
 									}
+									description={person.goal}
+									descriptionLines={2}
 								/>
-								<Button
-									label="Rate session"
-									variant="secondary"
-									compact
-									accessibilityLabel={`Rate session for ${person.name}`}
-									onPress={(): void =>
-										setRating({ personId: person.id, eventId: event.id })
-									}
-								/>
-							</Row>
-						</Stack>
+							</Stack>
+							<ResponsiveButtonControl
+								prefix="plus"
+								label="Give feedback"
+								variant="secondary"
+								compact
+								accessibilityLabel={`Give feedback for ${person.name}`}
+								onPress={(): void =>
+									setRating({ personId: person.id, eventId: event.id })
+								}
+							/>
+						</Row>
 					))}
 					{!players.length ? (
 						<EmptyState

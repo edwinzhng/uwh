@@ -55,7 +55,7 @@ export const PopupStyles = (): ReactElement => {
 .club-picker-trigger[data-picker], .club-combo { width:${geometry.popupWidth}px; }
 .club-picker-trigger[data-picker] { justify-content:space-between; }
 [data-testid="club-filter-fields"] .club-picker-trigger[data-picker]:not([data-compact]), [role="dialog"] .club-picker-trigger[data-picker]:not([data-compact]), [role="dialog"] .club-combo { width:100%; }
-.club-picker-trigger[data-picker][data-compact] { width:${geometry.compactPickerWidth}px; }
+.club-picker-trigger[data-picker][data-compact] { width:max-content; min-width:${geometry.touch}px; min-height:${geometry.compactControl}px; padding-block:${space.xxs}px; }
 .club-picker-trigger[data-picker][data-appearance="context"] { width:auto; min-height:${geometry.touch}px; border-color:transparent; background:transparent; justify-content:flex-start; }
 [role="dialog"] .club-picker-trigger[data-picker][data-appearance="context"] { width:auto; }
 .club-picker-trigger[data-appearance="context"] .club-picker-value { white-space:normal; overflow-wrap:anywhere; }
@@ -125,7 +125,7 @@ ${(["success", "warning", "danger", "pending"] as const).map((tone): string => `
 @media (hover:hover) and (pointer:fine) { .club-combo-action:hover:not(:disabled) { background:${theme.background.secondary}; } }
 @media (hover:hover) and (pointer:fine) { .club-message-reaction-trigger:hover:not(:disabled) { background:${theme.background.hover}; } }
 .club-combo-action:focus-visible { outline:${geometry.focus}px solid ${theme.focus}; outline-offset:-${geometry.focus}px; }
-@media ${control.touchQuery} { .club-picker-trigger, .club-combo, .club-popup-item { min-height:${geometry.touch}px; } .club-combo-action { width:${geometry.touch}px; height:${geometry.touch}px; } .club-combo-actions { margin-block:${-(geometry.touch - control.typography.lineHeight) / 2}px; margin-right:${-(geometry.touch - control.icon) / 2}px; } }
+@media ${control.touchQuery} { .club-picker-trigger, .club-picker-trigger[data-picker][data-compact], .club-combo, .club-popup-item { min-height:${geometry.touch}px; } .club-combo-action { width:${geometry.touch}px; height:${geometry.touch}px; } .club-combo-actions { margin-block:${-(geometry.touch - control.typography.lineHeight) / 2}px; margin-right:${-(geometry.touch - control.icon) / 2}px; } }
 .club-combo-action.club-reaction-trigger { position:relative; width:${typography.caption.lineHeight}px; height:${typography.caption.lineHeight}px; line-height:${typography.caption.lineHeight}px; }
 .club-reaction-trigger::after { content:""; position:absolute; inset:${-(control.actionSize - typography.caption.lineHeight) / 2}px; }
 @media ${control.touchQuery} { .club-reaction-trigger::after { inset:${-(geometry.touch - typography.caption.lineHeight) / 2}px; } }

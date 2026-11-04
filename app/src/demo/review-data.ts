@@ -41,7 +41,7 @@ export const reviewData = (data: AppData): AppData => {
 				threadId: "room:program:club",
 				accountId: "alex",
 				author: "Jordan Fryers",
-				body: "This program channel keeps players, linked guardians and staff together for weekly updates.",
+				body: "This program chat keeps players, linked guardians and staff together for weekly updates.",
 				time: "9:20 AM",
 			},
 		],

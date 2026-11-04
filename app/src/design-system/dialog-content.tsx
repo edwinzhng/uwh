@@ -272,7 +272,12 @@ export const DialogContent = ({
 					]}
 				>
 					{scrollable && !hideHeader ? (
-						<GlassBackdrop material="floating" showRim={false} softEdge />
+						<GlassBackdrop
+							material="floating"
+							showRim={false}
+							softEdge
+							uniform
+						/>
 					) : undefined}
 					{isSheet && !preview ? (
 						<View
@@ -396,9 +401,10 @@ export const DialogContent = ({
 													flexShrink: 1,
 													overflow: "hidden",
 													width: "100%",
-													maxWidth: lineupLandscape
-														? width
-														: dialogContentWidth(intent),
+													maxWidth:
+														isSheet || lineupLandscape
+															? width
+															: dialogContentWidth(intent),
 													height: lineupLandscape ? height : undefined,
 													alignSelf: "center",
 													zIndex: layer.modal,

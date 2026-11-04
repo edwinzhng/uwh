@@ -1,5 +1,7 @@
+import { useAuthToken } from "@convex-dev/auth/react";
 import { useMutation, useQuery } from "convex/react";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
 import {
@@ -16,9 +18,12 @@ import {
 	type SessionPlanPublication,
 	type SharedSessionPlan,
 } from "../domain/session-plan";
+import { createPlanImages, type PlanImages } from "./plan-images";
+import { usePreviewPlanImages } from "./use-preview-plan-images";
 
 export type SessionPlanService = {
 	plan?: SessionPlan;
+	images: PlanImages;
 	loading: boolean;
 	save: (command: SessionPlanCommand) => Promise<void>;
 	publish: (command: SessionPlanPublication) => Promise<void>;
@@ -27,11 +32,14 @@ export const useLiveSessionPlan = (
 	eventId: string,
 	partId?: string,
 ): SessionPlanService => {
+	const token = useAuthToken();
+	const images = useMemo(() => createPlanImages(token ?? undefined), [token]);
 	const plan = useQuery(api.session_plans.state, { eventId, partId });
 	const save = useMutation(api.session_plans.save);
 	const publish = useMutation(api.session_plans.publish);
 	return {
 		plan,
+		images,
 		loading: plan === undefined,
 		save: async (command): Promise<void> => {
 			await save(command);
@@ -46,11 +54,13 @@ export const usePreviewSessionPlan = (
 	partId?: string,
 ): SessionPlanService => {
 	const { account } = useApp();
+	const images = usePreviewPlanImages();
 	const plans = useAtomValue(previewSessionPlansAtom);
 	const save = useSetAtom(previewSessionPlanCommandAtom);
 	const publish = useSetAtom(previewSessionPlanPublicationAtom);
 	const key = practicePartKey(eventId, partId);
 	return {
+		images,
 		plan: account.coachPrograms.length
 			? (plans[key] ?? emptySessionPlan())
 			: undefined,

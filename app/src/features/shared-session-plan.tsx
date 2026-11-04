@@ -6,6 +6,7 @@ import {
 } from "../backend/use-session-plan";
 import { useApp } from "../demo/app-state";
 import {
+	Badge,
 	EmptyState,
 	LoadingContent,
 	SectionHeading,
@@ -26,7 +27,11 @@ const SharedPlanContent = ({
 		<LoadingContent />
 	) : service.plan ? (
 		<Stack gap="sm">
-			{!preview ? <SectionHeading>Plan</SectionHeading> : undefined}
+			{!preview ? (
+				<SectionHeading badge={<Badge label="Published" compact />}>
+					Plan
+				</SectionHeading>
+			) : undefined}
 			<Surface>
 				<SessionPlanDetails plan={service.plan} />
 			</Surface>

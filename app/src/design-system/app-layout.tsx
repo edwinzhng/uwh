@@ -11,6 +11,7 @@ import {
 	SafeAreaView,
 	useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { ChatBackdrop } from "./chat-backdrop";
 import { chatSidebarWidth, useChatSidebar } from "./chat-workspace";
 import { CompactPageHeading } from "./compact-page-heading";
 import { nativeTabsAvailable } from "./native-navigation";
@@ -320,6 +321,7 @@ export const AppLayout = ({
 					/>
 				) : undefined}
 				<View style={{ flex: 1, minWidth: 0 }}>
+					{workspace && workspaceTitle ? <ChatBackdrop /> : undefined}
 					{floatingToolbar ? (
 						<View
 							onLayout={

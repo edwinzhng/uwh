@@ -33,6 +33,7 @@ export const HomeScreen = (): ReactElement => {
 	return (
 		<ClubShell
 			title="Summary"
+			roleTone={workspace === "coaching" ? "coach" : undefined}
 			toolbarLeading={<ClubMark />}
 			toolbarCenter={
 				canCoach(account) ? (

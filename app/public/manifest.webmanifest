@@ -9,12 +9,12 @@
 	"theme_color": "#F7F8F5",
 	"icons": [
 		{
-			"src": "/crocs-app-v1-192.png",
+			"src": "/uwhclub-app-v1-192.png",
 			"type": "image/png",
 			"sizes": "192x192"
 		},
 		{
-			"src": "/crocs-app-v1-512.png",
+			"src": "/uwhclub-app-v1-512.png",
 			"type": "image/png",
 			"sizes": "512x512"
 		}

@@ -5,8 +5,8 @@ export const previewResources = atom<Resource[]>([
 	{
 		id: "demo-uploaded-video",
 		clubId: "preview",
-		title: "Demo uploaded video",
-		description: "Generated sample clip for testing private playback.",
+		title: "Practice clip",
+		description: "",
 		kind: "video",
 		audience: "players",
 		personIds: ["sam"],
@@ -14,9 +14,6 @@ export const previewResources = atom<Resource[]>([
 		fileName: "clip.mp4",
 		fileMime: "video/mp4",
 		thumbnailFileId: "demo-thumbnail-file",
-		voiceFileId: "demo-voice-file",
-		voiceTranscript:
-			"Demonstration tone for audio playback; replace it with a recorded coaching note.",
 		sessionNumber: 1,
 		archived: false,
 		revision: 1,
@@ -25,8 +22,8 @@ export const previewResources = atom<Resource[]>([
 	{
 		id: "practice-resources",
 		clubId: "preview",
-		title: "Practice reference (sample)",
-		description: "Sample document for preview and download checks.",
+		title: "Practice reference",
+		description: "",
 		kind: "document",
 		audience: "club",
 		personIds: [],

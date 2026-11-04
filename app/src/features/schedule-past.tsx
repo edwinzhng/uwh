@@ -29,6 +29,7 @@ const PastEntries = ({
 		);
 	return (
 		<HistorySection
+			treatment="heading"
 			loadMore={loadMore}
 			loading={loading}
 			revision={entries.length}

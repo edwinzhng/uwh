@@ -16,7 +16,7 @@ export const calendarFeed = httpAction(
 					headers: {
 						...headers,
 						"Content-Type": "text/calendar; charset=utf-8",
-						"Content-Disposition": 'inline; filename="crocs-calendar.ics"',
+						"Content-Disposition": 'inline; filename="uwhclub-calendar.ics"',
 					},
 				})
 			: new Response("Calendar unavailable.", { status: 404, headers });

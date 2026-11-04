@@ -1,4 +1,4 @@
-- The Vercel projects are `edwinzhang/uwh-club` (root `app`) and `edwinzhang/calgary-crocs` (root `site`). Both need access to `packages/design-system` outside their root directory. Use Bun 1.3.14-compatible lockfiles and the per-project `vercel.json` files. The repository root is the legacy coaching app; do not deploy it as either new project.
+- The Vercel projects are `calgary-crocs/uwh-club` (root `app`) and `calgary-crocs/calgary-crocs` (root `site`). Both need access to `packages/design-system` outside their root directory. Use Bun 1.3.14-compatible lockfiles and the per-project `vercel.json` files. The repository root is the legacy coaching app; do not deploy it as either new project.
 
 - On September 13, 2026, Namecheap DNS was connected to Vercel: `@` uses A record `216.198.79.1`, `www` uses CNAME `c89c35d3d7becdde.vercel-dns-017.com`, and `app` uses CNAME `e6c5c6b36725b997.vercel-dns-017.com`. Existing email and verification records were preserved. The main site project now includes `calgaryuwh.com` and `www.calgaryuwh.com`.
 
@@ -68,3 +68,5 @@
 - The legacy content editor still uses `CONVEX_URL`, `WEBSITE_SERVER_KEY`, and `WEBSITE_ADMIN_PASSWORD`; it is independent of the inquiry email path and is not configured on the production site.
 
 - See [release readiness](RELEASE.md) and [social authentication](SOCIAL-AUTH.md). Remaining work includes Apple Developer and Expo ownership, a permanent bundle identifier, signing and APNs credentials, icons and screenshots, published privacy/support pages, store privacy answers, and TestFlight testing. Apple sign-in token revocation on account deletion remains implementation work. The existing identifier `club.crocs.preview` is provisional. A web deployment does not submit an iOS binary to the App Store.
+
+- The club Vercel account is `calgaryuwh` (`hello@calgaryuwh.com`), team `calgary-crocs`. Public UWH Club information, Privacy Policy, and Terms of Use are hosted at `https://app.calgaryuwh.com/uwh-club`, `/uwh-club/privacy`, and `/uwh-club/terms`. They are static public files generated from the approved app policy content; they do not require club access. The club website was not republished for these pages.

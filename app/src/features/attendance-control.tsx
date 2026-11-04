@@ -1,7 +1,8 @@
-import { type ReactElement, useState } from "react";
+import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
 import { Select } from "../design-system";
 import type { Attendance } from "../domain/club";
+import { useFormTask } from "./use-form-task";
 
 export const AttendanceControl = ({
 	eventId,
@@ -21,19 +22,22 @@ export const AttendanceControl = ({
 	defaultHere?: boolean;
 }): ReactElement => {
 	const { dispatch } = useApp();
-	const [pending, setPending] = useState<Attendance>();
-	const mark = async (attendance: Attendance): Promise<void> => {
-		if (pending || disabled || value === attendance) return;
-		const next = attendance;
-		setPending(next);
-		await dispatch({
-			type: "attendance",
-			eventId,
-			partId,
-			personId,
-			attendance: next,
-		});
-		setPending(undefined);
+	const task = useFormTask();
+	const mark = (attendance: Attendance): void => {
+		if (disabled || value === attendance) return;
+		void task.submit(
+			() => undefined,
+			async (): Promise<void> => {
+				const saved = await dispatch({
+					type: "attendance",
+					eventId,
+					partId,
+					personId,
+					attendance,
+				});
+				if (!saved) throw new Error("Couldn’t save attendance. Try again.");
+			},
+		);
 	};
 	return (
 		<Select<Attendance>
@@ -41,7 +45,7 @@ export const AttendanceControl = ({
 			hideLabel
 			compact
 			value={value}
-			isDisabled={disabled || pending !== undefined}
+			isDisabled={disabled || task.busy}
 			options={[
 				{ value: "present", label: "Here", tone: "success" },
 				{ value: "late", label: "Late", tone: "warning" },
@@ -51,7 +55,7 @@ export const AttendanceControl = ({
 					: []),
 			]}
 			onValueChange={(attendance): void => {
-				if (attendance) void mark(attendance);
+				if (attendance) mark(attendance);
 			}}
 		/>
 	);

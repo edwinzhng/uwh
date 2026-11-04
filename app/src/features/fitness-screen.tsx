@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { FitnessProvider } from "../backend/fitness-actions";
 import { useActivePerson, useApp } from "../demo/app-state";
-import { Button, Text } from "../design-system";
+import { Button, RoleScope, Text } from "../design-system";
 import { canReadProgress } from "../domain/app-rules";
 import { ClubShell } from "./club-shell";
 import { FitnessTests } from "./fitness-tests";
@@ -36,7 +36,9 @@ export const FitnessScreen = (): ReactElement => {
 		</ClubShell>
 	) : (
 		<FitnessProvider>
-			<FitnessTests />
+			<RoleScope tone="coach">
+				<FitnessTests />
+			</RoleScope>
 		</FitnessProvider>
 	);
 };

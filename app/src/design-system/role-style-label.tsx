@@ -1,13 +1,13 @@
 import type { ReactElement } from "react";
 import { Text, View } from "react-native";
 import { rainbowPalette } from "./rainbow-palette";
-import { type PreviewRole, roleDestinations } from "./role-style-preview-types";
+import type { RoleTone } from "./role-glow";
 import { useTheme } from "./theme";
 import { font, radius, space, typography } from "./tokens";
 export const RoleStyleLabel = ({
 	roleKind,
 }: {
-	roleKind: PreviewRole;
+	roleKind: RoleTone;
 }): ReactElement => {
 	const theme = useTheme();
 	const palette = rainbowPalette[roleKind === "coach" ? "violet" : "blue"];
@@ -29,7 +29,7 @@ export const RoleStyleLabel = ({
 					lineHeight: typography.overline.lineHeight,
 				}}
 			>
-				{roleDestinations[roleKind].label}
+				{roleKind === "coach" ? "Coach" : "Admin"}
 			</Text>
 		</View>
 	);

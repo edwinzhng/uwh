@@ -10,9 +10,11 @@ export const EventResponseRow = ({
 	label,
 	description,
 	tone = "neutral",
+	divider = true,
 	children,
 }: {
 	label: string;
+	divider?: boolean;
 	description?: string;
 	tone?: "neutral" | "success" | "danger" | "warning";
 	children: ReactNode;
@@ -21,8 +23,8 @@ export const EventResponseRow = ({
 	return (
 		<View
 			style={{
-				paddingVertical: space.xs,
-				borderTopWidth: geometry.border,
+				paddingVertical: space.xxs,
+				borderTopWidth: divider ? geometry.border : 0,
 				borderColor: theme.border,
 				borderRadius: 0,
 				backgroundColor: "transparent",
@@ -30,20 +32,21 @@ export const EventResponseRow = ({
 		>
 			<Row gap="xs">
 				<Stack grow gap="none">
-					<Row gap="xxs" wrap>
-						<Text
-							variant="small"
-							weight="medium"
-							tone={tone === "neutral" ? "primary" : tone}
-						>
-							{label}
-						</Text>
+					<Text
+						variant="small"
+						weight="medium"
+						lines={2}
+						tone={tone === "neutral" ? "primary" : tone}
+					>
+						{label}
 						{description ? (
-							<Text variant="caption" tone="secondary">
-								· {description}
-							</Text>
+							<Text
+								variant="caption"
+								weight="regular"
+								tone="secondary"
+							>{`\u00a0· ${description.replace(/ (AM|PM)\b/g, "\u00a0$1")}`}</Text>
 						) : undefined}
-					</Row>
+					</Text>
 				</Stack>
 				{children}
 			</Row>

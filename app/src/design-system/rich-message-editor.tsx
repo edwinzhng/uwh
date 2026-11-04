@@ -108,7 +108,10 @@ export const RichMessageEditor = (
 			maxLength={projection.text.length + remaining}
 			selection={forcedSelection}
 			scrollEnabled={contentHeight > height}
-			onFocus={(): void => setFocused(true)}
+			onFocus={(): void => {
+				setFocused(true);
+				props.onFocus?.();
+			}}
 			onBlur={(): void => setFocused(false)}
 			onChangeText={(text): void => {
 				nativeText.current = text;

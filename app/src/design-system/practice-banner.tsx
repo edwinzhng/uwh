@@ -33,7 +33,8 @@ export const PracticeBanner = ({
 			onHoverOut={(): void => setHovered(false)}
 			style={({ pressed }) => ({
 				marginHorizontal: space.sm,
-				marginBottom: space.xs,
+				marginBottom: space.sm,
+				marginTop: space.sm,
 				padding: space.sm,
 				borderRadius: corners.panel,
 				borderWidth: geometry.border,

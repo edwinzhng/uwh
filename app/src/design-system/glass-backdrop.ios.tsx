@@ -1,14 +1,8 @@
 import { lazy, type ReactElement, Suspense } from "react";
 import { StyleSheet, View } from "react-native";
 import { nativeFeatureAvailable } from "../platform/native-feature";
-import type { GlassMaterial } from "./materials";
+import type { GlassBackdropProps } from "./glass-backdrop-props";
 import { useTheme } from "./theme";
-
-type GlassBackdropProps = {
-	material: GlassMaterial;
-	showRim?: boolean;
-	radius?: number;
-};
 
 const OpaqueBackdrop = ({ material }: GlassBackdropProps): ReactElement => {
 	const theme = useTheme();
@@ -37,8 +31,11 @@ const AvailableGlass = lazy(() =>
 export const GlassBackdrop = ({
 	material,
 	radius,
+	uniform,
 }: GlassBackdropProps): ReactElement =>
-	material === "floating" && nativeFeatureAvailable("ExpoGlassEffect") ? (
+	uniform ? (
+		<View pointerEvents="none" />
+	) : material === "floating" && nativeFeatureAvailable("ExpoGlassEffect") ? (
 		<Suspense fallback={<OpaqueBackdrop material={material} />}>
 			<AvailableGlass material={material} radius={radius} />
 		</Suspense>

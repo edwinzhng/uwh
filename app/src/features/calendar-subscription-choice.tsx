@@ -22,8 +22,8 @@ export const CalendarSubscriptionChoice = ({
 	return (
 		<Stack gap="xs">
 			<ListItem
-				title={task.busy ? "Preparing private links…" : "Subscribe"}
-				description="Keep new and changed events up to date."
+				title={task.busy ? "Preparing sync…" : "Sync calendar"}
+				description="Subscribe for automatic updates."
 				icon="calendar"
 				onPress={(): void => {
 					void task.run(async (): Promise<void> => {

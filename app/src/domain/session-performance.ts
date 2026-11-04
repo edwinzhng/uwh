@@ -60,7 +60,11 @@ export const performanceSessionEligible = (
 export const canReadSessionPerformance = (
 	actor: Account,
 	person: Member,
-): boolean => !person.mergedInto && canReadProgress(actor, person);
+	kind?: SessionPerformanceKind,
+): boolean =>
+	!person.mergedInto &&
+	canReadProgress(actor, person) &&
+	(kind !== "coach" || canCoachMember(actor, person));
 export const sessionPerformanceHistory = (
 	entries: readonly SessionPerformance[],
 	actor: Account,
@@ -73,6 +77,7 @@ export const sessionPerformanceHistory = (
 					(entry) =>
 						entry.personId === person.id &&
 						!entry.removed &&
+						canReadSessionPerformance(actor, person, entry.kind) &&
 						(!kind || entry.kind === kind),
 				)
 				.sort(
@@ -113,7 +118,7 @@ export const canReportSessionPerformance = (
 	!entry.removed &&
 	entry.kind === "coach" &&
 	entry.authorId !== actor.id &&
-	canReadSessionPerformance(actor, person);
+	canReadSessionPerformance(actor, person, entry.kind);
 export const validateSessionPerformance = (
 	command: Pick<SessionPerformanceCommand, "eventId" | "rating" | "comments">,
 ): string | undefined =>

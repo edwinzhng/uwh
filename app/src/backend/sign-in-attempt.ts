@@ -5,7 +5,7 @@ import {
 } from "../domain/social-auth";
 import { connectionStorage } from "./connection-storage";
 
-const key = "crocs_social_sign_in";
+const key = "uwhclub_social_sign_in";
 export const saveSignInAttempt = async (
 	provider: SocialProvider,
 	path: string,

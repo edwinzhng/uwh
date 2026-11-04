@@ -51,7 +51,7 @@ export const clubToolLinks = {
 		href: { pathname: "/", params: { view: "coaching" } },
 	},
 	reviews: {
-		title: "Player reviews",
+		title: "Player ratings",
 		description: "Goals and coach assessments",
 		icon: "users",
 		href: "/development",

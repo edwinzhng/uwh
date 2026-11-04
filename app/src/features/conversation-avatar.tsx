@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { AvatarStack } from "../design-system";
+import { Avatar, AvatarStack } from "../design-system";
 import {
 	type ConversationSummary,
 	conversationKind,
@@ -41,20 +41,9 @@ export const ConversationAvatar = ({
 				? people.slice(0, 1)
 				: [{ name: thread.title }]
 			: people;
-	if (thread.avatarIcon || thread.avatarImageId)
-		return (
-			<AvatarStack
-				name={thread.title}
-				people={[{ name: thread.title }]}
-				avatarIcon={thread.avatarIcon ?? "users"}
-				imageUri={photo.uri}
-			/>
-		);
+	if (kind !== "direct")
+		return <Avatar compact name={thread.title} uri={photo.uri} initials />;
 	return (
-		<AvatarStack
-			name={thread.title}
-			people={visible}
-			icon={kind === "event" ? "calendar" : "users"}
-		/>
+		<AvatarStack name={thread.title} people={visible} imageUri={photo.uri} />
 	);
 };

@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import "./build-app-information";
 import { buildPushWorker } from "./build-push-worker";
 import { buildWebExport } from "./publish-web-export";
 import { syncPdfAssets } from "./sync-pdf-assets";

@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import {
 	type PoolBoardDrag,
 	poolBoardDropHighlighted,
+	poolBoardRowInset,
 	poolBoardSpotAt,
 } from "../src/design-system/pool-board-layout";
 
@@ -26,6 +27,37 @@ test("pool drop targets follow measured rows as substitute stacks grow", (): voi
 			poolBoardSpotAt(rows, frames, width ?? 0, x ?? 0, y ?? 0),
 		).toBeUndefined();
 	expect(poolBoardSpotAt(rows, new Map(), 300, 40, 40)).toBeUndefined();
+});
+
+test("two forwards occupy the gaps between three midfielders and drop targets match", (): void => {
+	const rows = [
+		["left-forward", "right-forward"],
+		["left-mid", "center", "right-mid"],
+		["back"],
+	];
+	const frames = new Map([
+		[0, { y: 0, height: 100 }],
+		[1, { y: 100, height: 100 }],
+	]);
+	expect(poolBoardRowInset(rows, 0)).toBe(1 / 6);
+	expect(poolBoardRowInset(rows, 1)).toBe(0);
+	expect(
+		poolBoardRowInset(
+			[
+				[1, 2, 3],
+				[4, 5],
+			],
+			0,
+		),
+	).toBe(0);
+	for (const x of [100, 200])
+		expect(poolBoardSpotAt(rows, frames, 300, x, 50)).toBe(
+			x === 100 ? "left-forward" : "right-forward",
+		);
+	expect(poolBoardSpotAt(rows, frames, 300, 25, 50)).toBeUndefined();
+	expect(poolBoardSpotAt(rows, frames, 300, 275, 50)).toBeUndefined();
+	expect(poolBoardSpotAt(rows, frames, 300, 50, 150)).toBe("left-mid");
+	expect(poolBoardSpotAt(rows, frames, 300, 250, 150)).toBe("right-mid");
 });
 
 test("pool drag highlights only another spot in the same cohort within its measured bounds", (): void => {

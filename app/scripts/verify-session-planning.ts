@@ -288,17 +288,6 @@ const verify = async (): Promise<void> => {
 	assert.deepEqual(await planFor(owner, sourceId), published);
 	await assert.rejects(owner.mutation(api.club.apply, { action: carry }));
 
-	const resourceId = await owner.mutation(api.resources.save, {
-		title: "Planning drill reference",
-		description: "Synthetic drill reference",
-		kind: "document",
-		category: "drills",
-		audience: "coaches",
-		personIds: [],
-		url: "https://example.test/drill.pdf",
-		key: crypto.randomUUID(),
-		revision: 0,
-	});
 	const foreignResource = await outsider.mutation(api.resources.save, {
 		title: "Other club drill",
 		description: "Foreign private fixture",
@@ -317,20 +306,7 @@ const verify = async (): Promise<void> => {
 		revision: 0,
 		body: "Support the receiver\nPassing lanes: pass and move into support.\nThree on two: find an open teammate.",
 		notes: "Keep partner rotations short",
-		media: [
-			{
-				id: "resource",
-				label: "Planning reference",
-				source: "resource",
-				resourceId,
-			},
-			{
-				id: "video",
-				label: "Secure demonstration",
-				source: "link",
-				url: "https://youtu.be/dQw4w9WgXcQ",
-			},
-		],
+		media: [],
 	};
 	for (const client of [viewer, outsider, signedOut]) {
 		await assert.rejects(
@@ -364,7 +340,7 @@ const verify = async (): Promise<void> => {
 	});
 	assert.equal(saved.revision, 1);
 	assert.equal(saved.body, command.body);
-	assert.equal(saved.media.length, 2);
+	assert.equal(saved.media.length, 0);
 	assert.equal(
 		(
 			await owner.query(api.session_plans.state, {

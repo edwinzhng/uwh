@@ -1,5 +1,6 @@
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { View } from "react-native";
+import type { RoleTone } from "./role-glow";
 import { ScrollArea, type ScrollAreaHandle } from "./scroll-area";
 import { SelectionIndicator } from "./selection-indicator";
 import { type TabSize, tabFrame, tabScrollRange } from "./tab-layout";
@@ -17,6 +18,7 @@ type Props<T extends string> = {
 		value: T;
 		label: string;
 		isDisabled?: boolean;
+		roleTone?: RoleTone;
 	}[];
 	onValueChange: (value: T) => void;
 };
@@ -123,6 +125,7 @@ export const Tabs = <T extends string>({
 							>
 								<TabOption
 									label={option.label}
+									roleTone={option.roleTone}
 									selected={selectedValue === option.value}
 									indicatorReady={frame !== undefined}
 									disabled={option.isDisabled}

@@ -5,4 +5,5 @@ export type GlassBackdropProps = {
 	showRim?: boolean;
 	radius?: number;
 	softEdge?: boolean;
+	uniform?: boolean;
 };

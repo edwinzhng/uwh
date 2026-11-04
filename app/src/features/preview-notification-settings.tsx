@@ -2,7 +2,7 @@ import { useAtom } from "jotai";
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
 import { previewNotificationPreferences } from "../demo/notification-preferences-state";
-import { SectionHeading, Stack, Surface, Toggle } from "../design-system";
+import { Stack, Surface, Toggle } from "../design-system";
 import {
 	defaultNotificationPreferences,
 	notificationPreferenceOptions,
@@ -14,7 +14,6 @@ export const PreviewNotificationSettings = (): ReactElement => {
 	const preferences = stored[account.id] ?? defaultNotificationPreferences;
 	return (
 		<Stack gap="sm">
-			<SectionHeading>Notifications</SectionHeading>
 			<Surface>
 				<Stack>
 					{notificationPreferenceOptions

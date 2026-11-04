@@ -18,19 +18,20 @@ export const MemberCoachNotes = ({
 	return (
 		<>
 			<Button
-				label="Coach notes"
+				label="Feedback"
 				prefix="list"
 				variant="secondary"
 				onPress={(): void => setOpen(true)}
 			/>
-			<Dialog title="Coach notes" isOpen={open} onOpenChange={setOpen}>
+			<Dialog title="Feedback" isOpen={open} onOpenChange={setOpen}>
 				<Stack>
 					<Text variant="small">
 						Shared notes are visible to this player and linked guardians.
 					</Text>
 					{coach ? (
 						<Button
-							label="Add note"
+							label="Add feedback"
+							roleTone="coach"
 							prefix="plus"
 							variant="secondary"
 							onPress={(): void => {

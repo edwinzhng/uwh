@@ -13,11 +13,11 @@ const resolveRequest: CustomResolver = (
 		context,
 		/^(react|react-dom)(\/|$)/.test(moduleName)
 			? resolve(root, "node_modules", moduleName)
-			: moduleName.startsWith("@calgarycrocs/design-system/")
+			: moduleName.startsWith("@uwhclub/design-system/")
 				? resolve(
 						root,
 						"../packages/design-system/src",
-						moduleName.slice("@calgarycrocs/design-system/".length),
+						moduleName.slice("@uwhclub/design-system/".length),
 					)
 				: moduleName,
 		platform,

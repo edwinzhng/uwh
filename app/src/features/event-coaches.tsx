@@ -1,10 +1,12 @@
-import { type ReactElement, useState } from "react";
+import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
 import {
+	Avatar,
+	Badge,
 	Button,
-	Dialog,
 	LoadingContent,
-	MultiSelect,
+	Row,
+	SectionHeading,
 	Stack,
 	Text,
 } from "../design-system";
@@ -27,101 +29,63 @@ const EventCoachList = ({
 		{controls.loading ? (
 			<LoadingContent />
 		) : (
-			<MultiSelect
-				label="Coaches"
-				placeholder="Choose coaches"
-				values={controls.assignments.map((entry) => entry.coachId)}
-				options={[
-					...controls.coaches,
-					...controls.assignments.filter(
-						(assignment) =>
-							!controls.coaches.some(
-								(coach) => coach.coachId === assignment.coachId,
-							),
-					),
-				].map((coach) => ({
-					value: coach.coachId,
-					label: coach.name,
-					person: { id: coach.personId },
-					isDisabled: !controls.coaches.some(
-						(entry) => entry.coachId === coach.coachId,
-					),
-				}))}
-				maxSelections={maxPracticeCoaches}
-				isDisabled={event.cancelled}
-				isBusy={controls.busy}
-				onToggle={(coachId, assigned): void => {
-					void controls.change({ coachId, assigned });
-				}}
-			/>
+			<Stack gap="sm">
+				<SectionHeading
+					action={
+						<Badge
+							label={`${controls.assignments.length} selected`}
+							kind="neutral"
+						/>
+					}
+				>
+					Coaches
+				</SectionHeading>
+				<Row gap="xs" wrap>
+					{controls.coaches.map((coach) => {
+						const selected = controls.assignments.some(
+							(entry) => entry.coachId === coach.coachId,
+						);
+						return (
+							<Button
+								key={coach.coachId}
+								label={coach.name}
+								leading={
+									<Avatar name={coach.name} personId={coach.personId} mini />
+								}
+								variant="selection"
+								round
+								compact
+								isSelected={selected}
+								isLoading={controls.busy}
+								isDisabled={
+									event.cancelled ||
+									(!selected &&
+										controls.assignments.length >= maxPracticeCoaches)
+								}
+								onPress={(): void => {
+									void controls.change({
+										coachId: coach.coachId,
+										assigned: !selected,
+									});
+								}}
+							/>
+						);
+					})}
+				</Row>
+			</Stack>
 		)}
 		{controls.error ? <Text tone="danger">{controls.error}</Text> : undefined}
 	</Stack>
 );
-type PresentationProps = {
-	event: ClubEvent;
-	partId?: string;
-	presentation?: "inline" | "button";
-	onOpenChange?: (open: boolean) => void;
-};
-const CoachPresentation = ({
-	event,
-	controls,
-	presentation,
-	onOpenChange,
-}: PresentationProps & { controls: EventCoachControls }): ReactElement => {
-	const [open, setOpen] = useState(false);
-	const changeOpen = (value: boolean): void => {
-		setOpen(value);
-		onOpenChange?.(value);
-	};
-	return presentation === "button" ? (
-		<>
-			<Button
-				label={`Coaches${controls.loading ? "" : ` · ${controls.assignments.length}`}`}
-				prefix="users"
-				compact
-				variant="secondary"
-				onPress={(): void => changeOpen(true)}
-			/>
-			{open ? (
-				<Dialog
-					title="Practice coaches"
-					intent="detail"
-					isOpen
-					isDismissDisabled={controls.busy}
-					onOpenChange={changeOpen}
-				>
-					<EventCoachList event={event} controls={controls} />
-				</Dialog>
-			) : undefined}
-		</>
-	) : (
-		<EventCoachList event={event} controls={controls} />
-	);
-};
-const LiveEventCoaches = ({
-	event,
-	partId,
-	presentation,
-	onOpenChange,
-}: PresentationProps): ReactElement => (
-	<CoachPresentation
-		presentation={presentation}
-		onOpenChange={onOpenChange}
+type Props = { event: ClubEvent; partId?: string };
+const LiveEventCoaches = ({ event, partId }: Props): ReactElement => (
+	<EventCoachList
 		event={event}
 		controls={useLiveEventCoaches(event.id, partId)}
 	/>
 );
-const PreviewEventCoaches = ({
-	event,
-	partId,
-	presentation,
-	onOpenChange,
-}: PresentationProps): ReactElement => (
-	<CoachPresentation
-		presentation={presentation}
-		onOpenChange={onOpenChange}
+const PreviewEventCoaches = ({ event, partId }: Props): ReactElement => (
+	<EventCoachList
 		event={event}
 		controls={usePreviewEventCoaches(event, partId)}
 	/>
@@ -129,9 +93,7 @@ const PreviewEventCoaches = ({
 export const EventCoaches = ({
 	event,
 	partId,
-	presentation,
-	onOpenChange,
-}: PresentationProps): ReactElement | undefined => {
+}: Props): ReactElement | undefined => {
 	const { source, account } = useApp();
 	if (
 		!account.coachPrograms.length ||
@@ -140,18 +102,8 @@ export const EventCoaches = ({
 	)
 		return undefined;
 	return source === "convex" ? (
-		<LiveEventCoaches
-			presentation={presentation}
-			onOpenChange={onOpenChange}
-			event={event}
-			partId={partId}
-		/>
+		<LiveEventCoaches event={event} partId={partId} />
 	) : (
-		<PreviewEventCoaches
-			presentation={presentation}
-			onOpenChange={onOpenChange}
-			event={event}
-			partId={partId}
-		/>
+		<PreviewEventCoaches event={event} partId={partId} />
 	);
 };

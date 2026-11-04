@@ -68,7 +68,11 @@ const PerformanceContent = ({
 				<LoadingContent />
 			) : (
 				(["self", "coach"] as const)
-					.filter((kind) => !visibleKind || kind === visibleKind)
+					.filter(
+						(kind) =>
+							(!visibleKind || kind === visibleKind) &&
+							(kind !== "coach" || canCoachMember(account, member)),
+					)
 					.map((kind) => {
 						const entries = chronologicalSessionRatings(service.entries).filter(
 							(entry) => entry.kind === kind,
@@ -123,7 +127,8 @@ const PerformanceContent = ({
 							action={
 								actions.some((action) => action.id === "note") ? (
 									<Button
-										label="Add note"
+										label="Add feedback"
+										roleTone="coach"
 										compact
 										variant="secondary"
 										onPress={(): void => setNoteOpen(true)}
@@ -131,7 +136,7 @@ const PerformanceContent = ({
 								) : undefined
 							}
 						>
-							Coach notes
+							Feedback
 						</SectionHeading>
 						<FeedbackList
 							personId={member.id}
@@ -150,7 +155,8 @@ const PerformanceContent = ({
 					</Stack>
 				</Surface>
 			) : undefined}
-			{editor ? (
+			{editor &&
+			(editor.kind !== "coach" || canCoachMember(account, member)) ? (
 				<SessionPerformanceEditor
 					personId={member.id}
 					kind={editor.kind}

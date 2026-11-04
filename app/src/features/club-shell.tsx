@@ -6,17 +6,21 @@ import {
 	Button,
 	LoadingBoundary,
 	LoadingScope,
+	RoleLabel,
+	RoleScope,
+	type RoleTone,
 	Row,
 	Stack,
 	Text,
 } from "../design-system";
-import { isPrimaryDestination } from "../domain/page-navigation";
+import { isPrimaryDestination, pageRoleTone } from "../domain/page-navigation";
 import { FamilyMenu } from "./family-menu";
 import { NotificationsMenu } from "./notifications-menu";
 import { hasRouteBack, RouteBack } from "./route-back";
 
 type Props = {
 	children: ReactNode;
+	roleTone?: RoleTone;
 	title?: string;
 	workspaceTitle?: ReactNode;
 	subtitle?: string;
@@ -33,6 +37,7 @@ type Props = {
 };
 export const ClubShell = ({
 	children,
+	roleTone,
 	title,
 	workspaceTitle,
 	subtitle,
@@ -57,6 +62,7 @@ export const ClubShell = ({
 			? headerOption
 			: "content";
 	const { loading } = useApp();
+	const restrictedRole = roleTone ?? pageRoleTone(pathname);
 	const { error, clearError } = useAppStatus();
 	return (
 		<LoadingScope>
@@ -69,7 +75,11 @@ export const ClubShell = ({
 				subtitle={subtitle}
 				toolbarLeading={toolbarLeading}
 				toolbarCenter={toolbarCenter}
-				action={action}
+				action={
+					action ? (
+						<RoleScope tone={restrictedRole}>{action}</RoleScope>
+					) : undefined
+				}
 				actionPlacement={actionPlacement}
 				tabs={tabs}
 				back={
@@ -103,7 +113,12 @@ export const ClubShell = ({
 									: "xl"
 						}
 					>
-						{children}
+						{restrictedRole ? (
+							<Row justify="end">
+								<RoleLabel roleKind={restrictedRole} />
+							</Row>
+						) : undefined}
+						<RoleScope>{children}</RoleScope>
 					</Stack>
 				</LoadingBoundary>
 			</AppLayout>

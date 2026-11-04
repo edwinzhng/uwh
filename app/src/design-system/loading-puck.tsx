@@ -1,4 +1,4 @@
-import { motionEffects } from "@calgarycrocs/design-system/tokens";
+import { motionEffects } from "@uwhclub/design-system/tokens";
 import { type ExpoWebGLRenderingContext, GLView } from "expo-gl";
 import { type ReactElement, useCallback, useEffect, useRef } from "react";
 import { PixelRatio, Platform, View } from "react-native";

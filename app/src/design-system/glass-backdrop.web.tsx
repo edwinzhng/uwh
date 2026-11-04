@@ -11,6 +11,7 @@ export const GlassBackdrop = ({
 	material,
 	showRim = true,
 	softEdge = false,
+	uniform = false,
 }: GlassBackdropProps): ReactElement => {
 	const theme = useTheme();
 	const colors = materialColors(theme);
@@ -23,7 +24,9 @@ export const GlassBackdrop = ({
 	const background = opaque
 		? theme.background.primary
 		: softEdge
-			? colors.header
+			? uniform
+				? "transparent"
+				: colors.header
 			: recipe
 				? recipe.fill
 				: material === "selection"
@@ -44,7 +47,7 @@ export const GlassBackdrop = ({
 					pointerEvents: "none",
 					position: "absolute",
 					inset: 0,
-					bottom: softEdge && !opaque ? -space.md : 0,
+					bottom: softEdge && !opaque ? -space.xs : 0,
 					borderRadius: "inherit",
 					backgroundColor: background,
 					backgroundImage:
@@ -54,7 +57,7 @@ export const GlassBackdrop = ({
 					boxShadow: showRim ? recipe?.rim : undefined,
 					maskImage:
 						softEdge && !opaque
-							? `linear-gradient(to bottom, #000 calc(100% - ${space.md}px), transparent)`
+							? `linear-gradient(to bottom, #000 calc(100% - ${space.xs}px), transparent)`
 							: undefined,
 				}}
 			/>

@@ -26,7 +26,6 @@ export const clubToolGroups = (account: Account): ClubToolGroup[] => {
 		{
 			title: "Club",
 			tools: [
-				...(account.admin ? (["equipment"] as const) : []),
 				"programs",
 				"members",
 				"fitness",
@@ -46,7 +45,14 @@ export const clubToolGroups = (account: Account): ClubToolGroup[] => {
 		{
 			title: "Administration",
 			tools: account.admin
-				? ["registration", "payments", "settings", "moderation", "imports"]
+				? [
+						"equipment",
+						"registration",
+						"payments",
+						"settings",
+						"moderation",
+						"imports",
+					]
 				: [],
 		},
 	];

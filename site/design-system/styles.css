@@ -684,7 +684,7 @@ body:has(dialog[open]) {
 	border-radius: 50%;
 	background: #ffffff25;
 	backdrop-filter: blur(12px);
-	transition: background var(--crocs-motion-fast) var(--crocs-ease-standard);
+	transition: background var(--uwhclub-motion-fast) var(--uwhclub-ease-standard);
 }
 .visually-hidden {
 	position: absolute;
@@ -729,7 +729,8 @@ body:has(dialog[open]) {
 	inset: 0;
 	z-index: -2;
 	opacity: 0;
-	transition: opacity var(--crocs-motion-extended) var(--crocs-ease-standard);
+	transition: opacity var(--uwhclub-motion-extended)
+		var(--uwhclub-ease-standard);
 }
 .hero-photo {
 	transform: none;
@@ -754,20 +755,20 @@ body:has(dialog[open]) {
 	margin-bottom: 18px;
 }
 .hero-content > :not(dialog) {
-	animation: hero-copy-arrive var(--crocs-motion-extended) var(--crocs-ease-out)
-		both;
+	animation: hero-copy-arrive var(--uwhclub-motion-extended)
+		var(--uwhclub-ease-out) both;
 }
 .hero-content > :nth-child(1) {
-	animation-delay: var(--crocs-motion-fast);
+	animation-delay: var(--uwhclub-motion-fast);
 }
 .hero-content > :nth-child(2) {
-	animation-delay: var(--crocs-motion-standard);
+	animation-delay: var(--uwhclub-motion-standard);
 }
 .hero-content > :nth-child(3) {
-	animation-delay: var(--crocs-motion-slow);
+	animation-delay: var(--uwhclub-motion-slow);
 }
 .hero-content > button {
-	animation-delay: var(--crocs-motion-extended);
+	animation-delay: var(--uwhclub-motion-extended);
 }
 @keyframes hero-arrive {
 	from {
@@ -855,20 +856,20 @@ body:has(dialog[open]) {
 	margin-bottom: 18px;
 }
 .hero-title > * {
-	animation: hero-copy-arrive var(--crocs-motion-heroCopyReveal)
-		var(--crocs-ease-standard) both;
+	animation: hero-copy-arrive var(--uwhclub-motion-heroCopyReveal)
+		var(--uwhclub-ease-standard) both;
 }
 .hero-title > :first-child {
-	animation-delay: var(--crocs-motion-instant);
+	animation-delay: var(--uwhclub-motion-instant);
 }
 .hero-title > h1 {
-	animation-delay: var(--crocs-motion-slow);
+	animation-delay: var(--uwhclub-motion-slow);
 }
 .hero-content {
 	padding-top: 0;
 }
 .hero-content > .hero-description {
-	animation-delay: var(--crocs-motion-slow);
+	animation-delay: var(--uwhclub-motion-slow);
 }
 
 @media (max-width: 700px) {
@@ -928,10 +929,10 @@ body > footer {
 	margin: 24px auto;
 }
 .hero-title > .hero-description {
-	animation-delay: var(--crocs-motion-extended);
+	animation-delay: var(--uwhclub-motion-extended);
 }
 .hero-title > button {
-	animation-delay: var(--crocs-motion-heroActionDelay);
+	animation-delay: var(--uwhclub-motion-heroActionDelay);
 }
 .hero-title > dialog {
 	animation: none;
@@ -1441,7 +1442,7 @@ body > footer {
 	border-radius: 5px;
 	box-shadow: 0 1px 3px #00000015;
 	transform: translateX(calc(100% + 4px));
-	transition: transform var(--crocs-motion-standard) var(--crocs-ease-out);
+	transition: transform var(--uwhclub-motion-standard) var(--uwhclub-ease-out);
 }
 .group-segments:has(input[value="Youth"]:checked)::before {
 	transform: translateX(0);
@@ -1554,7 +1555,7 @@ body > footer {
 		);
 	filter: blur(7px);
 	transform: rotate(-18deg) scale(1);
-	transition: transform var(--crocs-motion-extended) var(--crocs-ease-out);
+	transition: transform var(--uwhclub-motion-extended) var(--uwhclub-ease-out);
 }
 .video-preview::after {
 	content: "";
@@ -1570,8 +1571,8 @@ body > footer {
 	border: 1px solid #ffffffd9;
 	border-radius: 50%;
 	transition:
-		transform var(--crocs-motion-extended) var(--motion-ease-out),
-		opacity var(--crocs-motion-extended) var(--motion-ease-out);
+		transform var(--uwhclub-motion-extended) var(--motion-ease-out),
+		opacity var(--uwhclub-motion-extended) var(--motion-ease-out);
 }
 .video-preview:hover::before {
 	transform: rotate(-12deg) scale(1.08);
@@ -1592,14 +1593,14 @@ body > footer {
 }
 
 :root {
-	--motion-duration-modal: var(--crocs-motion-standard);
-	--motion-ease-out: var(--crocs-ease-out);
-	--ink: var(--crocs-ink);
-	--paper: var(--crocs-surface);
+	--motion-duration-modal: var(--uwhclub-motion-standard);
+	--motion-ease-out: var(--uwhclub-ease-out);
+	--ink: var(--uwhclub-ink);
+	--paper: var(--uwhclub-surface);
 }
 .button {
-	background-color: var(--crocs-accent);
-	border-radius: var(--crocs-control-radius);
+	background-color: var(--uwhclub-accent);
+	border-radius: var(--uwhclub-control-radius);
 }
 #about,
 #schedule,
@@ -1785,8 +1786,8 @@ body > footer {
 	color: #656b6f;
 }
 .join-dialog {
-	--motion-duration-modal: var(--crocs-motion-extended);
-	--motion-ease-out: var(--crocs-ease-out);
+	--motion-duration-modal: var(--uwhclub-motion-extended);
+	--motion-ease-out: var(--uwhclub-ease-out);
 }
 
 .practice-card > header {
@@ -1937,7 +1938,7 @@ body > footer {
 }
 .coach-photo {
 	opacity: 0;
-	transition: opacity var(--crocs-motion-slow) var(--crocs-ease-out);
+	transition: opacity var(--uwhclub-motion-slow) var(--uwhclub-ease-out);
 }
 .coach-photo[data-loaded="true"] {
 	opacity: 1;
@@ -2118,8 +2119,8 @@ body:has(.not-found-page) {
 		0 2px 6px #19392a12;
 	pointer-events: none;
 	transition:
-		transform var(--crocs-motion-extended) var(--crocs-ease-emphasized),
-		opacity var(--crocs-motion-standard) var(--crocs-ease-standard);
+		transform var(--uwhclub-motion-extended) var(--uwhclub-ease-emphasized),
+		opacity var(--uwhclub-motion-standard) var(--uwhclub-ease-standard);
 }
 .nav-island a,
 .nav-island button {
@@ -2139,7 +2140,7 @@ body:has(.not-found-page) {
 	text-align: center;
 	cursor: pointer;
 	-webkit-tap-highlight-color: transparent;
-	transition: color var(--crocs-motion-standard) var(--crocs-ease-standard);
+	transition: color var(--uwhclub-motion-standard) var(--uwhclub-ease-standard);
 }
 .nav-island :focus-visible {
 	outline: 2px solid #0d4ff7;
@@ -2240,7 +2241,7 @@ html {
 
 @media (prefers-reduced-motion: no-preference) {
 	.section-reveal[data-revealed="true"] {
-		animation: section-arrive var(--crocs-motion-slow) var(--crocs-ease-out)
+		animation: section-arrive var(--uwhclub-motion-slow) var(--uwhclub-ease-out)
 			both;
 	}
 }
@@ -2283,7 +2284,7 @@ html {
 }
 
 .page-transition[data-leaving="false"] {
-	animation: page-enter var(--crocs-motion-slow) var(--crocs-ease-out) both;
+	animation: page-enter var(--uwhclub-motion-slow) var(--uwhclub-ease-out) both;
 }
 
 @keyframes page-enter {
@@ -2300,7 +2301,8 @@ html {
 }
 
 .page-transition[data-exiting="true"] {
-	animation: page-exit var(--crocs-motion-standard) var(--crocs-ease-out) both;
+	animation: page-exit var(--uwhclub-motion-standard) var(--uwhclub-ease-out)
+		both;
 }
 
 @keyframes page-exit {

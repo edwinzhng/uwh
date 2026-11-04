@@ -77,7 +77,10 @@ export const DesignProvider = ({
 								<ScrollbarStyles />
 								<DateTimeStyles />
 								<InputStyles />
-								<LoadingHandoff loading={!clientReady || (!loaded && !error)}>
+								<LoadingHandoff
+									fillViewport
+									loading={!clientReady || (!loaded && !error)}
+								>
 									<LoadingScope>
 										{loaded ? (
 											children

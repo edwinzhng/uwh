@@ -41,7 +41,8 @@ export const eraseResources = async (
 		.query("resourceFiles")
 		.withIndex("by_owner", (q) => q.eq("ownerId", userId))
 		.collect()) {
-		if (file.resourceId) await ctx.db.patch(file._id, { ownerId: undefined });
+		if (file.resourceId || file.sessionPlanKey)
+			await ctx.db.patch(file._id, { ownerId: undefined });
 		else {
 			await ctx.storage.delete(file.storageId);
 			await ctx.db.delete(file._id);

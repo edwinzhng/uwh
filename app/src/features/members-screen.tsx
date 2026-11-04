@@ -46,6 +46,9 @@ export const MembersScreen = (): ReactElement => {
 	);
 	return (
 		<ClubShell
+			roleTone={
+				tab === "rankings" ? "coach" : tab === "invites" ? "admin" : undefined
+			}
 			tabs={
 				staff ? (
 					<Tabs
@@ -57,10 +60,22 @@ export const MembersScreen = (): ReactElement => {
 						options={[
 							{ value: "members", label: "Members" },
 							...(account.coachPrograms.length > 0
-								? [{ value: "rankings", label: "Rankings" }]
+								? [
+										{
+											value: "rankings",
+											label: "Rankings",
+											roleTone: "coach" as const,
+										},
+									]
 								: []),
 							...(account.admin
-								? [{ value: "invites", label: "Invites" }]
+								? [
+										{
+											value: "invites",
+											label: "Invites",
+											roleTone: "admin" as const,
+										},
+									]
 								: []),
 						]}
 					/>
@@ -71,6 +86,7 @@ export const MembersScreen = (): ReactElement => {
 				account.admin ? (
 					<Button
 						label="Invite member"
+						roleTone="admin"
 						prefix="plus"
 						onPress={(): void => setAdd(true)}
 					/>

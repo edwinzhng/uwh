@@ -27,7 +27,6 @@ import {
 import { formatTeams, type Position } from "../domain/player-coaching";
 import * as Clipboard from "../platform/clipboard";
 import { ConfirmationDialog } from "./confirmation-dialog";
-import { EventCoaches } from "./event-coaches";
 import {
 	commitLineupDraft,
 	currentLineupSnapshot,
@@ -83,8 +82,6 @@ export const LineupEditor = ({
 	const preview = planWithSnapshot(base, snapshot);
 	const people = lineupPeople(snapshot);
 	const [toolsOpen, setToolsOpen] = useState(false);
-	const [coachesOpen, setCoachesOpen] = useState(false);
-	const event = data.events.find((entry) => entry.id === plan.eventId);
 	const [personId, setPersonId] = useState<string>();
 	const [side, setSide] = useState<LineupSide>("black");
 	const [role, setRole] = useState<Position>("FORWARD");
@@ -207,14 +204,6 @@ export const LineupEditor = ({
 					) : undefined}
 				</Row>
 				<Row gap="xs" wrap>
-					{event ? (
-						<EventCoaches
-							event={event}
-							partId={plan.partId}
-							presentation="button"
-							onOpenChange={setCoachesOpen}
-						/>
-					) : undefined}
 					{changed ? (
 						<Button
 							label="Save"
@@ -344,7 +333,6 @@ export const LineupEditor = ({
 			<PoolBoardGroup
 				active={
 					!overlayOpen &&
-					!coachesOpen &&
 					!rotation &&
 					!confirmSave &&
 					!discarding &&

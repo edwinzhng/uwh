@@ -38,6 +38,7 @@ export const AgendaScreen = (): ReactElement => {
 					{account.admin ? (
 						<IconButton
 							label="New event"
+							roleTone="admin"
 							icon="plus"
 							onPress={(): void => setCreate(true)}
 						/>
@@ -46,7 +47,7 @@ export const AgendaScreen = (): ReactElement => {
 			}
 		>
 			<Stack gap="md">
-				<Row wrap gap="xs">
+				<Row wrap gap="xxs">
 					<FilterChip
 						label="All programs"
 						selected={!programId}

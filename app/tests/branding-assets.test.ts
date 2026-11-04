@@ -16,7 +16,7 @@ const imageGeometry = async (
 	};
 };
 
-describe("Crocs app branding", () => {
+describe("UWH Club app branding", () => {
 	test("uses one opaque 1024px launcher source for native and generated web icons", async (): Promise<void> => {
 		const path = "./assets/app-icon.png";
 		expect(config.icon).toBe(path);
@@ -64,8 +64,8 @@ describe("Crocs app branding", () => {
 		expect(manifest.background_color).toBe(lightTheme.background.canvas);
 		expect(manifest.theme_color).toBe(lightTheme.background.canvas);
 		expect(manifest.icons.map((icon) => icon.src)).toEqual([
-			"/crocs-app-v1-192.png",
-			"/crocs-app-v1-512.png",
+			"/uwhclub-app-v1-192.png",
+			"/uwhclub-app-v1-512.png",
 		]);
 		for (const icon of manifest.icons) {
 			const size = await imageGeometry(`public${icon.src}`);
@@ -78,15 +78,15 @@ describe("Crocs app branding", () => {
 		const document = await Bun.file(
 			new URL("../src/design-system/web-document.tsx", import.meta.url),
 		).text();
-		expect(document).toContain("/crocs-app-v1-favicon.png");
-		expect(document).toContain("/crocs-app-v1-apple.png");
+		expect(document).toContain("/uwhclub-app-v1-favicon.png");
+		expect(document).toContain("/uwhclub-app-v1-apple.png");
 		expect(document).not.toContain("club-logo");
-		expect(await imageGeometry("public/crocs-app-v1-favicon.png")).toEqual({
+		expect(await imageGeometry("public/uwhclub-app-v1-favicon.png")).toEqual({
 			width: 32,
 			height: 32,
 			colorType: 2,
 		});
-		expect(await imageGeometry("public/crocs-app-v1-apple.png")).toEqual({
+		expect(await imageGeometry("public/uwhclub-app-v1-apple.png")).toEqual({
 			width: 180,
 			height: 180,
 			colorType: 2,

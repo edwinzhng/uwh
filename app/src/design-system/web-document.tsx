@@ -34,12 +34,12 @@ export const WebDocument = ({
 				rel="icon"
 				type="image/png"
 				sizes="32x32"
-				href="/crocs-app-v1-favicon.png"
+				href="/uwhclub-app-v1-favicon.png"
 			/>
 			<link
 				rel="apple-touch-icon"
 				sizes="180x180"
-				href="/crocs-app-v1-apple.png"
+				href="/uwhclub-app-v1-apple.png"
 			/>
 			{reset}
 		</head>

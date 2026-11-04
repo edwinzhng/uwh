@@ -4,7 +4,6 @@ import { Avatar } from "./avatar";
 import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
-import { geometry } from "./tokens";
 
 type Props = {
 	title: string;
@@ -23,11 +22,15 @@ export const ContentRow = ({
 	titleVariant = "label",
 }: Props): ReactElement => {
 	const { width } = useWindowDimensions();
-	const separateActions = Boolean(metadata) && width < geometry.narrow;
+	const separateActions = Boolean(metadata) && width < 400;
 	const identityBlock = (
 		<Stack gap="none" grow>
 			<Row gap="xs">
-				<Text variant={titleVariant}>{title}</Text>
+				<Stack grow gap="none">
+					<Text variant={titleVariant} lines={2}>
+						{title}
+					</Text>
+				</Stack>
 				{metadata}
 			</Row>
 			{description ? (
@@ -40,7 +43,7 @@ export const ContentRow = ({
 	return separateActions ? (
 		<Stack gap="xs">
 			{identityBlock}
-			<Row justify="end">{control}</Row>
+			<Row>{control}</Row>
 		</Stack>
 	) : (
 		<Row align="center">

@@ -21,7 +21,7 @@ export const CoachDashboard = ({
 }): ReactElement => {
 	const router = useRouter();
 	return (
-		<Stack gap="xl">
+		<Stack gap="md">
 			{nextPractice ? (
 				<HomeCoaching event={nextPractice} />
 			) : (
@@ -43,7 +43,7 @@ export const CoachDashboard = ({
 				<Surface>
 					<Stack gap="none">
 						<ListItem
-							title="Player reviews"
+							title="Player ratings"
 							description="Goals and coach ratings"
 							icon="users"
 							onPress={(): void => router.push("/development")}

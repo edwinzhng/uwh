@@ -4,7 +4,6 @@ import { useChatSafety } from "../backend/chat-safety";
 import { useApp } from "../demo/app-state";
 import {
 	Button,
-	ChatBackground,
 	ChatIdentity,
 	MessageTimeline,
 	Row,
@@ -121,7 +120,7 @@ export const ThreadContent = ({
 				)
 			}
 		>
-			<ChatBackground>
+			<Stack grow gap="none">
 				<ThreadPractice threadId={thread.id} />
 				<ThreadExtras />
 				{read.error ? (
@@ -149,7 +148,7 @@ export const ThreadContent = ({
 						/>
 					)}
 				/>
-			</ChatBackground>
+			</Stack>
 		</ClubShell>
 	);
 };

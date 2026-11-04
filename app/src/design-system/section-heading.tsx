@@ -8,6 +8,7 @@ import { useControlSize } from "./use-control-size";
 type Props = {
 	children: ReactNode;
 	action?: ReactNode;
+	badge?: ReactNode;
 	size?: "small";
 	icon?: IconName;
 };
@@ -15,6 +16,7 @@ type Props = {
 export const SectionHeading = ({
 	children,
 	action,
+	badge,
 	icon,
 }: Props): ReactElement => {
 	const height = useControlSize();
@@ -39,6 +41,7 @@ export const SectionHeading = ({
 			>
 				{icon ? <Icon name={icon} tone="secondary" /> : undefined}
 				<Text variant="h4">{children}</Text>
+				{badge}
 			</View>
 			{action ? (
 				<View

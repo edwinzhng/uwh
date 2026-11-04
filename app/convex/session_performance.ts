@@ -77,14 +77,26 @@ export const page = query({
 	): Promise<PaginationResult<SessionPerformanceEntry>> => {
 		const actor = await requireMember(ctx);
 		const person = await personFor(ctx, actor, personId);
-		const records = kind
+		if (
+			kind &&
+			!canReadSessionPerformance(accountFor(actor), person.value, kind)
+		)
+			throw new Error("Coach access required.");
+		const visibleKind = canReadSessionPerformance(
+			accountFor(actor),
+			person.value,
+			"coach",
+		)
+			? kind
+			: "self";
+		const records = visibleKind
 			? ctx.db
 					.query("sessionPerformance")
 					.withIndex("by_person_kind", (q) =>
 						q
 							.eq("clubId", actor.clubId)
 							.eq("personId", personId)
-							.eq("kind", kind),
+							.eq("kind", visibleKind),
 					)
 			: ctx.db
 					.query("sessionPerformance")
@@ -136,6 +148,8 @@ export const current = query({
 	): Promise<SessionPerformanceEntry | null> => {
 		const actor = await requireMember(ctx);
 		const person = await personFor(ctx, actor, personId);
+		if (!canReadSessionPerformance(accountFor(actor), person.value, kind))
+			throw new Error("Coach access required.");
 		const row = await ctx.db
 			.query("sessionPerformance")
 			.withIndex("by_identity", (q) =>

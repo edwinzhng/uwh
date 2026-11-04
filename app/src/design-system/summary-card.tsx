@@ -14,11 +14,14 @@ import {
 	space,
 	unmarkedCardColors,
 } from "./tokens";
+import { WatercolorShader } from "./watercolor-shader";
 
 export const SummaryCard = ({
 	title,
 	titleVariant = "overline",
 	icon,
+	category = "sky",
+	headerTexture,
 	variant = "default",
 	metadata,
 	children,
@@ -26,11 +29,14 @@ export const SummaryCard = ({
 	accessibilityLabel,
 	action,
 	borderStyle = "solid",
+	compact = false,
 }: {
 	title: string;
+	compact?: boolean;
 	titleVariant?: "overline" | "h3";
 	icon?: IconName;
 	category?: CategoryColor;
+	headerTexture?: "watercolor";
 	variant?: "default" | "metric" | "section";
 	tone?: "default" | "brand" | "recognition";
 	metadata?: string;
@@ -51,6 +57,9 @@ export const SummaryCard = ({
 		? unmarkedColors.background
 		: theme.background.card;
 	const interactiveBackground = pressed ? theme.background.pressed : background;
+	const texture = headerTexture ? (
+		<WatercolorShader category={category} seed={`practice-header:${title}`} />
+	) : undefined;
 	const content = (
 		<CardContentContext value={!section}>
 			<View style={{ gap: space.xs, minWidth: 0 }}>
@@ -114,32 +123,39 @@ export const SummaryCard = ({
 						onPressIn={(): void => setPressed(true)}
 						onPressOut={(): void => setPressed(false)}
 						style={{
-							padding: section ? 0 : space.md,
+							padding: section ? 0 : compact ? space.sm : space.md,
 							minHeight: geometry.touch,
 							minWidth: 0,
 							backgroundColor: section ? "transparent" : interactiveBackground,
 						}}
 					>
-						{!section && !unmarked ? <CardAtmosphere /> : undefined}
+						{texture}
+						{!headerTexture && !section && !unmarked ? (
+							<CardAtmosphere />
+						) : undefined}
 						{content}
 					</Pressable>
 				) : (
 					<View
 						style={{
-							padding: section ? 0 : space.md,
+							padding: section ? 0 : compact ? space.sm : space.md,
 							backgroundColor: section ? "transparent" : background,
 						}}
 					>
-						{!section && !unmarked ? <CardAtmosphere /> : undefined}
+						{texture}
+						{!headerTexture && !section && !unmarked ? (
+							<CardAtmosphere />
+						) : undefined}
 						{content}
 					</View>
 				)}
 				{action ? (
 					<View
 						style={{
-							padding: space.md,
+							padding: compact ? space.sm : space.md,
+							paddingTop: compact ? 0 : space.md,
 							gap: space.sm,
-							borderTopWidth: geometry.border,
+							borderTopWidth: compact ? 0 : geometry.border,
 							borderTopColor: theme.border,
 						}}
 					>

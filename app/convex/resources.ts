@@ -18,6 +18,7 @@ import {
 	validateResource,
 	validateResourceComment,
 } from "../src/domain/resources";
+import { canReadSessionPlanImage } from "../src/domain/session-plan";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
@@ -27,7 +28,7 @@ import {
 	type QueryCtx,
 	query,
 } from "./_generated/server";
-import { requireMember } from "./identity";
+import { accountFor, requireMember } from "./identity";
 import { enqueue } from "./notifications";
 import {
 	resourceCategory,
@@ -306,6 +307,7 @@ export const save = mutation({
 						!file ||
 						file.clubId !== actor.clubId ||
 						(file.purpose ?? "document") !== purpose ||
+						file.sessionPlanKey ||
 						(file.resourceId
 							? file.resourceId !== previous?._id
 							: file.ownerId !== actor.userId)
@@ -467,6 +469,7 @@ export const registerFile = internalMutation({
 			.withIndex("by_owner_resource", (q) =>
 				q.eq("ownerId", userId).eq("resourceId", undefined),
 			)
+			.filter((q) => q.eq(q.field("sessionPlanKey"), undefined))
 			.take(resourceLimits.pendingFiles);
 		if (pending.length >= resourceLimits.pendingFiles)
 			throw new Error("Finish saving your pending documents first.");
@@ -520,9 +523,73 @@ export const expireFile = internalMutation({
 	args: { id: v.id("resourceFiles") },
 	handler: async (ctx, { id }): Promise<void> => {
 		const file = await ctx.db.get(id);
-		if (file && !file.resourceId) {
+		if (file && !file.resourceId && !file.sessionPlanKey) {
 			await ctx.storage.delete(file.storageId);
 			await ctx.db.delete(id);
 		}
+	},
+});
+
+export const readablePlanImage = internalQuery({
+	args: { userId: v.id("users"), fileId: v.string() },
+	handler: async (
+		ctx,
+		{ userId, fileId },
+	): Promise<Doc<"resourceFiles"> | null> => {
+		const actor = await actorFor(ctx, userId);
+		const id = ctx.db.normalizeId("resourceFiles", fileId);
+		const file = id ? await ctx.db.get(id) : undefined;
+		if (
+			!actor ||
+			!file ||
+			file.clubId !== actor.clubId ||
+			!["image/jpeg", "image/png", "image/webp"].includes(file.mime) ||
+			file.resourceId
+		)
+			return null;
+		if (!file.sessionPlanKey)
+			return actor.coachPrograms.length && file.ownerId === userId
+				? file
+				: null;
+		const plan = await ctx.db
+			.query("sessionPlans")
+			.withIndex("by_club_key", (q) =>
+				q.eq("clubId", actor.clubId).eq("key", file.sessionPlanKey ?? ""),
+			)
+			.unique();
+		if (
+			!plan ||
+			!plan.media.some(
+				(media) => media.source === "image" && media.fileId === fileId,
+			)
+		)
+			return null;
+
+		const event = await ctx.db
+			.query("events")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", actor.clubId).eq("value.id", plan.eventId),
+			)
+			.unique();
+		const people = await Promise.all(
+			[actor.personId, ...actor.children].map((personId) =>
+				ctx.db
+					.query("members")
+					.withIndex("by_club_and_key", (q) =>
+						q.eq("clubId", actor.clubId).eq("value.id", personId),
+					)
+					.unique(),
+			),
+		);
+		return event &&
+			canReadSessionPlanImage(
+				accountFor(actor),
+				event.value,
+				people.flatMap((person) => (person ? [person.value] : [])),
+				plan,
+				fileId,
+			)
+			? file
+			: null;
 	},
 });

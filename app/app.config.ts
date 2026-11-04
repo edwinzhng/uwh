@@ -5,11 +5,11 @@ const projectId =
 	"8670108c-8259-43e5-8799-f1d4078577e8";
 
 const config: ExpoConfig = {
-	name: "Calgary UWH",
+	name: "UWH Club",
 	slug: "calgary-uwh",
 	owner: "calgary-uwh",
 	scheme: "uwh-club",
-	version: "0.1.0",
+	version: "1.0.0",
 	icon: "./assets/app-icon.png",
 	extra: {
 		eas: {
@@ -29,11 +29,11 @@ const config: ExpoConfig = {
 	},
 	ios: {
 		supportsTablet: true,
-		bundleIdentifier: "com.base69c3f808e02b5b2113ac2191.app",
+		bundleIdentifier: "com.uwhclub.app",
 		infoPlist: { ITSAppUsesNonExemptEncryption: false },
 	},
 	android: {
-		package: "club.crocs.preview",
+		package: "com.uwhclub.app",
 		softwareKeyboardLayoutMode: "resize",
 	},
 	web: {

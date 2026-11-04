@@ -1,10 +1,7 @@
 import type { CoachingFeedback } from "./app-types";
 import { feedbackKind } from "./feedback-access";
-import type { SessionPerformanceEntry } from "./session-performance";
 
-export type HomeFeedbackHighlight =
-	| { kind: "note"; entry: CoachingFeedback }
-	| { kind: "rating"; entry: SessionPerformanceEntry };
+export type HomeFeedbackHighlight = { kind: "note"; entry: CoachingFeedback };
 
 export const homeCoachNotes = (
 	entries: readonly CoachingFeedback[],
@@ -22,24 +19,8 @@ export const homeCoachNotes = (
 
 export const homeFeedbackHighlight = (
 	notes: readonly CoachingFeedback[],
-	ratings: readonly SessionPerformanceEntry[],
 	personId: string,
 ): HomeFeedbackHighlight | undefined => {
-	const note = homeCoachNotes(notes, personId).at(0);
-	const rating = ratings
-		.filter(
-			(entry) =>
-				entry.personId === personId && entry.kind === "coach" && !entry.removed,
-		)
-		.sort(
-			(left, right) =>
-				right.eventDate.localeCompare(left.eventDate) ||
-				right.updatedAt - left.updatedAt,
-		)
-		.at(0);
-	return note && (!rating || note.date >= rating.eventDate)
-		? { kind: "note", entry: note }
-		: rating
-			? { kind: "rating", entry: rating }
-			: undefined;
+	const entry = homeCoachNotes(notes, personId).at(0);
+	return entry ? { kind: "note", entry } : undefined;
 };

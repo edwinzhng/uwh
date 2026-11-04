@@ -87,6 +87,7 @@ const ResourceWorkspace = ({
 				canManage && !id ? (
 					<Button
 						label="New"
+						roleTone={account.coachPrograms.length ? "coach" : "admin"}
 						prefix="plus"
 						onPress={(): void => setEditor("new")}
 					/>

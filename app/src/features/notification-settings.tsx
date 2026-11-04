@@ -15,7 +15,6 @@ import {
 	actionToast,
 	Button,
 	Row,
-	SectionHeading,
 	Stack,
 	Surface,
 	Text,
@@ -36,7 +35,6 @@ const LiveNotificationSettings = (): ReactElement => {
 	const task = useTask();
 	return (
 		<Stack gap="sm">
-			<SectionHeading>Notifications</SectionHeading>
 			<Surface>
 				<Stack>
 					{settings ? (

@@ -37,10 +37,13 @@ const PlanContent = ({
 	return (
 		<Stack gap="sm">
 			<SectionHeading
+				badge={
+					plan?.published ? <Badge label="Published" compact /> : undefined
+				}
 				action={
 					<Row wrap gap="xs">
 						<Button
-							label="Edit plan"
+							label="Edit"
 							prefix="edit"
 							variant="secondary"
 							isDisabled={event.cancelled || service.loading}
@@ -64,13 +67,6 @@ const PlanContent = ({
 				<LoadingContent />
 			) : (
 				<>
-					<Badge
-						label={
-							plan.published
-								? "Published to eligible households"
-								: "Private draft"
-						}
-					/>
 					{plan.body || plan.media.length ? (
 						<Surface>
 							<SessionPlanDetails plan={plan} />
@@ -98,6 +94,7 @@ const PlanContent = ({
 							partId={partId}
 							plan={plan}
 							save={service.save}
+							images={service.images}
 							onClose={(): void => setOpen(false)}
 						/>
 					) : undefined}

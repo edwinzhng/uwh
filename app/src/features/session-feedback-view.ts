@@ -18,7 +18,7 @@ export const sessionFeedbackActions = (
 		? [{ id: "coach" as const, label: "Coach rating" }]
 		: []),
 	...(canCoachMember(account, member)
-		? [{ id: "note" as const, label: "Add coach note" }]
+		? [{ id: "note" as const, label: "Add feedback" }]
 		: []),
 ];
 

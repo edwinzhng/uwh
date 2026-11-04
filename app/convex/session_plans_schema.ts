@@ -5,6 +5,12 @@ export const planMediaValue = v.union(
 	v.object({
 		id: v.string(),
 		label: v.string(),
+		source: v.literal("image"),
+		fileId: v.string(),
+	}),
+	v.object({
+		id: v.string(),
+		label: v.string(),
 		source: v.literal("link"),
 		url: v.string(),
 	}),

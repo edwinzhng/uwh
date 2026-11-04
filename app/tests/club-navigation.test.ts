@@ -69,7 +69,10 @@ test("club resources share the primary group and equipment remains available to 
 		"Coaching",
 		"Administration",
 	]);
-	expect(groups.at(0)?.tools).toContain("equipment");
+	expect(groups.at(0)?.tools).not.toContain("equipment");
+	expect(
+		groups.find((group) => group.title === "Administration")?.tools.at(0),
+	).toBe("equipment");
 	expect(groups.at(0)?.tools).toEqual(
 		expect.arrayContaining(["videos", "documents", "announcements"]),
 	);

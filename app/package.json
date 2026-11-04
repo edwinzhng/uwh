@@ -68,7 +68,7 @@
 	"dependencies": {
 		"@auth/core": "0.41.3",
 		"@base-ui/react": "^1.8.0",
-		"@calgarycrocs/design-system": "file:../packages/design-system",
+		"@uwhclub/design-system": "file:../packages/design-system",
 		"@convex-dev/auth": "^0.0.95",
 		"@emoji-mart/data": "^1.2.1",
 		"@emoji-mart/react": "^1.1.1",

@@ -13,6 +13,7 @@ import { FloatingControlContext } from "./floating-control-context";
 import { useButtonHaptics } from "./haptics";
 import { Icon } from "./icon";
 import { roleGlow } from "./role-glow";
+import { useRoleTone } from "./role-scope";
 import { useTheme } from "./theme";
 import { control, corners, font, geometry, space, typography } from "./tokens";
 import { ToolbarHighlight } from "./toolbar-highlight";
@@ -21,7 +22,7 @@ import { useControlSize } from "./use-control-size";
 export const ButtonControl = ({
 	label,
 	density = "standard",
-	roleTone,
+	roleTone: explicitRole,
 	validationError,
 	onInvalid,
 	leading,
@@ -38,6 +39,7 @@ export const ButtonControl = ({
 	round = false,
 }: ButtonProps): ReactElement => {
 	const theme = useTheme();
+	const roleTone = useRoleTone(explicitRole);
 	const floating = useContext(FloatingControlContext) && variant === "ghost";
 	const [attempted, setAttempted] = useState(false);
 	const haptic = useButtonHaptics();

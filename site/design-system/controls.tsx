@@ -1,6 +1,6 @@
-import { Button as SharedButton } from "@calgarycrocs/design-system/button";
-import { Field as SharedField } from "@calgarycrocs/design-system/field";
-import { SegmentedControl as SharedSegments } from "@calgarycrocs/design-system/segmented-control";
+import { Button as SharedButton } from "@uwhclub/design-system/button";
+import { Field as SharedField } from "@uwhclub/design-system/field";
+import { SegmentedControl as SharedSegments } from "@uwhclub/design-system/segmented-control";
 import Link from "next/link";
 import type { ComponentProps, ReactElement, ReactNode } from "react";
 

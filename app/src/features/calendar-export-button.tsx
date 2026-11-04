@@ -1,6 +1,7 @@
 import { type ReactElement, useState } from "react";
-import { useActivePerson } from "../demo/app-state";
+import { useApp } from "../demo/app-state";
 import { Button, Dialog } from "../design-system";
+import { canManagePerson } from "../domain/app-rules";
 import {
 	type CalendarView,
 	calendarViewAfterScopeChange,
@@ -11,19 +12,24 @@ import { useReviewFlow } from "./use-review-flow";
 
 export const CalendarExportButton = (): ReactElement => {
 	const [open, setOpen] = useState(useReviewFlow() === "sync-calendar");
-	const active = useActivePerson();
-	const [selected, setSelected] = useState([active.id]);
+	const { data, account } = useApp();
+	const people = data.members.filter(
+		(person) =>
+			canManagePerson(account, person.id) &&
+			!person.archived &&
+			!person.mergedInto,
+	);
+	const [selected, setSelected] = useState(people.map((person) => person.id));
 	const [view, setView] = useState<CalendarView>("choose");
-	const [returnTo, setReturnTo] = useState<CalendarView>("choose");
 	const [busy, setBusy] = useState(false);
 	return (
 		<>
 			<Button
-				label="Export"
+				label="Sync"
 				variant="ghost"
 				prefix="calendar"
 				onPress={(): void => {
-					setSelected([active.id]);
+					setSelected(people.map((person) => person.id));
 					setView("choose");
 					setOpen(true);
 				}}
@@ -44,15 +50,12 @@ export const CalendarExportButton = (): ReactElement => {
 					selected={selected}
 					busy={busy}
 					onBusyChange={setBusy}
-					onViewChange={(next): void => {
-						if (next === "people") setReturnTo(view);
-						setView(next);
-					}}
-					onPeopleSave={(ids): void => {
+					onViewChange={setView}
+					onPeopleChange={(ids): void => {
 						setSelected(ids);
-						setView(calendarViewAfterScopeChange(returnTo));
+						setView(calendarViewAfterScopeChange(view));
 					}}
-					onBack={(): void => setView(view === "people" ? returnTo : "choose")}
+					onBack={(): void => setView("choose")}
 				/>
 			</Dialog>
 		</>

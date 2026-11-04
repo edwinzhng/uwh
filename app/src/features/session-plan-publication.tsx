@@ -82,12 +82,6 @@ export const SessionPlanPublication = ({
 							? "Remove this plan from the player and guardian view. Coaches will keep the saved plan and private notes."
 							: "Share this version’s plan and attachments with eligible players and their linked guardians. Coaching notes stay private."}
 					</Text>
-					{!plan.published ? (
-						<Text variant="small" tone="secondary">
-							Saving edits unpublishes the plan until a coach publishes the new
-							version.
-						</Text>
-					) : undefined}
 					{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
 				</Stack>
 			</Dialog>

@@ -8,15 +8,15 @@ import {
 test("invalid attachment validation preserves the freeform draft for correction and retry", (): void => {
 	const draft = {
 		...emptySessionPlan(),
-		body: "**Practice**\nWarm up and play.",
+		body: "**Practice**\nWarm up and play.[[plan-image:clip]]",
 		notes: "Private coaching note",
 		revision: 7,
 		media: [
 			{
 				id: "clip",
-				source: "link" as const,
+				source: "image" as const,
 				label: "",
-				url: "https://youtu.be/dQw4w9WgXcQ",
+				fileId: "uploaded-image",
 			},
 		],
 	};

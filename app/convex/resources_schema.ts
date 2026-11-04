@@ -69,6 +69,7 @@ export const resourceTables = {
 		size: v.number(),
 		purpose: v.optional(resourceFilePurpose),
 		resourceId: v.optional(v.id("resources")),
+		sessionPlanKey: v.optional(v.string()),
 	})
 		.index("by_owner_resource", ["ownerId", "resourceId"])
 		.index("by_owner", ["ownerId"])

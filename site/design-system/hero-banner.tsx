@@ -1,6 +1,6 @@
 "use client";
 
-import { LiquidLens } from "@calgarycrocs/design-system/liquid-lens";
+import { LiquidLens } from "@uwhclub/design-system/liquid-lens";
 import Image from "next/image";
 import {
 	type ReactElement,

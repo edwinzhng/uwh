@@ -27,7 +27,6 @@ import {
 } from "../domain/event-lineups";
 import { type AgeGroup, formatTeams } from "../domain/player-coaching";
 import * as Clipboard from "../platform/clipboard";
-import { EventCoaches } from "./event-coaches";
 import { LineupEditor } from "./lineup-editor";
 import { TeamOptions } from "./team-options";
 import { TeamPool } from "./team-pool";
@@ -143,11 +142,6 @@ const TeamPanelContent = ({
 							action={
 								!readOnly && canCoach(account) ? (
 									<Row wrap>
-										<EventCoaches
-											event={event}
-											partId={partId}
-											presentation="button"
-										/>
 										{editable ? (
 											<Button
 												label="Generate teams"

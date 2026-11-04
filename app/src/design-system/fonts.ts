@@ -5,8 +5,8 @@ import regular from "../../assets/fonts/inter-regular.ttf";
 import semibold from "../../assets/fonts/inter-semibold.ttf";
 
 export const fontSources: Record<string, FontSource> = {
-	CrocsDisplay: display,
-	CrocsInter: regular,
-	CrocsInterMedium: medium,
-	CrocsInterSemibold: semibold,
+	UwhClubDisplay: display,
+	UwhClubInter: regular,
+	UwhClubInterMedium: medium,
+	UwhClubInterSemibold: semibold,
 };

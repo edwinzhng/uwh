@@ -8,16 +8,21 @@ import { useMotion } from "./use-motion";
 export const ContentReveal = ({
 	children,
 	enabled = true,
+	delay = 0,
 	fill = false,
 	gap,
 }: ContentRevealProps): ReactElement => {
 	const element = useRef<HTMLDivElement>(null);
 	const allowed = useMotion() && enabled;
-	const initial = useRef(allowed);
+	const initial = useRef({ allowed, delay });
 	const playback = useRef<Pick<Animation, "cancel"> | undefined>(undefined);
 	useLayoutEffect(() => {
 		const animation = element.current
-			? playPageReveal(element.current, initial.current && pageMotionAllowed())
+			? playPageReveal(
+					element.current,
+					initial.current.allowed && pageMotionAllowed(),
+					initial.current.delay,
+				)
 			: undefined;
 		playback.current = animation;
 		return (): void => animation?.cancel();

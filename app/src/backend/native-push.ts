@@ -16,8 +16,8 @@ const available = Boolean(requireOptionalNativeModule("ExpoPushTokenManager"));
 const projectId =
 	process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? Constants.easConfig?.projectId;
 export const nativePushAvailable = available && Boolean(projectId);
-const installationKey = "crocs.push.installation";
-const enabledKey = "crocs.push.enabled";
+const installationKey = "uwhclub.push.installation";
+const enabledKey = "uwhclub.push.enabled";
 export const installationId = createInstallationReader({
 	read: async (): Promise<string | undefined> =>
 		(await SecureStore.getItemAsync(installationKey)) ?? undefined,

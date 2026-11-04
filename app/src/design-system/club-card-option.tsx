@@ -3,6 +3,8 @@ import { Pressable, View } from "react-native";
 import { ClubCardOptionBackground } from "./club-card-option-background";
 import { useButtonHaptics } from "./haptics";
 import { Icon, type IconName } from "./icon";
+import { roleGlow } from "./role-glow";
+import { useRoleTone } from "./role-scope";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import {
@@ -14,6 +16,8 @@ import {
 } from "./tokens";
 
 export type ClubCardTreatment =
+	| "color-field"
+	| "color-field-row"
 	| "watercolor-soft"
 	| "watercolor-bold"
 	| "corner"
@@ -36,10 +40,14 @@ export const ClubCardOption = ({
 	treatment: ClubCardTreatment;
 }): ReactElement => {
 	const theme = useTheme();
+	const roleTone = useRoleTone();
 	const haptic = useButtonHaptics();
 	const [focused, setFocused] = useState(false);
 	const [hovered, setHovered] = useState(false);
-	const hybrid = treatment === "hybrid" || treatment === "hybrid-watercolor";
+	const hybrid =
+		treatment === "hybrid" ||
+		treatment === "hybrid-watercolor" ||
+		treatment === "color-field-row";
 	const compact = treatment === "compact" || hybrid;
 	const iconTile = treatment === "compact";
 	const stats = stat ? (
@@ -75,6 +83,7 @@ export const ClubCardOption = ({
 				flex: 1,
 				minWidth: 0,
 				borderRadius: corners.panel,
+				boxShadow: roleTone ? roleGlow(roleTone, theme.mode) : undefined,
 				outlineWidth: focused ? geometry.focus : 0,
 				outlineColor: theme.focus,
 				outlineOffset: geometry.focus,
@@ -85,18 +94,21 @@ export const ClubCardOption = ({
 					style={{
 						flex: 1,
 						minWidth: 0,
-						minHeight: hybrid
-							? stat
-								? space.xxxl
-								: geometry.touch + space.sm
-							: compact
-								? geometry.touch + space.lg
-								: treatment === "watercolor-bold"
-									? geometry.touch * 2 + space.xl
-									: geometry.touch * 2 + space.md,
+						minHeight:
+							treatment === "color-field"
+								? geometry.touch + space.sm
+								: hybrid
+									? stat
+										? space.xxxl
+										: geometry.touch + space.sm
+									: compact
+										? geometry.touch + space.lg
+										: treatment === "watercolor-bold"
+											? geometry.touch * 2 + space.xl
+											: geometry.touch * 2 + space.md,
 						padding: compact && !hybrid ? space.sm : space.xs,
 						justifyContent: compact ? "center" : "flex-start",
-						borderWidth: geometry.border,
+						borderWidth: stat ? 0 : geometry.border,
 						borderColor: theme.border,
 						borderRadius: corners.panel,
 						overflow: "hidden",

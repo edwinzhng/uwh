@@ -21,7 +21,7 @@
 		"paths": {
 			"react": ["./node_modules/@types/react"],
 			"react/*": ["./node_modules/@types/react/*"],
-			"@calgarycrocs/design-system/*": ["../packages/design-system/src/*"]
+			"@uwhclub/design-system/*": ["../packages/design-system/src/*"]
 		}
 	},
 	"include": [

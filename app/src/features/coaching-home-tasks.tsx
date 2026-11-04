@@ -26,7 +26,7 @@ const Tasks = ({ tasks }: { tasks?: CoachingTasks }): ReactElement => {
 				icon="message"
 				action={
 					<Button
-						label="Player reviews"
+						label="Player ratings"
 						compact
 						variant="ghost"
 						onPress={(): void => router.push("/development")}
@@ -78,7 +78,7 @@ const Tasks = ({ tasks }: { tasks?: CoachingTasks }): ReactElement => {
 						) : undefined}
 						{tasks.morePlayers || tasks.moreDrafts ? (
 							<Text variant="caption" tone="secondary">
-								Showing recent items. Open Player reviews or a player’s Feedback
+								Showing recent items. Open Player ratings or a player’s Feedback
 								tab for more.
 							</Text>
 						) : undefined}

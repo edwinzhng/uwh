@@ -4,6 +4,8 @@ import { Avatar } from "./avatar";
 import { FeatureIcon } from "./feature-icon";
 import { Icon, type IconName } from "./icon";
 import { interactiveRow, listRowSpacing } from "./interactive-row-layout";
+import { roleGlow } from "./role-glow";
+import { useRoleTone } from "./role-scope";
 import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
@@ -53,6 +55,7 @@ export const ListItem = ({
 	cardRow = false,
 }: Props): ReactElement => {
 	const theme = useTheme();
+	const roleTone = useRoleTone();
 	const [hovered, setHovered] = useState(false);
 	const [focused, setFocused] = useState(false);
 	const spacing = listRowSpacing({
@@ -138,6 +141,7 @@ export const ListItem = ({
 			onBlur={(): void => setFocused(false)}
 			style={({ pressed }) => ({
 				...spacing,
+				boxShadow: roleTone ? roleGlow(roleTone, theme.mode) : undefined,
 				minHeight: interactiveRow.minHeight,
 				justifyContent: "center",
 				borderRadius: interactiveRow.borderRadius,

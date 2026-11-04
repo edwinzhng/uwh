@@ -1,9 +1,14 @@
 import type { ReactElement } from "react";
+import { roleGlow } from "./role-glow";
+import { useRoleTone } from "./role-scope";
+import { RoleTabMarker } from "./role-tab-marker";
+import { useRoleTabTreatment } from "./role-tab-treatment";
 import type { TabOptionProps } from "./tab-option";
 import { useTheme } from "./theme";
 import { control, corners, font, geometry, space } from "./tokens";
 export const TabOption = ({
 	label,
+	roleTone: explicitRole,
 	selected,
 	indicatorReady = false,
 	disabled,
@@ -11,11 +16,19 @@ export const TabOption = ({
 	onFocus,
 }: TabOptionProps): ReactElement => {
 	const theme = useTheme();
+	const treatment = useRoleTabTreatment();
+	const roleTone = useRoleTone(explicitRole);
 	return (
 		<button
 			type="button"
 			role="tab"
 			aria-selected={selected}
+			aria-label={label}
+			aria-description={
+				roleTone
+					? `${roleTone === "coach" ? "Coach" : "Admin"} access`
+					: undefined
+			}
 			disabled={disabled}
 			tabIndex={selected ? 0 : -1}
 			onClick={(event): void => onPress(event.detail === 0)}
@@ -47,6 +60,7 @@ export const TabOption = ({
 			}}
 			style={{
 				minHeight: geometry.touch,
+				position: "relative",
 				display: "flex",
 				alignItems: "center",
 				gap: space.xs,
@@ -57,6 +71,10 @@ export const TabOption = ({
 						? theme.background.selected
 						: "transparent",
 				borderRadius: corners.control,
+				boxShadow:
+					roleTone && treatment === "glow"
+						? roleGlow(roleTone, theme.mode, true)
+						: undefined,
 				opacity: disabled ? geometry.disabledOpacity : 1,
 				cursor: "pointer",
 				fontFamily: font.medium,
@@ -64,7 +82,13 @@ export const TabOption = ({
 				color: selected ? theme.text.primary : theme.text.secondary,
 			}}
 		>
+			{roleTone && treatment === "dot" ? (
+				<RoleTabMarker role={roleTone} treatment="dot" />
+			) : undefined}
 			{label}
+			{roleTone && (treatment === "underline" || treatment === "label") ? (
+				<RoleTabMarker role={roleTone} treatment={treatment} />
+			) : undefined}
 		</button>
 	);
 };

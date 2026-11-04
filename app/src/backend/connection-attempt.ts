@@ -13,7 +13,7 @@ export type ConnectionAttempt = {
 	purpose: AccountConnectionPurpose;
 	expiresAt: number;
 };
-const key = "crocs_account_connection";
+const key = "uwhclub_account_connection";
 const isAttempt = (value: unknown): value is ConnectionAttempt =>
 	typeof value === "object" &&
 	value !== null &&

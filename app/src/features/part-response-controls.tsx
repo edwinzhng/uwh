@@ -14,6 +14,7 @@ export const PartResponseControls = ({
 	full,
 	partId,
 	hideLabel = false,
+	firstDivider = true,
 	isPending,
 	onRespond,
 }: {
@@ -24,6 +25,7 @@ export const PartResponseControls = ({
 	full: boolean;
 	partId?: string;
 	hideLabel?: boolean;
+	firstDivider?: boolean;
 	isPending: () => boolean;
 	onRespond: (
 		response: "going" | "unavailable" | "unanswered",
@@ -37,8 +39,8 @@ export const PartResponseControls = ({
 	);
 	return (
 		<>
-			<List gap="xs">
-				{parts?.map((part) => {
+			<List>
+				{parts?.map((part, index) => {
 					const response = partResponse(current, part.id);
 					const buttons = (
 						<QuickResponseButtons
@@ -78,6 +80,7 @@ export const PartResponseControls = ({
 						<EventResponseRow
 							key={part.id}
 							label={part.title}
+							divider={index > 0 || firstDivider}
 							description={eventTimeRange(part.start, part.end)}
 							tone={
 								response === "going"

@@ -13,7 +13,7 @@ export const HomeSummary = ({ now }: { now: number }): ReactElement => {
 	const practice = homeNextPractice(data, account, now);
 	const pending = homePendingResponse(data, account, now);
 	return (
-		<Stack gap="xl">
+		<Stack gap="md">
 			<HomePractice event={practice} responseNeeded={Boolean(pending)} />
 			<HomeAnnouncement />
 			<HomeHighlights />

@@ -13,6 +13,7 @@ export const GlassBackdrop = ({
 	showRim = true,
 	radius,
 	softEdge = false,
+	uniform = false,
 }: GlassBackdropProps): ReactElement => {
 	const theme = useTheme();
 	const colors = materialColors(theme);
@@ -34,7 +35,9 @@ export const GlassBackdrop = ({
 						backgroundColor: opaque
 							? theme.background.primary
 							: softEdge
-								? colors.header
+								? uniform
+									? "transparent"
+									: colors.header
 								: material === "floating"
 									? glass.fill
 									: colors[material],
@@ -43,18 +46,21 @@ export const GlassBackdrop = ({
 			/>
 			{softEdge && !opaque ? (
 				<LinearGradient
-					colors={[colors.header, "transparent"]}
+					colors={[uniform ? "transparent" : colors.header, "transparent"]}
 					style={{
 						position: "absolute",
 						top: "100%",
 						left: 0,
 						right: 0,
-						height: space.md,
+						height: space.xs,
 					}}
 				/>
 			) : undefined}
 			<LinearGradient
-				colors={[opaque ? "transparent" : glass.highlight, "transparent"]}
+				colors={[
+					opaque || uniform ? "transparent" : glass.highlight,
+					"transparent",
+				]}
 				locations={[0, 1]}
 				start={{ x: 0, y: 0 }}
 				end={{ x: 0, y: 1 }}

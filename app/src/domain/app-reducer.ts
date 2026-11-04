@@ -725,6 +725,14 @@ export const reduceApp = (
 			)
 				return data;
 			if (
+				feedbackKind(action.feedback) === "coaching" &&
+				action.feedback.visibility === "private" &&
+				existing?.visibility !== "private"
+			)
+				throw new Error(
+					"Save feedback as a draft or publish it to the player.",
+				);
+			if (
 				existing?.visibility === "private" &&
 				action.feedback.visibility !== "private"
 			)

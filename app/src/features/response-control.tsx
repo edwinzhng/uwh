@@ -12,6 +12,7 @@ type Props = {
 	personId?: string;
 	partId?: string;
 	hideLabel?: boolean;
+	firstDivider?: boolean;
 	quick?: boolean;
 };
 const LiveResponse = ({
@@ -19,6 +20,7 @@ const LiveResponse = ({
 	personId,
 	partId,
 	hideLabel,
+	firstDivider,
 	quick,
 }: Props): ReactElement => {
 	const series = useQuery(
@@ -34,6 +36,7 @@ const LiveResponse = ({
 			personId={personId}
 			partId={partId}
 			hideLabel={hideLabel}
+			firstDivider={firstDivider}
 			quick={quick}
 			committed={committed}
 			loading={Boolean(event.seriesId && !series)}
@@ -45,6 +48,7 @@ const PreviewResponse = ({
 	personId,
 	partId,
 	hideLabel,
+	firstDivider,
 	quick,
 }: Props): ReactElement => {
 	const series = useAtomValue(previewSessionSeries);
@@ -54,6 +58,7 @@ const PreviewResponse = ({
 			personId={personId}
 			partId={partId}
 			hideLabel={hideLabel}
+			firstDivider={firstDivider}
 			quick={quick}
 			committed={series.some((entry) =>
 				entry.seriesIds.includes(event.seriesId ?? ""),
@@ -66,6 +71,7 @@ export const ResponseControl = ({
 	personId,
 	partId,
 	hideLabel,
+	firstDivider,
 	quick,
 }: Props): ReactElement =>
 	useApp().source === "convex" ? (
@@ -74,6 +80,7 @@ export const ResponseControl = ({
 			personId={personId}
 			partId={partId}
 			hideLabel={hideLabel}
+			firstDivider={firstDivider}
 			quick={quick}
 		/>
 	) : (
@@ -82,6 +89,7 @@ export const ResponseControl = ({
 			personId={personId}
 			partId={partId}
 			hideLabel={hideLabel}
+			firstDivider={firstDivider}
 			quick={quick}
 		/>
 	);

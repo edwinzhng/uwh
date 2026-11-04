@@ -4,7 +4,10 @@ import { Linking } from "react-native";
 import { api } from "../../convex/_generated/api";
 import { Button, Dialog, Row, Stack, Text } from "../design-system";
 import { calendarFeedUrl } from "../domain/calendar-links";
-import { googleCalendarSubscriptionUrl } from "../domain/calendar-workflow";
+import {
+	appleCalendarSubscriptionUrl,
+	googleCalendarSubscriptionUrl,
+} from "../domain/calendar-workflow";
 import * as Clipboard from "../platform/clipboard";
 import { calendarOrigin } from "./calendar-origin";
 import { useTask } from "./use-task";
@@ -34,14 +37,19 @@ export const CalendarSubscriptions = ({
 		onBusyChange(task.busy);
 		return (): void => onBusyChange(false);
 	}, [onBusyChange, task.busy]);
-	const subscribe = (person: Person, method: "google" | "copy"): void => {
+	const subscribe = (
+		person: Person,
+		method: "apple" | "google" | "copy",
+	): void => {
 		setCopied(undefined);
 		void task.run(async (): Promise<void> => {
 			const feed = feeds?.find((entry) => entry.personId === person.id);
 			if (!calendarOrigin || !feed)
 				throw new Error("Calendar subscriptions are unavailable.");
 			const url = calendarFeedUrl(calendarOrigin, feed.token);
-			if (method === "google")
+			if (method === "apple")
+				await Linking.openURL(appleCalendarSubscriptionUrl(url));
+			else if (method === "google")
 				await Linking.openURL(googleCalendarSubscriptionUrl(url));
 			else {
 				await Clipboard.setStringAsync(url);
@@ -52,7 +60,7 @@ export const CalendarSubscriptions = ({
 	return (
 		<Stack gap="md">
 			<Text variant="small" tone="secondary">
-				Subscribe once. Your calendar app controls how quickly changes appear.
+				Your calendar app controls how quickly updates appear.
 			</Text>
 			{feeds === undefined ? (
 				<Text variant="small" tone="secondary">
@@ -75,7 +83,17 @@ export const CalendarSubscriptions = ({
 					) : (
 						<Row gap="xs" wrap>
 							<Button
-								label="Add to Google Calendar"
+								label="Apple Calendar"
+								prefix="calendar"
+								variant="secondary"
+								isDisabled={
+									task.busy ||
+									!feeds?.some((feed) => feed.personId === person.id)
+								}
+								onPress={(): void => subscribe(person, "apple")}
+							/>
+							<Button
+								label="Google Calendar"
 								prefix="calendar"
 								variant="secondary"
 								isDisabled={

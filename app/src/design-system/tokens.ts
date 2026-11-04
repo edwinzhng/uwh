@@ -17,14 +17,14 @@ export {
 	opacity,
 	radius,
 	space,
-} from "@calgarycrocs/design-system/tokens";
+} from "@uwhclub/design-system/tokens";
 
 import {
 	corners as sharedCorners,
 	elevation as sharedElevation,
 	radius as sharedRadius,
 	space,
-} from "@calgarycrocs/design-system/tokens";
+} from "@uwhclub/design-system/tokens";
 export const corners = {
 	...sharedCorners,
 	control: sharedRadius.md,
@@ -37,10 +37,10 @@ export const corners = {
 	overlay: sharedRadius.xxxl,
 };
 export const font = {
-	heading: "CrocsDisplay",
-	regular: "CrocsInter",
-	medium: "CrocsInterMedium",
-	semibold: "CrocsInterSemibold",
+	heading: "UwhClubDisplay",
+	regular: "UwhClubInter",
+	medium: "UwhClubInterMedium",
+	semibold: "UwhClubInterSemibold",
 } as const;
 
 export const elevation = {
@@ -63,7 +63,7 @@ export const pageMaterialOpacity = { light: 0.025, dark: 0.04 } as const;
 
 export const progressColors = ["#173E2B", "#638E41", "#D8FF63"] as const;
 
-import { typography as sharedTypography } from "@calgarycrocs/design-system/tokens";
+import { typography as sharedTypography } from "@uwhclub/design-system/tokens";
 
 export const typography = {
 	...sharedTypography,

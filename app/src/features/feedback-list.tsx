@@ -46,7 +46,7 @@ export const FeedbackList = ({
 							<>
 								<Divider />
 								<Row>
-									<Text variant="label">Drafts & private notes</Text>
+									<Text variant="label">Drafts & private feedback</Text>
 								</Row>
 							</>
 						) : undefined}
@@ -61,7 +61,7 @@ export const FeedbackList = ({
 						{!items.length ? (
 							compactEmpty ? (
 								<Text variant="small" tone="secondary">
-									No shared coach notes.
+									No shared feedback.
 								</Text>
 							) : (
 								<EmptyState
@@ -70,7 +70,7 @@ export const FeedbackList = ({
 											? kind === "shoutout"
 												? "No shoutouts"
 												: "No shared coaching feedback"
-											: "No drafts or private notes"
+											: "No drafts or private feedback"
 									}
 								/>
 							)

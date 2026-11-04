@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { calendarFeedUrl } from "../src/domain/calendar-links";
 import {
+	appleCalendarSubscriptionUrl,
 	calendarScopeLabel,
 	calendarViewAfterScopeChange,
 	calendarViewTitle,
@@ -15,7 +16,6 @@ test("changing subscription scope returns to an explicit preparation choice", ()
 
 test("calendar steps identify one task instead of repeating an export form", (): void => {
 	expect(calendarViewTitle("choose")).toBe("Add to calendar");
-	expect(calendarViewTitle("people")).toBe("Choose people");
 	expect(calendarViewTitle("subscribe")).toBe("Automatic updates");
 	expect(calendarViewTitle("download")).toBe("Download calendar");
 });
@@ -42,11 +42,11 @@ test("calendar scope survives step remounts and busy work blocks dismissal", asy
 		new URL("../src/features/calendar-export-button.tsx", import.meta.url),
 	).text();
 	expect(source).toContain(
-		"const [selected, setSelected] = useState([active.id])",
+		"const [selected, setSelected] = useState(people.map((person) => person.id))",
 	);
 	expect(source).toContain("focusKey={view}");
 	expect(source).toContain("isDismissDisabled={busy}");
-	expect(source).toContain("setView(calendarViewAfterScopeChange(returnTo))");
+	expect(source).toContain("setView(calendarViewAfterScopeChange(view))");
 	expect(source).not.toContain("open ? <CalendarSettings");
 });
 
@@ -71,4 +71,12 @@ test("provider actions reuse prepared URLs without waiting for a network action 
 	expect(source).toContain("Keep it private");
 	expect(source).toContain('label="Create subscription link"');
 	expect(source).toContain("onPress={onCreateLink}");
+});
+
+test("Apple receives the same private feed as a subscription instead of a file import", (): void => {
+	const feed = calendarFeedUrl("https://club.convex.site", "private+token/&?=");
+	const apple = new URL(appleCalendarSubscriptionUrl(feed));
+	expect(apple.protocol).toBe("webcal:");
+	expect(apple.host).toBe(new URL(feed).host);
+	expect(apple.searchParams.get("token")).toBe("private+token/&?=");
 });

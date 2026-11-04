@@ -62,7 +62,10 @@ import { useInvites } from "./use-invites";
 import { useRetainedQuery } from "./use-retained-query";
 import { useSocialAuth } from "./use-social-auth";
 
-const url = process.env.EXPO_PUBLIC_CONVEX_URL;
+const url =
+	process.env.EXPO_PUBLIC_REVIEW_MODE === "true"
+		? undefined
+		: process.env.EXPO_PUBLIC_CONVEX_URL;
 const client = url ? new ConvexReactClient(url) : undefined;
 const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 	const { isAuthenticated, isLoading } = useConvexAuth();
@@ -357,6 +360,7 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 					<PreviewProvider>{children}</PreviewProvider>
 				) : (
 					<LoadingHandoff
+						fillViewport
 						loading={
 							isLoading ||
 							(isAuthenticated &&

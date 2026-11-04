@@ -1,4 +1,4 @@
-import { motionEffects } from "@calgarycrocs/design-system/tokens";
+import { motionEffects } from "@uwhclub/design-system/tokens";
 import type { CSSProperties, ReactElement } from "react";
 import { Image, StyleSheet } from "react-native";
 import type { MaterialLayersProps } from "./material-layers-props";

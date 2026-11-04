@@ -1,22 +1,13 @@
 import { type ReactElement, useState } from "react";
 import type { SessionPlanService } from "../backend/use-session-plan";
-import {
-	Button,
-	Dialog,
-	Disclosure,
-	Field,
-	RichTextField,
-	Stack,
-	Text,
-} from "../design-system";
+import { Button, Dialog, Field, Stack, Text } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import {
-	maxSessionPlanBodyLength,
 	normalizeSessionPlan,
 	type SessionPlan,
 	validateSessionPlan,
 } from "../domain/session-plan";
-import { SessionDrillMediaEditor } from "./session-drill-media-editor";
+import { SessionPlanBodyEditor } from "./session-plan-body-editor";
 import { useFormTask } from "./use-form-task";
 import { useOperationKey } from "./use-operation-key";
 
@@ -25,31 +16,38 @@ export const SessionPlanEditor = ({
 	partId,
 	plan,
 	save,
+	images,
 	onClose,
 }: {
 	event: ClubEvent;
 	partId?: string;
 	plan: SessionPlan;
 	save: SessionPlanService["save"];
+	images: SessionPlanService["images"];
 	onClose: () => void;
 }): ReactElement => {
-	const [draft, setDraft] = useState(plan);
+	const [draft, setDraft] = useState<SessionPlan>({
+		...plan,
+		media: plan.media.filter((media) => media.source === "image"),
+	});
+	const [uploading, setUploading] = useState(false);
 	const task = useFormTask();
 	const operationKey = useOperationKey();
 
 	return (
 		<Dialog
 			intent="form"
-			isDismissDisabled={task.busy}
+			isDismissDisabled={task.busy || uploading}
 			title="Plan"
 			isOpen
 			onOpenChange={(open): void => {
-				if (!open && !task.busy) onClose();
+				if (!open && !task.busy && !uploading) onClose();
 			}}
 			footer={
 				<Button
 					label="Save plan"
 					isLoading={task.busy}
+					isDisabled={uploading}
 					onPress={(): void => {
 						void task.submit(
 							() => validateSessionPlan(draft),
@@ -75,45 +73,32 @@ export const SessionPlanEditor = ({
 			}
 		>
 			<Stack>
-				<Text variant="small" tone="secondary">
-					{event.title} · Private draft
-				</Text>
-				<RichTextField
-					label="Plan"
-					value={draft.body}
-					onValueChange={(body): void => setDraft({ ...draft, body })}
-					placeholder="Write the session plan…"
-					maxLength={maxSessionPlanBodyLength}
-					isDisabled={task.busy}
-				/>
-				<SessionDrillMediaEditor
-					media={draft.media}
+				<SessionPlanBodyEditor
+					draft={draft}
+					onChange={(next): void => setDraft({ ...draft, ...next })}
+					images={images}
 					disabled={task.busy}
-					onChange={(media): void =>
-						setDraft((current) => ({ ...current, media }))
-					}
+					onBusyChange={setUploading}
 				/>
-				<Disclosure
-					title="Private coaching notes"
-					summary={draft.notes ? "Notes added · coaches only" : "Coaches only"}
-					isDisabled={task.busy}
-				>
-					<Field
-						label="Notes"
-						value={draft.notes}
-						onValueChange={(notes): void => setDraft({ ...draft, notes })}
-						multiline
-						maxLength={10000}
-						isDisabled={task.busy}
-					/>
-				</Disclosure>
+				<Field
+					label="Private coaching notes"
+					rows={2}
+					value={draft.notes}
+					onValueChange={(notes): void => setDraft({ ...draft, notes })}
+					multiline
+					maxLength={10000}
+					isDisabled={task.busy || uploading}
+				/>
 				{plan.revision !== draft.revision ? (
 					<Button
 						label="Reload saved plan"
 						variant="secondary"
-						isDisabled={task.busy}
+						isDisabled={task.busy || uploading}
 						onPress={(): void => {
-							setDraft(plan);
+							setDraft({
+								...plan,
+								media: plan.media.filter((media) => media.source === "image"),
+							});
 							task.clear();
 						}}
 					/>

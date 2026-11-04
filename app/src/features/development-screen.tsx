@@ -11,7 +11,7 @@ export const DevelopmentScreen = (): ReactElement => {
 	const { account, source } = useApp();
 	const { person } = useLocalSearchParams<{ person?: string }>();
 	return (
-		<ClubShell title="Player reviews">
+		<ClubShell title="Player ratings">
 			{account.coachPrograms.length > 0 && !person ? (
 				<DevelopmentReviewers />
 			) : undefined}

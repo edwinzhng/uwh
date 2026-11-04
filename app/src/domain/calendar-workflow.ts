@@ -1,4 +1,4 @@
-export type CalendarView = "choose" | "people" | "subscribe" | "download";
+export type CalendarView = "choose" | "subscribe" | "download";
 
 export const calendarViewAfterScopeChange = (
 	previous: CalendarView,
@@ -7,7 +7,6 @@ export const calendarViewAfterScopeChange = (
 export const calendarViewTitle = (view: CalendarView): string =>
 	({
 		choose: "Add to calendar",
-		people: "Choose people",
 		subscribe: "Automatic updates",
 		download: "Download calendar",
 	})[view];
@@ -21,3 +20,6 @@ export const calendarScopeLabel = (
 
 export const googleCalendarSubscriptionUrl = (feedUrl: string): string =>
 	`https://calendar.google.com/calendar/u/0/r?${new URLSearchParams({ cid: feedUrl })}`;
+
+export const appleCalendarSubscriptionUrl = (feedUrl: string): string =>
+	feedUrl.replace(/^https?:/, "webcal:");

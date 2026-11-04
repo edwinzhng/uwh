@@ -5,6 +5,8 @@ import type { ClubCardTreatment } from "./club-card-option";
 import { MaterialTexture } from "./material-texture";
 import { useTheme } from "./theme";
 import { type CategoryColor, categoryPalette, space } from "./tokens";
+import { WatercolorShader } from "./watercolor-shader";
+import { useWatercolorTuning } from "./watercolor-tuning";
 
 export const ClubCardOptionBackground = ({
 	treatment,
@@ -16,11 +18,17 @@ export const ClubCardOptionBackground = ({
 	seed: string;
 }): ReactElement => {
 	const theme = useTheme();
+	const tuning = useWatercolorTuning();
 	const watercolor =
+		treatment === "color-field" ||
+		treatment === "color-field-row" ||
 		treatment === "watercolor-soft" ||
 		treatment === "watercolor-bold" ||
 		treatment === "hybrid-watercolor";
+	const field = treatment === "color-field" || treatment === "color-field-row";
 	const bold = treatment === "watercolor-bold";
+	if ((tuning && watercolor) || treatment === "color-field")
+		return <WatercolorShader category={category} seed={seed} />;
 	return (
 		<View
 			pointerEvents="none"
@@ -35,11 +43,13 @@ export const ClubCardOptionBackground = ({
 						style={[
 							StyleSheet.absoluteFill,
 							{
-								opacity: bold
+								opacity: field
 									? 1
-									: treatment === "hybrid-watercolor"
-										? 0.35
-										: 0.5,
+									: bold
+										? 1
+										: treatment === "hybrid-watercolor"
+											? 0.35
+											: 0.5,
 							},
 						]}
 					>
@@ -52,17 +62,23 @@ export const ClubCardOptionBackground = ({
 					</View>
 					<LinearGradient
 						colors={
-							bold
+							field
 								? [
-										`${theme.background.card}F5`,
-										`${theme.background.card}C7`,
-										`${theme.background.card}80`,
-									]
-								: [
-										`${theme.background.card}F5`,
-										`${theme.background.card}E6`,
 										`${theme.background.card}B3`,
+										`${theme.background.card}66`,
+										`${theme.background.card}26`,
 									]
+								: bold
+									? [
+											`${theme.background.card}F5`,
+											`${theme.background.card}C7`,
+											`${theme.background.card}80`,
+										]
+									: [
+											`${theme.background.card}F5`,
+											`${theme.background.card}E6`,
+											`${theme.background.card}B3`,
+										]
 						}
 						locations={[0, 0.45, 1]}
 						start={{ x: 0, y: 0 }}

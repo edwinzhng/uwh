@@ -104,7 +104,7 @@ export const calendarUid = (
 	personId: string,
 	eventId: string,
 ): string =>
-	`${[clubId, personId, eventId].map(encodeURIComponent).join(".")}@crocs.club`;
+	`${[clubId, personId, eventId].map(encodeURIComponent).join(".")}@uwhclub.app`;
 
 export const reconcileCalendar = (
 	previous: CalendarEntry[],

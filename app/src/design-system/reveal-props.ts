@@ -4,6 +4,7 @@ import type { SpaceToken } from "./tokens";
 export type ContentRevealProps = {
 	children: ReactNode;
 	enabled?: boolean;
+	delay?: number;
 	fill?: boolean;
 	gap?: SpaceToken;
 };

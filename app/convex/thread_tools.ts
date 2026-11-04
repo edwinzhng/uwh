@@ -272,7 +272,7 @@ export const pin = mutation({
 		const member = await requireMember(ctx);
 		await requireChat(ctx, member, threadId);
 		if (!(await pinPermission(ctx, member, threadId)))
-			throw new Error("Club staff manage pinned messages in this channel.");
+			throw new Error("Club staff manage pinned messages in this chat.");
 		const message = await messageFor(ctx, member.clubId, messageId);
 		if (
 			!message ||

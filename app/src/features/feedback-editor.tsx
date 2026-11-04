@@ -1,29 +1,25 @@
 import { type ReactElement, useRef, useState } from "react";
 import { newId, useApp, useAppStatus } from "../demo/app-state";
-import {
-	Button,
-	Dialog,
-	Field,
-	Row,
-	Stack,
-	Text,
-	Toggle,
-} from "../design-system";
+import { Button, Dialog, Field, Row, Stack, Text } from "../design-system";
 import { memberName } from "../domain/app-rules";
 import type { CoachingFeedback } from "../domain/app-types";
 import { clubDate } from "../domain/event-time";
+import { feedbackAudienceLabel } from "../domain/feedback-audience";
 import { ConfirmButton } from "./confirm-button";
+import { FeedbackAudience } from "./feedback-audience";
 import { useDraft } from "./use-draft";
 import { useFormTask } from "./use-form-task";
 
 export const FeedbackEditor = ({
 	personId,
+	collapseLabelOnNarrow,
 	eventId,
 	existing,
 	isOpen: controlledOpen,
 	onOpenChange,
 }: {
 	personId: string;
+	collapseLabelOnNarrow?: boolean;
 	eventId?: string;
 	existing?: CoachingFeedback;
 } & (
@@ -40,9 +36,7 @@ export const FeedbackEditor = ({
 		setLocalOpen(value);
 		onOpenChange?.(value);
 	};
-	const [privateNote, setPrivateNote] = useState(
-		existing?.visibility === "private",
-	);
+	const privateNote = existing?.visibility === "private";
 	const [body, setBody] = useDraft(
 		`feedback:${source}:${account.id}:${personId}:${existing?.id ?? "new"}${eventId ? `:${eventId}` : ""}`,
 	);
@@ -87,7 +81,10 @@ export const FeedbackEditor = ({
 			{controlledOpen === undefined ? (
 				<Button
 					compact
-					label={existing ? "Edit note" : "Add note"}
+					collapseLabelOnNarrow={collapseLabelOnNarrow}
+					label={existing ? "Edit feedback" : "Add feedback"}
+					accessibilityLabel={`${existing ? "Edit" : "Add"} feedback for ${memberName(data, personId)}`}
+					roleTone="coach"
 					prefix={existing ? "edit" : "plus"}
 					variant="secondary"
 					onPress={(): void => {
@@ -97,74 +94,77 @@ export const FeedbackEditor = ({
 					}}
 				/>
 			) : undefined}
-			<Dialog
-				intent="form"
-				isDismissDisabled={busy}
-				title={`Coach note for ${memberName(data, personId)}`}
-				isOpen={open}
-				onOpenChange={(value): void => {
-					if (!busy) setOpen(value);
+			<FeedbackAudience personId={personId} enabled={open && !privateNote}>
+				{(names) => {
+					const audience = names ? feedbackAudienceLabel(names) : undefined;
+					return (
+						<Dialog
+							intent="form"
+							isDismissDisabled={busy}
+							title={`Feedback for ${memberName(data, personId)}`}
+							isOpen={open}
+							onOpenChange={(value): void => {
+								if (!busy) setOpen(value);
+							}}
+							footer={
+								<Row>
+									{!privateNote ? (
+										<Button
+											label="Save draft"
+											variant="ghost"
+											isDisabled={busy}
+											onPress={(): void => {
+												void save("draft");
+											}}
+										/>
+									) : undefined}
+									{privateNote ? (
+										<Button
+											label="Save feedback"
+											isLoading={busy}
+											onPress={(): void => {
+												void save("private");
+											}}
+										/>
+									) : (
+										<ConfirmButton
+											label="Publish"
+											title="Publish feedback?"
+											description={`Share with ${audience ?? memberName(data, personId)}. Published feedback can’t be edited or deleted.`}
+											confirmLabel="Publish feedback"
+											isDisabled={busy || !names?.length}
+											onConfirm={(): Promise<boolean> => save("published")}
+										/>
+									)}
+								</Row>
+							}
+						>
+							<Stack>
+								<Field
+									label="Feedback"
+									value={body}
+									onValueChange={setBody}
+									multiline
+									maxLength={10000}
+									isDisabled={busy}
+								/>
+								<Text variant="caption" tone="secondary">
+									{privateNote
+										? "Coaches only"
+										: audience
+											? `Publishes to ${audience}.`
+											: "Loading recipients…"}
+								</Text>
+								{task.error ? (
+									<Text variant="small" tone="danger">
+										{task.error}
+									</Text>
+								) : undefined}
+							</Stack>
+						</Dialog>
+					);
 				}}
-				footer={
-					<Row>
-						{!privateNote ? (
-							<Button
-								label="Save draft"
-								variant="ghost"
-								isDisabled={busy}
-								onPress={(): void => {
-									void save("draft");
-								}}
-							/>
-						) : undefined}
-						{privateNote ? (
-							<Button
-								label="Save note"
-								isLoading={busy}
-								onPress={(): void => {
-									void save("private");
-								}}
-							/>
-						) : (
-							<ConfirmButton
-								label="Publish"
-								title="Publish feedback?"
-								description={`Share with ${memberName(data, personId)} and linked parents. Published feedback can’t be edited or deleted.`}
-								confirmLabel="Publish feedback"
-								isDisabled={busy}
-								onConfirm={(): Promise<boolean> => save("published")}
-							/>
-						)}
-					</Row>
-				}
-			>
-				<Stack>
-					<Field
-						label="Feedback"
-						value={body}
-						onValueChange={setBody}
-						multiline
-						maxLength={10000}
-						isDisabled={busy}
-					/>
-					<Toggle
-						label="Private coach note"
-						value={privateNote}
-						onValueChange={setPrivateNote}
-						isDisabled={busy || existing?.visibility === "private"}
-					/>
-					<Text variant="caption" tone="secondary">
-						{privateNote
-							? "Coaches only"
-							: `Publishes to ${memberName(data, personId)} and linked parents.`}
-					</Text>
-					{task.error ? (
-						<Text variant="small" tone="danger">
-							{task.error}
-						</Text>
-					) : undefined}
-				</Stack>
-			</Dialog>
+			</FeedbackAudience>
 		</>
 	);
 };

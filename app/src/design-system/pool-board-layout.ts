@@ -1,4 +1,11 @@
 export type PoolRowFrame = { y: number; height: number };
+export const poolBoardRowInset = <T>(
+	rows: readonly (readonly T[])[],
+	index: number,
+): number =>
+	index === 0 && rows.at(0)?.length === 2 && rows.at(1)?.length === 3
+		? 1 / 6
+		: 0;
 export type PoolDropFrame = {
 	x: number;
 	y: number;
@@ -45,7 +52,9 @@ export const poolBoardSpotAt = <T>(
 	});
 	const row = rows.at(rowIndex);
 	if (rowIndex < 0 || !row?.length) return;
-	return row.at(Math.floor(x / (width / row.length)));
+	const inset = width * poolBoardRowInset(rows, rowIndex);
+	if (x < inset || x >= width - inset) return;
+	return row.at(Math.floor((x - inset) / ((width - inset * 2) / row.length)));
 };
 
 export type PoolDropCandidate = {

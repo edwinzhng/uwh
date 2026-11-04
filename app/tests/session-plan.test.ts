@@ -9,12 +9,14 @@ import {
 	previewSharedSessionPlansAtom,
 } from "../src/demo/session-plan-state";
 import {
+	canReadSessionPlanImage,
 	canReadSharedSessionPlan,
 	emptySessionPlan,
 	maxSessionPlanBodyLength,
 	maxSessionPlanMedia,
 	nextSessionPlan,
 	normalizeSessionPlan,
+	planBodyBlocks,
 	planResourceIds,
 	publishSessionPlan,
 	type SessionPlanCommand,
@@ -28,21 +30,16 @@ const command: SessionPlanCommand = {
 	eventId: "club-thu",
 	requestId: "fictional-plan-request",
 	revision: 0,
-	body: " Warm up together.\n\nPlay three on two. ",
+	body: " Warm up together.[[plan-image:diagram]]\n\nPlay three on two.[[plan-image:pool]] ",
 	notes: " Private coaching notes ",
 	media: [
 		{
-			id: "pdf",
-			source: "link",
-			label: " Practice sheet ",
-			url: "https://example.test/practice.pdf",
+			id: "diagram",
+			source: "image",
+			label: " Practice diagram ",
+			fileId: "uploaded-diagram",
 		},
-		{
-			id: "resource",
-			source: "resource",
-			label: "Club clip",
-			resourceId: "club-resource",
-		},
+		{ id: "pool", source: "image", label: "Pool", fileId: "uploaded-pool" },
 	],
 };
 const publication = {
@@ -52,18 +49,18 @@ const publication = {
 	published: true,
 };
 
-test("freeform plans retain text, ordered flat attachments and private notes", (): void => {
+test("freeform plans retain text, inline uploaded images and private notes", (): void => {
 	expect(validateSessionPlan(command)).toBeUndefined();
 	const saved = nextSessionPlan(emptySessionPlan(), command, 123);
 	expect(saved.body).toBe(command.body.trim());
 	expect(saved.notes).toBe(command.notes.trim());
-	expect(saved.media.map((media) => media.id)).toEqual(["pdf", "resource"]);
+	expect(saved.media.map((media) => media.id)).toEqual(["diagram", "pool"]);
 	expect(saved.revision).toBe(1);
-	expect(saved.published).toBe(false);
+	expect(Boolean(saved.published)).toBe(false);
 	expect(saved).not.toHaveProperty("drills");
 	expect(saved).not.toHaveProperty("objective");
 	expect(saved).not.toHaveProperty("goals");
-	expect(planResourceIds(saved)).toEqual(["club-resource"]);
+	expect(planResourceIds(saved)).toEqual([]);
 	expect(normalizeSessionPlan(saved)).toEqual(normalizeSessionPlan(command));
 });
 test("publication is explicit and revision guarded, excludes notes and inaccessible files", (): void => {
@@ -72,15 +69,15 @@ test("publication is explicit and revision guarded, excludes notes and inaccessi
 	const published = publishSessionPlan(saved, publication, 2);
 	const shared = sharedSessionPlan(published, () => false);
 	expect(shared?.body).toBe(command.body.trim());
-	expect(shared?.media.map((media) => media.id)).toEqual(["pdf"]);
+	expect(shared?.media.map((media) => media.id)).toEqual(["diagram", "pool"]);
 	expect(shared).not.toHaveProperty("notes");
 	expect(() =>
 		publishSessionPlan(published, { ...publication, revision: 0 }, 3),
 	).toThrow("Review the latest version");
 	const changed = nextSessionPlan(published, { ...command, revision: 2 }, 4);
-	expect(changed.published).toBe(false);
-	expect(changed.publishedAt).toBeUndefined();
-	expect(sharedSessionPlan(changed, () => true)).toBeUndefined();
+	expect(changed.published).toBe(true);
+	expect(changed.publishedAt).toBe(2);
+	expect(sharedSessionPlan(changed, () => true)?.body).toBe(changed.body);
 	expect(() =>
 		publishSessionPlan(
 			{ ...emptySessionPlan(), notes: "Private notes only" },
@@ -145,6 +142,7 @@ test("validation bounds freeform text and attachment identities and allows only 
 		validateSessionPlan({
 			...command,
 			body: "x".repeat(maxSessionPlanBodyLength),
+			media: [],
 		}),
 	).toBeUndefined();
 	expect(
@@ -184,7 +182,7 @@ test("validation bounds freeform text and attachment identities and allows only 
 				...command,
 				media: [{ id: "link", source: "link", label: "Invalid", url }],
 			}),
-		).toContain("YouTube or Vimeo");
+		).toContain("uploaded images only");
 	for (const url of [
 		"https://www.youtube.com/watch?v=dQw4w9WgXcQ",
 		"https://vimeo.com/123456",
@@ -196,7 +194,7 @@ test("validation bounds freeform text and attachment identities and allows only 
 				...command,
 				media: [{ id: "link", source: "link", label: "Supported", url }],
 			}),
-		).toBeUndefined();
+		).toContain("uploaded images only");
 });
 test("revision and canonical payloads preserve concurrent work, retries and exact scope", (): void => {
 	const saved = nextSessionPlan(emptySessionPlan(), command, 1);
@@ -231,7 +229,7 @@ test("preview saves and publishes the same flat contract with safe replay and st
 	store.set(previewSessionPlansAtom, {});
 	const draft = {
 		...command,
-		media: command.media.filter((media) => media.source === "link"),
+		media: command.media,
 	};
 	store.set(previewSessionPlanCommandAtom, draft);
 	store.set(previewSessionPlanCommandAtom, draft);
@@ -257,4 +255,102 @@ test("preview saves and publishes the same flat contract with safe replay and st
 			revision: 2,
 		}),
 	).toThrow("Coach");
+});
+
+test("inline image bytes follow publication, household and current eligibility", (): void => {
+	const event = initialAppData.events.find((entry) => entry.id === "club-thu");
+	if (!event) throw new Error("Missing practice fixture.");
+	const guardian = {
+		...primaryAccount,
+		admin: false,
+		coachPrograms: [],
+		personId: "jamie",
+		children: ["sam"],
+	};
+	const plan = nextSessionPlan(emptySessionPlan(), command, 1);
+	const shared = publishSessionPlan(plan, publication, 2);
+	expect(
+		canReadSessionPlanImage(
+			guardian,
+			event,
+			initialAppData.members,
+			plan,
+			"uploaded-diagram",
+		),
+	).toBe(false);
+	expect(
+		canReadSessionPlanImage(
+			guardian,
+			event,
+			initialAppData.members,
+			shared,
+			"uploaded-diagram",
+		),
+	).toBe(true);
+	expect(
+		canReadSessionPlanImage(
+			{ ...guardian, children: [] },
+			event,
+			initialAppData.members,
+			shared,
+			"uploaded-diagram",
+		),
+	).toBe(false);
+	expect(
+		canReadSessionPlanImage(
+			guardian,
+			{ ...event, eligiblePersonIds: [] },
+			initialAppData.members,
+			shared,
+			"uploaded-diagram",
+		),
+	).toBe(false);
+	expect(
+		canReadSessionPlanImage(
+			guardian,
+			{ ...event, cancelled: true },
+			initialAppData.members,
+			shared,
+			"uploaded-diagram",
+		),
+	).toBe(false);
+	expect(
+		canReadSessionPlanImage(
+			guardian,
+			event,
+			initialAppData.members,
+			shared,
+			"guessed-file",
+		),
+	).toBe(false);
+	expect(
+		canReadSessionPlanImage(
+			primaryAccount,
+			event,
+			initialAppData.members,
+			plan,
+			"uploaded-diagram",
+		),
+	).toBe(true);
+	expect(
+		planBodyBlocks(command).map((block) => block.image?.id ?? block.text),
+	).toEqual([
+		" Warm up together.",
+		"diagram",
+		"\n\nPlay three on two.",
+		"pool",
+		" ",
+	]);
+	expect(
+		validateSessionPlan({
+			...command,
+			body: `${command.body}[[plan-image:diagram]]`,
+		}),
+	).toContain("once");
+	expect(
+		validateSessionPlan({
+			...command,
+			body: `${command.body}[[plan-image:guessed]]`,
+		}),
+	).toContain("once");
 });

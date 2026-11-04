@@ -24,20 +24,7 @@ const seed: SessionPlan = {
 	body: "Warm up together, then practise short passes in groups of three. Move into an open lane after each pass.\n\nPlay three on two and rotate after each turnover. Finish with a game, keeping substitutions moving and sharing the workload.",
 	notes: "Keep rotations short and check in with new players.",
 	revision: 0,
-	media: [
-		{
-			id: "passing-reference",
-			label: "Practice resources",
-			source: "resource",
-			resourceId: "practice-resources",
-		},
-		{
-			id: "support-replay",
-			label: "Demo uploaded video",
-			source: "resource",
-			resourceId: "demo-uploaded-video",
-		},
-	],
+	media: [],
 };
 
 export const previewSessionPlansAtom = atom<Record<string, SessionPlan>>({

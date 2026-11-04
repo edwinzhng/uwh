@@ -62,7 +62,7 @@ export const ConversationList = ({
 					{ value: "all", label: "All" },
 					{ value: "unread", label: "Unread" },
 					{ value: "group", label: "Groups" },
-					{ value: "channel", label: "Channels" },
+					{ value: "channel", label: "Programs" },
 				]}
 			/>
 			{visible.length ? (

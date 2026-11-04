@@ -1,10 +1,10 @@
 import { type ReactElement, useContext, useEffect, useState } from "react";
-import { Image, View } from "react-native";
+import { Image, Text as NativeText, View } from "react-native";
 import { avatarColors } from "./avatar-colors";
 import { AvatarSourceContext, avatarPhotoId } from "./avatar-source";
 import { Icon, type IconName } from "./icon";
 import { useTheme } from "./theme";
-import { corners, geometry, space } from "./tokens";
+import { corners, font, geometry, space, typography } from "./tokens";
 
 export const Avatar = ({
 	name,
@@ -14,6 +14,7 @@ export const Avatar = ({
 	large = false,
 	personId,
 	icon,
+	initials = false,
 }: {
 	name: string;
 	compact?: boolean;
@@ -22,6 +23,7 @@ export const Avatar = ({
 	large?: boolean;
 	personId?: string;
 	icon?: IconName;
+	initials?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
 	const source = useContext(AvatarSourceContext);
@@ -72,6 +74,24 @@ export const Avatar = ({
 					fadeDuration={0}
 					style={{ width: size, height: size }}
 				/>
+			) : initials ? (
+				<NativeText
+					style={{
+						fontFamily: font.semibold,
+						fontSize: large
+							? typography.h3.fontSize
+							: typography.small.fontSize,
+						color: colors.foreground,
+					}}
+				>
+					{name
+						.trim()
+						.split(/\s+/)
+						.slice(0, 2)
+						.map((word) => word.at(0))
+						.join("")
+						.toLocaleUpperCase()}
+				</NativeText>
 			) : (
 				<Icon
 					name={icon ?? "user"}

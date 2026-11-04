@@ -3,9 +3,13 @@ import { api } from "../convex/_generated/api";
 import { addDays } from "../src/domain/app-rules";
 import type { EventDraft } from "../src/domain/app-types";
 import { clubDate } from "../src/domain/event-time";
+import type { ResourceFile } from "../src/domain/resources";
+import type { VerificationFixture } from "./verification-fixtures";
 import { createVerificationRun } from "./verification-fixtures";
 
 const run = createVerificationRun("shared-plans");
+const site = process.env.EXPO_PUBLIC_CONVEX_SITE_URL;
+if (site !== "http://127.0.0.1:3211") throw new Error("Local backend only.");
 try {
 	const owner = await run.fixture("Shared plan coach");
 	await owner.client.mutation(api.club.create, {
@@ -55,42 +59,45 @@ try {
 		await guardian.client.query(api.session_plans.shared, target),
 		null,
 	);
-	const resource = async (audience: "club" | "coaches"): Promise<string> =>
-		owner.client.mutation(api.resources.save, {
-			title: `${audience} drill reference`,
-			description: "Synthetic media",
-			kind: "document",
-			audience,
-			personIds: [],
-			url: `https://example.test/${audience}.pdf`,
-			key: crypto.randomUUID(),
-			revision: 0,
+	const uploaded = await fetch(
+		`${site}/resources/file?name=plan.png&purpose=document`,
+		{
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${owner.token}`,
+				"Content-Type": "image/png",
+			},
+			body: await Bun.file(
+				new URL("../assets/loading/loading-puck-dark.png", import.meta.url),
+			).arrayBuffer(),
+		},
+	);
+	assert.equal(uploaded.status, 200);
+	const image: ResourceFile = await uploaded.json();
+	const readImage = (actor: VerificationFixture): Promise<Response> =>
+		fetch(`${site}/resources/file?planImage=${image.id}`, {
+			headers: { Authorization: `Bearer ${actor.token}` },
 		});
-	const privateId = await resource("coaches");
-	const publicId = await resource("club");
+	assert.equal((await readImage(owner)).status, 200);
+	assert.equal((await readImage(guardian)).status, 404);
 	const command = {
 		...target,
 		revision: 0,
 		requestId: crypto.randomUUID(),
-		body: "**Session plan**\nWarm up, then *small-sided games*.\nGame FOCUS\n- Sub on the fly\n- Balance the load",
+		body: "**Session plan**\nWarm up, then *small-sided games*.\nGame FOCUS\n- Sub on the fly\n- Balance the load[[plan-image:diagram]]",
 		notes: "Do not expose internal coaching notes",
 		media: [
 			{
-				id: "staff",
-				label: "Secret coaching-only reference",
-				source: "resource",
-				resourceId: privateId,
-			},
-			{
-				id: "public",
-				label: "Shared reference",
-				source: "resource",
-				resourceId: publicId,
+				id: "diagram",
+				label: "Plan diagram",
+				source: "image",
+				fileId: image.id,
 			},
 		],
 	} as const;
 	const saveCommand = { ...command, media: [...command.media] };
 	await owner.client.mutation(api.session_plans.save, saveCommand);
+	assert.equal((await readImage(guardian)).status, 404);
 	assert.equal(
 		await player.client.query(api.session_plans.shared, target),
 		null,
@@ -124,19 +131,19 @@ try {
 		assert.equal(shared.body, command.body);
 		assert(!("notes" in shared));
 		assert.equal(shared.media.length, 1);
-		assert(!JSON.stringify(shared).includes(privateId));
-		assert(!JSON.stringify(shared).includes("Secret coaching"));
+		assert.equal((await readImage(actor)).status, 200);
 		assert(!JSON.stringify(shared).includes(command.notes));
 	}
 	assert.equal(
 		await unrelated.client.query(api.session_plans.shared, target),
 		null,
 	);
+	assert.equal((await readImage(unrelated)).status, 404);
 	const coachShared = await owner.client.query(
 		api.session_plans.shared,
 		target,
 	);
-	assert.equal(coachShared?.media.length, 2);
+	assert.equal(coachShared?.media.length, 1);
 	assert(coachShared && !("notes" in coachShared));
 	assert.equal(
 		(await owner.client.query(api.session_plans.state, target)).notes,
@@ -191,6 +198,7 @@ try {
 		published: false,
 	};
 	await owner.client.mutation(api.session_plans.publish, unpublish);
+	assert.equal((await readImage(player)).status, 404);
 	assert.equal(
 		await player.client.query(api.session_plans.shared, target),
 		null,
@@ -209,16 +217,16 @@ try {
 		...saveCommand,
 		revision: 4,
 		requestId: crypto.randomUUID(),
-		body: "A revised shared plan",
+		body: "A revised shared plan[[plan-image:diagram]]",
 	});
-	assert.equal(
-		await player.client.query(api.session_plans.shared, target),
-		null,
-	);
+	const revised = await player.client.query(api.session_plans.shared, target);
+	assert.equal(revised?.body, "A revised shared plan[[plan-image:diagram]]");
+	assert.equal(revised?.revision, 5);
+	assert(revised && !("notes" in revised));
 	const nextPublication = {
 		...target,
 		revision: 5,
-		published: true,
+		published: false,
 		requestId: crypto.randomUUID(),
 	};
 	const race = await Promise.allSettled([

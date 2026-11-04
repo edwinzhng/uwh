@@ -1,45 +1,27 @@
 import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { Stack, SummaryCard, Text } from "../design-system";
+import { SummaryCard, Text } from "../design-system";
 import { formatDate } from "../domain/app-rules";
-import type { homeFeedbackHighlight } from "../domain/home-feedback";
+import type { HomeFeedbackHighlight } from "../domain/home-feedback";
 
 export const HomeFeedback = ({
 	highlight,
 }: {
-	highlight: NonNullable<ReturnType<typeof homeFeedbackHighlight>>;
+	highlight: HomeFeedbackHighlight;
 }): ReactElement => {
 	const router = useRouter();
 	const { accounts } = useApp();
+	const entry = highlight.entry;
 	const author =
-		highlight.kind === "note"
-			? (highlight.entry.authorName ??
-				accounts.find((account) => account.id === highlight.entry.authorId)
-					?.name)
-			: highlight.entry.authorName;
-	const linkedEventId =
-		highlight.kind === "rating" && highlight.entry.dateKind === "recorded"
-			? undefined
-			: highlight.entry.eventId;
-	const recorded =
-		highlight.kind === "rating" && highlight.entry.dateKind === "recorded";
-	const date =
-		highlight.kind === "note"
-			? highlight.entry.date
-			: highlight.entry.eventDate;
+		entry.authorName ??
+		accounts.find((account) => account.id === entry.authorId)?.name;
 	return (
 		<SummaryCard
 			title="Feedback"
 			icon="message"
 			category="violet"
-			metadata={[
-				author,
-				highlight.kind === "rating"
-					? `${highlight.entry.rating}/10`
-					: undefined,
-				`${recorded ? "Recorded " : ""}${formatDate(date)}`,
-			]
+			metadata={[author ? `From ${author}` : undefined, formatDate(entry.date)]
 				.filter(Boolean)
 				.join(" · ")}
 			onPress={(): void =>
@@ -47,28 +29,13 @@ export const HomeFeedback = ({
 					pathname: "/account",
 					params: {
 						tab: "feedback",
-						feedback: "coach",
-						...(linkedEventId ? { event: linkedEventId } : {}),
+						...(entry.eventId ? { event: entry.eventId } : {}),
 					},
 				})
 			}
-			accessibilityLabel={`Coach feedback. ${highlight.kind === "note" ? highlight.entry.body : `${highlight.entry.rating}/10. ${highlight.entry.comments || highlight.entry.eventTitle}`}. Open feedback for the selected player`}
+			accessibilityLabel={`Coach feedback. ${entry.body}. Open feedback for the selected player`}
 		>
-			<Stack gap="xs">
-				{highlight.kind === "note" ? (
-					<Text lines={3}>{highlight.entry.body}</Text>
-				) : (
-					<>
-						<Text variant="label" lines={2}>
-							{highlight.entry.eventTitle}
-						</Text>
-						<Text lines={3}>
-							{highlight.entry.comments ||
-								`${highlight.entry.rating}/10 session rating`}
-						</Text>
-					</>
-				)}
-			</Stack>
+			<Text lines={3}>{entry.body}</Text>
 		</SummaryCard>
 	);
 };

@@ -143,7 +143,7 @@ export const usePreviewPerformanceEditor = (
 					.map(performanceSession)
 			: [];
 	const current =
-		person && canReadSessionPerformance(account, person)
+		person && canReadSessionPerformance(account, person, kind)
 			? records.find(
 					(entry) =>
 						entry.personId === personId &&

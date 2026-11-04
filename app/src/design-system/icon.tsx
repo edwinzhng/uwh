@@ -6,6 +6,7 @@ import ArrowRight from "lucide-react-native/icons/arrow-right";
 import ArrowUp from "lucide-react-native/icons/arrow-up";
 import Backpack from "lucide-react-native/icons/backpack";
 import Bell from "lucide-react-native/icons/bell";
+import Bold from "lucide-react-native/icons/bold";
 import CalendarClock from "lucide-react-native/icons/calendar-clock";
 import CalendarDays from "lucide-react-native/icons/calendar-days";
 import ChartColumn from "lucide-react-native/icons/chart-column";
@@ -26,6 +27,7 @@ import SmilePlus from "lucide-react-native/icons/face-slightly-smiling-plus";
 import FileText from "lucide-react-native/icons/file-text";
 import House from "lucide-react-native/icons/house";
 import ImagePlus from "lucide-react-native/icons/image-plus";
+import Italic from "lucide-react-native/icons/italic";
 import Layers from "lucide-react-native/icons/layers";
 import List from "lucide-react-native/icons/list";
 import LockKeyhole from "lucide-react-native/icons/lock-keyhole";
@@ -64,6 +66,8 @@ import { useTheme } from "./theme";
 import { geometry } from "./tokens";
 
 const icons = {
+	bold: Bold,
+	italic: Italic,
 	video: Video,
 	document: FileText,
 	payments: CreditCard,

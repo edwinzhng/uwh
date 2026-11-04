@@ -4,6 +4,8 @@ import { useActivePerson, useApp } from "../demo/app-state";
 import {
 	Button,
 	EmptyState,
+	RoleLabel,
+	type RoleTone,
 	Row,
 	Stack,
 	Surface,
@@ -52,6 +54,7 @@ export const MemberScreen = (): ReactElement => {
 	const tabs: {
 		value: string;
 		label: string;
+		roleTone?: RoleTone;
 	}[] = [
 		{ value: "profile", label: "Profile" },
 		{ value: "shoutouts", label: "Shoutouts" },
@@ -68,6 +71,7 @@ export const MemberScreen = (): ReactElement => {
 					{
 						value: "admin",
 						label: "Admin",
+						roleTone: "admin" as const,
 					},
 				]
 			: []),
@@ -76,6 +80,7 @@ export const MemberScreen = (): ReactElement => {
 					{
 						value: "coach",
 						label: "Coach",
+						roleTone: "coach" as const,
 					},
 				]
 			: []),
@@ -153,10 +158,16 @@ export const MemberScreen = (): ReactElement => {
 						<MemberAttendance key={member.id} member={member} />
 					) : selectedTab === "coach" ? (
 						<Stack gap="xl">
+							<Row justify="end">
+								<RoleLabel roleKind="coach" />
+							</Row>
 							<PlayerCoachingPanel personId={member.id} />
 						</Stack>
 					) : selectedTab === "admin" ? (
 						<Stack gap="xl">
+							<Row justify="end">
+								<RoleLabel roleKind="admin" />
+							</Row>
 							<MemberAdmin key={member.id} member={member} />
 							{!accounts.some(
 								(entry) =>

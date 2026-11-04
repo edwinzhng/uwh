@@ -32,7 +32,9 @@ export const HomePractice = ({
 	const { data, account } = useApp();
 	const now = useEventNow(event);
 	const open = event && !event.cancelled && signupState(event, now) === "open";
-	const people = householdMembers(data, account).filter(
+	const household = householdMembers(data, account);
+	const showIdentity = household.length > 1;
+	const people = household.filter(
 		(person) => event && canRegister(person, event),
 	);
 	return (
@@ -42,6 +44,7 @@ export const HomePractice = ({
 			icon="calendar"
 			tone={event ? "brand" : "default"}
 			category="sky"
+			headerTexture={event ? "watercolor" : undefined}
 			borderStyle={
 				event &&
 				people.length &&
@@ -68,28 +71,43 @@ export const HomePractice = ({
 					<Stack gap="md">
 						{open ? <SignupWindow event={event} /> : undefined}
 						{people.map((person) => (
-							<Surface key={person.id} variant="subtle" padding="sm">
+							<Surface
+								key={person.id}
+								variant="subtle"
+								padding="sm"
+								paddingBottom={event.parts?.length && open ? "none" : undefined}
+							>
 								<Stack gap="xs">
-									<Row justify="between" gap="xs" wrap>
-										<Row gap="xs">
-											<Avatar name={person.name} personId={person.id} compact />
-											<Text variant="small" weight="medium">
-												{person.name}
-											</Text>
+									{showIdentity || !event.parts?.length || !open ? (
+										<Row justify="between" gap="xs" wrap>
+											{showIdentity ? (
+												<Row gap="xs">
+													<Avatar
+														name={person.name}
+														personId={person.id}
+														compact
+													/>
+													<Text variant="small" weight="medium">
+														{person.name}
+													</Text>
+												</Row>
+											) : undefined}
+											{!event.parts?.length || !open ? (
+												<ResponseControl
+													event={event}
+													personId={person.id}
+													firstDivider={showIdentity}
+													quick
+													hideLabel
+												/>
+											) : undefined}
 										</Row>
-										{!event.parts?.length || !open ? (
-											<ResponseControl
-												event={event}
-												personId={person.id}
-												quick
-												hideLabel
-											/>
-										) : undefined}
-									</Row>
+									) : undefined}
 									{event.parts?.length && open ? (
 										<ResponseControl
 											event={event}
 											personId={person.id}
+											firstDivider={showIdentity}
 											quick
 											hideLabel
 										/>

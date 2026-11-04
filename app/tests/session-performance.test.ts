@@ -13,6 +13,7 @@ import {
 	previewSessionPerformanceAtom,
 	previewSessionPerformanceCommand,
 } from "../src/demo/session-performance-state";
+import { visibleAppData } from "../src/domain/app-visibility";
 import { planSessionMemberPreview } from "../src/domain/session-member-merge";
 import {
 	canEditSessionPerformance,
@@ -56,9 +57,7 @@ test("unlinked recorded-date history stays private and read-only even if an even
 	expect(
 		canEditSessionPerformance(primaryAccount, member, event, recorded),
 	).toBe(false);
-	expect(sessionPerformanceHistory([recorded], guardian, member)).toEqual([
-		recorded,
-	]);
+	expect(sessionPerformanceHistory([recorded], guardian, member)).toEqual([]);
 	expect(
 		sessionPerformanceHistory(
 			[recorded],
@@ -101,7 +100,7 @@ test("coach history filters before the first page so newer self-ratings cannot b
 	).toBe(true);
 	expect(
 		sessionPerformanceHistory(records, guardian, member, "coach").slice(0, 6),
-	).toEqual([coach]);
+	).toEqual([]);
 	expect(records.at(0)?.id).toBe("self-0");
 	expect(
 		sessionPerformanceHistory(records, guardian, member, "self"),
@@ -123,7 +122,7 @@ test("filtered session history preserves private readership and excludes removed
 		{ ...entry, id: "other-player", personId: "other-player" },
 	];
 	expect(sessionPerformanceHistory(records, guardian, member, "coach")).toEqual(
-		[entry],
+		[],
 	);
 	expect(
 		sessionPerformanceHistory(
@@ -164,7 +163,7 @@ test("session-note reports use current private readers, exact versions and the e
 	const row = store.get(previewSessionPerformanceAtom).at(0);
 	if (!row) throw new Error("Missing rating fixture.");
 	expect(canReportSessionPerformance(primaryAccount, member, row)).toBe(false);
-	expect(canReportSessionPerformance(guardian, member, row)).toBe(true);
+	expect(canReportSessionPerformance(guardian, member, row)).toBe(false);
 	expect(
 		canReportSessionPerformance(guardian, member, { ...row, kind: "self" }),
 	).toBe(false);
@@ -176,7 +175,7 @@ test("session-note reports use current private readers, exact versions and the e
 			reason: "Private attack",
 		}),
 	).toThrow("unavailable");
-	store.set(previewAccountIdAtom, "jamie");
+	store.set(previewAccountIdAtom, "casey");
 	expect(() =>
 		store.set(previewPerformanceReportCommand, {
 			id,
@@ -231,7 +230,7 @@ test("session-note reports use current private readers, exact versions and the e
 		id: report._id,
 		decision: "dismissed",
 	});
-	store.set(previewAccountIdAtom, "jamie");
+	store.set(previewAccountIdAtom, "casey");
 	store.set(previewPerformanceReportCommand, {
 		id,
 		revision: 2,
@@ -463,4 +462,62 @@ test("merge preserves independent coach histories but refuses same-coach and sha
 	expect(planSessionMemberPreview(collision, "source", "target").next).toBe(
 		collision,
 	);
+});
+
+test("internal ratings require coaching authorization for players, guardians and administrators", (): void => {
+	const rating = nextSessionPerformance(
+		undefined,
+		command,
+		primaryAccount,
+		event,
+		"internal",
+		1,
+	);
+	const player = { ...guardian, personId: member.id, children: [] };
+	for (const actor of [
+		guardian,
+		player,
+		{ ...player, admin: true },
+		{ ...primaryAccount, coachPrograms: [] },
+	]) {
+		expect(canReadSessionPerformance(actor, member, "coach")).toBe(false);
+		expect(
+			sessionPerformanceHistory(
+				[rating, { ...rating, id: "reflection", kind: "self" }],
+				actor,
+				member,
+			).some((entry) => entry.kind === "coach"),
+		).toBe(false);
+		expect(canWriteSessionPerformance(actor, member, "coach")).toBe(false);
+	}
+	expect(sessionPerformanceHistory([rating], primaryAccount, member)).toEqual([
+		rating,
+	]);
+});
+
+test("member payloads redact internal ratings and their known state for non-coaching accounts", (): void => {
+	const data = {
+		...initialAppData,
+		members: initialAppData.members.map((person) =>
+			person.id === member.id
+				? { ...person, rating: 88, ratingKnown: true }
+				: person,
+		),
+	};
+	for (const account of [
+		guardian,
+		{ ...guardian, personId: member.id, children: [] },
+		{ ...guardian, admin: true },
+	]) {
+		const projected = visibleAppData(data, account);
+		expect(
+			projected.members.find((person) => person.id === member.id),
+		).toMatchObject({ rating: 0, ratingKnown: false });
+		expect(projected.playerCoaching).toBeUndefined();
+	}
+	expect(
+		visibleAppData(data, primaryAccount).members.find(
+			(person) => person.id === member.id,
+		),
+	).toMatchObject({ rating: 88, ratingKnown: true });
 });

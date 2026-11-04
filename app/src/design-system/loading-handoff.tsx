@@ -1,4 +1,4 @@
-import { motionEffects } from "@calgarycrocs/design-system/tokens";
+import { motionEffects } from "@uwhclub/design-system/tokens";
 import {
 	type ReactElement,
 	type ReactNode,
@@ -19,6 +19,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { loadingColors } from "./loading-colors";
+import { LoadingLayer } from "./loading-layer";
 import { LoadingScreen } from "./loading-screen";
 import { LoadingCoveredContext } from "./loading-state";
 import { motion } from "./tokens";
@@ -27,10 +28,12 @@ export const LoadingHandoff = ({
 	loading,
 	children,
 	keepMounted = false,
+	fillViewport = false,
 }: {
 	loading: boolean;
 	children: ReactNode | (() => ReactNode);
 	keepMounted?: boolean;
+	fillViewport?: boolean;
 }): ReactElement => {
 	const canAnimate = useMotion();
 	const covered = useContext(LoadingCoveredContext);
@@ -77,19 +80,21 @@ export const LoadingHandoff = ({
 					(typeof children === "function" ? children() : children)}
 			</LoadingCoveredContext>
 			{!covered && (loading || visible) && (
-				<Animated.View
-					style={[
-						StyleSheet.absoluteFill,
-						{
-							backgroundColor: loadingColors.canvas,
-							zIndex: 1,
-							pointerEvents: "none",
-						},
-						style,
-					]}
-				>
-					<LoadingScreen />
-				</Animated.View>
+				<LoadingLayer fillViewport={fillViewport}>
+					<Animated.View
+						style={[
+							StyleSheet.absoluteFill,
+							{
+								backgroundColor: loadingColors.canvas,
+								zIndex: 1,
+								pointerEvents: "none",
+							},
+							style,
+						]}
+					>
+						<LoadingScreen />
+					</Animated.View>
+				</LoadingLayer>
 			)}
 		</View>
 	);

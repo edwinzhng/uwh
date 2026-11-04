@@ -22,7 +22,7 @@ export const inspectMotionTokens = (
 			"Use a shared motion easing variable instead of a CSS keyword.",
 		);
 		for (const match of source.matchAll(
-			/var\(--crocs-(motion|ease)-([\w-]+)\)/g,
+			/var\(--uwhclub-(motion|ease)-([\w-]+)\)/g,
 		)) {
 			const tokens =
 				match.at(1) === "motion"

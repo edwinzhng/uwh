@@ -31,6 +31,7 @@ import {
 	matchesEventType,
 } from "../src/domain/event-types";
 import { canReadFeedback } from "../src/domain/feedback-access";
+import { feedbackAudienceNames } from "../src/domain/feedback-audience";
 import { groupBy } from "../src/domain/group-by";
 import { relevantHouseholdEvent } from "../src/domain/home";
 import {
@@ -799,3 +800,23 @@ const householdPeople = async (
 	);
 	return people.flatMap((person) => (person ? [person.value] : []));
 };
+
+export const feedbackAudience = query({
+	args: { personId: v.string() },
+	handler: async (ctx, { personId }): Promise<string[]> => {
+		const actor = await memberFor(ctx);
+		if (!actor) return [];
+		const member = await ctx.db
+			.query("members")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", actor.clubId).eq("value.id", personId),
+			)
+			.unique();
+		if (!member || !canCoachMember(accountFor(actor), member.value)) return [];
+		const memberships = await ctx.db
+			.query("memberships")
+			.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+			.collect();
+		return feedbackAudienceNames(memberships, personId, member.value.name);
+	},
+});

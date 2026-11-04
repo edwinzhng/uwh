@@ -18,6 +18,7 @@ import {
 	type PoolBoardDrag,
 	type PoolRowFrame,
 	poolBoardDropAction,
+	poolBoardRowInset,
 	poolBoardSpotAt,
 } from "./pool-board-layout";
 import { PoolPiece } from "./pool-board-piece";
@@ -49,12 +50,14 @@ const rowHeight = geometry.touch + space.lg * 2 + typography.caption.lineHeight;
 const PoolRow = ({
 	row,
 	index,
+	inset,
 	drag,
 	onLayout,
 	children,
 }: {
 	row: PoolBoardSpot[];
 	index: number;
+	inset: number;
 	drag: SharedValue<PoolBoardDrag | undefined>;
 	onLayout: (event: LayoutChangeEvent) => void;
 	children: ReactNode;
@@ -74,6 +77,7 @@ const PoolRow = ({
 				{
 					minHeight: rowHeight,
 					paddingVertical: space.sm,
+					paddingHorizontal: `${inset * 100}%`,
 					flexDirection: "row",
 					alignItems: "flex-start",
 					borderTopWidth: index === 0 ? 0 : geometry.border,
@@ -210,6 +214,7 @@ export const PoolBoard = ({
 							key={row.map((spot) => spot.id).join(":")}
 							row={row}
 							index={index}
+							inset={poolBoardRowInset(rows, index)}
 							drag={drag}
 							onLayout={({ nativeEvent: { layout } }): void => {
 								rowFrames.current.set(index, {

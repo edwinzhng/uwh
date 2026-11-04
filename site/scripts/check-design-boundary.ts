@@ -24,7 +24,7 @@ export const inspectDesignBoundary = (
 			if (
 				path &&
 				ts.isStringLiteral(path) &&
-				(/^(next\/(image|link|script)|react-dom|react-native|@calgarycrocs\/design-system|@radix-ui\/|@base-ui\/|motion|framer-motion)/.test(
+				(/^(next\/(image|link|script)|react-dom|react-native|@uwhclub\/design-system|@radix-ui\/|@base-ui\/|motion|framer-motion)/.test(
 					path.text,
 				) ||
 					/\.css$/.test(path.text) ||

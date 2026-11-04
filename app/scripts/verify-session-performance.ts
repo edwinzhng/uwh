@@ -131,7 +131,24 @@ try {
 			paginationOpts: { cursor: null, numItems: 30 },
 		});
 	const entries = (await list(guardian)).page;
-	assert.equal(entries.length, 3);
+	assert.equal(entries.length, 1);
+	assert(entries.every((entry) => entry.kind === "self"));
+	for (const actor of [player, guardian, admin]) {
+		await assert.rejects(
+			actor.client.query(api.session_performance.current, {
+				personId,
+				eventId,
+				kind: "coach",
+			}),
+		);
+		await assert.rejects(
+			actor.client.query(api.session_performance.page, {
+				personId,
+				kind: "coach",
+				paginationOpts: { cursor: null, numItems: 10 },
+			}),
+		);
+	}
 	assert(entries.every((entry) => entry.sessionNumber === 2));
 	assert.equal(entries.find((entry) => entry.id === id)?.canEdit, false);
 	assert.equal(entries.find((entry) => entry.id === selfId)?.canEdit, true);
@@ -245,7 +262,7 @@ try {
 	await owner.client.mutation(api.club.apply, {
 		action: { type: "set-member-archived", personId, archived: true },
 	});
-	assert.equal((await list(player)).page.length, 3);
+	assert.equal((await list(player)).page.length, 1);
 	await assert.rejects(
 		player.client.mutation(api.session_performance.save, {
 			...self,
@@ -439,7 +456,7 @@ try {
 	});
 	assert.equal(firstPage.page.length, 6);
 	assert(firstPage.page.every((entry) => entry.kind === "self"));
-	const coachPage = await player.client.query(api.session_performance.page, {
+	const coachPage = await owner.client.query(api.session_performance.page, {
 		personId,
 		kind: "coach",
 		paginationOpts: { cursor: null, numItems: 1 },
@@ -447,7 +464,7 @@ try {
 	assert.equal(coachPage.page.length, 1);
 	assert.equal(coachPage.page.at(0)?.id, id);
 	if (!coachPage.isDone) {
-		const remaining = await player.client.query(api.session_performance.page, {
+		const remaining = await owner.client.query(api.session_performance.page, {
 			personId,
 			kind: "coach",
 			paginationOpts: { cursor: coachPage.continueCursor, numItems: 1 },

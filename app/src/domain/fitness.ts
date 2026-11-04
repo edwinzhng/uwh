@@ -72,3 +72,6 @@ export const fitnessUnitLabel = (
 			: unit === "count"
 				? "Count · higher is better"
 				: "Pass/fail";
+
+export const shortFitnessTestName = (name: string): string =>
+	name.replace(/^(\d+)\s*m(?:\s+swim)?$/i, "$1M");

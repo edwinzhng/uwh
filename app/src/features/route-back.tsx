@@ -16,7 +16,7 @@ const routes: Record<
 	"/development": {
 		parent: "/club",
 		parentLabel: "Club",
-		label: "Player reviews",
+		label: "Player ratings",
 	},
 	"/announcements": {
 		parent: "/",

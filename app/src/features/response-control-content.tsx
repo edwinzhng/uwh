@@ -22,6 +22,7 @@ export const ResponseControlContent = ({
 	personId,
 	partId,
 	hideLabel = false,
+	firstDivider = true,
 	committed = false,
 	loading = false,
 	quick = false,
@@ -30,6 +31,7 @@ export const ResponseControlContent = ({
 	personId?: string;
 	partId?: string;
 	hideLabel?: boolean;
+	firstDivider?: boolean;
 	committed?: boolean;
 	loading?: boolean;
 	quick?: boolean;
@@ -125,6 +127,7 @@ export const ResponseControlContent = ({
 					name={person.name}
 					partId={partId}
 					hideLabel={hideLabel}
+					firstDivider={firstDivider}
 					disabled={busy}
 					isPending={(): boolean =>
 						store.get(pendingResponsesAtom).has(requestKey)

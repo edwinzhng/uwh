@@ -1,4 +1,4 @@
-import { DesignTokens } from "@calgarycrocs/design-system/theme";
+import { DesignTokens } from "@uwhclub/design-system/theme";
 import type { ReactElement, ReactNode } from "react";
 import "./styles.css";
 export const Document = ({

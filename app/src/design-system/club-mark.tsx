@@ -6,7 +6,7 @@ import { geometry } from "./tokens";
 export const ClubMark = (): ReactElement => (
 	<Image
 		source={artwork}
-		accessibilityLabel="Calgary Crocs"
+		accessibilityLabel="UWH Club"
 		resizeMode="contain"
 		style={{
 			width: geometry.touch,

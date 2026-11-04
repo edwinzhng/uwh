@@ -12,9 +12,9 @@ export const UnreadCount = ({ count }: { count: number }): ReactElement => {
 				alignSelf: "flex-end",
 				alignItems: "center",
 				justifyContent: "center",
-				minWidth: typography.caption.lineHeight,
-				minHeight: typography.caption.lineHeight,
-				paddingHorizontal: space.xxs,
+				minWidth: typography.navigation.lineHeight,
+				height: typography.navigation.lineHeight,
+				paddingHorizontal: space.half,
 				borderRadius: corners.control,
 				backgroundColor: theme.navigation.unread,
 			}}
@@ -22,8 +22,11 @@ export const UnreadCount = ({ count }: { count: number }): ReactElement => {
 			<Text
 				style={{
 					fontFamily: font.semibold,
-					fontSize: typography.caption.fontSize,
-					lineHeight: typography.caption.lineHeight,
+					fontSize: typography.navigation.fontSize,
+					lineHeight: typography.navigation.fontSize,
+					includeFontPadding: false,
+					textAlign: "center",
+					fontVariant: ["tabular-nums"],
 					color: theme.text.contrast,
 				}}
 			>

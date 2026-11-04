@@ -10,7 +10,7 @@ import {
 	Surface,
 	Text,
 } from "../design-system";
-import { eventResponse, formatDate } from "../domain/app-rules";
+import { canRegister, eventResponse, formatDate } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import {
 	eventDateParts,
@@ -18,7 +18,7 @@ import {
 } from "../domain/event-card-presentation";
 import { eventResponsePresentation } from "../domain/event-response-presentation";
 import { signupState } from "../domain/event-time";
-import { householdAttendanceReason } from "../domain/home";
+import { householdAttendanceReason, householdMembers } from "../domain/home";
 import { venueName } from "../domain/venue";
 import { EventAttendeesPreview } from "./event-attendees-preview";
 import { EventPreviewActions } from "./event-preview-actions";
@@ -40,7 +40,7 @@ export const HouseholdEventCard = ({
 	dateLayout?: ScheduleDateLayout;
 	compactPast?: boolean;
 }): ReactElement => {
-	const { data } = useApp();
+	const { data, account } = useApp();
 	const person = useActivePerson();
 	const date = eventDateParts(event.date);
 	const reason = householdAttendanceReason(person, event);
@@ -49,8 +49,18 @@ export const HouseholdEventCard = ({
 	const signup = signupState(event, useEventNow(event));
 	const open = signup === "open" && !event.cancelled;
 	const status = eventResponsePresentation(current, event.parts?.length);
+	const showIdentity =
+		householdMembers(data, account).filter((member) =>
+			canRegister(member, event),
+		).length > 1;
+	const inlineResponse =
+		!past &&
+		!reason &&
+		!event.cancelled &&
+		(!event.parts?.length || !open) &&
+		signup !== "scheduled";
 	const tone =
-		reason || event.cancelled || past || response === "unanswered"
+		reason || event.cancelled || past || (response === "unanswered" && !open)
 			? "neutral"
 			: status.tone;
 	if (past && compactPast)
@@ -90,15 +100,16 @@ export const HouseholdEventCard = ({
 					status={
 						event.cancelled ? (
 							<Badge label="Cancelled" kind="warning" />
-						) : !past && !reason && open ? (
-							<Badge
-								label={status.label}
-								kind={response === "unanswered" ? "neutral" : status.tone}
-							/>
+						) : !past && !reason && open && response === "waiting" ? (
+							<Badge label={status.label} kind={status.tone} />
 						) : undefined
 					}
 					actions={
-						open && response !== "unavailable" && !event.cancelled ? (
+						signup === "scheduled" && !past && !event.cancelled ? (
+							<Text variant="caption" tone="secondary">
+								Not open yet
+							</Text>
+						) : open && response !== "unavailable" && !event.cancelled ? (
 							<Row gap="xs">
 								<EventAttendeesPreview
 									event={event}
@@ -121,25 +132,26 @@ export const HouseholdEventCard = ({
 					venue={venueName(event.venue)}
 					href={{ pathname: "/session", params: { event: event.id } }}
 				/>
-				<Row justify="between" gap="xs" wrap>
-					<Row gap="xs">
-						<Avatar name={person.name} personId={person.id} compact />
-						<Text variant="small" weight="medium">
-							{person.name}
-						</Text>
+				{(showIdentity && signup !== "scheduled") || inlineResponse ? (
+					<Row justify={showIdentity ? "between" : "end"} gap="xs" wrap>
+						{showIdentity ? (
+							<Row gap="xs">
+								<Avatar name={person.name} personId={person.id} compact />
+								<Text variant="small" weight="medium">
+									{person.name}
+								</Text>
+							</Row>
+						) : undefined}
+						{inlineResponse ? (
+							<ResponseControl
+								event={event}
+								personId={person.id}
+								hideLabel
+								quick
+							/>
+						) : undefined}
 					</Row>
-					{!past &&
-					!reason &&
-					!event.cancelled &&
-					(!event.parts?.length || !open) ? (
-						<ResponseControl
-							event={event}
-							personId={person.id}
-							hideLabel
-							quick
-						/>
-					) : undefined}
-				</Row>
+				) : undefined}
 				{event.cancelled || past ? undefined : reason ? (
 					<Text variant="caption" tone="secondary">
 						{reason}

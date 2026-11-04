@@ -1,6 +1,6 @@
 - **UWH Club**
 
-- The production Calgary Crocs club app for web, iOS, and Android. TypeScript, Bun, Biome, and a shared design system. Start with the [documentation index](docs/README.md) and [production readiness](docs/PRODUCTION-READINESS.md).
+- The production UWH Club app for web, iOS, and Android. TypeScript, Bun, Biome, and a shared design system. Start with the [documentation index](docs/README.md) and [production readiness](docs/PRODUCTION-READINESS.md).
 
 - [Try the app](http://127.0.0.1:4180/)
 

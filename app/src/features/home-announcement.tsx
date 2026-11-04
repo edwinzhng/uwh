@@ -27,18 +27,13 @@ const AnnouncementContent = ({
 	return notice ? (
 		<SummaryCard
 			title="Announcement"
+			compact
 			icon={featureIdentity.announcements.icon}
 			category="coral"
 			metadata={formatDate(notice.date)}
 			onPress={(): void => router.push("/announcements")}
 			action={
 				<Row wrap>
-					<Button
-						label="Read announcement"
-						variant="secondary"
-						compact
-						onPress={(): void => router.push("/announcements")}
-					/>
 					<Button
 						label="Dismiss"
 						variant="ghost"
@@ -51,7 +46,7 @@ const AnnouncementContent = ({
 				</Row>
 			}
 		>
-			<Text weight="medium" lines={3}>
+			<Text weight="medium" lines={2}>
 				{notice.body}
 			</Text>
 		</SummaryCard>

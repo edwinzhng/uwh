@@ -2,17 +2,14 @@ import { type ReactElement, useEffect, useState } from "react";
 import {
 	Button,
 	Dialog,
-	Divider,
 	EditableAvatar,
 	Row,
 	Stack,
-	Surface,
 	Text,
 } from "../design-system";
 import type { Conversation } from "../domain/app-types";
 import {
 	type ChatAppearance,
-	chatIcons,
 	sameChatAppearance,
 } from "../domain/chat-appearance";
 import {
@@ -27,17 +24,6 @@ import { ProfilePhotoCropper } from "./profile-photo-cropper";
 import { useFormTask } from "./use-form-task";
 import { useImageService } from "./use-image-service";
 import { usePhotoUri } from "./use-photo-uri";
-
-const iconLabels = {
-	message: "Chat",
-	users: "People",
-	calendar: "Calendar",
-	shield: "Shield",
-	trophy: "Trophy",
-	target: "Target",
-	barChart: "Fitness",
-	star: "Star",
-};
 
 export const ChatAppearanceForm = ({
 	thread,
@@ -146,7 +132,7 @@ export const ChatAppearanceForm = ({
 						<Row justify="center" gap="md">
 							<EditableAvatar
 								name={thread.title}
-								icon={input.avatarIcon ?? "users"}
+								initials
 								uri={photo.uri}
 								label={
 									input.avatarImageId
@@ -173,32 +159,6 @@ export const ChatAppearanceForm = ({
 								</Text>
 							</Stack>
 						</Row>
-						<Divider label="Or choose an icon" />
-						<Surface variant="subtle" padding="sm">
-							<Stack gap="xs">
-								{[chatIcons.slice(0, 4), chatIcons.slice(4)].map((icons) => (
-									<Row key={icons.at(0)} justify="center" gap="xs">
-										{icons.map((icon) => (
-											<Button
-												key={icon}
-												icon={icon}
-												label={iconLabels[icon]}
-												variant="selection"
-												isSelected={
-													!input.avatarImageId &&
-													(input.avatarIcon ?? "users") === icon
-												}
-												isDisabled={task.busy}
-												onPress={(): void => {
-													task.clear();
-													setInput({ avatarIcon: icon });
-												}}
-											/>
-										))}
-									</Row>
-								))}
-							</Stack>
-						</Surface>
 						{photo.failed ? (
 							<Button
 								label="Retry photo"

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { motionEffects } from "@calgarycrocs/design-system/tokens";
+import { motionEffects } from "@uwhclub/design-system/tokens";
 import { inspectMotionTokens } from "../../packages/design-system/check-motion";
 import {
 	motionDurations,
@@ -35,9 +35,9 @@ test("motion checks reject custom durations and easing escape hatches", (): void
 		);
 	for (const source of [
 		"transition: opacity 420ms ease;",
-		"transition: opacity var(--crocs-motion-slow) ease;",
-		"transition: opacity var(--crocs-motion-custom);",
-		"transition: opacity var(--crocs-motion-slow) cubic-bezier(0,1,0,1);",
+		"transition: opacity var(--uwhclub-motion-slow) ease;",
+		"transition: opacity var(--uwhclub-motion-custom);",
+		"transition: opacity var(--uwhclub-motion-slow) cubic-bezier(0,1,0,1);",
 	])
 		expect(inspectMotionTokens(source, "styles.css").length).toBeGreaterThan(0);
 	expect(

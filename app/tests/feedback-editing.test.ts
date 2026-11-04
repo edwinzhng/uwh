@@ -183,10 +183,29 @@ test("drafts can be edited, published or deleted only by their coach", (): void 
 });
 
 test("private notes cannot become a draft that leaks to a parent", (): void => {
-	const saved = reduceApp(initialAppData, primaryAccount, {
-		type: "save-feedback",
-		feedback: { ...feedback, visibility: "private" },
-	});
+	const saved: AppData = {
+		...initialAppData,
+		feedback: [
+			...initialAppData.feedback,
+			{ ...feedback, authorId: primaryAccount.id, visibility: "private" },
+		],
+	};
+	expect(() =>
+		reduceApp(initialAppData, primaryAccount, {
+			type: "save-feedback",
+			feedback: { ...feedback, visibility: "private" },
+		}),
+	).toThrow("Save feedback as a draft");
+	expect(
+		reduceApp(saved, primaryAccount, {
+			type: "save-feedback",
+			feedback: {
+				...feedback,
+				visibility: "private",
+				body: "Updated private feedback",
+			},
+		}).feedback.find((entry) => entry.id === feedback.id)?.visibility,
+	).toBe("private");
 	for (const visibility of ["draft", "published"] as const)
 		expect(() =>
 			reduceApp(saved, primaryAccount, {

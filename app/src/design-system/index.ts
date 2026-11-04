@@ -58,6 +58,7 @@ export { Grid } from "./grid";
 export { hapticsAvailable, hapticsEnabledAtom } from "./haptics";
 export { HistorySection } from "./history-section";
 export type { HistoryControlTreatment } from "./history-section-props";
+export { HomeFitnessLayout } from "./home-fitness-layout";
 export { Icon, type IconName } from "./icon";
 export { IconButton } from "./icon-button";
 export { IconHint } from "./icon-hint";
@@ -69,7 +70,6 @@ export { ListItem } from "./list-item";
 export { LoadingBoundary } from "./loading-boundary";
 export { LoadingContent } from "./loading-content";
 export { LoadingHandoff } from "./loading-handoff";
-export { LoadingPreview } from "./loading-preview";
 export { LoadingScope } from "./loading-scope";
 export { LoadingScreen } from "./loading-screen";
 export { MainTabs } from "./main-tabs";
@@ -110,15 +110,21 @@ export { DesignProvider } from "./provider";
 export { ProviderLogo } from "./provider-logo";
 export { ReactionPill } from "./reaction-pill";
 export { RecoveryScreen } from "./recovery-screen";
+export { ResponsiveButtonControl } from "./responsive-button-control";
 export { RichMessageEditor } from "./rich-message-editor";
 export type { RichFormatRequest } from "./rich-message-model";
 export { RichTextField } from "./rich-text-field";
+export type { RoleTone } from "./role-glow";
+export { RoleScope } from "./role-scope";
+export { RoleStyleLabel as RoleLabel } from "./role-style-label";
 export { RoleStyleOptionsScreen } from "./role-style-options-screen";
+export { RoleTabOptionsScreen } from "./role-tab-options-screen";
 export { Row } from "./row";
 export { SectionHeading } from "./section-heading";
 export { SectionNavigation } from "./section-navigation";
 export { SegmentedControl } from "./segmented-control";
 export { Select } from "./select";
+export { Sparkline } from "./sparkline";
 export { SpotlightCard } from "./spotlight-card";
 export { Stack } from "./stack";
 export { SummaryCard } from "./summary-card";
@@ -132,10 +138,18 @@ export { formatTimeLocation } from "./time-location";
 export { TimeSelector } from "./time-selector";
 export type { ToastContext, ToastMessage } from "./toast-messages";
 export { Toggle } from "./toggle";
+export { motion } from "./tokens";
 export { ToolbarGroup } from "./toolbar-group";
 export { TrendChart } from "./trend-chart";
 export { UnreadCount } from "./unread-count";
 export { useAppInactive } from "./use-app-inactive";
 export { useVoiceRecorder } from "./use-voice-recorder";
 export { captureVideoThumbnail } from "./video-thumbnail";
+export { WatercolorControls } from "./watercolor-controls";
+export {
+	type WatercolorTuning,
+	WatercolorTuningContext,
+	watercolorDefaults,
+	watercolorParameter,
+} from "./watercolor-tuning";
 export { WebDocument } from "./web-document";

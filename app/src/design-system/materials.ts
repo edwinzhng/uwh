@@ -1,6 +1,6 @@
-import { materials as sharedMaterials } from "@calgarycrocs/design-system/materials";
+import { materials as sharedMaterials } from "@uwhclub/design-system/materials";
 
-export type { GlassMaterial } from "@calgarycrocs/design-system/materials";
+export type { GlassMaterial } from "@uwhclub/design-system/materials";
 export const materials = {
 	...sharedMaterials,
 	blur: { ...sharedMaterials.blur, floating: 16 },

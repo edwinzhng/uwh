@@ -1,13 +1,13 @@
 import type {
 	ColorScale,
 	SemanticColorScales,
-} from "@calgarycrocs/design-system/tokens";
+} from "@uwhclub/design-system/tokens";
 import { type RainbowHue, rainbowPalette } from "./rainbow-palette";
 
 export type {
 	ColorScale,
 	SemanticColorScales,
-} from "@calgarycrocs/design-system/tokens";
+} from "@uwhclub/design-system/tokens";
 
 const rainbowScale = (hue: RainbowHue, mode: "light" | "dark"): ColorScale => {
 	const color = rainbowPalette[hue];

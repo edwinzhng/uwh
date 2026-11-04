@@ -144,7 +144,7 @@ export const planHistoryMemberMerge = async (
 			)
 			.map((row) =>
 				mergeCollision(
-					"Player reviews",
+					"Player ratings",
 					`Round ${row.round}`,
 					"A coach review has no matching review round.",
 					"Repair the review history before merging.",
