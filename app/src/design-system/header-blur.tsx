@@ -19,7 +19,7 @@ export const HeaderBlur = (): ReactElement => {
 			}
 		>
 			<BlurView
-				intensity={60}
+				intensity={15}
 				tint={theme.mode}
 				style={StyleSheet.absoluteFill}
 			/>

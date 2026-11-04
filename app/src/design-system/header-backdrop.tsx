@@ -40,7 +40,10 @@ export const HeaderBackdrop = ({
 			) : (
 				<>
 					<LinearGradient
-						colors={[theme.background.primary, "transparent"]}
+						colors={[
+							`${theme.background.primary}33`,
+							`${theme.background.primary}00`,
+						]}
 						style={StyleSheet.absoluteFill}
 					/>
 					{available ? (

@@ -21,9 +21,9 @@ export const HeaderBackdrop = ({
 				pointerEvents: "none",
 				background: opaque
 					? theme.background.primary
-					: `linear-gradient(${theme.background.primary}99, ${theme.background.primary}33)`,
-				backdropFilter: opaque ? undefined : "blur(20px)",
-				WebkitBackdropFilter: opaque ? undefined : "blur(20px)",
+					: `linear-gradient(${theme.background.primary}33, ${theme.background.primary}00)`,
+				backdropFilter: opaque ? undefined : "blur(4px)",
+				WebkitBackdropFilter: opaque ? undefined : "blur(4px)",
 				maskImage: opaque
 					? undefined
 					: "linear-gradient(black 60%, transparent)",
