@@ -13,7 +13,6 @@ export const FilterChip = ({
 		label={label}
 		variant="selection"
 		density="filter"
-		round
 		isSelected={selected}
 		onPress={onPress}
 	/>

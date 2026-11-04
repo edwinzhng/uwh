@@ -49,7 +49,7 @@ export const AgendaScreen = (): ReactElement => {
 			<Stack gap="md">
 				<Row wrap gap="xxs">
 					<FilterChip
-						label="All programs"
+						label="All"
 						selected={!programId}
 						onPress={(): void => router.setParams({ program: undefined })}
 					/>

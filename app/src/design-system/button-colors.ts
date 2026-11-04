@@ -38,9 +38,7 @@ export const buttonColors = (
 				? theme.background.pressed
 				: interaction === "hover"
 					? theme.background.hover
-					: variant === "selection"
-						? theme.background.secondary
-						: "transparent",
+					: "transparent",
 		foreground:
 			variant === "danger-text" ? theme.danger.foreground : theme.text.primary,
 		border:
