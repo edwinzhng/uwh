@@ -29,6 +29,8 @@ const config: ExpoConfig = {
 	},
 	ios: {
 		supportsTablet: true,
+		usesAppleSignIn: true,
+		entitlements: { "com.apple.developer.applesignin": ["Default"] },
 		bundleIdentifier: "com.uwhclub.app",
 		infoPlist: { ITSAppUsesNonExemptEncryption: false },
 	},
