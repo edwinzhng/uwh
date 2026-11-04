@@ -164,23 +164,15 @@ export const AppLayout = ({
 			/>
 		)
 	) : nativeHeader && workspaceTitle ? undefined : nativeHeader ? (
-		title || subtitle || headingAction ? (
-			<Stack gap="xs">
-				{title ? (
-					<Row>
-						<Text variant={workspace ? "h3" : "h1"}>{title}</Text>
-						{titleAccessory}
-					</Row>
+		subtitle || headingAction ? (
+			<Row justify="between" align="center" wrap>
+				{subtitle ? (
+					<Text variant="small" tone="secondary">
+						{subtitle}
+					</Text>
 				) : undefined}
-				<Row justify="between" align="center" wrap>
-					{subtitle ? (
-						<Text variant="small" tone="secondary">
-							{subtitle}
-						</Text>
-					) : undefined}
-					{headingAction}
-				</Row>
-			</Stack>
+				{headingAction}
+			</Row>
 		) : undefined
 	) : compactRoot ? (
 		back || subtitle || titleAccessory ? (
