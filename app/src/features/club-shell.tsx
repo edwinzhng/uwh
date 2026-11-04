@@ -1,9 +1,10 @@
-import { useGlobalSearchParams, usePathname } from "expo-router";
+import { useGlobalSearchParams, usePathname, useRouter } from "expo-router";
 import type { ReactElement, ReactNode } from "react";
 import { useApp, useAppStatus } from "../demo/app-state";
 import {
 	AppLayout,
 	Button,
+	ClubMark,
 	LoadingBoundary,
 	LoadingScope,
 	RoleLabel,
@@ -53,6 +54,7 @@ export const ClubShell = ({
 	presentation = "page",
 }: Props): ReactElement => {
 	const pathname = usePathname();
+	const router = useRouter();
 	const { headerOption } = useGlobalSearchParams<{ headerOption?: string }>();
 	const headerLayout =
 		process.env.EXPO_PUBLIC_REVIEW_MODE === "true" &&
@@ -73,7 +75,19 @@ export const ClubShell = ({
 				title={title}
 				workspaceTitle={workspaceTitle}
 				subtitle={subtitle}
-				toolbarLeading={toolbarLeading}
+				toolbarLeading={
+					isPrimaryDestination(pathname) ? (
+						<Row gap="xs">
+							<ClubMark
+								selected={pathname === "/club"}
+								onPress={(): void => router.navigate("/club")}
+							/>
+							{toolbarLeading}
+						</Row>
+					) : (
+						toolbarLeading
+					)
+				}
 				toolbarCenter={toolbarCenter}
 				action={
 					action ? (

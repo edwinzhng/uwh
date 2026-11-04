@@ -81,12 +81,18 @@ export const ThreadContent = ({
 			action={<ThreadParticipantsHeader thread={thread} />}
 			title={thread.title}
 			workspaceTitle={
-				<ChatIdentity
-					avatar={<ConversationAvatar thread={thread} />}
-					title={chatHeaderTitle(thread, [
-						...data.members.map((member) => member.name),
-						...(thread.participants ?? []).map((person) => person.name),
-					])}
+				<ThreadParticipantsHeader
+					thread={thread}
+					trigger={(onOpen): ReactElement => (
+						<ChatIdentity
+							onPress={onOpen}
+							avatar={<ConversationAvatar thread={thread} />}
+							title={chatHeaderTitle(thread, [
+								...data.members.map((member) => member.name),
+								...(thread.participants ?? []).map((person) => person.name),
+							])}
+						/>
+					)}
 				/>
 			}
 			scrollable={false}

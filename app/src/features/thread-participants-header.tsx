@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 import { useChatSafety } from "../backend/chat-safety";
 import { newId, useApp } from "../demo/app-state";
 import {
@@ -238,18 +238,24 @@ const ParticipantsDialog = ({
 
 export const ThreadParticipantsHeader = ({
 	thread,
+	trigger,
 }: {
 	thread: Conversation;
+	trigger?: (onOpen: () => void) => ReactNode;
 }): ReactElement => {
 	const [open, setOpen] = useState(false);
 	return (
 		<>
-			<Button
-				label="Conversation info"
-				icon="users"
-				variant="ghost"
-				onPress={(): void => setOpen(true)}
-			/>
+			{trigger ? (
+				trigger((): void => setOpen(true))
+			) : (
+				<Button
+					label="Conversation info"
+					icon="users"
+					variant="ghost"
+					onPress={(): void => setOpen(true)}
+				/>
+			)}
 			{open ? (
 				<ParticipantsDialog
 					thread={thread}
