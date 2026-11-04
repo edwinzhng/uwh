@@ -10,6 +10,13 @@ export const AuthCallbackScreen = (): ReactElement => {
 	const router = useRouter();
 	const started = useRef(false);
 	const [error, setError] = useState<string>();
+	const failure = error ?? backend.social?.signInError;
+	const completing = Boolean(
+		code ||
+			backend.loading ||
+			backend.social?.signingIn ||
+			backend.authenticated,
+	);
 	useEffect((): void => {
 		if (started.current || !code || !backend.social || backend.loading) return;
 		started.current = true;
@@ -20,10 +27,13 @@ export const AuthCallbackScreen = (): ReactElement => {
 	}, [code, backend.social, backend.loading, router]);
 	return (
 		<AuthLayout title="Signing in">
-			<Text variant="small" tone={error ? "danger" : "secondary"}>
-				{error ?? (code ? "Completing sign-in…" : "Sign-in was cancelled.")}
+			<Text variant="small" tone={failure ? "danger" : "secondary"}>
+				{failure ??
+					(completing
+						? "Completing sign-in…"
+						: "Sign-in wasn’t completed. Please try again.")}
 			</Text>
-			{error || !code ? (
+			{failure || !completing ? (
 				<Button
 					label="Back to sign in"
 					onPress={(): void => router.replace("/")}

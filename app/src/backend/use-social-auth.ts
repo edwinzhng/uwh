@@ -22,14 +22,21 @@ import {
 	readConnectionAttempt,
 	saveConnectionAttempt,
 } from "./connection-attempt";
+import { friendlyError } from "./errors";
 import {
 	clearSignInAttempt,
 	readSignInAttempt,
 	saveSignInAttempt,
 } from "./sign-in-attempt";
+import {
+	completeNativeSocialSignIn,
+	createSocialSignInCompletion,
+} from "./social-sign-in-completion";
 
 export type SocialAuthService = {
 	info?: FunctionReturnType<typeof api.connected_accounts.list>;
+	signingIn: boolean;
+	signInError?: string;
 	signIn: (provider: SocialProvider) => Promise<void>;
 	completeSignIn: (code: string) => Promise<string>;
 	connect: (
@@ -74,9 +81,21 @@ export const useSocialAuth = (): SocialAuthService => {
 		requestId: string;
 		result: Promise<AccountConnectionPurpose>;
 	}>(undefined);
-	const signInCompletion = useRef<{ code: string; result: Promise<string> }>(
-		undefined,
-	);
+	const [signingIn, setSigningIn] = useState(false);
+	const [signInError, setSignInError] = useState<string>();
+	const signInCompletion =
+		useRef<ReturnType<typeof createSocialSignInCompletion>>(undefined);
+	const completeSignIn = (code: string): Promise<string> => {
+		const complete =
+			signInCompletion.current ??
+			createSocialSignInCompletion({
+				readAttempt: readSignInAttempt,
+				exchange: (provider, code) => auth.signIn(provider, { code }),
+				clearAttempt: clearSignInAttempt,
+			});
+		signInCompletion.current = complete;
+		return complete(code);
+	};
 	const unauthenticatedClient = (): ConvexHttpClient => {
 		const url = process.env.EXPO_PUBLIC_CONVEX_URL;
 		if (!url) throw new Error("Account service unavailable.");
@@ -84,6 +103,9 @@ export const useSocialAuth = (): SocialAuthService => {
 	};
 	return {
 		info,
+		signingIn,
+		signInError,
+		completeSignIn,
 		signIn: async (provider): Promise<void> => {
 			if (!info?.[provider])
 				throw new Error("This sign-in provider isn’t configured yet.");
@@ -94,32 +116,31 @@ export const useSocialAuth = (): SocialAuthService => {
 			const returnTo = signInReturnPath(currentAuthPath(fallback));
 			const redirectTo =
 				Platform.OS === "web" ? returnTo : callbackAddress("auth-callback");
-			if (Platform.OS !== "web") await saveSignInAttempt(provider, returnTo);
-			const result = await auth.signIn(provider, { redirectTo });
-			if (Platform.OS === "web" || !result.redirect) return;
-			const callback = await openAuthBrowser(
-				result.redirect.toString(),
-				redirectTo,
-			);
-			if (!callback) {
-				await clearSignInAttempt();
-				return;
+			setSigningIn(true);
+			setSignInError(undefined);
+			signInCompletion.current = undefined;
+			try {
+				if (Platform.OS !== "web") await saveSignInAttempt(provider, returnTo);
+				const result = await auth.signIn(provider, { redirectTo });
+				if (Platform.OS === "web") return;
+				if (!result.redirect)
+					throw new Error("Couldn’t start sign-in. Try again.");
+				const callback = await openAuthBrowser(
+					result.redirect.toString(),
+					redirectTo,
+				);
+				const destination = await completeNativeSocialSignIn({
+					callback,
+					complete: completeSignIn,
+					cancel: clearSignInAttempt,
+				});
+				if (destination) router.replace(destination);
+			} catch (error) {
+				setSignInError(friendlyError(error));
+				throw error;
+			} finally {
+				setSigningIn(false);
 			}
-			const code = new URL(callback).searchParams.get("code");
-			if (!code) throw new Error("Sign-in wasn’t completed. Try again.");
-			router.replace({ pathname: "/auth-callback", params: { code } });
-		},
-		completeSignIn: (code): Promise<string> => {
-			if (signInCompletion.current?.code === code)
-				return signInCompletion.current.result;
-			const result = (async (): Promise<string> => {
-				const attempt = await readSignInAttempt();
-				await auth.signIn(attempt.provider, { code });
-				await clearSignInAttempt();
-				return attempt.path;
-			})();
-			signInCompletion.current = { code, result };
-			return result;
 		},
 		connect: async (provider, purpose = "link"): Promise<void> => {
 			const requestId = await begin({ provider, purpose });
