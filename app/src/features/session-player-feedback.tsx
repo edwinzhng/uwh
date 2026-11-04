@@ -6,7 +6,6 @@ import {
 	List,
 	ListItem,
 	ResponsiveButtonControl,
-	Row,
 	SectionHeading,
 	Stack,
 	Surface,
@@ -32,40 +31,39 @@ export const SessionPlayerFeedback = ({
 			<Surface>
 				<List separators="full">
 					{players.map((person) => (
-						<Row key={person.id} gap="xs">
-							<Stack grow gap="none">
-								<ListItem
-									title={person.name}
-									titleLines={2}
-									showChevron={false}
-									avatar={person.name}
-									avatarId={person.id}
+						<ListItem
+							key={person.id}
+							title={person.name}
+							titleLines={2}
+							showChevron={false}
+							avatar={person.name}
+							avatarId={person.id}
+							onPress={(): void =>
+								router.push({
+									pathname: "/member",
+									params: {
+										id: person.id,
+										tab: "profile",
+										event: event.id,
+									},
+								})
+							}
+							description={person.goal}
+							descriptionLines={2}
+							action={
+								<ResponsiveButtonControl
+									prefix="plus"
+									collapseBelow={480}
+									label="Feedback"
+									variant="secondary"
+									compact
+									accessibilityLabel={`Feedback for ${person.name}`}
 									onPress={(): void =>
-										router.push({
-											pathname: "/member",
-											params: {
-												id: person.id,
-												tab: "profile",
-												event: event.id,
-											},
-										})
+										setRating({ personId: person.id, eventId: event.id })
 									}
-									description={person.goal}
-									descriptionLines={2}
 								/>
-							</Stack>
-							<ResponsiveButtonControl
-								prefix="plus"
-								collapseBelow={480}
-								label="Give feedback"
-								variant="secondary"
-								compact
-								accessibilityLabel={`Give feedback for ${person.name}`}
-								onPress={(): void =>
-									setRating({ personId: person.id, eventId: event.id })
-								}
-							/>
-						</Row>
+							}
+						/>
 					))}
 					{!players.length ? (
 						<EmptyState

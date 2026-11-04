@@ -28,6 +28,7 @@ import {
 import { type AgeGroup, formatTeams } from "../domain/player-coaching";
 import * as Clipboard from "../platform/clipboard";
 import { LineupEditor } from "./lineup-editor";
+import { TeamLineupPreview } from "./team-lineup-preview";
 import { TeamOptions } from "./team-options";
 import { TeamPool } from "./team-pool";
 import { useReviewFlow } from "./use-review-flow";
@@ -247,6 +248,7 @@ const TeamPanelContent = ({
 		content
 	) : (
 		<LineupDialog
+			preview={plan ? <TeamLineupPreview plan={plan} /> : undefined}
 			openRequest={generated?.revision}
 			label={
 				plan ? "Open lineup" : editable ? "Generate teams" : "View team status"

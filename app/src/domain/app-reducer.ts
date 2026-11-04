@@ -227,7 +227,7 @@ export const reduceApp = (
 					member &&
 						event &&
 						canRegister({ ...member, archived: false }, event) &&
-						(account.admin || canCoach(account, event.program)),
+						canCoach(account, event.program),
 				),
 			);
 			if (!event || event.cancelled) throw new Error("Practice unavailable.");

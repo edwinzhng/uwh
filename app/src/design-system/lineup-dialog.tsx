@@ -7,8 +7,10 @@ export const LineupDialog = ({
 	children,
 	label,
 	openRequest,
+	preview,
 }: {
 	children: ReactNode;
+	preview?: ReactNode;
 	label: string;
 	openRequest?: number;
 }): ReactElement => {
@@ -29,6 +31,7 @@ export const LineupDialog = ({
 			>
 				Teams
 			</SectionHeading>
+			{preview}
 			<Dialog
 				isOpen={open}
 				onOpenChange={setOpen}

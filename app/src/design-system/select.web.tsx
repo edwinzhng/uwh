@@ -67,7 +67,14 @@ export const Select = <T extends string>({
 						className="club-picker-value"
 						placeholder={placeholder}
 					/>
-					<BaseSelect.Icon>
+					<BaseSelect.Icon
+						style={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							flexShrink: 0,
+						}}
+					>
 						<Icon name="chevronDown" tone={selected?.tone ?? "secondary"} />
 					</BaseSelect.Icon>
 				</BaseSelect.Trigger>

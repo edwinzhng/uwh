@@ -335,3 +335,24 @@ beforeEach((): void => {
 afterEach((): void => {
 	setSystemTime();
 });
+
+test("attendance changes require coach access even for administrators", (): void => {
+	const action = {
+		type: "attendance",
+		eventId: "club-thu",
+		personId: "sam",
+		attendance: "absent",
+	} as const;
+	for (const account of [
+		{ ...primaryAccount, admin: true, coachPrograms: [] },
+		{ ...primaryAccount, admin: false, coachPrograms: [] },
+	])
+		expect(() => reduceApp(initialAppData, account, action)).toThrow();
+	expect(
+		eventResponse(
+			reduceApp(initialAppData, { ...primaryAccount, admin: false }, action),
+			"club-thu",
+			"sam",
+		).attendance,
+	).toBe("absent");
+});

@@ -10,7 +10,7 @@ import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
-import { geometry } from "./tokens";
+import { geometry, space } from "./tokens";
 
 type Props = {
 	title: string;
@@ -27,6 +27,7 @@ type Props = {
 	avatarId?: string;
 	leading?: ReactNode;
 	trailing?: ReactNode;
+	action?: ReactNode;
 	showChevron?: boolean;
 	onPress?: () => void;
 	selected?: boolean;
@@ -48,6 +49,7 @@ export const ListItem = ({
 	avatarId,
 	leading,
 	trailing,
+	action,
 	showChevron = true,
 	onPress,
 	selected = false,
@@ -58,6 +60,7 @@ export const ListItem = ({
 	const roleTone = useRoleTone();
 	const [hovered, setHovered] = useState(false);
 	const [focused, setFocused] = useState(false);
+	const [actionPressed, setActionPressed] = useState(false);
 	const spacing = listRowSpacing({
 		interactive: Boolean(onPress),
 		flush,
@@ -129,28 +132,30 @@ export const ListItem = ({
 			) : undefined}
 		</Row>
 	);
-	return onPress ? (
+	const item = onPress ? (
 		<Pressable
 			accessibilityRole="button"
 			accessibilityState={{ selected }}
 			accessibilityLabel={accessibilityLabel ?? title}
 			onPress={onPress}
-			onHoverIn={(): void => setHovered(true)}
-			onHoverOut={(): void => setHovered(false)}
+			onPressIn={action ? (): void => setActionPressed(true) : undefined}
+			onPressOut={action ? (): void => setActionPressed(false) : undefined}
+			onHoverIn={action ? undefined : (): void => setHovered(true)}
+			onHoverOut={action ? undefined : (): void => setHovered(false)}
 			onFocus={(): void => setFocused(true)}
 			onBlur={(): void => setFocused(false)}
 			style={({ pressed }) => ({
-				...spacing,
+				...(action ? { paddingVertical: spacing.paddingVertical } : spacing),
 				boxShadow: roleTone ? roleGlow(roleTone, theme.mode) : undefined,
 				minHeight: interactiveRow.minHeight,
 				justifyContent: "center",
 				borderRadius: interactiveRow.borderRadius,
 				backgroundColor: selected
 					? theme.background.selected
-					: hovered || pressed
+					: !action && (hovered || pressed)
 						? theme.background.hover
 						: "transparent",
-				outlineWidth: focused ? geometry.focus : 0,
+				outlineWidth: focused && !action ? geometry.focus : 0,
 				outlineColor: theme.focus,
 				outlineOffset: interactiveRow.focusOffset,
 			})}
@@ -159,5 +164,29 @@ export const ListItem = ({
 		</Pressable>
 	) : (
 		<View style={spacing}>{content}</View>
+	);
+	return action ? (
+		<View
+			onPointerEnter={(): void => setHovered(true)}
+			onPointerLeave={(): void => setHovered(false)}
+			style={{
+				flexDirection: "row",
+				alignItems: "center",
+				gap: space.xs,
+				paddingHorizontal: spacing.paddingHorizontal,
+				marginHorizontal: spacing.marginHorizontal,
+				borderRadius: interactiveRow.borderRadius,
+				backgroundColor:
+					hovered || actionPressed ? theme.background.hover : "transparent",
+				outlineWidth: focused ? geometry.focus : 0,
+				outlineColor: theme.focus,
+				outlineOffset: interactiveRow.focusOffset,
+			}}
+		>
+			<View style={{ flex: 1, minWidth: 0 }}>{item}</View>
+			{action}
+		</View>
+	) : (
+		item
 	);
 };

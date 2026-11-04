@@ -71,12 +71,7 @@ export const HomePractice = ({
 					<Stack gap="md">
 						{open ? <SignupWindow event={event} /> : undefined}
 						{people.map((person) => (
-							<Surface
-								key={person.id}
-								variant="subtle"
-								padding="sm"
-								paddingBottom={event.parts?.length && open ? "none" : undefined}
-							>
+							<Surface key={person.id} variant="subtle" padding="sm">
 								<Stack gap="xs">
 									{showIdentity || !event.parts?.length || !open ? (
 										<Row justify="between" gap="xs" wrap>

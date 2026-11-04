@@ -95,19 +95,21 @@ export const SessionPeople = ({
 													control={
 														staff ? (
 															<Row gap="xs">
-																<AttendanceControl
-																	eventId={event.id}
-																	personId={member.id}
-																	name={member.name}
-																	value={effectiveAttendance(
-																		event,
-																		response,
-																		partId,
-																	)}
-																	defaultHere={response.response === "going"}
-																	partId={partId}
-																	disabled={event.cancelled}
-																/>
+																{canCoach(account, event.program) ? (
+																	<AttendanceControl
+																		eventId={event.id}
+																		personId={member.id}
+																		name={member.name}
+																		value={effectiveAttendance(
+																			event,
+																			response,
+																			partId,
+																		)}
+																		defaultHere={response.response === "going"}
+																		partId={partId}
+																		disabled={event.cancelled}
+																	/>
+																) : undefined}
 																<AttendanceFlagControl
 																	personId={member.id}
 																	name={member.name}
