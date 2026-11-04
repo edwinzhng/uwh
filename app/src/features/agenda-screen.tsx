@@ -1,13 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
-import {
-	FilterChip,
-	IconButton,
-	Row,
-	Stack,
-	ToolbarGroup,
-} from "../design-system";
+import { IconButton, Stack, Tabs, ToolbarGroup } from "../design-system";
 import { clubPrograms } from "../domain/programs";
 import { CalendarExportButton } from "./calendar-export-button";
 import { ClubShell } from "./club-shell";
@@ -47,25 +41,20 @@ export const AgendaScreen = (): ReactElement => {
 			}
 		>
 			<Stack gap="md">
-				<Row wrap gap="xxs">
-					<FilterChip
-						label="All"
-						selected={!programId}
-						onPress={(): void => router.setParams({ program: undefined })}
-					/>
-					{programs.map((program) => (
-						<FilterChip
-							key={program.id}
-							label={program.name}
-							selected={programId === program.id}
-							onPress={(): void =>
-								router.setParams({
-									program: programId === program.id ? undefined : program.id,
-								})
-							}
-						/>
-					))}
-				</Row>
+				<Tabs
+					label="Programs"
+					value={programId ?? "all"}
+					options={[
+						{ value: "all", label: "All" },
+						...programs.map((program) => ({
+							value: program.id,
+							label: program.name,
+						})),
+					]}
+					onValueChange={(value): void =>
+						router.setParams({ program: value === "all" ? undefined : value })
+					}
+				/>
 				<SchedulePage programId={programId} now={now} />
 			</Stack>
 			{account.admin && create ? (
