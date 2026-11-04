@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import { useAtom, useSetAtom } from "jotai";
 import { type ReactElement, useState } from "react";
 import { previewAccounts } from "../demo/app-data";
@@ -13,21 +12,20 @@ import {
 	hapticsEnabledAtom,
 	Row,
 	reduceMotionAtom,
+	SectionHeading,
 	Select,
 	Stack,
 	Surface,
 	Text,
-	ThemeToggle,
 	Toggle,
-	themePreferenceAtom,
 } from "../design-system";
+import { AccountHousehold } from "./account-household";
 import { AccountSecurity } from "./account-security";
+import { NotificationSettings } from "./notification-settings";
 import { SignOutConfirmation } from "./sign-out-confirmation";
 export const AccountSettingsContent = (): ReactElement => {
 	const { source } = useApp();
-	const router = useRouter();
 	const [signOutOpen, setSignOutOpen] = useState(false);
-	const [theme, setTheme] = useAtom(themePreferenceAtom);
 	const [reduceMotion, setReduceMotion] = useAtom(reduceMotionAtom);
 	const [haptics, setHaptics] = useAtom(hapticsEnabledAtom);
 	const [previewAccount] = useAtom(previewAccountIdAtom);
@@ -51,7 +49,6 @@ export const AccountSettingsContent = (): ReactElement => {
 							}}
 						/>
 					) : undefined}
-					<ThemeToggle value={theme} onValueChange={setTheme} />
 					<Toggle
 						label="Reduce motion"
 						value={reduceMotion}
@@ -81,26 +78,11 @@ export const AccountSettingsContent = (): ReactElement => {
 			{signOutOpen ? (
 				<SignOutConfirmation onClose={(): void => setSignOutOpen(false)} />
 			) : undefined}
-			<Button
-				label="Notification settings"
-				variant="secondary"
-				onPress={(): void =>
-					router.push({
-						pathname: "/account-settings",
-						params: { section: "notifications" },
-					})
-				}
-			/>
-			<Button
-				label="Linked profiles"
-				variant="secondary"
-				onPress={(): void =>
-					router.push({
-						pathname: "/account-settings",
-						params: { section: "household" },
-					})
-				}
-			/>
+			<Stack gap="sm">
+				<SectionHeading>Notifications</SectionHeading>
+				<NotificationSettings />
+			</Stack>
+			<AccountHousehold />
 		</Stack>
 	);
 };

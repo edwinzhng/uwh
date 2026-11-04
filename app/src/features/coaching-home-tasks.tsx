@@ -26,10 +26,10 @@ const Tasks = ({ tasks }: { tasks?: CoachingTasks }): ReactElement => {
 				icon="message"
 				action={
 					<Button
-						label="Player ratings"
+						label="Members"
 						compact
 						variant="ghost"
-						onPress={(): void => router.push("/development")}
+						onPress={(): void => router.push("/members")}
 					/>
 				}
 			>
@@ -78,8 +78,8 @@ const Tasks = ({ tasks }: { tasks?: CoachingTasks }): ReactElement => {
 						) : undefined}
 						{tasks.morePlayers || tasks.moreDrafts ? (
 							<Text variant="caption" tone="secondary">
-								Showing recent items. Open Player ratings or a player’s Feedback
-								tab for more.
+								Showing recent items. Open Members or a player’s Feedback tab
+								for more.
 							</Text>
 						) : undefined}
 					</List>

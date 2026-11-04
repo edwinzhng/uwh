@@ -15,7 +15,6 @@ export const CalendarSettings = ({
 	busy,
 	onViewChange,
 	onPeopleChange,
-	onBack,
 	onBusyChange,
 }: {
 	view: CalendarView;
@@ -23,7 +22,6 @@ export const CalendarSettings = ({
 	busy: boolean;
 	onViewChange: (view: CalendarView) => void;
 	onPeopleChange: (ids: string[]) => void;
-	onBack: () => void;
 	onBusyChange: (busy: boolean) => void;
 }): ReactElement => {
 	const { data, account, source } = useApp();
@@ -38,15 +36,6 @@ export const CalendarSettings = ({
 		source === "convex" && isHostedCalendarOrigin(calendarOrigin);
 	return (
 		<Stack gap="sm">
-			{view !== "choose" ? (
-				<Button
-					label="Back"
-					prefix="arrowLeft"
-					variant="ghost"
-					isDisabled={busy}
-					onPress={onBack}
-				/>
-			) : undefined}
 			<Row wrap gap="xxs">
 				{people.map((person) => (
 					<Button
@@ -128,7 +117,7 @@ export const CalendarSettings = ({
 						<Text variant="caption" tone="secondary">
 							{source === "convex"
 								? "Calendar sync is unavailable right now. Try again later."
-								: "Live sync is available in the connected club app. This local preview can’t create subscription links."}
+								: "Connect a development backend to enable calendar subscriptions."}
 						</Text>
 					</Stack>
 				)

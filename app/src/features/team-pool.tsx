@@ -34,6 +34,7 @@ export const TeamPool = ({
 	onManageRotation,
 	onFormationChange,
 	onCaptainChange,
+	onRefereeChange,
 }: {
 	plan: TeamPlan;
 	side: LineupSide;
@@ -45,6 +46,7 @@ export const TeamPool = ({
 	onManageRotation?: (slot: number, label: string) => void;
 	onFormationChange?: (formation: TeamFormation) => void;
 	onCaptainChange?: (personId?: string) => void;
+	onRefereeChange?: (personId?: string) => void;
 }): ReactElement => {
 	const { data } = useApp();
 	const snapshot = lineupSnapshot(plan);
@@ -109,12 +111,41 @@ export const TeamPool = ({
 				summary={
 					<Row justify="between" wrap>
 						<TeamStrength people={teamPeople} />
-						<TeamCaptain
-							side={side}
-							people={teamPeople}
-							personId={captain?.personId}
-							onChange={onCaptainChange}
-						/>
+						<Row wrap>
+							<TeamCaptain
+								side={side}
+								people={teamPeople}
+								personId={captain?.personId}
+								onChange={onCaptainChange}
+							/>
+							{onRefereeChange ? (
+								<Select
+									hideLabel
+									compact
+									appearance="context"
+									label={`${side === "black" ? "Black" : "White"} referee`}
+									value={referee?.personId ?? "none"}
+									options={[
+										{ value: "none", label: "Set ref" },
+										...data.members
+											.filter(
+												(member) =>
+													!member.archived &&
+													!member.mergedInto &&
+													member.programs.length > 0,
+											)
+											.map((member) => ({
+												value: member.id,
+												label: member.name,
+												person: { id: member.id, name: member.name },
+											})),
+									]}
+									onValueChange={(id): void => {
+										if (id) onRefereeChange(id === "none" ? undefined : id);
+									}}
+								/>
+							) : undefined}
+						</Row>
 					</Row>
 				}
 				key={formation}

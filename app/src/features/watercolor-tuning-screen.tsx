@@ -1,5 +1,4 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useAtom } from "jotai";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import {
@@ -11,8 +10,6 @@ import {
 	Stack,
 	Surface,
 	Text,
-	ThemeToggle,
-	themePreferenceAtom,
 	WatercolorControls,
 	type WatercolorTuning,
 	WatercolorTuningContext,
@@ -39,7 +36,6 @@ export const WatercolorTuningScreen = (): ReactElement => {
 	const seasonId =
 		data.seasons.find((season) => season.start <= today && season.end >= today)
 			?.id ?? defaultSeasonId;
-	const [theme, setTheme] = useAtom(themePreferenceAtom);
 	const [paused, setPaused] = useState(false);
 	const [tuning, setTuning] = useState<WatercolorTuning>(() => ({
 		grain: watercolorParameter(params.grain, watercolorDefaults.grain),
@@ -76,7 +72,6 @@ export const WatercolorTuningScreen = (): ReactElement => {
 				/>
 			}
 		>
-			<ThemeToggle value={theme} onValueChange={setTheme} />
 			<ClubSummaryData seasonId={seasonId}>
 				{(registered) => (
 					<Grid gap="lg">

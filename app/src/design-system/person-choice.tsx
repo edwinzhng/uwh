@@ -16,7 +16,7 @@ export const PersonChoice = ({
 }): ReactElement => (
 	<PopupRow
 		label={name}
-		person={{ id: personId }}
+		person={{ id: personId, name }}
 		isChecked={checked}
 		isDisabled={isDisabled}
 		onSelect={(): void => onChange(!checked)}

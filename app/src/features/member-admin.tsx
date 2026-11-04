@@ -33,7 +33,7 @@ export const MemberAdmin = ({
 			<SeasonMembership personId={member.id} editable={editable}>
 				<MemberTrackers member={member} editable={editable} />
 				<Stack gap="sm">
-					<SectionHeading size="small">Equipment</SectionHeading>
+					<SectionHeading>Equipment</SectionHeading>
 					<Surface variant="plain">
 						<Stack>
 							{loans.length ? (

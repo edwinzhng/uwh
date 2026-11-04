@@ -39,20 +39,3 @@ test("short drags, cancelled flicks and upward gestures keep the toast", (): voi
 			swipe(motion.at(0) ?? 0, motion.at(1) ?? 0, motion.at(2), motion.at(3)),
 		).toBeUndefined();
 });
-
-test("native swipe stays on the UI thread and web enables downward dismissal", async (): Promise<void> => {
-	const [native, toaster, toast, view] = await Promise.all([
-		Bun.file("src/design-system/toast-swipe.tsx").text(),
-		Bun.file("src/design-system/action-toaster.web.tsx").text(),
-		Bun.file("src/design-system/action-toast.ts").text(),
-		Bun.file("src/design-system/toast-card.tsx").text(),
-	]);
-	expect(native).toContain("useAnimatedStyle");
-	expect(native).toContain("motion.duration.fast");
-	expect(native).toContain("ReduceMotion.System");
-	expect(native).toContain("if (dismissing.get()) return");
-	expect(native).not.toContain("useState");
-	expect(toaster).toContain('swipeDirections={["left", "right", "bottom"]}');
-	expect(toast).toContain("dismissible: false");
-	expect(view).toContain('name: "dismiss"');
-});

@@ -24,7 +24,7 @@ export const TeamCaptain = ({
 			label={`${side === "black" ? "Black" : "White"} captain`}
 			value={personId ?? "none"}
 			options={[
-				{ value: "none", label: "No captain" },
+				{ value: "none", label: "Set captain" },
 				...people.map((id) => ({
 					value: id,
 					label: memberName(data, id),

@@ -15,17 +15,14 @@ import {
 	Stack,
 } from "../design-system";
 import { formatDate } from "../domain/app-rules";
-import {
-	performanceSession,
-	type SessionPerformanceKind,
-} from "../domain/session-performance";
+import { performanceSession } from "../domain/session-performance";
 import { SessionPerformanceFields } from "./session-performance-fields";
 import { useFormTask } from "./use-form-task";
 import { useSessionPerformanceForm } from "./use-session-performance-form";
 
 type EditorProps = {
 	personId: string;
-	kind: SessionPerformanceKind;
+	kind: "self";
 	eventId: string;
 	setEventId: (eventId: string) => void;
 	save: SessionPerformanceService["save"];
@@ -86,7 +83,7 @@ const EditorDialog = ({
 					false
 				)
 			}
-			title={`${kind === "coach" ? "Coach rating" : "Session reflection"}${person ? ` · ${person.name}` : ""}`}
+			title={`Session reflection${person ? ` · ${person.name}` : ""}`}
 			isOpen
 			onOpenChange={(open): void => {
 				if (!open && !task.busy) onClose();
@@ -137,7 +134,7 @@ const EditorDialog = ({
 				{service.loadingCurrent ? (
 					<LoadingContent />
 				) : eventId ? (
-					<SessionPerformanceFields kind={kind} task={task} form={form} />
+					<SessionPerformanceFields task={task} form={form} />
 				) : undefined}
 			</Stack>
 		</Dialog>

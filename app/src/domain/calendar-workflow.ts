@@ -7,7 +7,7 @@ export const calendarViewAfterScopeChange = (
 export const calendarViewTitle = (view: CalendarView): string =>
 	({
 		choose: "Add to calendar",
-		subscribe: "Automatic updates",
+		subscribe: "Calendar sync",
 		download: "Download calendar",
 	})[view];
 

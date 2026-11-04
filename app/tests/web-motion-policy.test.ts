@@ -62,29 +62,3 @@ test("progress has a fixed layout and scales only its blue gradient", (): void =
 		expect(markup).not.toContain("transition-property:width");
 	}
 });
-
-test("shared route context is one Back action and explicit workflow Back takes precedence", async (): Promise<void> => {
-	const source = await Bun.file("src/features/route-back.tsx").text();
-	const shell = await Bun.file("src/features/club-shell.tsx").text();
-	expect(source).toContain('prefix="arrowLeft"');
-	expect(source).toMatch(/Back to .*route\.parentLabel.* from .*route\.label/);
-	expect(source).not.toContain("Breadcrumbs");
-	expect(shell).toContain("back ??");
-	expect(shell).toContain("<RouteBack");
-});
-
-test("web page animations are cancelled on blur, interruption, and unmount without per-frame React updates", async (): Promise<void> => {
-	const source = await Bun.file("src/design-system/page-reveal.web.tsx").text();
-	expect(source).toContain("animation.current?.cancel()");
-	expect(
-		await Bun.file("src/design-system/use-page-reveal.ts").text(),
-	).toContain("playback.current.stop()");
-	expect(source).toContain("animate && pageMotionAllowed()");
-	for (const forbidden of [
-		"useSharedValue",
-		"requestAnimationFrame",
-		"useState",
-		"withTiming",
-	])
-		expect(source).not.toContain(forbidden);
-});

@@ -15,9 +15,7 @@ import { CoachingSessionActions } from "./coaching-session-actions";
 export const HomeCoaching = ({ event }: { event: ClubEvent }): ReactElement => {
 	return (
 		<Stack gap="sm">
-			<SectionHeading icon="calendar" size="small">
-				Next practice
-			</SectionHeading>
+			<SectionHeading icon="calendar">Next practice</SectionHeading>
 			<Surface>
 				<Stack>
 					<Text variant="h4">{event.title}</Text>

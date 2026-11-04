@@ -6,104 +6,53 @@ import {
 	usePreviewSessionPerformance,
 } from "../backend/use-session-performance";
 import { useApp } from "../demo/app-state";
-import {
-	Button,
-	InfiniteScroll,
-	LoadingContent,
-	Row,
-	SectionHeading,
-	Stack,
-	Surface,
-} from "../design-system";
-import { canCoachMember } from "../domain/app-rules";
+import { InfiniteScroll, LoadingContent, Stack } from "../design-system";
 import type { Member } from "../domain/app-types";
-import type { SessionPerformanceKind } from "../domain/session-performance";
-import { FeedbackEditor } from "./feedback-editor";
-import { FeedbackList } from "./feedback-list";
-import { MemberCoachNotes } from "./member-coach-notes";
-import {
-	chronologicalSessionRatings,
-	sessionFeedbackActions,
-} from "./session-feedback-view";
+import { canWriteSessionPerformance } from "../domain/session-performance";
+import { chronologicalSessionRatings } from "./session-feedback-view";
 import { SessionPerformanceEditor } from "./session-performance-editor";
 import { SessionRatingSection } from "./session-rating-section";
 import { useReviewFlow } from "./use-review-flow";
 
-const PerformanceContent = ({
+const Reflections = ({
 	member,
 	service,
-	inlineNotes = false,
-	visibleKind,
 }: {
 	member: Member;
 	service: SessionPerformanceService;
-	inlineNotes?: boolean;
-	visibleKind?: SessionPerformanceKind;
 }): ReactElement => {
 	const { account } = useApp();
 	const params = useLocalSearchParams<{ event?: string }>();
-	const [noteOpen, setNoteOpen] = useState(false);
-	const actions = sessionFeedbackActions(account, member);
 	const review = useReviewFlow();
-	const [editor, setEditor] = useState<
-		{ kind: SessionPerformanceKind; eventId?: string } | undefined
-	>(
-		review === "session-self-rating"
-			? { kind: "self", eventId: params.event }
-			: review === "session-coach-rating"
-				? { kind: "coach", eventId: params.event }
-				: undefined,
+	const [editor, setEditor] = useState<{ eventId?: string } | undefined>(
+		review === "session-self-rating" ? { eventId: params.event } : undefined,
 	);
+	const entries = chronologicalSessionRatings(service.entries).filter(
+		(entry) => entry.kind === "self",
+	);
+	const canAdd = canWriteSessionPerformance(account, member, "self");
 	return (
 		<Stack gap="lg">
-			{!inlineNotes && !visibleKind ? (
-				<Row justify="end">
-					<MemberCoachNotes
-						member={member}
-						onAdd={(): void => setNoteOpen(true)}
-					/>
-				</Row>
-			) : undefined}
 			{service.loading ? (
 				<LoadingContent />
-			) : (
-				(["self", "coach"] as const)
-					.filter(
-						(kind) =>
-							(!visibleKind || kind === visibleKind) &&
-							(kind !== "coach" || canCoachMember(account, member)),
-					)
-					.map((kind) => {
-						const entries = chronologicalSessionRatings(service.entries).filter(
-							(entry) => entry.kind === kind,
-						);
-						const canAdd = actions.some((action) => action.id === kind);
-						if (!entries.length && !canAdd && kind === "self") return undefined;
-						return (
-							<SessionRatingSection
-								key={kind}
-								title={
-									kind === "self"
-										? account.personId === member.id
-											? "Your reflections"
-											: "Player reflections"
-										: "Coach ratings"
-								}
-								actionLabel={kind === "self" ? "Reflect" : "Add rating"}
-								entries={entries}
-								onAdd={
-									canAdd
-										? (): void => setEditor({ kind, eventId: params.event })
-										: undefined
-								}
-								report={service.report}
-								onEdit={(entry): void =>
-									setEditor({ kind: entry.kind, eventId: entry.eventId })
-								}
-							/>
-						);
-					})
-			)}
+			) : entries.length || canAdd ? (
+				<SessionRatingSection
+					title={
+						account.personId === member.id
+							? "Your reflections"
+							: "Player reflections"
+					}
+					actionLabel="Reflect"
+					entries={entries}
+					onAdd={
+						canAdd
+							? (): void => setEditor({ eventId: params.event })
+							: undefined
+					}
+					onEdit={(entry): void => setEditor({ eventId: entry.eventId })}
+					report={service.report}
+				/>
+			) : undefined}
 			{service.canLoadMore || service.loadingMore ? (
 				<InfiniteScroll
 					loadMore={service.loadMore}
@@ -112,54 +61,10 @@ const PerformanceContent = ({
 					disabled={false}
 				/>
 			) : undefined}
-			{noteOpen && actions.some((action) => action.id === "note") ? (
-				<FeedbackEditor
-					personId={member.id}
-					isOpen
-					onOpenChange={setNoteOpen}
-				/>
-			) : undefined}
-			{inlineNotes ? (
-				<Surface elevation="none">
-					<Stack gap="sm">
-						<SectionHeading
-							size="small"
-							action={
-								actions.some((action) => action.id === "note") ? (
-									<Button
-										label="Add feedback"
-										roleTone="coach"
-										compact
-										variant="secondary"
-										onPress={(): void => setNoteOpen(true)}
-									/>
-								) : undefined
-							}
-						>
-							Feedback
-						</SectionHeading>
-						<FeedbackList
-							personId={member.id}
-							visibility="published"
-							embedded
-							compactEmpty
-						/>
-						{canCoachMember(account, member) ? (
-							<FeedbackList
-								personId={member.id}
-								visibility="private"
-								embedded
-								hideEmpty
-							/>
-						) : undefined}
-					</Stack>
-				</Surface>
-			) : undefined}
-			{editor &&
-			(editor.kind !== "coach" || canCoachMember(account, member)) ? (
+			{editor ? (
 				<SessionPerformanceEditor
 					personId={member.id}
-					kind={editor.kind}
+					kind="self"
 					initialEventId={editor.eventId}
 					save={service.save}
 					onClose={(): void => setEditor(undefined)}
@@ -168,50 +73,25 @@ const PerformanceContent = ({
 		</Stack>
 	);
 };
-type Props = {
-	member: Member;
-	inlineNotes?: boolean;
-	visibleKind?: SessionPerformanceKind;
-};
-const LivePerformance = ({
-	member,
-	inlineNotes,
-	visibleKind,
-}: Props): ReactElement => (
-	<PerformanceContent
+const LiveReflections = ({ member }: { member: Member }): ReactElement => (
+	<Reflections
 		member={member}
-		service={useLiveSessionPerformance(member.id)}
-		inlineNotes={inlineNotes}
-		visibleKind={visibleKind}
+		service={useLiveSessionPerformance(member.id, "self")}
 	/>
 );
-const PreviewPerformance = ({
-	member,
-	inlineNotes,
-	visibleKind,
-}: Props): ReactElement => (
-	<PerformanceContent
+const PreviewReflections = ({ member }: { member: Member }): ReactElement => (
+	<Reflections
 		member={member}
-		service={usePreviewSessionPerformance(member.id)}
-		inlineNotes={inlineNotes}
-		visibleKind={visibleKind}
+		service={usePreviewSessionPerformance(member.id, "self")}
 	/>
 );
 export const SessionPerformance = ({
 	member,
-	inlineNotes,
-	visibleKind,
-}: Props): ReactElement =>
+}: {
+	member: Member;
+}): ReactElement =>
 	useApp().source === "convex" ? (
-		<LivePerformance
-			member={member}
-			inlineNotes={inlineNotes}
-			visibleKind={visibleKind}
-		/>
+		<LiveReflections member={member} />
 	) : (
-		<PreviewPerformance
-			member={member}
-			inlineNotes={inlineNotes}
-			visibleKind={visibleKind}
-		/>
+		<PreviewReflections member={member} />
 	);

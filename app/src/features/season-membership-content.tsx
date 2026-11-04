@@ -50,7 +50,7 @@ export const SeasonMembershipContent = ({
 			) : (
 				<>
 					<Stack gap="sm">
-						<SectionHeading size="small">Registration</SectionHeading>
+						<SectionHeading>Registration</SectionHeading>
 						<Surface>
 							<Stack>
 								{editable ? (
@@ -120,7 +120,7 @@ export const SeasonMembershipContent = ({
 						</Surface>
 					</Stack>
 					<Stack gap="sm">
-						<SectionHeading size="small">Payments</SectionHeading>
+						<SectionHeading>Payments</SectionHeading>
 						<Surface>
 							<Stack>
 								<Row justify="between" wrap>
@@ -194,12 +194,12 @@ export const SeasonMembershipContent = ({
 						<Stack gap="lg">
 							{season === defaultSeasonId ? (
 								<Stack gap="sm">
-									<SectionHeading size="small">Payment records</SectionHeading>
+									<SectionHeading>Payment records</SectionHeading>
 									<PaymentHistory personId={personId} />
 								</Stack>
 							) : undefined}
 							<Stack gap="sm">
-								<SectionHeading size="small">Membership changes</SectionHeading>
+								<SectionHeading>Membership changes</SectionHeading>
 								{history}
 							</Stack>
 						</Stack>

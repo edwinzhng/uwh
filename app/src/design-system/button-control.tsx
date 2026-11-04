@@ -113,7 +113,7 @@ export const ButtonControl = ({
 					selected: isSelected,
 				}}
 				style={{
-					alignSelf: icon ? "flex-start" : undefined,
+					alignSelf: icon ? "center" : undefined,
 					minHeight: controlSize,
 					minWidth: icon || compact ? controlSize : undefined,
 					maxWidth: "100%",

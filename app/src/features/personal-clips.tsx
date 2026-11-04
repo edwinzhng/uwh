@@ -39,7 +39,6 @@ const ClipsList = ({
 		<Surface elevation="none">
 			<Stack gap="sm">
 				<SectionHeading
-					size="small"
 					action={
 						<Row wrap>
 							{account.admin || account.coachPrograms.length ? (
@@ -62,7 +61,7 @@ const ClipsList = ({
 						</Row>
 					}
 				>
-					Assigned videos
+					Shared videos
 				</SectionHeading>
 				{!state.loading && !state.items.length ? (
 					<Text variant="small" tone="secondary">

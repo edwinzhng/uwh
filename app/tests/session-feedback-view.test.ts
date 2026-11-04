@@ -21,7 +21,7 @@ test("feedback actions retain self, guardian, coach and private-note capabilitie
 	]);
 	expect(
 		sessionFeedbackActions(primaryAccount, member).map((action) => action.id),
-	).toEqual(["coach", "note"]);
+	).toEqual(["note"]);
 	expect(
 		sessionFeedbackActions({ ...guardian, children: [], admin: true }, member),
 	).toEqual([]);

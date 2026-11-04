@@ -55,7 +55,7 @@ export const HouseholdProfiles = ({
 			<Surface
 				header={
 					<Row justify="between">
-						<Text variant="h4">Household</Text>
+						<Text variant="h4">Linked profiles</Text>
 						<IconButton
 							label="Add dependent"
 							icon="plus"

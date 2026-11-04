@@ -44,7 +44,7 @@ export const LineupBackdrop = ({
 	}, [active, visible, enabled, phase]);
 	const style = useAnimatedStyle(() => ({
 		transform: [
-			{ scale: 1.06 },
+			{ scale: 1.015 },
 			{ translateX: (phase.get() - 0.5) * space.xs },
 			{ translateY: (phase.get() - 0.5) * space.xxs },
 		],
@@ -58,8 +58,8 @@ export const LineupBackdrop = ({
 		>
 			<Animated.Image
 				source={artwork}
-				resizeMode="cover"
-				blurRadius={2}
+				resizeMode="stretch"
+				blurRadius={0}
 				style={[StyleSheet.absoluteFill, { opacity: 1 }, style]}
 			/>
 			<LinearGradient

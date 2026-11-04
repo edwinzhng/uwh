@@ -23,3 +23,4 @@
 - Freeze baseline bundles and dependencies together; normalize vendor paths for hosting and verify deployed fonts, deep links and interactions.
 - Use real interactive before/after components. On phones mount only the current pair of two frames; destroy offscreen contexts. Bound desktop live rendering.
 - Record only meaningful results with environment and limitations; keep temporary captures and review diaries out of tracked source.
+- Keep reusable source restrictions in `check:design`, `check:native` and `check:tests`; test those rules with inline fixtures. Product tests import and exercise behavior rather than asserting source-code strings. Invalid public component combinations are checked by `tests/component-api.typecheck.ts` during typecheck.

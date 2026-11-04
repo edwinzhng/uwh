@@ -43,12 +43,6 @@ export const CoachDashboard = ({
 				<Surface>
 					<Stack gap="none">
 						<ListItem
-							title="Player ratings"
-							description="Goals and coach ratings"
-							icon="users"
-							onPress={(): void => router.push("/development")}
-						/>
-						<ListItem
 							title="Fitness tests"
 							description="Record and review swim tests"
 							icon={featureIdentity.fitness.icon}

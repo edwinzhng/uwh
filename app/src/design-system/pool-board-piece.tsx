@@ -40,7 +40,7 @@ export const PoolPiece = ({
 	scope: string;
 	positionId?: string;
 	onPress?: () => void;
-	onDrop?: (personId: string, x: number, y: number) => void;
+	onDrop?: (personId: string, x: number, y: number) => Promise<void>;
 	onManage?: () => void;
 	acceptsDrop?: boolean;
 }): ReactElement => {
@@ -63,10 +63,23 @@ export const PoolPiece = ({
 	const y = useSharedValue(0);
 	const personId = spot.person?.id;
 	const canDrag = Boolean(personId && onDrop);
-	const drop = useCallback((id: string, left: number, top: number): void => {
-		if (latest.current.spot.person?.id === id)
-			latest.current.onDrop?.(id, left, top);
-	}, []);
+	const resetDrag = useCallback((): void => {
+		x.set(0);
+		y.set(0);
+		dragState.set(undefined);
+		endDrag();
+	}, [x, y, dragState, endDrag]);
+	const drop = useCallback(
+		async (id: string, left: number, top: number): Promise<void> => {
+			try {
+				if (latest.current.spot.person?.id === id)
+					await latest.current.onDrop?.(id, left, top);
+			} finally {
+				releaseFrame.current = requestAnimationFrame(resetDrag);
+			}
+		},
+		[resetDrag],
+	);
 	const gesture = useMemo(
 		() =>
 			Gesture.Pan()
@@ -98,13 +111,10 @@ export const PoolPiece = ({
 					if (personId)
 						runOnJS(drop)(personId, event.absoluteX, event.absoluteY);
 				})
-				.onFinalize((): void => {
-					x.set(0);
-					y.set(0);
-					dragState.set(undefined);
-					runOnJS(endDrag)();
+				.onFinalize((_event, success): void => {
+					if (!success) runOnJS(resetDrag)();
 				}),
-		[canDrag, personId, scope, drop, dragState, x, y, beginDrag, endDrag],
+		[canDrag, personId, scope, drop, dragState, x, y, beginDrag, resetDrag],
 	);
 	const chipStyle = useAnimatedStyle(() => ({
 		transform: [{ translateX: x.get() }, { translateY: y.get() }],
@@ -180,7 +190,7 @@ export const PoolPiece = ({
 			style={[
 				{
 					flex: acceptsDrop ? 1 : undefined,
-					width: acceptsDrop ? undefined : geometry.touch,
+					width: acceptsDrop ? undefined : geometry.touch + space.xs * 2,
 					minWidth: geometry.touch,
 					paddingHorizontal: 0,
 					alignItems: "center",
@@ -192,10 +202,10 @@ export const PoolPiece = ({
 		>
 			{acceptsDrop ? (
 				<Text
-					numberOfLines={2}
+					numberOfLines={1}
 					style={{
-						...typography.caption,
-						fontFamily: font.medium,
+						...typography.navigation,
+						fontFamily: font.regular,
 						color: theme.text.secondary,
 						textAlign: "center",
 					}}
@@ -218,7 +228,7 @@ export const PoolPiece = ({
 						{
 							alignItems: "center",
 							gap: space.xxs,
-							width: geometry.touch,
+							width: geometry.touch + space.xs * 2,
 						},
 						chipStyle,
 					]}
@@ -246,7 +256,7 @@ export const PoolPiece = ({
 							numberOfLines={2}
 							style={{
 								...typography.navigation,
-								fontFamily: font.medium,
+								fontFamily: font.regular,
 								color: theme.text.primary,
 								textAlign: "center",
 								width: "100%",

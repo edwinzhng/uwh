@@ -10,7 +10,6 @@ export type ButtonProps = {
 	roleTone?: RoleTone;
 	validationError?: string;
 	onInvalid?: (message: string) => void;
-	leading?: ReactNode;
 	accessibilityLabel?: string;
 	onPress: () => void;
 	variant?: ButtonVariant;
@@ -21,6 +20,7 @@ export type ButtonProps = {
 	compact?: boolean;
 	round?: boolean;
 } & (
-	| { prefix?: IconName; icon?: undefined }
-	| { icon: IconName; prefix?: undefined }
+	| { prefix?: IconName; icon?: undefined; leading?: undefined }
+	| { icon: IconName; prefix?: undefined; leading?: undefined }
+	| { leading: ReactNode; prefix?: undefined; icon?: undefined }
 );

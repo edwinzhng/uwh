@@ -22,7 +22,6 @@ export const SessionRatingSection = ({
 	<Surface variant="plain">
 		<Stack gap="sm">
 			<SectionHeading
-				size="small"
 				action={
 					onAdd ? (
 						<Button
@@ -48,9 +47,7 @@ export const SessionRatingSection = ({
 				))
 			) : (
 				<Text variant="small" tone="secondary">
-					{title === "Coach ratings"
-						? "No coach ratings yet."
-						: "No self-reflections yet."}
+					No reflections yet.
 				</Text>
 			)}
 		</Stack>

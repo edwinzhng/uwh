@@ -6,16 +6,13 @@ import {
 	type SessionPerformanceEntry,
 } from "../domain/session-performance";
 
-export type SessionFeedbackAction = "self" | "coach" | "note";
+export type SessionFeedbackAction = "self" | "note";
 export const sessionFeedbackActions = (
 	account: Account,
 	member: Member,
 ): { id: SessionFeedbackAction; label: string }[] => [
 	...(canWriteSessionPerformance(account, member, "self")
 		? [{ id: "self" as const, label: "Rate yourself" }]
-		: []),
-	...(canWriteSessionPerformance(account, member, "coach")
-		? [{ id: "coach" as const, label: "Coach rating" }]
 		: []),
 	...(canCoachMember(account, member)
 		? [{ id: "note" as const, label: "Add feedback" }]

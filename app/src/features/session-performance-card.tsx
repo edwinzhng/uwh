@@ -47,9 +47,7 @@ export const SessionPerformanceCard = ({
 				) : undefined}
 				<Row justify="between" align="end" wrap>
 					<Stack gap="none">
-						<Text variant="caption">
-							{entry.kind === "coach" ? "Coach rating" : "Self-rating"}
-						</Text>
+						<Text variant="caption">Self-rating</Text>
 						<Text variant="number">
 							{entry.rating}
 							<Text variant="small">/10</Text>

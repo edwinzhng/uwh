@@ -34,23 +34,6 @@ test("emoji row and anchored category chrome reserve the entire glyph line box",
 	}
 });
 
-test("only the emoji grid scrolls vertically and shortcuts cannot consume reserved category space", async (): Promise<void> => {
-	const browser = await Bun.file(
-		new URL("../src/design-system/emoji-browser.tsx", import.meta.url),
-	).text();
-	const shortcuts = await Bun.file(
-		new URL("../src/design-system/reaction-content.tsx", import.meta.url),
-	).text();
-	expect(browser).toContain("ListHeaderComponent={header}");
-	expect(browser).toContain("height: emojiBrowserMetrics.categoryHeight");
-	expect(browser).toContain("height: emojiBrowserMetrics.rowHeight");
-	expect(browser).toContain('accessibilityLabel="Emoji categories"');
-	expect(browser).toContain('overflow: "hidden"');
-	expect(browser).not.toContain('position: "absolute"');
-	expect(shortcuts).toContain("header={");
-	expect(shortcuts).toContain("<ReactionShortcuts");
-});
-
 test("emoji search uses actual names, keywords and glyphs without a fake recent catalog", (): void => {
 	const people = emojiResults(
 		emojiData.emojis,

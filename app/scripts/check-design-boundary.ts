@@ -31,6 +31,22 @@ const visualProps = new Set([
 	"dangerouslySetInnerHTML",
 ]);
 
+const literalAttribute = (
+	element: ts.JsxOpeningElement,
+	name: string,
+): string | undefined => {
+	const attribute = element.attributes.properties.find(
+		(property) =>
+			ts.isJsxAttribute(property) && property.name.getText() === name,
+	);
+	return attribute &&
+		ts.isJsxAttribute(attribute) &&
+		attribute.initializer &&
+		ts.isStringLiteral(attribute.initializer)
+		? attribute.initializer.text
+		: undefined;
+};
+
 export const inspectDesignBoundary = (
 	source: string,
 	filename: string,
@@ -56,6 +72,33 @@ export const inspectDesignBoundary = (
 					insideList(node.parent)),
 		);
 	const inspect = (node: ts.Node): void => {
+		if (
+			ts.isJsxElement(node) &&
+			node.openingElement.tagName.getText() === "Dialog"
+		) {
+			const title = literalAttribute(node.openingElement, "title");
+			const inspect = (child: ts.Node): void => {
+				if (ts.isJsxElement(child)) {
+					const tag = child.openingElement.tagName.getText();
+					if (tag === "Dialog") return;
+					const heading =
+						tag === "SectionHeading" ||
+						(tag === "Text" &&
+							/^h[1-4]$/.test(
+								literalAttribute(child.openingElement, "variant") ?? "",
+							));
+					const text = child.children
+						.map((entry) => (ts.isJsxText(entry) ? entry.text : ""))
+						.join("")
+						.replace(/\s+/g, " ")
+						.trim();
+					if (title && heading && text === title)
+						fail(child, "Do not repeat the dialog title in its body.");
+				}
+				ts.forEachChild(child, inspect);
+			};
+			for (const child of node.children) inspect(child);
+		}
 		if (
 			ts.isVariableDeclaration(node) &&
 			ts.isIdentifier(node.name) &&

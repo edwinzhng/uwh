@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import config from "../app.config";
 import { loadingColors } from "../src/design-system/loading-colors";
-import { lightTheme } from "../src/design-system/tokens";
+import { darkTheme } from "../src/design-system/tokens";
 
 const imageGeometry = async (
 	path: string,
@@ -61,8 +61,8 @@ describe("UWH Club app branding", () => {
 		} = await Bun.file(
 			new URL("../public/manifest.webmanifest", import.meta.url),
 		).json();
-		expect(manifest.background_color).toBe(lightTheme.background.canvas);
-		expect(manifest.theme_color).toBe(lightTheme.background.canvas);
+		expect(manifest.background_color).toBe(darkTheme.background.canvas);
+		expect(manifest.theme_color).toBe(darkTheme.background.canvas);
 		expect(manifest.icons.map((icon) => icon.src)).toEqual([
 			"/uwhclub-app-v1-192.png",
 			"/uwhclub-app-v1-512.png",
@@ -72,24 +72,5 @@ describe("UWH Club app branding", () => {
 			expect(`${size.width}x${size.height}`).toBe(icon.sizes);
 			expect(icon.type).toBe("image/png");
 		}
-	});
-
-	test("uses matching small-icon and Apple artwork in the actual HTML head", async (): Promise<void> => {
-		const document = await Bun.file(
-			new URL("../src/design-system/web-document.tsx", import.meta.url),
-		).text();
-		expect(document).toContain("/uwhclub-app-v1-favicon.png");
-		expect(document).toContain("/uwhclub-app-v1-apple.png");
-		expect(document).not.toContain("club-logo");
-		expect(await imageGeometry("public/uwhclub-app-v1-favicon.png")).toEqual({
-			width: 32,
-			height: 32,
-			colorType: 2,
-		});
-		expect(await imageGeometry("public/uwhclub-app-v1-apple.png")).toEqual({
-			width: 180,
-			height: 180,
-			colorType: 2,
-		});
 	});
 });

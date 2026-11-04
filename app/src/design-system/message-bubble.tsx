@@ -74,7 +74,7 @@ export const MessageBubble = ({
 				{children}
 				{stamp ? (
 					<View style={{ alignSelf: "flex-end", paddingTop: space.xxs }}>
-						<Text variant="caption" tone="secondary">
+						<Text variant="navigation" tone="secondary">
 							{stamp}
 						</Text>
 					</View>
@@ -92,7 +92,7 @@ export const MessageBubble = ({
 		>
 			{timeLabel ? (
 				<View style={{ paddingTop: space.md, paddingBottom: space.xs }}>
-					<Text variant="caption" tone="secondary" align="center">
+					<Text variant="navigation" tone="secondary" align="center">
 						{timeLabel}
 					</Text>
 				</View>
@@ -125,7 +125,7 @@ export const MessageBubble = ({
 								gap: space.xs,
 							}}
 						>
-							<Text variant="caption" weight="semibold" lines={1}>
+							<Text variant="caption" weight="regular" lines={1}>
 								{authorLabel}
 							</Text>
 						</View>

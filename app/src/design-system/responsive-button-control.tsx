@@ -6,12 +6,15 @@ import type { ButtonProps } from "./button-props";
 export const ResponsiveButtonControl = ({
 	icon,
 	prefix,
+	leading,
 	collapseBelow = 360,
 	...props
 }: ButtonProps & { collapseBelow?: number }): ReactElement => {
 	const { width } = useWindowDimensions();
 	const glyph = icon ?? prefix;
-	return width < collapseBelow && glyph ? (
+	return leading ? (
+		<ButtonControl {...props} leading={leading} />
+	) : width < collapseBelow && glyph ? (
 		<ButtonControl {...props} icon={glyph} />
 	) : icon ? (
 		<ButtonControl {...props} icon={icon} />

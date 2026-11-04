@@ -1,5 +1,4 @@
 import { type Href, useRouter } from "expo-router";
-import { useAtom } from "jotai";
 import type { ReactElement } from "react";
 import { AppLayout } from "./app-layout";
 import { Badge } from "./badge";
@@ -10,11 +9,8 @@ import { RoleStyleOption } from "./role-style-option";
 import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
-import { themePreferenceAtom } from "./theme";
-import { ThemeToggle } from "./theme-toggle";
 export const RoleStyleOptionsScreen = (): ReactElement => {
 	const router = useRouter();
-	const [theme, setTheme] = useAtom(themePreferenceAtom);
 	if (process.env.EXPO_PUBLIC_REVIEW_MODE !== "true")
 		return <EmptyState title="Review unavailable" />;
 	const open = (href: Href): void => router.push(href);
@@ -31,7 +27,6 @@ export const RoleStyleOptionsScreen = (): ReactElement => {
 			}
 		>
 			<Stack gap="xl">
-				<ThemeToggle value={theme} onValueChange={setTheme} />
 				<Grid gap="xl">
 					<RoleStyleOption
 						treatment="glow"

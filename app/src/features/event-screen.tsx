@@ -70,6 +70,7 @@ export const EventScreen = (): ReactElement => {
 				: "overview";
 	return (
 		<ClubShell
+			roleTone={activeTab === "coaching" ? "coach" : undefined}
 			actionPlacement="inline"
 			tabs={
 				<Tabs

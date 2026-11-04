@@ -87,6 +87,7 @@ export const PopupStyles = (): ReactElement => {
 .club-popup-item::before { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; border-radius:inherit; background:var(--row-highlight); opacity:0; transform:scale(${canAnimate ? 0.97 : 1}); transition:opacity ${canAnimate ? motion.duration.fast : motion.duration.instant}ms cubic-bezier(${motion.easing.out.join(",")}), transform ${canAnimate ? motion.duration.fast : motion.duration.instant}ms cubic-bezier(${motion.easing.out.join(",")}); }
 .club-popup-item[data-highlighted]:not([data-disabled])::before, .club-popup-item[data-checked]:not([data-disabled])::before { opacity:1; transform:scale(1); }
 ${(["success", "warning", "danger", "pending"] as const).map((tone): string => `.club-popup-item[data-tone="${tone}"] { --row-highlight:${theme.colorScales[tone].muted}; }`).join("\n")}
+.club-popup[data-people] { width:min(${geometry.personPopupWidth}px, calc(100vw - ${space.sm * 2}px)); }
 .club-popup-item-label { display:block; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:${typography.label.lineHeight}px; }
 .club-hover-surface { position:relative; isolation:isolate; min-width:0; }
 .club-moving-highlight { position:absolute; left:0; top:0; pointer-events:none; opacity:0; z-index:-1; }

@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { Text, View } from "react-native";
 import { useTheme } from "./theme";
-import { corners, font, geometry, space, typography } from "./tokens";
+import { font, space, typography } from "./tokens";
 
 export const PoolBoardSection = ({
 	label,
@@ -15,10 +15,6 @@ export const PoolBoardSection = ({
 		<View
 			style={{
 				gap: space.md,
-				borderWidth: label ? geometry.border : 0,
-				borderColor: theme.border,
-				borderRadius: corners.panel,
-				padding: label ? space.xs : 0,
 			}}
 		>
 			{label ? (

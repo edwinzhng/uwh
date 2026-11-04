@@ -167,15 +167,6 @@ test("foreground refresh only unregisters once and can subsequently re-enable", 
 	controller.stop();
 });
 
-test("push bridge forwards emitted tokens and does not restart on route changes", async (): Promise<void> => {
-	const native = await Bun.file("src/backend/native-push.ts").text();
-	const bridge = await Bun.file("src/backend/push-bridge.tsx").text();
-	expect(native).toContain("devicePushToken,");
-	expect(native).toContain("addPushTokenListener(refresh)");
-	expect(bridge).toContain("registerNativePush(false, token)");
-	expect(bridge).toContain("[register, unregister, account.id]");
-});
-
 test("a foreground permission refresh during acquisition is not dropped", async (): Promise<void> => {
 	const pending: { finish?: () => void } = {};
 	const state = { enabled: true, reads: 0, writes: 0, removals: 0 };

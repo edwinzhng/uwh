@@ -4,7 +4,6 @@ import { useActivePerson, useApp } from "../demo/app-state";
 import {
 	Button,
 	EmptyState,
-	RoleLabel,
 	type RoleTone,
 	Row,
 	Stack,
@@ -26,7 +25,6 @@ import { MemberMergeAction } from "./member-merge-action";
 import { MemberProfileDetails } from "./member-profile-details";
 import { MemberProgress } from "./member-progress";
 import { PersonalFitness } from "./personal-fitness";
-import { PlayerCoachingPanel } from "./player-coaching-panel";
 import { RecognitionSummary } from "./recognition-summary";
 import { ShoutoutEditor } from "./shoutout-editor";
 
@@ -75,15 +73,6 @@ export const MemberScreen = (): ReactElement => {
 					},
 				]
 			: []),
-		...(account.coachPrograms.length
-			? [
-					{
-						value: "coach",
-						label: "Coach",
-						roleTone: "coach" as const,
-					},
-				]
-			: []),
 	];
 	const selectedTab = tabs.some((entry) => entry.value === tab)
 		? tab
@@ -102,6 +91,7 @@ export const MemberScreen = (): ReactElement => {
 		);
 	return (
 		<ClubShell
+			roleTone={selectedTab === "admin" ? "admin" : undefined}
 			action={
 				account.admin && member && selectedTab === "admin" ? (
 					<Row gap="xs" justify="end" wrap>
@@ -156,18 +146,8 @@ export const MemberScreen = (): ReactElement => {
 						<MemberFeedback member={member} />
 					) : selectedTab === "attendance" ? (
 						<MemberAttendance key={member.id} member={member} />
-					) : selectedTab === "coach" ? (
-						<Stack gap="xl">
-							<Row justify="end">
-								<RoleLabel roleKind="coach" />
-							</Row>
-							<PlayerCoachingPanel personId={member.id} />
-						</Stack>
 					) : selectedTab === "admin" ? (
 						<Stack gap="xl">
-							<Row justify="end">
-								<RoleLabel roleKind="admin" />
-							</Row>
 							<MemberAdmin key={member.id} member={member} />
 							{!accounts.some(
 								(entry) =>

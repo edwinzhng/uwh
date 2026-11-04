@@ -1,4 +1,4 @@
-import { createStore, Provider, useAtom, useAtomValue } from "jotai";
+import { createStore, Provider } from "jotai";
 import { type ReactElement, useMemo, useState } from "react";
 import { ScrollView, useWindowDimensions, View } from "react-native";
 import { Button } from "./button";
@@ -20,8 +20,7 @@ import { Row } from "./row";
 import { SegmentedControl } from "./segmented-control";
 import { Stack } from "./stack";
 import { Text } from "./text";
-import { systemThemeAtom, themePreferenceAtom, useTheme } from "./theme";
-import { ThemeToggle } from "./theme-toggle";
+import { useTheme } from "./theme";
 import { corners, geometry, space } from "./tokens";
 
 const previewTabs: { id: string; label: string; icon: IconName }[] = [
@@ -173,7 +172,6 @@ const Comparison = ({ treatment, phone }: PreviewProps): ReactElement => {
 };
 const PreviewContent = (): ReactElement => {
 	const theme = useTheme();
-	const [appearance, setAppearance] = useAtom(themePreferenceAtom);
 	const { width } = useWindowDimensions();
 	const [treatment, setTreatment] = useState<GlassTreatment>("satin");
 	const [viewport, setViewport] = useState("phone");
@@ -189,7 +187,6 @@ const PreviewContent = (): ReactElement => {
 		>
 			<Row justify="between" wrap>
 				<Text variant="h1">Glass</Text>
-				<ThemeToggle value={appearance} onValueChange={setAppearance} />
 			</Row>
 			<Row wrap>
 				<SegmentedControl
@@ -234,12 +231,10 @@ const PreviewContent = (): ReactElement => {
 	);
 };
 export const GlassPreviewScreen = (): ReactElement => {
-	const system = useAtomValue(systemThemeAtom);
 	const store = useMemo(() => {
 		const preview = createStore();
-		preview.set(systemThemeAtom, system);
 		return preview;
-	}, [system]);
+	}, []);
 	return (
 		<Provider store={store}>
 			<PreviewContent />

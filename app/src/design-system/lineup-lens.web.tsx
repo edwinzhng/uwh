@@ -16,6 +16,7 @@ const LineupLens = (): ReactElement => (
 		width="100%"
 		height="100%"
 		fit="cover"
+		scale={1}
 		spread={0.12}
 		bias={0.1}
 		angle={15}

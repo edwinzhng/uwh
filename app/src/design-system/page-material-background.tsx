@@ -17,7 +17,7 @@ export const PageMaterialBackground = (): ReactElement | undefined => {
 	return (
 		<>
 			<View
-				style={[StyleSheet.absoluteFill, { opacity: 0.1 }]}
+				style={[StyleSheet.absoluteFill, { opacity: 0.16 }]}
 				pointerEvents="none"
 				accessible={false}
 				accessibilityElementsHidden

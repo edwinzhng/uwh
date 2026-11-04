@@ -18,6 +18,11 @@
 			"recommended": true,
 			"correctness": {
 				"noUnusedImports": "error"
+			},
+			"suspicious": {
+				"noFocusedTests": "error",
+				"noSkippedTests": "error",
+				"noDuplicateTestHooks": "error"
 			}
 		}
 	},

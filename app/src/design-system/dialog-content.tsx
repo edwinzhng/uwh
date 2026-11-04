@@ -61,17 +61,20 @@ export type DialogProps = {
 	title: string;
 	children: ReactNode;
 	footer?: ReactNode;
-	hideHeader?: boolean;
 	scrollable?: boolean;
 	intent?: DialogIntent;
 	isDismissDisabled?: boolean;
 	focusKey?: string;
-};
+} & (
+	| { hideHeader: true; back?: never }
+	| { hideHeader?: false; back?: { label: string; onPress: () => void } }
+);
 export const DialogContent = ({
 	isOpen,
 	onOpenChange,
 	onAfterClose,
 	title,
+	back,
 	children,
 	footer,
 	hideHeader = false,
@@ -294,6 +297,14 @@ export const DialogContent = ({
 					) : undefined}
 					{!hideHeader ? (
 						<Row justify="between" align="center">
+							{back ? (
+								<IconButton
+									label={back.label}
+									icon="arrowLeft"
+									isDisabled={isDismissDisabled}
+									onPress={back.onPress}
+								/>
+							) : undefined}
 							<View
 								ref={heading}
 								accessible={focusKey !== undefined}
@@ -304,7 +315,9 @@ export const DialogContent = ({
 								tabIndex={focusKey ? -1 : undefined}
 								style={{ flex: 1, minWidth: 0 }}
 							>
-								<Text variant="h1">{title}</Text>
+								<Text variant="h4" headingLevel={2}>
+									{title}
+								</Text>
 							</View>
 							<IconButton
 								label="Close dialog"

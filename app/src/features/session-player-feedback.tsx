@@ -2,17 +2,17 @@ import { useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import {
+	Button,
 	EmptyState,
 	List,
 	ListItem,
-	ResponsiveButtonControl,
 	SectionHeading,
 	Stack,
 	Surface,
 } from "../design-system";
 import { canCoachMember, canRegister } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
-import { SessionPerformanceTask } from "./session-performance-task";
+import { FeedbackEditor } from "./feedback-editor";
 
 export const SessionPlayerFeedback = ({
 	event,
@@ -21,7 +21,10 @@ export const SessionPlayerFeedback = ({
 }): ReactElement => {
 	const { data, account } = useApp();
 	const router = useRouter();
-	const [rating, setRating] = useState<{ personId: string; eventId: string }>();
+	const [feedback, setFeedback] = useState<{
+		personId: string;
+		eventId: string;
+	}>();
 	const players = data.members.filter(
 		(person) => canRegister(person, event) && canCoachMember(account, person),
 	);
@@ -51,15 +54,14 @@ export const SessionPlayerFeedback = ({
 							description={person.goal}
 							descriptionLines={2}
 							action={
-								<ResponsiveButtonControl
+								<Button
 									prefix="plus"
-									collapseBelow={480}
 									label="Feedback"
 									variant="secondary"
 									compact
 									accessibilityLabel={`Feedback for ${person.name}`}
 									onPress={(): void =>
-										setRating({ personId: person.id, eventId: event.id })
+										setFeedback({ personId: person.id, eventId: event.id })
 									}
 								/>
 							}
@@ -73,12 +75,14 @@ export const SessionPlayerFeedback = ({
 					) : undefined}
 				</List>
 			</Surface>
-			{rating ? (
-				<SessionPerformanceTask
-					personId={rating.personId}
-					eventId={rating.eventId}
-					kind="coach"
-					onClose={(): void => setRating(undefined)}
+			{feedback ? (
+				<FeedbackEditor
+					personId={feedback.personId}
+					eventId={feedback.eventId}
+					isOpen
+					onOpenChange={(open): void => {
+						if (!open) setFeedback(undefined);
+					}}
 				/>
 			) : undefined}
 		</Stack>

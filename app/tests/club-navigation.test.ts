@@ -28,14 +28,13 @@ test("members retain people, swim tests, videos and documents without management
 	]);
 });
 
-test("coaches retain assignment and review entry points without administrator tools", (): void => {
+test("coaches retain hours and attendance without administrator tools", (): void => {
 	const tools = clubToolGroups({
 		...primaryAccount,
 		admin: false,
 		coachPrograms: ["club"],
 	}).flatMap((group) => group.tools);
-	expect(tools).toContain("coaching");
-	expect(tools).toContain("reviews");
+	expect(tools).not.toContain("reviews");
 	expect(tools).toContain("hours");
 	expect(tools).toContain("attendance");
 	expect(tools).not.toContain("imports");

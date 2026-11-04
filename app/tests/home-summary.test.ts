@@ -1,5 +1,4 @@
 import { expect, test } from "bun:test";
-import ts from "typescript";
 import { initialAppData } from "../src/demo/app-data";
 import { visibleNotices } from "../src/domain/app-rules";
 import type {
@@ -287,72 +286,4 @@ test("announcement highlight preserves live dates, program visibility and privat
 			"2026-11-02",
 		).map((entry) => entry.id),
 	).toEqual(["live"]);
-});
-
-const querySource = async (file: string, name: string): Promise<string> => {
-	const text = await Bun.file(file).text();
-	const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
-	const declarations = source.statements.flatMap((statement) =>
-		ts.isVariableStatement(statement)
-			? statement.declarationList.declarations.filter(
-					(declaration) => declaration.name.getText(source) === name,
-				)
-			: [],
-	);
-	return declarations.at(0)?.initializer?.getText(source) ?? "";
-};
-
-test("live home summaries authorize before bounded indexed reads rather than loading fitness history per test", async (): Promise<void> => {
-	const fitnessQuery = await querySource("convex/fitness.ts", "homeSummary");
-	expect(fitnessQuery).toContain(
-		"canReadProgress(accountFor(actor), person.value)",
-	);
-	expect(fitnessQuery).toContain('withIndex("by_club_person_date"');
-	expect(fitnessQuery).toContain(".take(2)");
-	expect(fitnessQuery).not.toContain(".collect()");
-	expect(fitnessQuery).not.toContain("tests.map");
-	const announcement = await querySource(
-		"convex/pages.ts",
-		"readHomeAnnouncementPage",
-	);
-	expect(announcement).toContain("maximumRowsRead: 40");
-	expect(announcement).toContain("homeAnnouncementPage(");
-	expect(announcement).toContain("pageOptions(paginationOpts)");
-	expect(announcement).toContain('q.eq(q.field("value.program"), program)');
-	expect(announcement).not.toContain(".collect()");
-	const paginatedAnnouncement = await querySource(
-		"convex/pages.ts",
-		"homeAnnouncements",
-	);
-	expect(paginatedAnnouncement).toContain(
-		"paginationOpts: paginationOptsValidator",
-	);
-	const compatibleAnnouncement = await querySource(
-		"convex/pages.ts",
-		"homeAnnouncement",
-	);
-	expect(compatibleAnnouncement).toContain("Promise<Notice[]>");
-	expect(compatibleAnnouncement).toContain("{ today: v.string() }");
-	const home = await Bun.file("src/features/home-announcement.tsx").text();
-	expect(home).toContain("usePaginatedQuery(");
-	expect(home).toContain('!results.length && status === "CanLoadMore"');
-	expect(home).toContain("[results, status, loadMore]");
-});
-
-test("home composition renders real summaries without the former large empty-state and all-link pattern", async (): Promise<void> => {
-	const composition = await Bun.file("src/features/home-summary.tsx").text();
-	for (const name of [
-		"HomeHighlights",
-		"HomePractice",
-		"HomeFitness",
-		"HomeMessages",
-		"HomeAnnouncement",
-	])
-		expect(composition).toContain(`<${name}`);
-	expect(composition).not.toContain("HouseholdEventCard");
-	expect(composition).not.toContain("SectionHeading");
-	expect(composition).not.toContain("View all");
-	const home = await Bun.file("src/features/home-screen.tsx").text();
-	expect(home).toContain("<TabContent value={workspace}>");
-	expect(home).toContain("<CoachDashboard nextPractice={coaching} />");
 });

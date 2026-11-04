@@ -187,7 +187,7 @@ const TeamPanelContent = ({
 									/>
 								</Row>
 							) : undefined}
-							<PoolBoardGroup active={!options}>
+							<Stack>
 								{groups
 									.filter(
 										(group) =>
@@ -207,19 +207,21 @@ const TeamPanelContent = ({
 														: "Youth"
 											}
 										>
-											<PoolBoardColumns>
-												{(["black", "white"] as const).map((side) => (
-													<TeamPool
-														key={side}
-														plan={plan}
-														side={side}
-														group={group}
-													/>
-												))}
-											</PoolBoardColumns>
+											<PoolBoardGroup active={!options}>
+												<PoolBoardColumns>
+													{(["black", "white"] as const).map((side) => (
+														<TeamPool
+															key={side}
+															plan={plan}
+															side={side}
+															group={group}
+														/>
+													))}
+												</PoolBoardColumns>
+											</PoolBoardGroup>
 										</PoolBoardSection>
 									))}
-							</PoolBoardGroup>
+							</Stack>
 							{plan.referees?.map((referee) => (
 								<Text key={referee.side} variant="small">
 									{referee.side === "black" ? "Black" : "White"} referee ·{" "}

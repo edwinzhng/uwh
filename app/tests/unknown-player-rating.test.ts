@@ -54,25 +54,3 @@ test("an intentional rating clears unknown state and invalid unknown payloads ca
 		validatePlayerCoaching({ ...previous, rating: Number.NaN }),
 	).toThrow();
 });
-
-test("coaching reads preserve legacy unknown ratings and metadata edits leave scores to the rankings workflow", async (): Promise<void> => {
-	const backend = await Bun.file(
-		new URL("../convex/player_coaching.ts", import.meta.url),
-	).text();
-	const schema = await Bun.file(
-		new URL("../convex/player_coaching_schema.ts", import.meta.url),
-	).text();
-	const form = await Bun.file(
-		new URL("../src/features/player-coaching-form.tsx", import.meta.url),
-	).text();
-	expect(backend).toContain(": row.ratingKnown");
-	expect(backend).toContain("ratingKnown: v.optional(v.boolean())");
-	expect(schema).toContain("ratingKnown: v.optional(v.boolean())");
-	expect(form).toContain("...profile");
-	expect(form).not.toContain('label="Rating (0–100)"');
-	expect(form).toContain("playerRatingLabel(profile)");
-	const details = await Bun.file(
-		new URL("../src/features/player-coaching-details.tsx", import.meta.url),
-	).text();
-	expect(details).toContain("playerRatingLabel(profile)");
-});

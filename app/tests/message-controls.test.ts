@@ -44,23 +44,6 @@ describe("compact message controls", () => {
 		for (const width of [248, 296, 366, 430])
 			expect(messageBubbleLayout(width, true).separateMenu).toBe(false);
 	});
-
-	test("the bubble itself is bounded inside the native intrinsic-size menu wrapper", async (): Promise<void> => {
-		const [bubble, menu] = await Promise.all([
-			Bun.file("src/design-system/message-bubble.tsx").text(),
-			Bun.file("src/design-system/context-action-menu.tsx").text(),
-		]);
-		const content = bubble.slice(
-			bubble.indexOf("const bubble ="),
-			bubble.indexOf("return ("),
-		);
-		expect(content).toContain("maxWidth: layout.maxWidth");
-		expect(content).toContain("flexShrink: 1");
-		expect(bubble).toContain("viewport.width - space.sm * 2");
-		expect(menu).toContain(
-			'style={{ maxWidth: "100%", minWidth: 0, flexShrink: 1 }}',
-		);
-	});
 	test("corner reactions have a separate 44-point lane without a flex sibling squeezing the bubble", (): void => {
 		for (const width of [248, 272, 296, 366, 600, 720, 1024]) {
 			const layout = messageBubbleLayout(width, true);
@@ -133,24 +116,5 @@ describe("compact message controls", () => {
 		expect(styles).toContain(
 			".club-message-row:hover .club-message-menu-position[data-separate]",
 		);
-	});
-
-	test("context menus do not group poll controls, intercept their touch-start, or eagerly import optional ExpoUI", async (): Promise<void> => {
-		const native = await Bun.file(
-			"src/design-system/context-action-menu.tsx",
-		).text();
-		const web = await Bun.file(
-			"src/design-system/context-action-menu.web.tsx",
-		).text();
-		const trigger = await Bun.file(
-			"src/design-system/message-reaction-trigger.tsx",
-		).text();
-		expect(native).toContain("shouldOpenOnLongPress");
-		expect(native).toContain("accessible={false}");
-		expect(native).not.toMatch(/from ["']@expo\/ui/u);
-		expect(web).toContain("<ContextMenu.Trigger");
-		expect(web).toContain("event.preventBaseUIHandler()");
-		expect(web).toContain("interactiveTarget(event.target)");
-		expect(trigger).toContain('name: "showMenu", label: "Message actions"');
 	});
 });

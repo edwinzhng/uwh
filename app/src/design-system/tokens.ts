@@ -134,6 +134,7 @@ export const geometry = {
 	listRow: 36,
 	calendarDay: 36,
 	popupWidth: 224,
+	personPopupWidth: 360,
 	compactPickerWidth: 144,
 	popupMaxHeight: 320,
 	iconSmall: 16,

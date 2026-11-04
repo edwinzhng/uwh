@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { RoleLabel, RoleScope, Row, Stack } from "../design-system";
+import { RoleScope, Row, Stack } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import { EventCoaches } from "./event-coaches";
 import { SessionGuestManager } from "./session-guest-manager";
@@ -18,17 +18,18 @@ export const SessionCoaching = ({
 	return (
 		<RoleScope>
 			<Stack gap="xl">
-				<Row justify="between" wrap>
-					<RoleLabel roleKind="coach" />
-					{account.admin && event.seriesId ? (
-						<RoleScope tone="admin">
-							<SessionGuestManager event={event} />
-						</RoleScope>
-					) : undefined}
-					{event.seriesId ? (
-						<SessionSeriesLink seriesId={event.seriesId} />
-					) : undefined}
-				</Row>
+				{event.seriesId ? (
+					<Row justify="between" wrap>
+						{account.admin && event.seriesId ? (
+							<RoleScope tone="admin">
+								<SessionGuestManager event={event} />
+							</RoleScope>
+						) : undefined}
+						{event.seriesId ? (
+							<SessionSeriesLink seriesId={event.seriesId} />
+						) : undefined}
+					</Row>
+				) : undefined}
 				<EventCoaches event={event} />
 				<Stack gap="sm">
 					<SessionPlanSection key={event.id} event={event} />

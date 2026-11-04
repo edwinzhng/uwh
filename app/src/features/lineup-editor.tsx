@@ -330,16 +330,7 @@ export const LineupEditor = ({
 					{task.error ?? editError}
 				</Text>
 			) : undefined}
-			<PoolBoardGroup
-				active={
-					!overlayOpen &&
-					!rotation &&
-					!confirmSave &&
-					!discarding &&
-					!regenerating &&
-					publishRevision === undefined
-				}
-			>
+			<Stack>
 				{groups.map((group) => (
 					<PoolBoardSection
 						key={group}
@@ -351,83 +342,106 @@ export const LineupEditor = ({
 									: "Youth"
 						}
 					>
-						<PoolBoardColumns>
-							{(["black", "white"] as const).map((team) => (
-								<TeamPool
-									key={team}
-									plan={preview}
-									side={team}
-									group={group}
-									onCaptainChange={
-										disabled
-											? undefined
-											: (personId): void => {
-													void stage({
-														kind: "captain",
-														side: team,
-														personId,
-														group,
-													});
-												}
-									}
-									onFormationChange={
-										disabled
-											? undefined
-											: (formation): void => {
-													void stage({
-														kind: "formation",
-														side: team,
-														formation,
-													});
-												}
-									}
-									selectedPersonId={personId}
-									onManageRotation={
-										disabled
-											? undefined
-											: (slot, label): void => {
-													task.clear();
-													setRotation({ side: team, slot, label, group });
-												}
-									}
-									onAdd={
-										disabled
-											? undefined
-											: (id, slot): void => {
-													void stage({
-														kind: "add",
-														personId: id,
-														side: team,
-														slot,
-														ageGroup: group === "combined" ? undefined : group,
-													});
-												}
-									}
-									onSwap={
-										disabled
-											? undefined
-											: (id, otherId): void => {
-													void stage({ kind: "swap", personId: id, otherId });
-												}
-									}
-									onPlace={
-										disabled
-											? undefined
-											: (id, slot): void => {
-													void stage({
-														kind: "place",
-														side: team,
-														personId: id,
-														slot,
-													});
-												}
-									}
-								/>
-							))}
-						</PoolBoardColumns>
+						<PoolBoardGroup
+							active={
+								!overlayOpen &&
+								!rotation &&
+								!confirmSave &&
+								!discarding &&
+								!regenerating &&
+								publishRevision === undefined
+							}
+						>
+							<PoolBoardColumns>
+								{(["black", "white"] as const).map((team) => (
+									<TeamPool
+										key={team}
+										plan={preview}
+										side={team}
+										group={group}
+										onRefereeChange={
+											disabled
+												? undefined
+												: (personId): void => {
+														void stage({
+															kind: "referee",
+															side: team,
+															personId,
+														});
+													}
+										}
+										onCaptainChange={
+											disabled
+												? undefined
+												: (personId): void => {
+														void stage({
+															kind: "captain",
+															side: team,
+															personId,
+															group,
+														});
+													}
+										}
+										onFormationChange={
+											disabled
+												? undefined
+												: (formation): void => {
+														void stage({
+															kind: "formation",
+															side: team,
+															formation,
+														});
+													}
+										}
+										selectedPersonId={personId}
+										onManageRotation={
+											disabled
+												? undefined
+												: (slot, label): void => {
+														task.clear();
+														setRotation({ side: team, slot, label, group });
+													}
+										}
+										onAdd={
+											disabled
+												? undefined
+												: (id, slot): void => {
+														void stage({
+															kind: "add",
+															personId: id,
+															side: team,
+															slot,
+															ageGroup:
+																group === "combined" ? undefined : group,
+														});
+													}
+										}
+										onSwap={
+											disabled
+												? undefined
+												: (id, otherId): void => {
+														void stage({ kind: "swap", personId: id, otherId });
+													}
+										}
+										onPlace={
+											disabled
+												? undefined
+												: (id, slot): void => {
+														void stage({
+															kind: "place",
+															side: team,
+															personId: id,
+															slot,
+														});
+													}
+										}
+									/>
+								))}
+							</PoolBoardColumns>
+						</PoolBoardGroup>
 					</PoolBoardSection>
 				))}
-			</PoolBoardGroup>
+			</Stack>
 			{rotation ? (
 				<LineupPositionPicker
 					plan={preview}

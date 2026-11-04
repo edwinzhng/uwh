@@ -49,7 +49,7 @@ export const MemberProgress = ({
 					<GoalRequest member={member} />
 				</Stack>
 			</Surface>
-			<SessionPerformance member={member} visibleKind="self" />
+			<SessionPerformance member={member} />
 		</Stack>
 	);
 };

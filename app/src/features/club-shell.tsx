@@ -75,6 +75,9 @@ export const ClubShell = ({
 				title={title}
 				workspaceTitle={workspaceTitle}
 				subtitle={subtitle}
+				titleAccessory={
+					restrictedRole ? <RoleLabel roleKind={restrictedRole} /> : undefined
+				}
 				toolbarLeading={
 					isPrimaryDestination(pathname) ? (
 						<Row gap="xs">
@@ -127,11 +130,6 @@ export const ClubShell = ({
 									: "xl"
 						}
 					>
-						{restrictedRole ? (
-							<Row justify="end">
-								<RoleLabel roleKind={restrictedRole} />
-							</Row>
-						) : undefined}
 						<RoleScope>{children}</RoleScope>
 					</Stack>
 				</LoadingBoundary>

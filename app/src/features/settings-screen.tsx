@@ -19,16 +19,22 @@ import {
 } from "../design-system";
 import type { Tracker } from "../domain/app-types";
 import { defaultClubTimeZone, timeZoneOptions } from "../domain/time-zones";
+import { formatVenue, parseVenue, validateVenues } from "../domain/venue";
 import { AccessPanel } from "./access-panel";
 import { ClubShell } from "./club-shell";
 import { PublicScheduleSettings } from "./public-schedule-settings";
 import { SeasonSettings } from "./season-settings";
+import { useFormTask } from "./use-form-task";
+import { VenueFields } from "./venue-fields";
 
 export const SettingsScreen = (): ReactElement => {
 	const { data, account, dispatch, source } = useApp();
 	const { busy } = useAppStatus();
 	const router = useRouter();
-	const [venues, setVenues] = useState((data.venues ?? []).join("\n"));
+	const [venues, setVenues] = useState(
+		(data.venues ?? []).map((venue, index) => parseVenue(venue, String(index))),
+	);
+	const generalTask = useFormTask();
 	const [name, setName] = useState(data.clubName);
 	const [timeZone, setTimeZone] = useState(
 		data.timeZone ?? defaultClubTimeZone,
@@ -75,11 +81,10 @@ export const SettingsScreen = (): ReactElement => {
 						<SectionHeading>General</SectionHeading>
 						<Surface>
 							<Stack>
-								<Field
-									label="Venues (one per line)"
-									value={venues}
-									onValueChange={setVenues}
-									multiline
+								<VenueFields
+									venues={venues}
+									onChange={setVenues}
+									isDisabled={busy || generalTask.busy}
 								/>
 								<Field label="Club name" value={name} onValueChange={setName} />
 								<Combobox
@@ -99,27 +104,35 @@ export const SettingsScreen = (): ReactElement => {
 									value={reminders}
 									onValueChange={setReminders}
 								/>
+								{generalTask.error ? (
+									<Text tone="danger" variant="small">
+										{generalTask.error}
+									</Text>
+								) : undefined}
 								<Row justify="end">
 									<Button
 										label="Save changes"
-										isLoading={busy}
-										validationError={
-											!name.trim() ||
-											(venues === (data.venues ?? []).join("\n") &&
-												name === data.clubName &&
-												reminders === data.reminders &&
-												timeZone === (data.timeZone ?? defaultClubTimeZone))
-												? "Check the required fields"
-												: undefined
-										}
+										isLoading={busy || generalTask.busy}
 										onPress={(): void => {
-											void dispatch({
-												type: "settings",
-												clubName: name,
-												venues: venues.split("\n"),
-												reminders,
-												timeZone,
-											});
+											void generalTask.submit(
+												() =>
+													!name.trim()
+														? "Enter a club name"
+														: validateVenues(venues),
+												async (): Promise<void> => {
+													const saved = await dispatch({
+														type: "settings",
+														clubName: name,
+														venues: venues.map(formatVenue),
+														reminders,
+														timeZone,
+													});
+													if (!saved)
+														throw new Error(
+															"Couldn’t save settings. Try again.",
+														);
+												},
+											);
 										}}
 									/>
 								</Row>

@@ -8,7 +8,6 @@ import { corners, geometry, type SpaceToken, space } from "./tokens";
 
 type Props = {
 	children: ReactNode;
-	background?: ReactNode;
 	interactive?: boolean;
 	padding?: SpaceToken;
 	shape?: "panel" | "pill";
@@ -17,7 +16,6 @@ type Props = {
 };
 export const GlassPanel = ({
 	children,
-	background,
 	interactive = false,
 	padding = "md",
 	shape = "panel",
@@ -43,7 +41,6 @@ export const GlassPanel = ({
 				overflow: "hidden",
 			}}
 		>
-			{background}
 			<GlassBackdrop
 				material={material}
 				showRim={!seamlessEdges}

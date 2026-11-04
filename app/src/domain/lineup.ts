@@ -59,6 +59,20 @@ export const lineupSlotLabel = (
 	return number === undefined ? label : `${number} · ${label}`;
 };
 
+export const lineupSlotAbbreviation = (
+	formation: TeamFormation,
+	slot: number,
+): string => {
+	const label = formationSpotLabels[formation].at(slot);
+	return (
+		label
+			?.split(" ")
+			.map((word) => word.at(0))
+			.join("")
+			.toUpperCase() ?? String(slot + 1)
+	);
+};
+
 export type LineupSide = "black" | "white";
 export type LineupLocation = LineupSide | "blackBench" | "whiteBench";
 export type LineupSnapshot = {

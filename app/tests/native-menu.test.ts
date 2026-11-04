@@ -18,21 +18,3 @@ test("missing native menu modules never execute their throwing import and use th
 	const component = { name: "NativeMenu" };
 	expect(loadAvailableMenu(true, () => component)).toBe(component);
 });
-
-test("native menu adapters cannot eagerly import ExpoUI before capability checks", async (): Promise<void> => {
-	for (const name of ["action-menu", "select"]) {
-		const source = await Bun.file(
-			`src/design-system/${name}-native.tsx`,
-		).text();
-		expect(source).not.toMatch(
-			/import\s*\{[^}]*\bMenuView\b[^}]*\}\s*from\s*["']@expo\/ui/u,
-		);
-		expect(source).toMatch(/if\s*\(\s*!NativeMenuView/);
-		for (const platform of ["ios", "android"]) {
-			const adapter = await Bun.file(
-				`src/design-system/${name}.${platform}.tsx`,
-			).text();
-			expect(adapter).toContain(`from "./${name}-native"`);
-		}
-	}
-});

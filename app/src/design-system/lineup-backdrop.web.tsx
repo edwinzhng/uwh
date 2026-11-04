@@ -40,8 +40,8 @@ export const LineupBackdrop = ({
 		if (!enabled || !image.current) return undefined;
 		const animation = image.current.animate(
 			[
-				{ transform: "translate3d(-0.7%, -0.5%, 0) scale(1.06)" },
-				{ transform: "translate3d(0.7%, 0.5%, 0) scale(1.06)" },
+				{ transform: "translate3d(-0.7%, -0.5%, 0) scale(1.015)" },
+				{ transform: "translate3d(0.7%, 0.5%, 0) scale(1.015)" },
 			],
 			{
 				duration: motionEffects.cardMaterialFlow,
@@ -77,15 +77,15 @@ export const LineupBackdrop = ({
 				ref={image}
 				style={{
 					position: "absolute",
-					inset: -12,
-					transform: "scale(1.06)",
+					inset: 0,
+					transform: "scale(1.015)",
 					opacity: 1,
 				}}
 			>
 				<Image
 					source={artwork}
 					resizeMode="cover"
-					blurRadius={2}
+					blurRadius={0}
 					style={{ position: "absolute", inset: 0 }}
 				/>
 				{shaderAvailable ? (

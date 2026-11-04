@@ -57,21 +57,3 @@ test("categories reuse the actual palette and maintain readable paired and neutr
 			).toBeGreaterThanOrEqual(4.5);
 		}
 });
-
-test("summary actions are siblings and cards retain touch targets and optional haptics", async (): Promise<void> => {
-	const summary = await Bun.file(
-		new URL("../src/design-system/summary-card.tsx", import.meta.url),
-	).text();
-	const category = await Bun.file(
-		new URL("../src/design-system/category-card.tsx", import.meta.url),
-	).text();
-	for (const source of [summary, category]) {
-		expect(source).toContain("useButtonHaptics()");
-		expect(source).toContain('accessibilityRole="button"');
-		expect(source).toMatch(/minHeight:\s*geometry.touch/);
-		expect(source).not.toContain("motion.duration");
-	}
-	expect(summary.lastIndexOf("{action ?")).toBeGreaterThan(
-		summary.indexOf("</Pressable>"),
-	);
-});

@@ -29,7 +29,7 @@ export const ClubHomeScreen = (): ReactElement => {
 							<Stack key={group.title} gap="xs">
 								{group.title !== "Club" ? (
 									<SectionHeading
-										action={
+										badge={
 											<RoleLabel
 												roleKind={
 													group.title === "Coaching" ? "coach" : "admin"

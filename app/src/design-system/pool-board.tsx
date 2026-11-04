@@ -131,36 +131,48 @@ export const PoolBoard = ({
 		zIndex: personIds.some((id) => id === drag.get()?.personId) ? 2 : 1,
 	}));
 	const id = useId();
-	const drop = (personId: string, x: number, y: number): void => {
-		board.current?.measureInWindow((left, top, width, height): void => {
-			const localX = x - left;
-			const localY = y - top;
-			if (localX < 0 || localX > width || localY < 0 || localY > height) return;
-			const spot = poolBoardSpotAt(
-				rows,
-				rowFrames.current,
-				width,
-				localX,
-				localY,
-			);
-			if (!spot) return;
-			void Promise.all(
-				Array.from(targets.current.values())
-					.filter((target) => target.slotId === spot.id)
-					.map(async (target) => ({ target, bounds: await target.bounds() })),
-			).then((candidates): void => {
-				const action = poolBoardDropAction(
-					candidates.map(({ target, bounds }) => ({ ...target, bounds })),
-					x,
-					y,
-					personId,
-					spot.id,
+	const drop = (personId: string, x: number, y: number): Promise<void> =>
+		new Promise((resolve) => {
+			if (!board.current) {
+				resolve();
+				return;
+			}
+			board.current.measureInWindow((left, top, width, height): void => {
+				const localX = x - left;
+				const localY = y - top;
+				if (localX < 0 || localX > width || localY < 0 || localY > height) {
+					resolve();
+					return;
+				}
+				const spot = poolBoardSpotAt(
+					rows,
+					rowFrames.current,
+					width,
+					localX,
+					localY,
 				);
-				if (action?.kind === "swap") onSwap?.(personId, action.personId);
-				else if (action) (onAdd ?? onPlace)?.(personId, action.slotId);
+				if (!spot) {
+					resolve();
+					return;
+				}
+				void Promise.all(
+					Array.from(targets.current.values())
+						.filter((target) => target.slotId === spot.id)
+						.map(async (target) => ({ target, bounds: await target.bounds() })),
+				).then((candidates): void => {
+					const action = poolBoardDropAction(
+						candidates.map(({ target, bounds }) => ({ ...target, bounds })),
+						x,
+						y,
+						personId,
+						spot.id,
+					);
+					if (action?.kind === "swap") onSwap?.(personId, action.personId);
+					else if (action) (onAdd ?? onPlace)?.(personId, action.slotId);
+					resolve();
+				});
 			});
 		});
-	};
 	useEffect(() => {
 		if (!boards || !onPlace) return;
 		boards.register(id, drop);

@@ -87,7 +87,11 @@ export const Select = <T extends string>({
 					collisionPadding={space.xs}
 					align="start"
 				>
-					<BaseSelect.Popup className="club-popup" data-club-popup>
+					<BaseSelect.Popup
+						className="club-popup"
+						data-club-popup
+						data-people={options.some((option) => option.person) || undefined}
+					>
 						<HoverSurface>
 							<BaseSelect.List className="club-popup-list">
 								{options.length === 0 ? (

@@ -5,14 +5,7 @@ import {
 	ThemeProvider,
 } from "expo-router/react-navigation";
 import { StatusBar } from "expo-status-bar";
-import { useSetAtom } from "jotai";
-import {
-	type ReactElement,
-	type ReactNode,
-	useLayoutEffect,
-	useMemo,
-} from "react";
-import { useColorScheme } from "react-native";
+import { type ReactElement, type ReactNode, useMemo } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ActionToaster } from "./action-toaster";
@@ -30,7 +23,7 @@ import { PopupStyles } from "./popup-styles";
 import { ScrollbarStyles } from "./scrollbar-styles";
 import { Stack } from "./stack";
 import { Text } from "./text";
-import { systemThemeAtom, useTheme } from "./theme";
+import { useTheme } from "./theme";
 import { useClientReady } from "./use-client-ready";
 
 export const DesignProvider = ({
@@ -40,12 +33,6 @@ export const DesignProvider = ({
 }): ReactElement => {
 	const [loaded, error] = useFonts(fontSources);
 	const clientReady = useClientReady();
-	const system = useColorScheme();
-	const setSystemTheme = useSetAtom(systemThemeAtom);
-	useLayoutEffect(
-		(): void => setSystemTheme(system === "dark" ? "dark" : "light"),
-		[system, setSystemTheme],
-	);
 	const theme = useTheme();
 	const navigationTheme = useMemo(() => {
 		const base = theme.mode === "dark" ? DarkTheme : DefaultTheme;

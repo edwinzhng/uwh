@@ -3,7 +3,11 @@ import { useApp } from "../demo/app-state";
 import { LineupPreview } from "../design-system";
 import { memberName } from "../domain/app-rules";
 import type { TeamPlan } from "../domain/app-types";
-import { formationPositions, lineupSnapshot } from "../domain/lineup";
+import {
+	formationPositions,
+	lineupSlotAbbreviation,
+	lineupSnapshot,
+} from "../domain/lineup";
 
 export const TeamLineupPreview = ({
 	plan,
@@ -15,8 +19,14 @@ export const TeamLineupPreview = ({
 	const groups = plan.separateYouth ? ["adult", "youth"] : ["combined"];
 	return (
 		<LineupPreview
-			teams={groups.flatMap((group) =>
-				(["black", "white"] as const).map((side) => {
+			groups={groups.map((group) => ({
+				label:
+					group === "combined"
+						? undefined
+						: group === "adult"
+							? "Adults"
+							: "Youth",
+				teams: (["black", "white"] as const).map((side) => {
 					const formation =
 						side === "black"
 							? snapshot.blackFormation
@@ -33,6 +43,7 @@ export const TeamLineupPreview = ({
 						)?.personId;
 						return {
 							position,
+							positionLabel: lineupSlotAbbreviation(formation, slot),
 							id: `${group}:${side}:${slot}`,
 							name: personId
 								? (memberName(data, personId).split(" ").at(0) ??
@@ -41,8 +52,9 @@ export const TeamLineupPreview = ({
 						};
 					});
 					return {
-						label: `${side === "black" ? "Black" : "White"}${group === "combined" ? "" : group === "adult" ? " · Adults" : " · Youth"}`,
+						label: side === "black" ? "Black" : "White",
 						formation,
+						side,
 						rows: [
 							spots.filter((spot) => spot.position === "FORWARD"),
 							spots.filter(
@@ -53,7 +65,7 @@ export const TeamLineupPreview = ({
 						].filter((row) => row.length > 0),
 					};
 				}),
-			)}
+			}))}
 		/>
 	);
 };

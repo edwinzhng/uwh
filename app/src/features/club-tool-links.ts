@@ -44,18 +44,6 @@ export const clubToolLinks = {
 		icon: "document",
 		href: { pathname: "/resources", params: { kind: "document" } },
 	},
-	coaching: {
-		title: "Overview",
-		description: "Practice preparation and review queue",
-		icon: "home",
-		href: { pathname: "/", params: { view: "coaching" } },
-	},
-	reviews: {
-		title: "Player ratings",
-		description: "Goals and coach assessments",
-		icon: "users",
-		href: "/development",
-	},
 	hours: {
 		title: "Hours",
 		icon: "clock",

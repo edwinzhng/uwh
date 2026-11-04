@@ -5,13 +5,12 @@ import {
 	usePreviewSessionPerformance,
 } from "../backend/use-session-performance";
 import { useApp } from "../demo/app-state";
-import type { SessionPerformanceKind } from "../domain/session-performance";
 import { SessionPerformanceEditor } from "./session-performance-editor";
 
 type Props = {
 	personId: string;
 	eventId?: string;
-	kind: SessionPerformanceKind;
+	kind: "self";
 	onClose: () => void;
 };
 const Task = ({

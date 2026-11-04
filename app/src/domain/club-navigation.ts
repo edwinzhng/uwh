@@ -7,8 +7,6 @@ export type ClubTool =
 	| "fitness"
 	| "videos"
 	| "documents"
-	| "coaching"
-	| "reviews"
 	| "hours"
 	| "attendance"
 	| "registration"
@@ -37,7 +35,6 @@ export const clubToolGroups = (account: Account): ClubToolGroup[] => {
 		{
 			title: "Coaching",
 			tools: [
-				...(coach ? (["coaching", "reviews"] as const) : []),
 				...(coach || account.admin ? (["hours"] as const) : []),
 				...(coach ? (["attendance"] as const) : []),
 			],

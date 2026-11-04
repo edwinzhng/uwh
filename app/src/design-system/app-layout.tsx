@@ -160,10 +160,13 @@ export const AppLayout = ({
 			/>
 		)
 	) : nativeHeader && workspaceTitle ? undefined : nativeHeader ? (
-		title || subtitle || titleAccessory || headingAction ? (
+		title || subtitle || headingAction ? (
 			<Stack gap="xs">
 				{title ? (
-					<Text variant={workspace ? "h3" : "h1"}>{title}</Text>
+					<Row>
+						<Text variant={workspace ? "h3" : "h1"}>{title}</Text>
+						{titleAccessory}
+					</Row>
 				) : undefined}
 				<Row justify="between" align="center" wrap>
 					{subtitle ? (
@@ -171,7 +174,6 @@ export const AppLayout = ({
 							{subtitle}
 						</Text>
 					) : undefined}
-					{titleAccessory}
 					{headingAction}
 				</Row>
 			</Stack>
@@ -195,7 +197,7 @@ export const AppLayout = ({
 			}}
 		>
 			{workspaceTitle ? (
-				<GlassBackdrop material="floating" radius={0} />
+				<GlassBackdrop material="floating" radius={0} softEdge />
 			) : undefined}
 			{back}
 			<View style={{ flex: 1, minWidth: 0, gap: space.xxs }}>
@@ -290,7 +292,16 @@ export const AppLayout = ({
 							? (): ReactNode => toolbarCenter
 							: workspaceTitle
 								? (): ReactNode => workspaceTitle
-								: undefined,
+								: titleAccessory
+									? (): ReactNode => (
+											<Row gap="xs">
+												<Text variant="h4" lines={1}>
+													{title}
+												</Text>
+												{titleAccessory}
+											</Row>
+										)
+									: undefined,
 						headerTitleAlign: toolbarCenter
 							? "center"
 							: workspaceTitle

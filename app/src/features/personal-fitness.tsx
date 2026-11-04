@@ -31,7 +31,6 @@ export const PersonalFitness = ({
 		<Stack gap="sm">
 			{!full ? (
 				<SectionHeading
-					size="small"
 					action={
 						<Button
 							label="View all"

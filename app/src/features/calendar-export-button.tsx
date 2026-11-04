@@ -36,6 +36,14 @@ export const CalendarExportButton = (): ReactElement => {
 			/>
 			<Dialog
 				title={calendarViewTitle(view)}
+				back={
+					view === "choose"
+						? undefined
+						: {
+								label: "Calendar options",
+								onPress: (): void => setView("choose"),
+							}
+				}
 				focusKey={view}
 				isOpen={open}
 				isDismissDisabled={busy}
@@ -55,7 +63,6 @@ export const CalendarExportButton = (): ReactElement => {
 						setSelected(ids);
 						setView(calendarViewAfterScopeChange(view));
 					}}
-					onBack={(): void => setView("choose")}
 				/>
 			</Dialog>
 		</>

@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import { useAtom } from "jotai";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import {
@@ -14,8 +13,6 @@ import {
 	SegmentedControl,
 	Stack,
 	Text,
-	ThemeToggle,
-	themePreferenceAtom,
 } from "../design-system";
 import { type ClubTool, clubToolGroups } from "../domain/club-navigation";
 import { defaultSeasonId } from "../domain/seasons";
@@ -48,7 +45,6 @@ export const ClubCardOptionsScreen = (): ReactElement => {
 	const { account, data } = useApp();
 	const router = useRouter();
 	const today = useClubToday();
-	const [theme, setTheme] = useAtom(themePreferenceAtom);
 	const [viewport, setViewport] = useState<"phone" | "desktop">("phone");
 	const seasonId =
 		data.seasons.find((season) => season.start <= today && season.end >= today)
@@ -77,7 +73,6 @@ export const ClubCardOptionsScreen = (): ReactElement => {
 			}
 		>
 			<Stack gap="sm">
-				<ThemeToggle value={theme} onValueChange={setTheme} />
 				<SegmentedControl
 					label="Preview size"
 					value={viewport}

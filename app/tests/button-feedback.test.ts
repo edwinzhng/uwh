@@ -11,15 +11,6 @@ import {
 } from "../src/design-system/native-haptics.web";
 import { darkTheme, lightTheme } from "../src/design-system/tokens";
 
-test("compact buttons reduce horizontal chrome while retaining touch-sized targets", async (): Promise<void> => {
-	const button = await Bun.file("src/design-system/button-control.tsx").text();
-	expect(button).toContain(
-		"minWidth: icon || compact ? controlSize : undefined",
-	);
-	expect(button).toContain("? space.xs");
-	expect(button).toContain("minHeight: controlSize");
-});
-
 test("utility selection is neutral and distinct from hover while primary and destructive actions retain their meanings", (): void => {
 	for (const theme of [lightTheme, darkTheme]) {
 		expect(buttonColors(theme, "secondary", "rest").background).toBe(

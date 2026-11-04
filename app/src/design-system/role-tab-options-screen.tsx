@@ -1,4 +1,3 @@
-import { useAtom } from "jotai";
 import { type ReactElement, useState } from "react";
 import { AppLayout } from "./app-layout";
 import { EmptyState } from "./empty-state";
@@ -8,18 +7,14 @@ import { RoleTabPreview } from "./role-tab-preview";
 import { Row } from "./row";
 import { SegmentedControl } from "./segmented-control";
 import { Stack } from "./stack";
-import { themePreferenceAtom } from "./theme";
-import { ThemeToggle } from "./theme-toggle";
 
 export const RoleTabOptionsScreen = (): ReactElement => {
 	const [viewport, setViewport] = useState<"phone" | "desktop">("phone");
-	const [theme, setTheme] = useAtom(themePreferenceAtom);
 	if (process.env.EXPO_PUBLIC_REVIEW_MODE !== "true")
 		return <EmptyState title="Review unavailable" />;
 	return (
 		<AppLayout title="Tab styles">
 			<Stack gap="lg">
-				<ThemeToggle value={theme} onValueChange={setTheme} />
 				<Row justify="between" wrap>
 					<SegmentedControl
 						label="Viewport"

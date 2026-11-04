@@ -18,7 +18,7 @@ import type { PoolBoardDrag } from "./pool-board-layout";
 import { useTheme } from "./theme";
 import { corners, space } from "./tokens";
 
-type DropTarget = (personId: string, x: number, y: number) => void;
+type DropTarget = (personId: string, x: number, y: number) => Promise<void>;
 export const PoolBoardContext = createContext<
 	| {
 			register: (id: string, target: DropTarget) => void;
@@ -53,8 +53,12 @@ export const PoolBoardGroup = ({
 			unregister: (id: string): void => {
 				targets.current.delete(id);
 			},
-			drop: (personId: string, x: number, y: number): void => {
-				for (const target of targets.current.values()) target(personId, x, y);
+			drop: async (personId: string, x: number, y: number): Promise<void> => {
+				await Promise.all(
+					Array.from(targets.current.values(), (target) =>
+						target(personId, x, y),
+					),
+				);
 			},
 			drag,
 		}),

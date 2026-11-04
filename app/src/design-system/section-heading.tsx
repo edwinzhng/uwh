@@ -9,7 +9,6 @@ type Props = {
 	children: ReactNode;
 	action?: ReactNode;
 	badge?: ReactNode;
-	size?: "small";
 	icon?: IconName;
 };
 

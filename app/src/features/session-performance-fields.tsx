@@ -1,15 +1,12 @@
 import type { ReactElement } from "react";
 import { Button, Field, Select, Stack, Text } from "../design-system";
-import type { SessionPerformanceKind } from "../domain/session-performance";
 import type { useFormTask } from "./use-form-task";
 import type { useSessionPerformanceForm } from "./use-session-performance-form";
 
 export const SessionPerformanceFields = ({
-	kind,
 	task,
 	form,
 }: {
-	kind: SessionPerformanceKind;
 	task: ReturnType<typeof useFormTask>;
 	form: ReturnType<typeof useSessionPerformanceForm>;
 }): ReactElement => (
@@ -26,9 +23,7 @@ export const SessionPerformanceFields = ({
 			}))}
 		/>
 		<Field
-			label={
-				kind === "coach" ? "Coach feedback · optional" : "Reflection · optional"
-			}
+			label="Reflection · optional"
 			value={form.comments}
 			onValueChange={form.setComments}
 			multiline
@@ -36,8 +31,7 @@ export const SessionPerformanceFields = ({
 			isDisabled={task.busy || form.readOnly}
 		/>
 		<Text variant="small" tone="secondary">
-			Shared only with this player, their linked guardians and club coaches.
-			This does not change a goal or team-balancing rating.
+			Visible to you, your linked guardians and club coaches.
 		</Text>
 		{form.changed ? (
 			<Button

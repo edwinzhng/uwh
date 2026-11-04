@@ -49,16 +49,6 @@ test("phone navigation keeps four destinations while Account remains available f
 	});
 });
 
-test("navigation icons retain one outline family in selected and unselected states", async (): Promise<void> => {
-	const navigation = await Bun.file(
-		"src/design-system/navigation-control.tsx",
-	).text();
-	const icon = await Bun.file("src/design-system/icon.tsx").text();
-	expect(navigation).not.toContain("filled=");
-	expect(icon).toContain('fill="none"');
-	expect(icon).not.toContain("filled?:");
-});
-
 test("tab selection and underline geometry move immediately before the route update", (): void => {
 	const items = [
 		{ label: "Home", selected: true },
