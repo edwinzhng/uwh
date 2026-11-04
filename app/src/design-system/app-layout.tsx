@@ -2,7 +2,7 @@ import {
 	Stack as RouterStack,
 	useIsFocused,
 	useLocalSearchParams,
-	useSegments,
+	useRoute,
 } from "expo-router";
 import {
 	getDefaultHeaderHeight,
@@ -83,12 +83,11 @@ export const AppLayout = ({
 	const dimensions = useWindowDimensions();
 	const { width } = dimensions;
 	const insets = useSafeAreaInsets();
-	const segments = useSegments();
+	const route = useRoute();
 	const routeParameters = useLocalSearchParams();
 	const contentKey = JSON.stringify(routeParameters);
 	const nativeNavigation = nativeTabsAvailable();
-	const nativeHeader =
-		Platform.OS !== "web" && nativeHeaderRoute(segments.at(0) ?? "");
+	const nativeHeader = Platform.OS !== "web" && nativeHeaderRoute(route.name);
 	const measuredHeaderHeight = useContext(HeaderHeightContext);
 	const headerHeight = nativeHeader
 		? measuredHeaderHeight && measuredHeaderHeight > 0
@@ -96,7 +95,8 @@ export const AppLayout = ({
 			: getDefaultHeaderHeight(dimensions, false, insets.top)
 		: 0;
 	const bottomClearance =
-		nativeNavigation && segments.at(0) === "(tabs)"
+		nativeNavigation &&
+		["index", "schedule", "messages", "club"].includes(route.name)
 			? geometry.tab + insets.bottom
 			: insets.bottom;
 	const wide = width >= geometry.wide && !nativeNavigation;

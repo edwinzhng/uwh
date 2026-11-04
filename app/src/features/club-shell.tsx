@@ -1,4 +1,4 @@
-import { useGlobalSearchParams, usePathname } from "expo-router";
+import { useLocalSearchParams, useRoute } from "expo-router";
 import type { ReactElement, ReactNode } from "react";
 import { useApp, useAppStatus } from "../demo/app-state";
 import {
@@ -13,7 +13,11 @@ import {
 	Stack,
 	Text,
 } from "../design-system";
-import { isPrimaryDestination, pageRoleTone } from "../domain/page-navigation";
+import {
+	isPrimaryDestination,
+	pagePathname,
+	pageRoleTone,
+} from "../domain/page-navigation";
 import { FamilyMenu } from "./family-menu";
 import { NotificationsMenu } from "./notifications-menu";
 import { hasRouteBack, RouteBack } from "./route-back";
@@ -54,8 +58,8 @@ export const ClubShell = ({
 	scrollable,
 	presentation = "page",
 }: Props): ReactElement => {
-	const pathname = usePathname();
-	const { headerOption } = useGlobalSearchParams<{ headerOption?: string }>();
+	const pathname = pagePathname(useRoute().name);
+	const { headerOption } = useLocalSearchParams<{ headerOption?: string }>();
 	const headerLayout =
 		process.env.EXPO_PUBLIC_REVIEW_MODE === "true" &&
 		(headerOption === "compact" ||

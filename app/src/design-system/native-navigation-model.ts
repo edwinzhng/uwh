@@ -1,4 +1,4 @@
-import { isPrimaryDestination } from "../domain/page-navigation";
+import { isPrimaryDestination, pagePathname } from "../domain/page-navigation";
 
 const headerlessRoutes = [
 	"(tabs)",
@@ -10,7 +10,7 @@ const headerlessRoutes = [
 
 export const nativeHeaderRoute = (name: string): boolean =>
 	Boolean(name) &&
-	!isPrimaryDestination(`/${name}`) &&
+	!isPrimaryDestination(pagePathname(name)) &&
 	!headerlessRoutes.includes(name);
 
 const routeTitles: Record<string, string> = {

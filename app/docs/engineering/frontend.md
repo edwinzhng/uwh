@@ -15,6 +15,7 @@
 - Preserve deterministic Back destinations, deep links, focus restoration and native gestures.
 - Route and tab content switches are instant. Keep navigator scenes opaque and page layouts free of reveal animations; resolve selected tabs directly from route parameters.
 - The shared page shell owns safe-area padding through `useSafeAreaInsets`; include those insets in layout readiness so native padding cannot settle independently after content appears.
+- Derive screen header, role and padding from `useRoute` and local parameters. Global path/segment hooks describe the active screen and must not resize other mounted screens underneath it.
 - Register initial query loading with `LoadingBoundary` or `usePageLoading`, including optional sections that initially return nothing. `PageReady` waits for initial data and settled layout for each route-parameter identity; pagination and later reactive updates must not blank an already visible page.
 - Use shared motion tokens; respect reduced motion/transparency, cancel interruptions and pause inactive work.
 - Verify keyboard access, visible focus, accessible names, large text and touch targets.

@@ -15,10 +15,11 @@ export const inspectNavigationBoundary = (
 	const basename = filename.split("/").at(-1) ?? filename;
 	const navigator = navigatorFiles.has(basename);
 	const content = contentFiles.has(basename);
+	const shell = basename === "app-layout.tsx" || basename === "club-shell.tsx";
 	const home = /(?:features\/home-[^/]+|backend\/home-fitness-data)\.tsx$/.test(
 		filename,
 	);
-	if (!navigator && !content && !home) return [];
+	if (!navigator && !content && !home && !shell) return [];
 	const file = ts.createSourceFile(
 		filename,
 		source,
@@ -59,6 +60,17 @@ export const inspectNavigationBoundary = (
 			);
 	};
 	const inspect = (node: ts.Node): void => {
+		if (
+			shell &&
+			ts.isImportSpecifier(node) &&
+			["usePathname", "useSegments", "useGlobalSearchParams"].includes(
+				(node.propertyName ?? node.name).text,
+			)
+		)
+			fail(
+				node,
+				"Screen layout must use its own route and local parameters; global route changes must not resize mounted background screens.",
+			);
 		if (
 			basename === "app-layout.tsx" &&
 			ts.isImportSpecifier(node) &&

@@ -16,6 +16,10 @@ test("native detail pages keep native back controls without exposing a fifth pri
 	for (const name of [
 		"",
 		"(tabs)",
+		"index",
+		"messages",
+		"schedule",
+		"club",
 		"account",
 		"join",
 		"auth-callback",

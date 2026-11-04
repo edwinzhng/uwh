@@ -18,3 +18,16 @@ test("shared shell accepts React-owned insets and explicit page readiness", (): 
 		),
 	).toEqual([]);
 });
+
+test("mounted screen layouts reject globally active route hooks, including aliases", (): void => {
+	for (const filename of ["app-layout.tsx", "club-shell.tsx"])
+		for (const hook of ["usePathname", "useSegments", "useGlobalSearchParams"])
+			expect(
+				inspectNavigationBoundary(
+					`import { ${hook} as activeRoute } from "expo-router"; const Layout = () => <PageReady contentKey="route" />;`,
+					filename,
+				),
+			).toEqual([
+				expect.stringContaining("Screen layout must use its own route"),
+			]);
+});

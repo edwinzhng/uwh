@@ -6,6 +6,9 @@ const primaryDestinations = [
 	"/club",
 ];
 
+export const pagePathname = (routeName: string): string =>
+	routeName === "index" || routeName === "(tabs)" ? "/" : `/${routeName}`;
+
 export const isPrimaryDestination = (pathname: string): boolean =>
 	primaryDestinations.includes(pathname);
 
