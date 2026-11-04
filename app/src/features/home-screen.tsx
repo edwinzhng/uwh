@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { atom, useAtom } from "jotai";
 import type { ReactElement } from "react";
+import { HomeWorkspace } from "../backend/home-workspace";
 import { useApp } from "../demo/app-state";
 import {
 	ContextPicker,
@@ -18,7 +19,7 @@ import { useClubNow } from "./use-club-now";
 
 const homeWorkspaceAtom = atom<Record<string, "personal" | "coaching">>({});
 
-export const HomeScreen = (): ReactElement => {
+const HomeContent = (): ReactElement => {
 	const { data, account } = useApp();
 	const router = useRouter();
 	const params = useLocalSearchParams<{
@@ -76,3 +77,9 @@ export const HomeScreen = (): ReactElement => {
 		</ClubShell>
 	);
 };
+
+export const HomeScreen = (): ReactElement => (
+	<HomeWorkspace>
+		<HomeContent />
+	</HomeWorkspace>
+);

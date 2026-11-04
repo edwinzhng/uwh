@@ -1,0 +1,6 @@
+- Features import the public API from `src/design-system`; fix shared visual defects in their owner and verify callers.
+- Shared foundations: [package entry points](../../packages/design-system/README.md), [tokens](../../packages/design-system/src/tokens.ts), [motion](../../packages/design-system/MOTION.md).
+- App components and native/web adapters live in `app/src/design-system`; keep their semantic APIs consistent across platforms.
+- Use the existing text scale, neutral utility icons and component variants. Prefer one-line routine empty states; retain text that explains privacy, restrictions or recovery.
+- Keep screen geometry and data tied to the owning route. Headers and their fades must not cover adjacent controls.
+- Review task-specific layouts, narrow widths, large text, keyboard/focus and reduced accessibility settings using the [frontend](engineering/frontend.md) and [testing](engineering/testing.md) guides.

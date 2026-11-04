@@ -152,10 +152,7 @@ const LivePublicScheduleScreen = (): ReactElement => {
 							status === "LoadingFirstPage" ? (
 								<LoadingContent />
 							) : (
-								<EmptyState
-									title="No public events"
-									description="Choose another date or check back when the club publishes more events."
-								/>
+								<EmptyState title="No public events" />
 							)
 						) : undefined}
 						{status === "CanLoadMore" || status === "LoadingMore" ? (

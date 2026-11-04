@@ -116,10 +116,7 @@ const EditorDialog = ({
 						}))}
 					/>
 				) : (
-					<EmptyState
-						title="No eligible sessions"
-						description="Choose a scheduled practice for this player once one is available."
-					/>
+					<EmptyState title="No eligible sessions" />
 				)}
 
 				{service.canLoadMore || service.loadingMore ? (

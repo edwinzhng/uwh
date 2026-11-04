@@ -55,10 +55,7 @@ export const MemberMergeTargets = ({
 								/>
 							))}
 						{!items.length ? (
-							<EmptyState
-								title="No active members found"
-								description="Try a different name."
-							/>
+							<EmptyState title="No active members found" />
 						) : undefined}
 					</List>
 				)}

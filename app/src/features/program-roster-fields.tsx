@@ -59,10 +59,7 @@ export const ProgramRosterFields = ({
 				))}
 			</List>
 			{!matching.length ? (
-				<EmptyState
-					title="No matching members"
-					description="Try another name."
-				/>
+				<EmptyState title="No matching members" />
 			) : undefined}
 		</Stack>
 	);

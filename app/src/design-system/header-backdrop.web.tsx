@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { useReduceTransparency } from "./material-accessibility";
+import { headerFade } from "./materials";
 import { useTheme } from "./theme";
-import { space } from "./tokens";
 
 export const HeaderBackdrop = ({
 	topInset = 0,
@@ -17,7 +17,6 @@ export const HeaderBackdrop = ({
 				position: "absolute",
 				inset: 0,
 				top: -topInset,
-				bottom: opaque ? 0 : -space.lg,
 				pointerEvents: "none",
 				background: opaque
 					? theme.background.primary
@@ -26,10 +25,10 @@ export const HeaderBackdrop = ({
 				WebkitBackdropFilter: opaque ? undefined : "blur(4px)",
 				maskImage: opaque
 					? undefined
-					: "linear-gradient(black 60%, transparent)",
+					: `linear-gradient(black ${headerFade.start * 100}%, transparent ${headerFade.end * 100}%)`,
 				WebkitMaskImage: opaque
 					? undefined
-					: "linear-gradient(black 60%, transparent)",
+					: `linear-gradient(black ${headerFade.start * 100}%, transparent ${headerFade.end * 100}%)`,
 			}}
 		/>
 	);

@@ -291,10 +291,7 @@ export const EventScreen = (): ReactElement => {
 					) : undefined}
 				</>
 			) : (
-				<EmptyState
-					title="Event unavailable"
-					description="Return to Schedule to choose another event."
-				/>
+				<EmptyState title="Event unavailable" />
 			)}
 		</ClubShell>
 	);

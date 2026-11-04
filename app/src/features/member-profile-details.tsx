@@ -19,10 +19,7 @@ export const MemberProfileDetails = ({
 					{member.goal ? (
 						<Text>{member.goal}</Text>
 					) : (
-						<EmptyState
-							title="No goal yet"
-							description="Set a goal with your coach to give your training a focus."
-						/>
+						<EmptyState title="No goal" />
 					)}
 				</Surface>
 			) : undefined}

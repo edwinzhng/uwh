@@ -12,8 +12,10 @@ export const EmptyState = ({
 	description?: string;
 	action?: ReactNode;
 }): ReactElement => (
-	<Stack gap="xs" padding="sm">
-		<Text variant="label">{title}</Text>
+	<Stack gap={action ? "sm" : "xs"}>
+		<Text variant="small" tone="secondary">
+			{title}
+		</Text>
 		{description ? (
 			<Text variant="small" tone="secondary">
 				{description}

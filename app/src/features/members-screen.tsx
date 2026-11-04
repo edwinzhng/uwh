@@ -168,11 +168,6 @@ export const MembersScreen = (): ReactElement => {
 															? "No archived members"
 															: "No members found"
 													}
-													description={
-														archived
-															? undefined
-															: "Try another name or clear your search."
-													}
 												/>
 											) : undefined}
 										</List>

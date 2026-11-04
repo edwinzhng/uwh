@@ -57,13 +57,7 @@ export const CoachingHoursReport = ({
 		practice.coaches.some((entry) => entry.coachId === coach?.coachId),
 	);
 	if (loading) return <LoadingContent />;
-	if (!coach)
-		return (
-			<EmptyState
-				title="No coaches yet"
-				description="Program coaches will appear here when coaching access is assigned."
-			/>
-		);
+	if (!coach) return <EmptyState title="No coaches assigned" />;
 	return (
 		<Stack gap="lg">
 			{editing && editingPractice?.durationEditable && editingAssignment ? (
@@ -169,10 +163,7 @@ export const CoachingHoursReport = ({
 						</LocalPage>
 					</Surface>
 				) : (
-					<EmptyState
-						title="No completed practices"
-						description={`${coach.name} has no recorded coaching hours this season.`}
-					/>
+					<EmptyState title="No completed practices" />
 				)}
 			</Stack>
 		</Stack>

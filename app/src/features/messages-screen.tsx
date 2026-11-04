@@ -157,10 +157,7 @@ const MessagesContent = ({
 							/>
 						</Stack>
 					) : (
-						<EmptyState
-							title="No members available"
-							description="There are no other members you can message right now."
-						/>
+						<EmptyState title="No members available" />
 					)}
 
 					{task.error ? (

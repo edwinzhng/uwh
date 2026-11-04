@@ -116,11 +116,10 @@ export const EventEligibility = ({
 						))}
 						{!matchingPlayers.length ? (
 							<EmptyState
-								title={search.trim() ? "No players found" : "No players yet"}
-								description={
+								title={
 									search.trim()
-										? "Try another name or clear your search."
-										: "Add players to a program before choosing who can register."
+										? "No matching players"
+										: "Add players to a program first"
 								}
 							/>
 						) : undefined}

@@ -27,7 +27,6 @@ export const CoachDashboard = ({
 			) : (
 				<EmptyState
 					title="No upcoming practices"
-					description="Open Schedule to find another practice."
 					action={
 						<Button
 							label="Open schedule"
@@ -44,13 +43,11 @@ export const CoachDashboard = ({
 					<Stack gap="none">
 						<ListItem
 							title="Fitness tests"
-							description="Record and review swim tests"
 							icon={featureIdentity.fitness.icon}
 							onPress={(): void => router.push("/fitness")}
 						/>
 						<ListItem
 							title="Coaching hours"
-							description="Practice assignments and recorded hours"
 							icon="clock"
 							onPress={(): void => router.push("/coaching-hours")}
 						/>

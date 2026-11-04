@@ -81,12 +81,7 @@ const PlanContent = ({
 						</Disclosure>
 					) : undefined}
 					{!plan.body && !plan.notes && !plan.media.length ? (
-						<Surface>
-							<EmptyState
-								title="No plan yet"
-								description="Write the practice plan."
-							/>
-						</Surface>
+						<EmptyState title="No plan" />
 					) : undefined}
 					{open ? (
 						<SessionPlanEditor

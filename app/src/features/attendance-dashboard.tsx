@@ -57,12 +57,7 @@ export const AttendanceDashboard = ({
 	const [visible, setVisible] = useState(30);
 	if (!result) return <LoadingContent />;
 	if (result.limited)
-		return (
-			<EmptyState
-				title="Choose a smaller period"
-				description="This range is too large for a complete report. Choose a month to see accurate totals and rankings."
-			/>
-		);
+		return <EmptyState title="Choose a month for a complete report" />;
 	const rows = attendanceDashboardRows(result.rows, sort, band, search);
 	return (
 		<Stack gap="lg">
@@ -185,12 +180,7 @@ export const AttendanceDashboard = ({
 					/>
 				))}
 			</Stack>
-			{!rows.length ? (
-				<EmptyState
-					title="No players match"
-					description="Try another program, day, period or attendance filter."
-				/>
-			) : undefined}
+			{!rows.length ? <EmptyState title="No players match" /> : undefined}
 			<InfiniteScroll
 				revision={visible}
 				loadMore={

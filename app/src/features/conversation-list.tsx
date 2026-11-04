@@ -76,18 +76,11 @@ export const ConversationList = ({
 			) : (
 				<EmptyState
 					title={
-						filter === "unread"
-							? "You’re all caught up"
-							: search.trim()
-								? "No conversations found"
-								: "No conversations yet"
-					}
-					description={
-						filter === "unread"
-							? undefined
-							: search.trim()
-								? "Try another name or clear your search."
-								: "Start a message or open a session discussion to begin a conversation."
+						search.trim()
+							? "No matching chats"
+							: filter === "unread"
+								? "No unread chats"
+								: "No chats"
 					}
 				/>
 			)}

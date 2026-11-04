@@ -78,10 +78,7 @@ export const EquipmentInventory = ({
 				})}
 				{!page.length ? (
 					<Stack padding="sm">
-						<EmptyState
-							title="No items"
-							description="Add equipment to start tracking your inventory."
-						/>
+						<EmptyState title="No items" />
 					</Stack>
 				) : undefined}
 			</Stack>

@@ -68,10 +68,7 @@ export const SessionPlayerFeedback = ({
 						/>
 					))}
 					{!players.length ? (
-						<EmptyState
-							title="No eligible players"
-							description="Player feedback becomes available when players are eligible for this session."
-						/>
+						<EmptyState title="No eligible players" />
 					) : undefined}
 				</List>
 			</Surface>

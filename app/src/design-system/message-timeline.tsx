@@ -121,14 +121,7 @@ export const MessageTimeline = <T extends { id: string }>({
 				}}
 				onEndReachedThreshold={0.2}
 				ListEmptyComponent={
-					loading ? (
-						<LoadingContent />
-					) : (
-						<EmptyState
-							title="No messages yet"
-							description="Start the conversation below."
-						/>
-					)
+					loading ? <LoadingContent /> : <EmptyState title="No messages" />
 				}
 				ListFooterComponent={
 					loadingMore ? (

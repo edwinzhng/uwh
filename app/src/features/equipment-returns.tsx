@@ -45,12 +45,7 @@ export const EquipmentReturns = ({
 						/>
 					))}
 					{!items.length ? (
-						<EmptyState
-							title={term ? "No matching returns" : "No returns"}
-							description={
-								term ? "Try another item or borrower name." : undefined
-							}
-						/>
+						<EmptyState title={term ? "No matching returns" : "No returns"} />
 					) : undefined}
 				</List>
 			)}

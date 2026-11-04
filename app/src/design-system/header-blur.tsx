@@ -3,6 +3,7 @@ import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import type { ReactElement } from "react";
 import { StyleSheet } from "react-native";
+import { headerFade } from "./materials";
 import { useTheme } from "./theme";
 
 export const HeaderBlur = (): ReactElement => {
@@ -13,7 +14,7 @@ export const HeaderBlur = (): ReactElement => {
 			maskElement={
 				<LinearGradient
 					colors={["black", "black", "transparent"]}
-					locations={[0, 0.6, 1]}
+					locations={[0, headerFade.start, headerFade.end]}
 					style={StyleSheet.absoluteFill}
 				/>
 			}

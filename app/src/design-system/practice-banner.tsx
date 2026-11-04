@@ -1,6 +1,5 @@
 import { type ReactElement, useState } from "react";
 import { Pressable, View } from "react-native";
-import { CardAtmosphere } from "./card-atmosphere";
 import { GlassBackdrop } from "./glass-backdrop";
 import { Icon } from "./icon";
 import { Text } from "./text";
@@ -13,14 +12,12 @@ export const PracticeBanner = ({
 	detail,
 	attendance,
 	onPress,
-	material = "solid",
 }: {
 	label: string;
 	title: string;
 	detail: string;
 	attendance: string;
 	onPress: () => void;
-	material?: "solid" | "liquid";
 }): ReactElement => {
 	const theme = useTheme();
 	const [focused, setFocused] = useState(false);
@@ -43,11 +40,7 @@ export const PracticeBanner = ({
 				borderWidth: geometry.border,
 				borderColor: theme.border,
 				backgroundColor:
-					material === "liquid"
-						? "transparent"
-						: pressed || hovered
-							? theme.background.pressed
-							: theme.background.card,
+					pressed || hovered ? theme.background.pressed : "transparent",
 				flexDirection: "row",
 				alignItems: "center",
 				gap: space.sm,
@@ -56,11 +49,7 @@ export const PracticeBanner = ({
 				outlineOffset: space.half,
 			})}
 		>
-			{material === "liquid" ? (
-				<GlassBackdrop material="floating" radius={corners.panel} />
-			) : (
-				<CardAtmosphere />
-			)}
+			<GlassBackdrop material="floating" radius={corners.panel} />
 			<Icon name="calendar" tone="secondary" size="sm" />
 			<View style={{ flex: 1, minWidth: 0, gap: space.xxs }}>
 				<View

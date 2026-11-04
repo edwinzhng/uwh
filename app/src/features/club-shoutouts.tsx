@@ -42,11 +42,7 @@ export const ClubShoutouts = ({
 				{(entries) => {
 					const latest = entries.at(0);
 					return (
-						<SpotlightCard
-							title="Shoutouts"
-							tone="violet"
-							description={latest ? undefined : "Who made your session?"}
-						>
+						<SpotlightCard title="Shoutouts" tone="violet">
 							<Stack gap="sm">
 								{latest ? (
 									<ListItem
@@ -91,8 +87,8 @@ export const ClubShoutouts = ({
 						))
 					) : (
 						<EmptyState
-							title="No shoutouts yet"
-							description="Shoutouts you receive will appear here. They’re visible only to you and your linked household."
+							title="No shoutouts"
+							description="Visible only to you and your household."
 						/>
 					)
 				}

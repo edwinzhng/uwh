@@ -79,10 +79,7 @@ export const ResourcePlayerPicker = ({
 									/>
 								))}
 							{!items.length ? (
-								<EmptyState
-									title="No players found"
-									description="Try a different name."
-								/>
+								<EmptyState title="No players found" />
 							) : undefined}
 						</List>
 					)}

@@ -144,11 +144,8 @@ export const ProgramsScreen = (): ReactElement => {
 				))}
 				{!programs.length ? (
 					<EmptyState
-						title="No programs"
-						description={
-							filter === "archived"
-								? "Archived programs keep their history."
-								: "Create a program to set its roster and weekly schedule."
+						title={
+							filter === "archived" ? "No archived programs" : "No programs"
 						}
 					/>
 				) : undefined}

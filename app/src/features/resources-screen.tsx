@@ -202,20 +202,11 @@ const ResourceWorkspace = ({
 								title={
 									filters.search
 										? state.loadMore
-											? "No matches in this batch"
+											? "Searching files…"
 											: "No matching files"
 										: filters.archived
 											? "No archived files"
 											: "No files"
-								}
-								description={
-									filters.search
-										? state.loadMore
-											? "Searching the library…"
-											: "Try another search."
-										: canManage
-											? "Add a document or video for your club."
-											: undefined
 								}
 							/>
 						) : undefined}

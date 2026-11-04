@@ -96,10 +96,7 @@ export const FitnessOverview = ({
 								{overview.loading ? (
 									<LoadingContent />
 								) : !overview.rows.length ? (
-									<EmptyState
-										title="No active tests"
-										description="Create a test to compare results."
-									/>
+									<EmptyState title="No active tests" />
 								) : undefined}
 							</List>
 						</Surface>

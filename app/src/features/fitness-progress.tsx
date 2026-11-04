@@ -67,10 +67,7 @@ export const FitnessProgress = ({
 											}
 										/>
 									) : trends ? (
-										<EmptyState
-											title="No results for these players"
-											description="Record results for the selected players to compare their progress."
-										/>
+										<EmptyState title="No results for these players" />
 									) : (
 										<LoadingContent />
 									)}
@@ -135,10 +132,7 @@ export const FitnessProgress = ({
 							))}
 							{!page?.page.length ? (
 								page ? (
-									<EmptyState
-										title="No players found"
-										description="Try a different name or clear the search to see more players."
-									/>
+									<EmptyState title="No players found" />
 								) : (
 									<LoadingContent />
 								)

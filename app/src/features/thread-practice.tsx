@@ -39,7 +39,6 @@ const PracticeLink = ({
 	}).format(start);
 	return (
 		<PracticeBanner
-			material="liquid"
 			label={start <= now ? "Practice in progress" : "Next practice"}
 			title={event.title}
 			detail={`${date} · ${formatTimeLocation(eventTimeRange(event.start, event.end), venueName(event.venue))}`}

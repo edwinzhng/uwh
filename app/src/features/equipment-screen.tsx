@@ -129,10 +129,7 @@ export const EquipmentScreen = (): ReactElement => {
 												/>
 											))}
 											{!items.length ? (
-												<EmptyState
-													title="No loans found"
-													description="Try another filter or loan equipment to a member or guest."
-												/>
+												<EmptyState title="No loans found" />
 											) : undefined}
 										</List>
 									)}

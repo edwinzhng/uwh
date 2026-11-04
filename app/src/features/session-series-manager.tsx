@@ -297,10 +297,7 @@ export const SessionSeriesManager = ({
 							</Row>
 						))}
 						{!roster.length ? (
-							<EmptyState
-								title="No commitments yet"
-								description="Invite players to commit to this series or let them join from a session."
-							/>
+							<EmptyState title="No commitments yet" />
 						) : undefined}
 					</Stack>
 				</Disclosure>

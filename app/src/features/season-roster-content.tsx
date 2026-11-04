@@ -90,10 +90,7 @@ export const SeasonRosterContent = ({
 					})
 				)}
 				{records && !members.length ? (
-					<EmptyState
-						title="No members found"
-						description="Try a different search or season."
-					/>
+					<EmptyState title="No members found" />
 				) : undefined}
 			</List>
 		</Surface>

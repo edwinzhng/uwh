@@ -51,14 +51,7 @@ export const SchedulePage = ({
 						return upcoming.length ? (
 							<AgendaEntries entries={upcoming} />
 						) : complete ? (
-							<EmptyState
-								title="No upcoming events"
-								description={
-									programId
-										? "There are no upcoming events for this program."
-										: "New events will appear here."
-								}
-							/>
+							<EmptyState title="No upcoming events" />
 						) : (
 							<LoadingContent />
 						);

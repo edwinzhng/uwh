@@ -118,12 +118,7 @@ export const FitnessResultPage = ({
 							</Stack>
 						) : undefined;
 					})}
-					{!rows.length ? (
-						<EmptyState
-							title="No players found"
-							description="Choose a different group to record results."
-						/>
-					) : undefined}
+					{!rows.length ? <EmptyState title="No players found" /> : undefined}
 				</Stack>
 			</Surface>
 			{dirty ? (

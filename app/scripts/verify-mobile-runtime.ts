@@ -118,7 +118,7 @@ for (const platform of ["ios", "android"]) {
 		"The Home announcement cursor continuation must be present.",
 	);
 	assert(
-		bundle.includes("NativeToolbarButton") &&
+		bundle.includes("ToolbarGroup") &&
 			bundle.includes("Account and notifications") &&
 			bundle.includes('"shield"'),
 		"The compact native toolbar and shield navigation must be present.",

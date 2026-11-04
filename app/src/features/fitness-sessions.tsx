@@ -50,10 +50,7 @@ export const FitnessSessions = ({
 								sessions.status === "LoadingFirstPage" ? (
 									<LoadingContent />
 								) : (
-									<EmptyState
-										title="No sessions this season"
-										description="Add a session to record this test’s results."
-									/>
+									<EmptyState title="No sessions this season" />
 								)
 							) : undefined}
 						</List>

@@ -31,10 +31,7 @@ export const ConversationScreen = (): ReactElement => {
 				{loading ? (
 					<LoadingContent />
 				) : (
-					<EmptyState
-						title="Conversation unavailable"
-						description="Return to Chats to choose a conversation you can access."
-					/>
+					<EmptyState title="Conversation unavailable" />
 				)}
 			</ClubShell>
 		);

@@ -182,11 +182,10 @@ const ParticipantsContent = ({
 						))}
 						{!candidates.length ? (
 							<EmptyState
-								title="No people found"
-								description={
+								title={
 									search.trim()
-										? "Try another name or clear your search."
-										: "Everyone available is already in this conversation."
+										? "No matching people"
+										: "Everyone is already in this chat"
 								}
 							/>
 						) : undefined}

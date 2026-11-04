@@ -176,10 +176,7 @@ export const MemberScreen = (): ReactElement => {
 					)}
 				</TabContent>
 			) : (
-				<EmptyState
-					title="Member unavailable"
-					description="Return to Members to choose another member."
-				/>
+				<EmptyState title="Member unavailable" />
 			)}
 		</ClubShell>
 	);

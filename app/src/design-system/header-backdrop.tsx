@@ -4,7 +4,6 @@ import { StyleSheet, UIManager, View } from "react-native";
 import { nativeFeatureAvailable } from "../platform/native-feature";
 import { useReduceTransparency } from "./material-accessibility";
 import { useTheme } from "./theme";
-import { space } from "./tokens";
 
 const Blur = lazy(() =>
 	import("./header-blur").then((module) => ({ default: module.HeaderBlur })),
@@ -25,10 +24,7 @@ export const HeaderBackdrop = ({
 			pointerEvents="none"
 			accessibilityElementsHidden
 			importantForAccessibility="no-hide-descendants"
-			style={[
-				StyleSheet.absoluteFill,
-				{ top: -topInset, bottom: opaque ? 0 : -space.lg },
-			]}
+			style={[StyleSheet.absoluteFill, { top: -topInset }]}
 		>
 			{opaque ? (
 				<View
