@@ -85,12 +85,16 @@ export const inspectNavigationBoundary = (
 			if (name === "animation") {
 				found.animations += 1;
 				if (
-					!ts.isStringLiteral(node.initializer) ||
-					node.initializer.text !== "none"
+					basename === "app-router.native.tsx"
+						? !ts.isCallExpression(node.initializer) ||
+							node.initializer.expression.getText(file) !==
+								"nativeStackAnimation"
+						: !ts.isStringLiteral(node.initializer) ||
+							node.initializer.text !== "none"
 				)
 					fail(
 						node,
-						"Route and tab navigation must switch instantly; navigator fades are not allowed.",
+						"Web and tab navigation must switch instantly; native detail screens must use the shared reduced-motion stack policy.",
 					);
 			}
 			if (name === "animationDuration")

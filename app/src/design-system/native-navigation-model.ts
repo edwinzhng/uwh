@@ -13,6 +13,12 @@ export const nativeHeaderRoute = (name: string): boolean =>
 	!isPrimaryDestination(pagePathname(name)) &&
 	!headerlessRoutes.includes(name);
 
+export const nativeStackAnimation = (
+	name: string,
+	motionEnabled: boolean,
+): "default" | "none" =>
+	motionEnabled && nativeHeaderRoute(name) ? "default" : "none";
+
 const routeTitles: Record<string, string> = {
 	"(tabs)": "Home",
 	member: "Profile",

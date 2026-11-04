@@ -322,9 +322,11 @@ export const AppLayout = ({
 							: workspaceTitle
 								? "left"
 								: undefined,
-						headerLeft: toolbarLeading
-							? (): ReactNode => toolbarLeading
-							: undefined,
+						headerLeft:
+							toolbarLeading || back
+								? (): ReactNode => toolbarLeading ?? back
+								: undefined,
+						headerBackVisible: toolbarLeading || back ? false : undefined,
 						headerRight: (): ReactNode =>
 							workspaceTitle ? (
 								action

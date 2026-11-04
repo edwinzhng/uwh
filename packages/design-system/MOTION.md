@@ -1,7 +1,7 @@
 - Shared values live in `src/motion.ts`; keep app/site consumers aligned.
 - Use `motion.duration`, `motion.easing`, `motionDurationSeconds` and generated CSS variables.
 - Existing effects are implementation choices; intentional interaction behavior requires review before removal.
-- Club page and tab navigation is instant; do not add scene fades or page reveal wrappers. Keep feedback, dialog and gesture motion independent of page loading.
+- Web pages and tab switches are instant. Native detail screens use the platform stack push transition and its system timing; Reduced Motion disables it. Do not add scene fades or page reveal wrappers. Keep feedback, dialog and gesture motion independent of page loading.
 - Respect reduced motion, preserve immediate state feedback, cancel interruptions and stop inactive animation work.
 - Prefer opacity/transforms and stable layout; measure performance.
 - Run `bun run check:motion` in app and site after motion changes.
