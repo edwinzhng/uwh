@@ -14,7 +14,7 @@ import {
 import { ChatBackdrop } from "./chat-backdrop";
 import { chatSidebarWidth, useChatSidebar } from "./chat-workspace";
 import { CompactPageHeading } from "./compact-page-heading";
-import { GlassBackdrop } from "./glass-backdrop";
+import { HeaderBackdrop } from "./header-backdrop";
 import { nativeTabsAvailable } from "./native-navigation";
 import { nativeHeaderRoute } from "./native-navigation-model";
 import { PageReveal } from "./page-reveal";
@@ -196,9 +196,7 @@ export const AppLayout = ({
 				paddingVertical: space.xs,
 			}}
 		>
-			{workspaceTitle ? (
-				<GlassBackdrop material="floating" radius={0} softEdge />
-			) : undefined}
+			{workspaceTitle ? <HeaderBackdrop topInset={insets.top} /> : undefined}
 			{back}
 			<View style={{ flex: 1, minWidth: 0, gap: space.xxs }}>
 				{workspaceTitle ?? (
@@ -361,6 +359,7 @@ export const AppLayout = ({
 								justifyContent: "flex-end",
 							}}
 						>
+							<HeaderBackdrop topInset={insets.top} />
 							{toolbarLeading || toolbarBack || integratedHeader ? (
 								<View
 									style={{

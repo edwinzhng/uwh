@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import type { ReactElement } from "react";
+import { HeaderBackdrop } from "./header-backdrop";
 import { nativeHeaderRoute, nativeRouteTitle } from "./native-navigation-model";
 import { useTheme } from "./theme";
 import { motion } from "./tokens";
@@ -30,6 +31,7 @@ export const AppRouter = (): ReactElement => {
 					headerShown: nativeHeaderRoute(route.name),
 					headerBackButtonDisplayMode: "generic",
 					headerTransparent: true,
+					headerBackground: (): ReactElement => <HeaderBackdrop />,
 					headerTitle: "",
 					headerTintColor: theme.text.primary,
 					headerStyle: { backgroundColor: "transparent" },

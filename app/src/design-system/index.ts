@@ -22,7 +22,6 @@ export { ChatSidebar, ChatWorkspace } from "./chat-workspace";
 export { Checkbox } from "./checkbox";
 export { ClubCardOption, type ClubCardTreatment } from "./club-card-option";
 export { ClubCardPreviewFrame } from "./club-card-preview-frame";
-export { ClubMark } from "./club-mark";
 export { Combobox } from "./combobox";
 export { ContentReveal } from "./content-reveal";
 export { ContentRow } from "./content-row";

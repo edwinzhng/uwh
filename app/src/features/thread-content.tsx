@@ -127,8 +127,10 @@ export const ThreadContent = ({
 			}
 		>
 			<Stack grow gap="none">
-				<ThreadPractice threadId={thread.id} />
-				<ThreadExtras />
+				<Stack gap="xs" padding="md">
+					<ThreadPractice threadId={thread.id} />
+					<ThreadExtras />
+				</Stack>
 				{read.error ? (
 					<Row justify="between">
 						<Text variant="caption" tone="danger">
