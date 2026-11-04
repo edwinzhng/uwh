@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { type ReactElement, useCallback, useState } from "react";
-import { Image, useWindowDimensions, View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
 import { LoadingBackdrop } from "./loading-backdrop";
 import { loadingColors } from "./loading-colors";
 import { LoadingPuck } from "./loading-puck";
@@ -26,14 +26,6 @@ export const LoadingScreen = (): ReactElement => {
 			<StatusBar style="light" />
 			<LoadingBackdrop />
 			<View style={{ width: size, height: size }}>
-				{!ready ? (
-					<Image
-						source={require("../../assets/loading/loading-puck-dark.png")}
-						resizeMode="contain"
-						style={{ position: "absolute", width: size, height: size }}
-						accessible={false}
-					/>
-				) : undefined}
 				<LoadingReveal ready={ready}>
 					<LoadingPuck size={size} appearance="dark" onReady={onReady} />
 				</LoadingReveal>

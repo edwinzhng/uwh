@@ -49,8 +49,8 @@ export const ChatBackdrop = (): ReactElement => {
 				end={{ x: 0.9, y: 1 }}
 				style={StyleSheet.absoluteFill}
 			/>
-			<View style={[StyleSheet.absoluteFill, { opacity: 0.14 }]}>
-				<LoadingBackdrop canvas="transparent" line={theme.border} />
+			<View style={[StyleSheet.absoluteFill, { opacity: 0.12 }]}>
+				<LoadingBackdrop canvas="transparent" line={theme.text.secondary} />
 			</View>
 		</View>
 	);

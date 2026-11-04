@@ -107,7 +107,7 @@ export const RouteBack = ({
 			prefix="arrowLeft"
 			variant="ghost"
 			accessibilityLabel={`Back to ${route.parentLabel} from ${route.label}`}
-			onPress={(): void => router.navigate(route.parent)}
+			onPress={(): void => router.dismissTo(route.parent)}
 		/>
 	);
 };

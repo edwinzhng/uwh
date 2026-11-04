@@ -94,9 +94,9 @@ export const puckProjection = (aspect: number): Float32Array => {
 };
 
 export const puckPose = (phase: number): Float32Array => {
-	const pitch = Math.sin(phase) * 0.24;
-	const roll = Math.sin(phase) * 0.12;
-	const yaw = phase;
+	const pitch = 0.14 + Math.sin(phase) * 0.24;
+	const roll = -0.08 + Math.sin(phase) * 0.12;
+	const yaw = phase + 0.1;
 	const a = Math.cos(pitch),
 		b = Math.sin(pitch),
 		c = Math.cos(yaw),

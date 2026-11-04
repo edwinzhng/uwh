@@ -1,10 +1,12 @@
 import { motionEffects } from "@uwhclub/design-system/tokens";
 import { type ExpoWebGLRenderingContext, GLView } from "expo-gl";
 import { type ReactElement, useCallback, useEffect, useRef } from "react";
-import { PixelRatio, Platform, View } from "react-native";
+import { PixelRatio, View } from "react-native";
+import { advancePuckPhase } from "./puck-motion";
 import { createPuckRenderer } from "./puck-renderer";
 import { useTheme } from "./theme";
 import { useMotion } from "./use-motion";
+import { useRenderActivity } from "./use-render-activity";
 import { useScreenActive } from "./use-screen-active";
 export const LoadingPuck = ({
 	size = 300,
@@ -18,7 +20,7 @@ export const LoadingPuck = ({
 	const theme = useTheme();
 	const ready = useRef(onReady);
 	ready.current = onReady;
-	const scale = Platform.OS === "web" ? Math.max(1, 2 / PixelRatio.get()) : 1;
+	const scale = Math.min(2, 2 / PixelRatio.get());
 	const canAnimate = useMotion();
 	const active = useScreenActive();
 	const preferences = useRef({
@@ -42,16 +44,13 @@ export const LoadingPuck = ({
 			ready: false,
 		};
 		const render = (now: number): void => {
-			const elapsed = Math.min(
-				now - state.last,
-				motionEffects.loadingPuckLoop / 30,
-			);
-			state.last = now;
 			if (preferences.current.animate && state.ready)
-				state.phase =
-					(state.phase +
-						(elapsed / motionEffects.loadingPuckLoop) * Math.PI * 2) %
-					(Math.PI * 2);
+				state.phase = advancePuckPhase(
+					state.phase,
+					now - state.last,
+					motionEffects.loadingPuckLoop,
+				);
+			state.last = now;
 			renderer.draw(state.phase, preferences.current.dark);
 			gl.flush();
 			gl.endFrameEXP();
@@ -83,6 +82,10 @@ export const LoadingPuck = ({
 		};
 		lifecycle.current?.draw();
 	}, [appearance, theme.mode, canAnimate, active]);
+	useRenderActivity((isActive): void => {
+		preferences.current.animate = canAnimate && isActive;
+		lifecycle.current?.draw();
+	});
 	useEffect(
 		() => (): void => {
 			lifecycle.current?.dispose();
@@ -103,7 +106,7 @@ export const LoadingPuck = ({
 					transform: [{ scale: 1 / scale }],
 					transformOrigin: "top left",
 				}}
-				msaaSamples={4}
+				msaaSamples={0}
 				onContextCreate={onContextCreate}
 			/>
 		</View>

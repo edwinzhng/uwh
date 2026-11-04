@@ -70,3 +70,13 @@ export const fitnessChange = (
 		improved: fitnessLowerIsBetter(row.test) ? delta < 0 : delta > 0,
 	};
 };
+
+export const latestIsPersonalBest = (row: PersonalFitnessRow): boolean => {
+	const latest = row.history.at(0);
+	return (
+		row.test.unit !== "pass_fail" &&
+		latest !== undefined &&
+		row.stats?.best !== undefined &&
+		latest.value === row.stats.best
+	);
+};

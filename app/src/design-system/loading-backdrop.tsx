@@ -12,7 +12,7 @@ export const LoadingBackdrop = ({
 	line?: string;
 }): ReactElement => {
 	const cell = space.xl * 0.8;
-	const grid = useId();
+	const grid = `grid-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
 	return (
 		<View
 			pointerEvents="none"

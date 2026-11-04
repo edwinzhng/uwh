@@ -55,6 +55,7 @@ export const MainTabs = ({ unread = 0 }: MainTabsProps): ReactElement => {
 			}}
 		>
 			<NativeTabs.Trigger
+				disableAutomaticContentInsets
 				name="index"
 				contentStyle={{ backgroundColor: "transparent" }}
 			>
@@ -65,6 +66,7 @@ export const MainTabs = ({ unread = 0 }: MainTabsProps): ReactElement => {
 				/>
 			</NativeTabs.Trigger>
 			<NativeTabs.Trigger
+				disableAutomaticContentInsets
 				name="schedule"
 				contentStyle={{ backgroundColor: "transparent" }}
 			>
@@ -72,6 +74,7 @@ export const MainTabs = ({ unread = 0 }: MainTabsProps): ReactElement => {
 				<NativeTabs.Trigger.Icon sf="calendar" md="calendar_today" />
 			</NativeTabs.Trigger>
 			<NativeTabs.Trigger
+				disableAutomaticContentInsets
 				name="messages"
 				contentStyle={{ backgroundColor: "transparent" }}
 			>
@@ -90,6 +93,7 @@ export const MainTabs = ({ unread = 0 }: MainTabsProps): ReactElement => {
 				) : undefined}
 			</NativeTabs.Trigger>
 			<NativeTabs.Trigger
+				disableAutomaticContentInsets
 				name="club"
 				contentStyle={{ backgroundColor: "transparent" }}
 			>

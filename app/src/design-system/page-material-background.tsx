@@ -17,15 +17,6 @@ export const PageMaterialBackground = (): ReactElement | undefined => {
 	return (
 		<>
 			<View
-				style={[StyleSheet.absoluteFill, { opacity: 0.16 }]}
-				pointerEvents="none"
-				accessible={false}
-				accessibilityElementsHidden
-				importantForAccessibility="no-hide-descendants"
-			>
-				<LoadingBackdrop canvas="transparent" line={theme.border} />
-			</View>
-			<View
 				nativeID="app-material-background"
 				pointerEvents="none"
 				accessible={false}
@@ -57,6 +48,15 @@ export const PageMaterialBackground = (): ReactElement | undefined => {
 				end={{ x: 0.85, y: 1 }}
 				style={StyleSheet.absoluteFill}
 			/>
+			<View
+				style={[StyleSheet.absoluteFill, { opacity: 0.12 }]}
+				pointerEvents="none"
+				accessible={false}
+				accessibilityElementsHidden
+				importantForAccessibility="no-hide-descendants"
+			>
+				<LoadingBackdrop canvas="transparent" line={theme.text.secondary} />
+			</View>
 		</>
 	);
 };

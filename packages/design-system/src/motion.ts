@@ -9,7 +9,7 @@ export const motionDurations = {
 export const motionEffects = {
 	cardMaterialFlow: 6000,
 	loadingPuckLoop: 8000,
-	loadingHandoff: 2600,
+	loadingMinimum: 2000,
 	liquidRelease: 1000,
 	heroCopyReveal: 1500,
 	heroActionDelay: 700,

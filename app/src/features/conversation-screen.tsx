@@ -24,7 +24,7 @@ export const ConversationScreen = (): ReactElement => {
 						label="Chats"
 						icon="arrowLeft"
 						variant="ghost"
-						onPress={(): void => router.navigate("/messages")}
+						onPress={(): void => router.dismissTo("/messages")}
 					/>
 				}
 			>

@@ -10,7 +10,7 @@ export const LoadingLayer = ({
 		style={{
 			position: fillViewport ? "fixed" : "absolute",
 			inset: 0,
-			pointerEvents: "none",
+			pointerEvents: "auto",
 			zIndex: fillViewport ? layer.modal : 1,
 		}}
 	>

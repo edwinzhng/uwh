@@ -92,8 +92,11 @@ test("wobble preserves shape and loops without a pose discontinuity", (): void =
 	);
 });
 
-test("the first puck pose is flat and centered", (): void => {
-	expect(Array.from(puckPose(0))).toEqual([
-		1, 0, -0, 0, -0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
-	]);
+test("the first puck pose has a slight tilt without moving its center", (): void => {
+	const matrix = puckPose(0);
+	const normal = vectorAt(matrix, 4);
+	const tilt = Math.acos(normal[1]);
+	expect(tilt).toBeGreaterThan(0.05);
+	expect(tilt).toBeLessThan(0.3);
+	expect(vectorAt(matrix, 12)).toEqual([0, 0, 0]);
 });

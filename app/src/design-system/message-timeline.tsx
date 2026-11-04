@@ -54,6 +54,8 @@ export const MessageTimeline = <T extends { id: string }>({
 		>
 			<FlatList
 				ref={list}
+				contentInsetAdjustmentBehavior="never"
+				automaticallyAdjustContentInsets={false}
 				data={items}
 				inverted={items.length > 0}
 				keyExtractor={(item): string => item.id}

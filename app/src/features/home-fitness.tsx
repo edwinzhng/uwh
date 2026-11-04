@@ -13,6 +13,7 @@ import {
 } from "../design-system";
 import { formatDate } from "../domain/app-rules";
 import { formatFitnessValue, shortFitnessTestName } from "../domain/fitness";
+import { latestIsPersonalBest } from "../domain/personal-fitness";
 import { FitnessChangeIndicator } from "./fitness-change-indicator";
 import { useClubToday } from "./use-club-today";
 import { useSeason } from "./use-season";
@@ -45,7 +46,7 @@ export const HomeFitness = ({
 								params: { tab: "fitness" },
 							});
 						}}
-						accessibilityLabel={`Fitness tests for ${person.name}. ${row && latest ? `${shortFitnessTestName(row.test.name)}. ${formatFitnessValue(row.test.unit, latest.value)}${row.test.unit === "distance" ? " metres" : ""}. ${formatDate(latest.date)}.` : "No swim results yet."} Open swim test results`}
+						accessibilityLabel={`Fitness tests for ${person.name}. ${row && latest ? `${shortFitnessTestName(row.test.name)}. ${formatFitnessValue(row.test.unit, latest.value)}${row.test.unit === "distance" ? " metres" : ""}. ${formatDate(latest.date)}.${latestIsPersonalBest(row) ? " Personal best." : ""}` : "No swim results yet."} Open swim test results`}
 					>
 						{row && latest ? (
 							<HomeFitnessLayout wide={chart === "wide"}>
@@ -55,7 +56,13 @@ export const HomeFitness = ({
 											{formatFitnessValue(row.test.unit, latest.value)}
 											{row.test.unit === "distance" ? " m" : ""}
 										</Text>
-										<FitnessChangeIndicator row={row} />
+										{latestIsPersonalBest(row) ? (
+											<Text variant="caption" tone="success">
+												⭐ Personal best
+											</Text>
+										) : (
+											<FitnessChangeIndicator row={row} />
+										)}
 									</Row>
 									<Text variant="overline" weight="medium">
 										{shortFitnessTestName(row.test.name)}

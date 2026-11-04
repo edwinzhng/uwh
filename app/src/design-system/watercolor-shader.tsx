@@ -11,6 +11,7 @@ import { materialVariation } from "./material-variation";
 import { useTheme } from "./theme";
 import { type CategoryColor, categoryPalette } from "./tokens";
 import { useMotion } from "./use-motion";
+import { useRenderActivity } from "./use-render-activity";
 import { useScreenActive } from "./use-screen-active";
 import { createWatercolorRenderer } from "./watercolor-renderer";
 import { useWatercolorTuning, watercolorDefaults } from "./watercolor-tuning";
@@ -85,6 +86,10 @@ export const WatercolorShader = ({
 		};
 		lifecycle.current?.draw();
 	}, [active, motion, tuning, palette, theme.background.card, seed, category]);
+	useRenderActivity((isActive): void => {
+		preferences.current.active = motion && isActive;
+		lifecycle.current?.draw();
+	});
 	useEffect(
 		() => (): void => {
 			lifecycle.current?.dispose();

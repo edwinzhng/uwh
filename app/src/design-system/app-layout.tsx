@@ -81,6 +81,10 @@ export const AppLayout = ({
 	const nativeHeader =
 		Platform.OS !== "web" && nativeHeaderRoute(segments.at(0) ?? "");
 	const headerHeight = useContext(HeaderHeightContext) ?? 0;
+	const bottomClearance =
+		nativeNavigation && !nativeHeader
+			? geometry.tab + insets.bottom
+			: insets.bottom;
 	const wide = width >= geometry.wide && !nativeNavigation;
 	const keyboard = useKeyboardVisible();
 	const workspace = presentation === "workspace";
@@ -322,7 +326,7 @@ export const AppLayout = ({
 			) : undefined}
 			<KeyboardAvoidingView
 				behavior={Platform.OS === "ios" ? "padding" : undefined}
-				enabled={Platform.OS !== "web"}
+				enabled={Platform.OS !== "web" && !primaryDestination}
 				keyboardVerticalOffset={0}
 				style={{ flex: 1, flexDirection: "row" }}
 			>
@@ -424,19 +428,15 @@ export const AppLayout = ({
 						) : undefined}
 						{scrollable ? (
 							<ScrollView
-								contentInsetAdjustmentBehavior={
-									workspace
-										? "never"
-										: nativeNavigation || nativeHeader
-											? "automatic"
-											: undefined
-								}
+								contentInsetAdjustmentBehavior="never"
+								automaticallyAdjustContentInsets={false}
 								keyboardShouldPersistTaps="handled"
 								keyboardDismissMode="on-drag"
 								contentContainerStyle={{
 									paddingHorizontal: wide ? space.lg : space.md,
 									paddingTop:
 										(workspace && heading ? 0 : toolbarClearance) +
+										(nativeHeader && !workspace ? headerHeight : 0) +
 										(denseHeader
 											? space.xs
 											: workspace
@@ -447,7 +447,7 @@ export const AppLayout = ({
 									paddingBottom:
 										(floatingAction ? geometry.touch + space.md : 0) +
 										(nativeNavigation
-											? pagePadding + (nativeHeader ? insets.bottom : 0)
+											? pagePadding + bottomClearance
 											: wide || footer || keyboard
 												? pagePadding
 												: geometry.tab +
@@ -510,7 +510,7 @@ export const AppLayout = ({
 									paddingBottom: workspace
 										? Math.max(space.xs, insets.bottom)
 										: nativeNavigation
-											? Math.max(space.md, insets.bottom)
+											? Math.max(space.md, bottomClearance)
 											: keyboard || wide
 												? space.xs
 												: geometry.tab + space.lg + insets.bottom,
@@ -539,7 +539,7 @@ export const AppLayout = ({
 								right: space.md,
 								bottom:
 									nativeNavigation || wide
-										? space.md + (nativeHeader ? insets.bottom : 0)
+										? space.md + bottomClearance
 										: geometry.tab + space.lg + insets.bottom,
 								alignItems: "flex-end",
 							}}
