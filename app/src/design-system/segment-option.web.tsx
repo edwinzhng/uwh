@@ -36,7 +36,7 @@ export const SegmentOption = ({
 				width: icon ? height : undefined,
 				padding: `${control.paddingY - control.segmentInset}px ${icon ? space.none : control.paddingX}px`,
 				borderRadius: icon ? radius.round : corners.control,
-				border: `${geometry.border}px solid ${icon && isSelected && !indicatorReady ? theme.border : "transparent"}`,
+				border: `${geometry.border}px solid ${!icon ? (isSelected ? theme.controlBorder : theme.border) : isSelected && !indicatorReady ? theme.border : "transparent"}`,
 				backgroundColor:
 					isSelected && !indicatorReady
 						? selectedBackground

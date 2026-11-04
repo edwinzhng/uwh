@@ -89,14 +89,14 @@ export const SegmentedControl = <T extends string>({
 						flexDirection: "row",
 						alignItems: "center",
 						gap: icons ? 0 : space.xxs,
-						padding: control.segmentInset,
+						padding: icons ? control.segmentInset : 0,
 						borderRadius: icons ? radius.round : corners.control,
 						borderWidth: icons ? geometry.border : 0,
 						borderColor: theme.border,
-						backgroundColor: theme.background.secondary,
+						backgroundColor: icons ? theme.background.secondary : "transparent",
 					}}
 				>
-					{frame ? (
+					{icons && frame ? (
 						<SelectionIndicator
 							frame={{
 								...frame,
@@ -112,15 +112,19 @@ export const SegmentedControl = <T extends string>({
 					{options.map((option) => (
 						<View
 							key={option.value}
-							onLayout={(event): void => {
-								const { width, height } = event.nativeEvent.layout;
-								setSizes((current) =>
-									current[option.value]?.width === width &&
-									current[option.value]?.height === height
-										? current
-										: { ...current, [option.value]: { width, height } },
-								);
-							}}
+							onLayout={
+								icons
+									? (event): void => {
+											const { width, height } = event.nativeEvent.layout;
+											setSizes((current) =>
+												current[option.value]?.width === width &&
+												current[option.value]?.height === height
+													? current
+													: { ...current, [option.value]: { width, height } },
+											);
+										}
+									: undefined
+							}
 						>
 							<SegmentOption
 								key={option.value}
@@ -129,12 +133,12 @@ export const SegmentedControl = <T extends string>({
 								value={option.value}
 								groupName={groupName}
 								isSelected={selected?.value === option.value}
-								indicatorReady={frame !== undefined}
+								indicatorReady={icons && frame !== undefined}
 								isDisabled={option.isDisabled}
 								isTabStop={tabStop?.value === option.value}
 								height={
 									height -
-									control.segmentInset * 2 -
+									(icons ? control.segmentInset * 2 : 0) -
 									(icons ? geometry.border * 2 : 0)
 								}
 								onSelect={(): void => {

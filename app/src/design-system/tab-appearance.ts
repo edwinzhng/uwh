@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 import { corners, space, type Theme } from "./tokens";
 
 export type TabAppearance = "current" | "inset" | "outline" | "underline";
-export const TabAppearanceContext = createContext<TabAppearance>("current");
+export const TabAppearanceContext = createContext<TabAppearance>("outline");
 export const useTabAppearance = (): TabAppearance =>
 	useContext(TabAppearanceContext);
 export const tabAppearance = (

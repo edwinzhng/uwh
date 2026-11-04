@@ -41,8 +41,13 @@ export const SegmentOption = ({
 				justifyContent: "center",
 				borderRadius: icon ? radius.round : corners.control,
 				borderWidth: geometry.border,
-				borderColor:
-					icon && isSelected && !indicatorReady ? theme.border : "transparent",
+				borderColor: !icon
+					? isSelected
+						? theme.controlBorder
+						: theme.border
+					: isSelected && !indicatorReady
+						? theme.border
+						: "transparent",
 				backgroundColor:
 					isSelected && !indicatorReady
 						? selectedBackground
