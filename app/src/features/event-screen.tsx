@@ -137,6 +137,7 @@ export const EventScreen = (): ReactElement => {
 												{
 													id: "loan",
 													label: "Loan equipment",
+													icon: "equipment" as const,
 													onSelect: (): void => setLoan(true),
 												},
 											]

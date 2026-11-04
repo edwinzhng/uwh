@@ -15,10 +15,7 @@ import {
 	useWindowDimensions,
 	View,
 } from "react-native";
-import {
-	SafeAreaView,
-	useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChatBackdrop } from "./chat-backdrop";
 import { chatSidebarWidth, useChatSidebar } from "./chat-workspace";
 import { CompactPageHeading } from "./compact-page-heading";
@@ -289,12 +286,17 @@ export const AppLayout = ({
 		</View>
 	) : undefined;
 	return (
-		<SafeAreaView
-			edges={nativeHeader ? ["left", "right"] : ["top", "left", "right"]}
+		<View
 			pointerEvents={visible ? "auto" : "none"}
 			accessibilityElementsHidden={!visible}
 			importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
-			style={{ flex: 1, opacity: visible ? 1 : 0 }}
+			style={{
+				flex: 1,
+				opacity: visible ? 1 : 0,
+				paddingTop: nativeHeader ? 0 : insets.top,
+				paddingLeft: insets.left,
+				paddingRight: insets.right,
+			}}
 		>
 			<PageMaterialBackground />
 			{nativeHeader && title ? (
@@ -424,7 +426,7 @@ export const AppLayout = ({
 					<PageReady
 						loading={loading}
 						contentKey={contentKey}
-						layoutKey={`${headerHeight}:${toolbarHeight}:${width}`}
+						layoutKey={`${headerHeight}:${toolbarHeight}:${width}:${insets.top}:${insets.left}:${insets.right}:${insets.bottom}`}
 					>
 						<Stack grow gap="none">
 							{compactRoot && title ? <PageTitle title={title} /> : undefined}
@@ -562,6 +564,6 @@ export const AppLayout = ({
 					) : undefined}
 				</View>
 			</KeyboardAvoidingView>
-		</SafeAreaView>
+		</View>
 	);
 };

@@ -60,6 +60,36 @@ test("club members can publish shoutouts but cannot create coaching notes", (): 
 	).toThrow();
 });
 
+test("players, guardians and coaches can send recognition tied to a specific practice", (): void => {
+	const practice = initialAppData.events.find(
+		(entry) => entry.id === "club-thu",
+	);
+	if (!practice) throw new Error("Practice fixture is missing.");
+	const player = { ...parent, id: "taylor", personId: "taylor", children: [] };
+	for (const actor of [player, parent, primaryAccount]) {
+		const action = {
+			type: "save-feedback",
+			feedback: {
+				...feedback,
+				kind: "shoutout",
+				category: "mvp",
+				eventId: practice.id,
+				date: practice.date,
+			},
+		} as const;
+		const published = reduceApp(initialAppData, actor, action);
+		const saved = published.feedback.find((entry) => entry.id === feedback.id);
+		expect(saved).toMatchObject({
+			personId: "sam",
+			authorId: actor.id,
+			eventId: practice.id,
+			date: practice.date,
+			category: "mvp",
+		});
+		expect(reduceApp(published, actor, action)).toBe(published);
+	}
+});
+
 test("legacy published coaching feedback is limited to coaches and its household", (): void => {
 	const published = reduceApp(initialAppData, primaryAccount, {
 		type: "save-feedback",

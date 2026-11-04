@@ -11,7 +11,7 @@ import {
 	Stack,
 	Text,
 } from "../design-system";
-import { eventAttendees, memberName } from "../domain/app-rules";
+import { eventAttendees, formatDate, memberName } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import { practiceEvent } from "../domain/event-types";
 import { type ShoutoutCategory, shoutoutCategories } from "../domain/shoutouts";
@@ -25,11 +25,13 @@ export const ShoutoutEditor = ({
 	event,
 	compact = false,
 	floating = false,
+	label = "Give shoutout",
 }: {
 	personId?: string;
 	event?: ClubEvent;
 	compact?: boolean;
 	floating?: boolean;
+	label?: string;
 }): ReactElement => {
 	const { account, data, dispatch } = useApp();
 	const today = useClubToday();
@@ -85,9 +87,14 @@ export const ShoutoutEditor = ({
 	};
 	const trigger = (
 		<Button
-			label="Give shoutout"
+			label={label}
+			accessibilityLabel={
+				personId
+					? `Shoutout for ${memberName(data, personId)}${event ? ` · ${event.title}` : ""}`
+					: label
+			}
 			prefix="plus"
-			variant={floating || compact ? "ghost" : "secondary"}
+			variant={floating ? "ghost" : "secondary"}
 			compact={compact}
 			round={floating}
 			onPress={(): void => setOpen(true)}
@@ -105,7 +112,11 @@ export const ShoutoutEditor = ({
 			<Dialog
 				intent="form"
 				isDismissDisabled={task.busy}
-				title="Give a shoutout"
+				title={
+					personId
+						? `Shoutout for ${memberName(data, personId)}`
+						: "Give a shoutout"
+				}
 				isOpen={open}
 				onOpenChange={(value): void => {
 					if (!task.busy) setOpen(value);
@@ -123,6 +134,11 @@ export const ShoutoutEditor = ({
 				}
 			>
 				<Stack>
+					{event ? (
+						<Text variant="small" weight="medium">
+							{event.title} · {formatDate(event.date)}
+						</Text>
+					) : undefined}
 					<Text variant="small" tone="secondary">
 						Only the recipient and their linked household can see this. Your
 						name stays anonymous.
@@ -162,8 +178,12 @@ export const ShoutoutEditor = ({
 						}
 					/>
 					<Disclosure
-						title="Add a note or practice"
-						summary={body || practiceId ? "Optional details added" : undefined}
+						title={event ? "Add a note" : "Add a note or practice"}
+						summary={
+							body || (!event && practiceId)
+								? "Optional details added"
+								: undefined
+						}
 						isDisabled={task.busy}
 					>
 						{!event ? (

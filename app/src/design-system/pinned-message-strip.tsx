@@ -1,5 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { Pressable, View } from "react-native";
+import { GlassBackdrop } from "./glass-backdrop";
 import { Icon } from "./icon";
 import { Text } from "./text";
 import { useTheme } from "./theme";
@@ -45,14 +46,15 @@ export const PinnedMessageStrip = ({
 				borderColor: theme.border,
 				backgroundColor:
 					!isDisabled && (pressed || hovered)
-						? theme.background.tertiary
-						: theme.background.secondary,
+						? theme.background.pressed
+						: "transparent",
 				opacity: isDisabled ? geometry.disabledOpacity : 1,
 				outlineWidth: focused ? geometry.focus : 0,
 				outlineColor: theme.focus,
 				outlineOffset: -geometry.focus,
 			})}
 		>
+			<GlassBackdrop material="floating" radius={corners.item} />
 			<Icon name="pin" size="sm" tone="secondary" />
 			<View style={{ flex: 1, minWidth: 0 }}>
 				<Text variant="caption" tone="secondary" lines={1}>

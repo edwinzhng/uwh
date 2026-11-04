@@ -12,6 +12,7 @@ type Props = {
 	identity?: string;
 	control?: ReactNode;
 	metadata?: ReactNode;
+	headerAction?: ReactNode;
 	titleVariant?: "label" | "small";
 	titleLines?: 1 | 2 | 3;
 	controlLayout?: "inline" | "responsive";
@@ -22,6 +23,7 @@ export const ContentRow = ({
 	identity,
 	control,
 	metadata,
+	headerAction,
 	titleVariant = "label",
 	titleLines = 2,
 	controlLayout = "inline",
@@ -41,6 +43,7 @@ export const ContentRow = ({
 					</Text>
 				</Stack>
 				{metadata}
+				{separateActions ? headerAction : undefined}
 			</Row>
 			{description ? (
 				<Text variant="small" tone="secondary">
@@ -67,6 +70,7 @@ export const ContentRow = ({
 				</Row>
 			</View>
 			{control}
+			{!separateActions ? headerAction : undefined}
 		</View>
 	);
 };

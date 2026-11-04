@@ -19,6 +19,7 @@ import { AttendanceFlagBadge } from "./attendance-flag-badge";
 import { AttendanceFlagControl } from "./attendance-flag-control";
 import { AttendanceFlagProvider } from "./attendance-flag-provider";
 import { FeedbackEditor } from "./feedback-editor";
+import { ShoutoutEditor } from "./shoutout-editor";
 
 export const SessionPeople = ({
 	event,
@@ -74,7 +75,16 @@ export const SessionPeople = ({
 												<ContentRow
 													title={member.name}
 													titleLines={1}
-													controlLayout={staff ? "responsive" : "inline"}
+													controlLayout="responsive"
+													headerAction={
+														staff ? (
+															<AttendanceFlagControl
+																personId={member.id}
+																name={member.name}
+																disabled={event.cancelled}
+															/>
+														) : undefined
+													}
 													identity={staff ? undefined : member.name}
 													metadata={
 														staff ? (
@@ -95,38 +105,43 @@ export const SessionPeople = ({
 																: undefined
 													}
 													control={
-														staff ? (
-															<Row gap="xs" wrap>
-																{canCoach(account, event.program) ? (
-																	<AttendanceControl
-																		eventId={event.id}
-																		personId={member.id}
-																		name={member.name}
-																		value={effectiveAttendance(
-																			event,
-																			response,
-																			partId,
-																		)}
-																		defaultHere={response.response === "going"}
-																		partId={partId}
-																		disabled={event.cancelled}
-																	/>
-																) : undefined}
-																<AttendanceFlagControl
-																	personId={member.id}
-																	name={member.name}
-																	disabled={event.cancelled}
-																/>
-																{canCoach(account, event.program) ? (
-																	<FeedbackEditor
-																		personId={member.id}
-																		eventId={event.id}
-																	/>
-																) : undefined}
-															</Row>
-														) : (
-															<Badge label={label} />
-														)
+														<Row gap="xs" wrap>
+															{staff ? (
+																<>
+																	{canCoach(account, event.program) ? (
+																		<AttendanceControl
+																			eventId={event.id}
+																			personId={member.id}
+																			name={member.name}
+																			value={effectiveAttendance(
+																				event,
+																				response,
+																				partId,
+																			)}
+																			defaultHere={
+																				response.response === "going"
+																			}
+																			partId={partId}
+																			disabled={event.cancelled}
+																		/>
+																	) : undefined}
+																	{canCoach(account, event.program) ? (
+																		<FeedbackEditor
+																			personId={member.id}
+																			eventId={event.id}
+																		/>
+																	) : undefined}
+																</>
+															) : (
+																<Badge label={label} compact />
+															)}
+															<ShoutoutEditor
+																personId={member.id}
+																event={event}
+																label="Shoutout"
+																compact
+															/>
+														</Row>
 													}
 												/>
 											</Stack>

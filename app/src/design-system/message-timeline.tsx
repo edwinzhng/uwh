@@ -5,6 +5,7 @@ import { EmptyState } from "./empty-state";
 import { LoadingContent } from "./loading-content";
 import { Stack } from "./stack";
 import { geometry, layer, space } from "./tokens";
+import { ToolbarGroup } from "./toolbar-group";
 import { useMotion } from "./use-motion";
 
 type Props<T> = {
@@ -68,6 +69,7 @@ export const MessageTimeline = <T extends { id: string }>({
 						right: 0,
 						zIndex: layer.sticky,
 						padding: space.md,
+						paddingTop: space.xs,
 						gap: space.xs,
 					}}
 				>
@@ -137,15 +139,20 @@ export const MessageTimeline = <T extends { id: string }>({
 						alignSelf: "center",
 					}}
 				>
-					<Button
-						label="Jump to newest messages"
-						icon="arrowDown"
-						round
-						variant="secondary"
-						onPress={(): void =>
-							list.current?.scrollToOffset({ offset: 0, animated: canAnimate })
-						}
-					/>
+					<ToolbarGroup label="Message navigation">
+						<Button
+							label="Jump to newest messages"
+							icon="arrowDown"
+							round
+							variant="ghost"
+							onPress={(): void =>
+								list.current?.scrollToOffset({
+									offset: 0,
+									animated: canAnimate,
+								})
+							}
+						/>
+					</ToolbarGroup>
 				</View>
 			) : undefined}
 		</View>

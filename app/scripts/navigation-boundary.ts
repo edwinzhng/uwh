@@ -59,6 +59,15 @@ export const inspectNavigationBoundary = (
 			);
 	};
 	const inspect = (node: ts.Node): void => {
+		if (
+			basename === "app-layout.tsx" &&
+			ts.isImportSpecifier(node) &&
+			(node.propertyName ?? node.name).text === "SafeAreaView"
+		)
+			fail(
+				node,
+				"The shared shell must use React safe-area insets for padding and readiness; native SafeAreaView updates can shift an already visible page.",
+			);
 		if (navigator && ts.isPropertyAssignment(node)) {
 			const name = node.name.getText(file);
 			if (name === "animation") {
