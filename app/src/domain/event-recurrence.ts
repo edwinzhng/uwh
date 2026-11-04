@@ -148,6 +148,9 @@ export const editedOccurrences = (
 			venue: draft.venue.trim(),
 			program: draft.program,
 			programRsvp: draft.programRsvp,
+			programRsvpManaged:
+				event.programRsvpManaged &&
+				JSON.stringify(event.programRsvp) === JSON.stringify(draft.programRsvp),
 			description: draft.description.trim(),
 			kind: draft.kind,
 			repeatInterval: draft.repeatInterval,

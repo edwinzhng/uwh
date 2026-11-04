@@ -61,6 +61,8 @@ export const programDraft = (program: ClubProgram): ProgramDraft => ({
 			}
 		: undefined,
 	rsvp: {
+		openRule: program.rsvp.openRule,
+		openWeekday: program.rsvp.openWeekday,
 		openDays: program.rsvp.openDays,
 		openTime: program.rsvp.openTime,
 		closeDays: program.rsvp.closeDays,
@@ -257,13 +259,14 @@ export const saveProgram = (
 		if (
 			draft.archived ||
 			event.program !== draft.id ||
-			!event.programManaged ||
 			event.date < today ||
 			clubTimestamp(event.date, event.start, event.timeZone) <= now ||
-			event.cancelled ||
-			event.exception
+			event.cancelled
 		)
 			return event;
+		if (event.programRsvpManaged)
+			return applyProgramWindow(event, program, now);
+		if (!event.programManaged || event.exception) return event;
 		if (!dates.includes(event.date)) return { ...event, cancelled: true };
 		return applyProgramWindow(
 			{

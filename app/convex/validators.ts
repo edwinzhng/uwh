@@ -37,6 +37,7 @@ export const membersValue = v.object({
 export const eventsValue = v.object({
 	programRsvp: v.optional(programRsvpValue),
 	programManaged: v.optional(v.boolean()),
+	programRsvpManaged: v.optional(v.boolean()),
 	timeZone: v.optional(v.string()),
 	parts: v.optional(v.array(eventPartValue)),
 	public: v.optional(v.boolean()),

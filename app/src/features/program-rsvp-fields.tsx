@@ -19,9 +19,54 @@ export const ProgramRsvpFields = ({
 	disabled: boolean;
 }): ReactElement => (
 	<Stack>
+		<Select
+			label="Registration opening"
+			value={value.openRule ?? "before-event"}
+			options={[
+				{ value: "before-event", label: "Before each event" },
+				{ value: "weekly", label: "Weekly" },
+			]}
+			onValueChange={(openRule): void => {
+				if (openRule)
+					onChange({
+						...value,
+						openRule,
+						openWeekday:
+							openRule === "weekly" ? (value.openWeekday ?? 7) : undefined,
+						openDays:
+							openRule === "weekly"
+								? Math.max(14, value.openDays)
+								: value.openDays,
+					});
+			}}
+			isDisabled={disabled}
+		/>
+		{value.openRule === "weekly" ? (
+			<Select
+				label="Opening day"
+				value={String(value.openWeekday ?? 7)}
+				options={[
+					{ value: "7", label: "Sunday" },
+					{ value: "1", label: "Monday" },
+					{ value: "2", label: "Tuesday" },
+					{ value: "3", label: "Wednesday" },
+					{ value: "4", label: "Thursday" },
+					{ value: "5", label: "Friday" },
+					{ value: "6", label: "Saturday" },
+				]}
+				onValueChange={(day): void => {
+					if (day) onChange({ ...value, openWeekday: Number(day) });
+				}}
+				isDisabled={disabled}
+			/>
+		) : undefined}
 		<Grid gap="md">
 			<Field
-				label="RSVP opens · days before"
+				label={
+					value.openRule === "weekly"
+						? "Open events less than · days away"
+						: "RSVP opens · days before"
+				}
 				inputMode="numeric"
 				value={String(value.openDays)}
 				onValueChange={(days): void =>
@@ -39,7 +84,9 @@ export const ProgramRsvpFields = ({
 			/>
 		</Grid>
 		<Text variant="caption" tone="secondary">
-			0 days opens immediately when a session is created.
+			{value.openRule === "weekly"
+				? "Uses calendar days and the club’s time zone."
+				: "0 days opens immediately when a session is created."}
 		</Text>
 		<Grid gap="md">
 			<Field
@@ -83,9 +130,7 @@ export const ProgramRsvpFields = ({
 			isDisabled={disabled}
 		/>
 		<Text variant="small" tone="secondary">
-			Explicit answers are never overwritten. Program defaults update future
-			program-managed sessions; individually edited sessions keep their
-			overrides.
+			Explicit answers and individual time overrides are preserved.
 		</Text>
 	</Stack>
 );

@@ -47,6 +47,7 @@ export type EventPart = {
 export type ClubEvent = {
 	programRsvp?: ProgramRsvp;
 	programManaged?: boolean;
+	programRsvpManaged?: boolean;
 	timeZone?: string;
 	parts?: EventPart[];
 	public?: boolean;
