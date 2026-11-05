@@ -33,12 +33,16 @@ export const PoolDropTarget = ({
 	scope,
 	drag,
 	children,
+	contentAlignment = "start",
+	size = geometry.touch,
 }: {
 	slotId: string;
 	personId?: string;
 	scope: string;
 	drag: SharedValue<PoolBoardDrag | undefined>;
 	children: ReactNode;
+	contentAlignment?: "start" | "end";
+	size?: number;
 }): ReactElement => {
 	const register = useContext(PoolTargetsContext);
 	const target = useAnimatedRef<View>();
@@ -89,8 +93,9 @@ export const PoolDropTarget = ({
 			collapsable={false}
 			style={{
 				position: "relative",
-				width: geometry.touch,
-				height: geometry.touch,
+				width: size,
+				height: size,
+				alignItems: contentAlignment === "end" ? "flex-end" : "flex-start",
 			}}
 		>
 			{children}

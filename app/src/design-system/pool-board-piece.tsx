@@ -177,7 +177,7 @@ export const PoolPiece = ({
 						minWidth: 0,
 						alignItems: "center",
 						justifyContent: "center",
-						paddingVertical: space.xxs,
+						paddingVertical: geometry.icon + space.xs,
 						borderRadius: corners.panel,
 						borderWidth: geometry.border,
 						borderColor: theme.border,
@@ -196,7 +196,12 @@ export const PoolPiece = ({
 							zIndex: 1,
 						}}
 					>
-						<PoolDropTarget slotId={positionId} scope={scope} drag={dragState}>
+						<PoolDropTarget
+							slotId={positionId}
+							scope={scope}
+							drag={dragState}
+							contentAlignment="end"
+						>
 							<PoolAddButton
 								label={`Add player to ${spot.label}`}
 								onPress={onManage ?? onPress}
@@ -206,6 +211,10 @@ export const PoolPiece = ({
 				) : undefined}
 				<View
 					style={{
+						position: "absolute",
+						top: space.xs,
+						left: 0,
+						right: 0,
 						paddingHorizontal: geometry.icon + space.xs,
 						alignItems: "center",
 					}}
@@ -224,6 +233,7 @@ export const PoolPiece = ({
 					style={{
 						flexDirection: "row",
 						flexWrap: "wrap",
+						alignItems: "center",
 						justifyContent: "center",
 						gap: space.xxs,
 						maxWidth: "100%",
@@ -255,7 +265,7 @@ export const PoolPiece = ({
 				{
 					width: geometry.touch + space.sm,
 					alignItems: "center",
-					gap: space.xxs,
+					gap: 0,
 				},
 				slotStyle,
 				chipStyle,
@@ -263,6 +273,7 @@ export const PoolPiece = ({
 		>
 			<PoolDropTarget
 				slotId={positionId}
+				size={geometry.compactAvatar + space.xxs * 2}
 				personId={spot.person?.id}
 				scope={scope}
 				drag={dragState}
@@ -278,7 +289,6 @@ export const PoolPiece = ({
 					color: theme.text.primary,
 					textAlign: "center",
 					width: "100%",
-					height: typography.navigation.lineHeight * 2,
 				}}
 			>
 				{spot.person?.displayName ?? spot.person?.name}
