@@ -70,6 +70,8 @@ export { IconHint } from "./icon-hint";
 export { InfiniteScroll } from "./infinite-scroll";
 export { LineupDialog } from "./lineup-dialog";
 export { LineupPreview } from "./lineup-preview";
+export { LineupRoleMenu } from "./lineup-role-menu";
+export { LineupWorkspace } from "./lineup-workspace";
 export { LiquidBubble, LiquidBubbleScene } from "./liquid-bubble-scene";
 export { List } from "./list";
 export { ListItem } from "./list-item";

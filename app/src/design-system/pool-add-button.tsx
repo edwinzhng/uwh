@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { Pressable } from "react-native";
 import { Icon } from "./icon";
 import { useTheme } from "./theme";
-import { corners, geometry } from "./tokens";
+import { corners, geometry, space } from "./tokens";
 export const PoolAddButton = ({
 	label,
 	onPress,
@@ -17,18 +17,17 @@ export const PoolAddButton = ({
 			accessibilityLabel={label}
 			disabled={!onPress}
 			onPress={onPress}
+			hitSlop={space.sm}
 			style={({ pressed }) => ({
-				width: geometry.touch,
-				height: geometry.touch,
+				width: geometry.icon,
+				height: geometry.icon,
 				alignItems: "center",
 				justifyContent: "center",
 				borderRadius: corners.pill,
 				borderWidth: geometry.border,
-				borderStyle: "solid",
+				borderStyle: "dotted",
 				borderColor: theme.controlBorder,
-				backgroundColor: pressed
-					? theme.background.pressed
-					: theme.background.card,
+				backgroundColor: pressed ? theme.background.pressed : "transparent",
 			})}
 		>
 			<Icon name="plus" size="sm" />

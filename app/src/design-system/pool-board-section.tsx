@@ -14,7 +14,8 @@ export const PoolBoardSection = ({
 	return (
 		<View
 			style={{
-				gap: space.md,
+				gap: space.xs,
+				flexGrow: 1,
 			}}
 		>
 			{label ? (

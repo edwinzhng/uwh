@@ -126,6 +126,7 @@ export const PoolPiece = ({
 		<GestureDetector gesture={gesture} touchAction={canDrag ? "none" : "auto"}>
 			<Pressable
 				collapsable={false}
+				hitSlop={space.xs}
 				focusable={!spot.person && Boolean(onPress)}
 				accessibilityRole={spot.person ? "image" : onPress ? "button" : "text"}
 				accessibilityLabel={`${spot.label}${spot.person ? ` · ${spot.person.name}${spot.person.captain ? " · Captain" : ""}` : " · Add player"}`}
@@ -135,15 +136,13 @@ export const PoolPiece = ({
 					if (!spot.person && !suppressPress.current) onPress?.();
 				}}
 				style={{
-					width: geometry.touch,
-					height: geometry.touch,
+					width: geometry.compactAvatar + space.xxs * 2,
+					height: geometry.compactAvatar + space.xxs * 2,
 					borderRadius: geometry.touch / 2,
-					borderWidth: selected ? geometry.focus : geometry.border,
+					borderWidth: selected ? geometry.focus : 0,
 					borderStyle: spot.person ? "solid" : "dashed",
 					borderColor: selected ? theme.focus : theme.controlBorder,
-					backgroundColor: selected
-						? theme.background.selected
-						: theme.background.card,
+					backgroundColor: selected ? theme.background.selected : "transparent",
 					alignItems: "center",
 					justifyContent: "center",
 				}}
@@ -166,133 +165,112 @@ export const PoolPiece = ({
 						+
 					</Text>
 				)}
-				{spot.person?.captain ? (
-					<Text
-						pointerEvents="none"
-						style={{
-							position: "absolute",
-							bottom: -space.xxs,
-							right: -space.xxs,
-							...typography.caption,
-							fontFamily: font.semibold,
-							color: theme.text.primary,
-							backgroundColor: theme.background.selected,
-							borderRadius: corners.pill,
-							borderWidth: geometry.border,
-							borderColor: theme.border,
-							paddingHorizontal: space.xxs,
-						}}
-					>
-						C
-					</Text>
-				) : undefined}
 			</Pressable>
 		</GestureDetector>
 	);
+	if (acceptsDrop)
+		return (
+			<Animated.View
+				style={[
+					{
+						flex: 1,
+						minWidth: 0,
+						alignItems: "center",
+						justifyContent: "center",
+						paddingVertical: space.xxs,
+						borderRadius: corners.panel,
+						borderWidth: geometry.border,
+						borderColor: theme.border,
+						backgroundColor: `${theme.background.card}99`,
+						gap: space.xxs,
+					},
+					slotStyle,
+				]}
+			>
+				<View
+					style={{ flexDirection: "row", alignItems: "center", gap: space.xxs }}
+				>
+					<Text
+						style={{
+							...typography.navigation,
+							fontFamily: font.semibold,
+							color: theme.text.primary,
+						}}
+					>
+						{spot.shortLabel ?? spot.label}
+					</Text>
+					{onManage || onPress ? (
+						<PoolDropTarget slotId={positionId} scope={scope} drag={dragState}>
+							<PoolAddButton
+								label={`Add player to ${spot.label}`}
+								onPress={onManage ?? onPress}
+							/>
+						</PoolDropTarget>
+					) : undefined}
+				</View>
+				<View
+					style={{
+						flexDirection: "row",
+						flexWrap: "wrap",
+						justifyContent: "center",
+						gap: space.xxs,
+						maxWidth: "100%",
+					}}
+				>
+					{[
+						...(spot.person ? [spot.person] : []),
+						...(spot.substitutes ?? []),
+					].map((person) => (
+						<PoolPiece
+							key={person.id}
+							spot={{ id: person.id, label: spot.label, person }}
+							selected={selectedPersonId === person.id}
+							selectedPersonId={selectedPersonId}
+							dragState={dragState}
+							scope={scope}
+							onDrop={onDrop}
+							acceptsDrop={false}
+							positionId={positionId}
+						/>
+					))}
+				</View>
+			</Animated.View>
+		);
 	return (
 		<Animated.View
 			collapsable={false}
 			style={[
 				{
-					flex: acceptsDrop ? 1 : undefined,
-					width: acceptsDrop ? undefined : geometry.touch + space.xs * 2,
-					minWidth: geometry.touch,
-					paddingHorizontal: 0,
+					width: geometry.touch + space.sm,
 					alignItems: "center",
-					gap: space.xs,
-					borderRadius: corners.item,
+					gap: space.xxs,
 				},
 				slotStyle,
+				chipStyle,
 			]}
 		>
-			{acceptsDrop ? (
-				<Text
-					numberOfLines={1}
-					style={{
-						...typography.navigation,
-						fontFamily: font.semibold,
-						color: theme.text.primary,
-						textAlign: "center",
-					}}
-				>
-					{spot.label}
-				</Text>
-			) : undefined}
-			<View
+			<PoolDropTarget
+				slotId={positionId}
+				personId={spot.person?.id}
+				scope={scope}
+				drag={dragState}
+			>
+				{trigger}
+			</PoolDropTarget>
+			<Text
+				pointerEvents="none"
+				numberOfLines={2}
 				style={{
-					flexDirection: "row",
-					flexWrap: "wrap",
-					justifyContent: "center",
-					alignItems: "flex-start",
-					gap: space.xxs,
-					maxWidth: "100%",
+					...typography.navigation,
+					fontFamily: font.regular,
+					color: theme.text.primary,
+					textAlign: "center",
+					width: "100%",
+					height: typography.navigation.lineHeight * 2,
 				}}
 			>
-				<Animated.View
-					style={[
-						{
-							alignItems: "center",
-							gap: space.xxs,
-							width: geometry.touch + space.xs * 2,
-						},
-						chipStyle,
-					]}
-				>
-					{spot.person ? (
-						<PoolDropTarget
-							slotId={positionId}
-							personId={spot.person.id}
-							scope={scope}
-							drag={dragState}
-						>
-							{trigger}
-						</PoolDropTarget>
-					) : (
-						<PoolDropTarget slotId={positionId} scope={scope} drag={dragState}>
-							<PoolAddButton
-								label={`Add player to ${spot.label}`}
-								onPress={onPress}
-							/>
-						</PoolDropTarget>
-					)}
-					{spot.person ? (
-						<Text
-							pointerEvents="none"
-							numberOfLines={2}
-							style={{
-								...typography.navigation,
-								fontFamily: font.regular,
-								color: theme.text.primary,
-								textAlign: "center",
-								width: "100%",
-							}}
-						>
-							{spot.person.name}
-						</Text>
-					) : undefined}
-				</Animated.View>
-				{spot.substitutes?.map((person) => (
-					<PoolPiece
-						key={person.id}
-						spot={{ id: person.id, label: spot.label, person }}
-						selected={selectedPersonId === person.id}
-						selectedPersonId={selectedPersonId}
-						dragState={dragState}
-						scope={scope}
-						onDrop={onDrop}
-						acceptsDrop={false}
-						positionId={positionId}
-					/>
-				))}
-				{spot.person && acceptsDrop ? (
-					<PoolDropTarget slotId={positionId} scope={scope} drag={dragState}>
-						<PoolAddButton
-							label={`Add player to ${spot.label}`}
-							onPress={onManage}
-						/>
-					</PoolDropTarget>
-				) : undefined}
-			</View>
+				{spot.person?.displayName ?? spot.person?.name}
+			</Text>
 		</Animated.View>
 	);
 };

@@ -18,7 +18,6 @@ import {
 	type PoolBoardDrag,
 	type PoolRowFrame,
 	poolBoardDropAction,
-	poolBoardRowInset,
 	poolBoardSpotAt,
 } from "./pool-board-layout";
 import { PoolPiece } from "./pool-board-piece";
@@ -26,10 +25,16 @@ import { type PoolTarget, PoolTargetsContext } from "./pool-drop-target";
 import { useTheme } from "./theme";
 import { corners, font, geometry, space, typography } from "./tokens";
 
-export type PoolBoardPerson = { id: string; name: string; captain?: boolean };
+export type PoolBoardPerson = {
+	id: string;
+	name: string;
+	captain?: boolean;
+	displayName?: string;
+};
 export type PoolBoardSpot = {
 	id: string;
 	label: string;
+	shortLabel?: string;
 	person?: PoolBoardPerson;
 	substitutes?: PoolBoardPerson[];
 };
@@ -46,17 +51,16 @@ type Props = {
 	onSwap?: (personId: string, otherId: string) => void;
 	onManageRotation?: (spotId: string, label: string) => void;
 };
-const rowHeight = geometry.touch + space.lg * 2 + typography.caption.lineHeight;
+const rowHeight =
+	geometry.touch + space.xs * 2 + typography.navigation.lineHeight * 2;
 const PoolRow = ({
 	row,
-	index,
 	inset,
 	drag,
 	onLayout,
 	children,
 }: {
 	row: PoolBoardSpot[];
-	index: number;
 	inset: number;
 	drag: SharedValue<PoolBoardDrag | undefined>;
 	onLayout: (event: LayoutChangeEvent) => void;
@@ -76,11 +80,13 @@ const PoolRow = ({
 			style={[
 				{
 					minHeight: rowHeight,
-					paddingVertical: space.sm,
+					paddingVertical: space.xxs,
 					paddingHorizontal: `${inset * 100}%`,
 					flexDirection: "row",
-					alignItems: "flex-start",
-					borderTopWidth: index === 0 ? 0 : geometry.border,
+					alignItems: "stretch",
+					flexGrow: 1,
+					gap: space.xxs,
+					borderTopWidth: 0,
 					borderTopColor: theme.border,
 				},
 				activeStyle,
@@ -94,7 +100,7 @@ export const PoolBoard = ({
 	label,
 	headerAction,
 	summary,
-	side: _side = "white",
+	side = "white",
 	dragScope = "default",
 	rows,
 	selectedPersonId,
@@ -150,6 +156,7 @@ export const PoolBoard = ({
 					width,
 					localX,
 					localY,
+					0,
 				);
 				if (!spot) {
 					resolve();
@@ -185,13 +192,13 @@ export const PoolBoard = ({
 			: undefined;
 	return (
 		<PoolTargetsContext value={register}>
-			<Animated.View style={[{ gap: space.sm }, activeStyle]}>
+			<Animated.View style={[{ gap: space.xs, flexGrow: 1 }, activeStyle]}>
 				<View
 					style={{
 						gap: space.sm,
-						padding: space.sm,
+						padding: space.xxs,
 						borderRadius: corners.panel,
-						backgroundColor: theme.background.card,
+						backgroundColor: "transparent",
 					}}
 				>
 					<View
@@ -207,7 +214,12 @@ export const PoolBoard = ({
 							style={{
 								...typography.label,
 								fontFamily: font.semibold,
-								color: theme.text.primary,
+								color: side === "black" ? "#EEF2D9" : "#101710",
+								backgroundColor: side === "black" ? "#101710" : "#EEF2D9",
+								paddingHorizontal: space.xs,
+								paddingVertical: space.xxs,
+								borderRadius: corners.control,
+								overflow: "hidden",
 							}}
 						>
 							{label}
@@ -218,13 +230,13 @@ export const PoolBoard = ({
 							</View>
 						) : undefined}
 					</View>
-					{summary}
 				</View>
 				<View
 					ref={board}
 					collapsable={false}
 					style={{
-						borderWidth: geometry.border,
+						flexGrow: 1,
+						borderWidth: 0,
 						borderColor: theme.border,
 						borderRadius: corners.panel,
 						backgroundColor: "transparent",
@@ -234,8 +246,7 @@ export const PoolBoard = ({
 						<PoolRow
 							key={row.map((spot) => spot.id).join(":")}
 							row={row}
-							index={index}
-							inset={poolBoardRowInset(rows, index)}
+							inset={0}
 							drag={drag}
 							onLayout={({ nativeEvent: { layout } }): void => {
 								rowFrames.current.set(index, {
@@ -267,6 +278,7 @@ export const PoolBoard = ({
 						</PoolRow>
 					))}
 				</View>
+				{summary}
 			</Animated.View>
 		</PoolTargetsContext>
 	);

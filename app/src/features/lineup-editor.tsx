@@ -3,12 +3,13 @@ import { friendlyError } from "../backend/errors";
 import { useApp, useAppStatus } from "../demo/app-state";
 import {
 	ActionMenu,
-	Badge,
 	Button,
+	LineupWorkspace,
 	PoolBoardColumns,
 	PoolBoardGroup,
 	PoolBoardSection,
 	Row,
+	Select,
 	Stack,
 	Text,
 } from "../design-system";
@@ -79,6 +80,7 @@ export const LineupEditor = ({
 	const disabled = busy || conflicted || stale;
 	const preview = planWithSnapshot(base, snapshot);
 	const people = lineupPeople(snapshot);
+	const [activeGroup, setActiveGroup] = useState<string>();
 	const [toolsOpen, setToolsOpen] = useState(false);
 	const [personId, setPersonId] = useState<string>();
 	const [side, setSide] = useState<LineupSide>("black");
@@ -187,100 +189,117 @@ export const LineupEditor = ({
 				base.assignments?.some((entry) => entry.ageGroup === group),
 			)
 		: ["combined" as const];
+	const visibleGroup =
+		groups.find((group) => group === activeGroup) ?? groups.at(0);
 	return (
-		<Stack gap="sm">
-			<Row justify="between" wrap>
-				<Row gap="xs" wrap>
-					<Badge
-						label={changed ? "Unsaved" : base.published ? "Published" : "Draft"}
-						kind={changed ? "pending" : base.published ? "success" : "neutral"}
-					/>
-					{base.excludedPersonIds?.length ? (
-						<Text variant="caption">
-							{base.excludedPersonIds.length} excluded
-						</Text>
+		<LineupWorkspace
+			controls={
+				<Row justify="between" gap="xs" wrap>
+					{groups.length > 1 ? (
+						<Select
+							compact
+							hideLabel
+							label="Lineup group"
+							value={visibleGroup}
+							options={groups.map((group) => ({
+								value: group,
+								label:
+									group === "adult"
+										? "Adults"
+										: group === "youth"
+											? "Youth"
+											: "Teams",
+							}))}
+							onValueChange={(group): void => {
+								if (group) setActiveGroup(group);
+							}}
+						/>
 					) : undefined}
-				</Row>
-				<Row gap="xs" wrap>
-					{changed ? (
+					<Row gap="xs">
+						<ActionMenu
+							label="Lineup options"
+							icon="more"
+							isDisabled={busy}
+							groups={[
+								{
+									id: "edit",
+									items: [
+										{
+											id: "copy",
+											label: "Copy teams",
+											icon: "copy",
+											isDisabled: stale || conflicted,
+											onSelect: (): void => {
+												void copy();
+											},
+										},
+										{
+											id: "regenerate",
+											label: "Regenerate teams",
+											icon: "users",
+											isDisabled: !canRegenerate,
+											onSelect: (): void => {
+												if (changed) setRegenerating(true);
+												else onRegenerate();
+											},
+										},
+										{
+											id: "tools",
+											label: toolsOpen
+												? "Hide player options"
+												: "Players & referees",
+											icon: "settings",
+											onSelect: (): void => setToolsOpen((current) => !current),
+										},
+										{
+											id: "undo",
+											label: "Undo lineup change",
+											icon: "reply",
+											isDisabled: disabled || draft.history.length < 2,
+											onSelect: (): void => {
+												setDraft(undoLineupEdit);
+												setEditError(undefined);
+												task.clear();
+												setCopyState("ready");
+											},
+										},
+										{
+											id: "reload",
+											label: changed
+												? "Discard changes"
+												: "Reload saved lineup",
+											icon: "arrowDown",
+											onSelect: (): void => setDiscarding(true),
+										},
+									],
+								},
+							]}
+						/>
 						<Button
 							label="Save"
-							accessibilityLabel="Save changes"
 							compact
+							variant="secondary"
+							accessibilityLabel="Save lineup changes"
 							isLoading={task.busy}
-							isDisabled={disabled}
+							isDisabled={disabled || !changed}
 							onPress={(): void => {
 								if (base.published) setConfirmSave(true);
 								else void save();
 							}}
 						/>
-					) : !base.published ? (
 						<Button
-							label="Publish"
+							label={base.published && !changed ? "Published" : "Publish"}
 							compact
-							isDisabled={disabled}
+							isDisabled={disabled || changed || Boolean(base.published)}
+							accessibilityLabel={
+								changed ? "Save changes before publishing" : "Publish lineup"
+							}
 							onPress={(): void => setPublishRevision(base.revision ?? 0)}
 						/>
-					) : undefined}
-					<ActionMenu
-						label="Lineup options"
-						icon="more"
-						isDisabled={busy}
-						groups={[
-							{
-								id: "edit",
-								items: [
-									{
-										id: "copy",
-										label: "Copy teams",
-										icon: "copy",
-										isDisabled: stale || conflicted,
-										onSelect: (): void => {
-											void copy();
-										},
-									},
-									{
-										id: "regenerate",
-										label: "Regenerate teams",
-										icon: "users",
-										isDisabled: !canRegenerate,
-										onSelect: (): void => {
-											if (changed) setRegenerating(true);
-											else onRegenerate();
-										},
-									},
-									{
-										id: "tools",
-										label: toolsOpen
-											? "Hide player options"
-											: "Players & referees",
-										icon: "settings",
-										onSelect: (): void => setToolsOpen((current) => !current),
-									},
-									{
-										id: "undo",
-										label: "Undo lineup change",
-										icon: "reply",
-										isDisabled: disabled || draft.history.length < 2,
-										onSelect: (): void => {
-											setDraft(undoLineupEdit);
-											setEditError(undefined);
-											task.clear();
-											setCopyState("ready");
-										},
-									},
-									{
-										id: "reload",
-										label: changed ? "Discard changes" : "Reload saved lineup",
-										icon: "arrowDown",
-										onSelect: (): void => setDiscarding(true),
-									},
-								],
-							},
-						]}
-					/>
+					</Row>
 				</Row>
-			</Row>
+			}
+		>
 			{copyState !== "ready" ? (
 				<Text
 					variant="caption"
@@ -328,108 +347,105 @@ export const LineupEditor = ({
 					{task.error ?? editError}
 				</Text>
 			) : undefined}
-			<Stack>
-				{groups.map((group) => (
-					<PoolBoardSection
-						key={group}
-						label={
-							group === "combined"
-								? undefined
-								: group === "adult"
-									? "Adults"
-									: "Youth"
-						}
-					>
-						<PoolBoardGroup>
-							<PoolBoardColumns>
-								{(["black", "white"] as const).map((team) => (
-									<TeamPool
-										key={team}
-										plan={preview}
-										side={team}
-										group={group}
-										onRefereeChange={
-											disabled
-												? undefined
-												: (personId): void => {
-														void stage({
-															kind: "referee",
-															side: team,
-															personId,
-														});
-													}
-										}
-										onCaptainChange={
-											disabled
-												? undefined
-												: (personId): void => {
-														void stage({
-															kind: "captain",
-															side: team,
-															personId,
-															group,
-														});
-													}
-										}
-										onFormationChange={
-											disabled
-												? undefined
-												: (formation): void => {
-														void stage({
-															kind: "formation",
-															side: team,
-															formation,
-														});
-													}
-										}
-										selectedPersonId={personId}
-										onManageRotation={
-											disabled
-												? undefined
-												: (slot, label): void => {
-														task.clear();
-														setRotation({ side: team, slot, label, group });
-													}
-										}
-										onAdd={
-											disabled
-												? undefined
-												: (id, slot): void => {
-														void stage({
-															kind: "add",
-															personId: id,
-															side: team,
-															slot,
-															ageGroup:
-																group === "combined" ? undefined : group,
-														});
-													}
-										}
-										onSwap={
-											disabled
-												? undefined
-												: (id, otherId): void => {
-														void stage({ kind: "swap", personId: id, otherId });
-													}
-										}
-										onPlace={
-											disabled
-												? undefined
-												: (id, slot): void => {
-														void stage({
-															kind: "place",
-															side: team,
-															personId: id,
-															slot,
-														});
-													}
-										}
-									/>
-								))}
-							</PoolBoardColumns>
-						</PoolBoardGroup>
-					</PoolBoardSection>
-				))}
+			<Stack grow>
+				{groups
+					.filter((group) => group === visibleGroup)
+					.map((group) => (
+						<PoolBoardSection key={group}>
+							<PoolBoardGroup>
+								<PoolBoardColumns>
+									{(["black", "white"] as const).map((team) => (
+										<TeamPool
+											key={team}
+											plan={preview}
+											side={team}
+											group={group}
+											onRefereeChange={
+												disabled
+													? undefined
+													: (personId): void => {
+															void stage({
+																kind: "referee",
+																side: team,
+																personId,
+															});
+														}
+											}
+											onCaptainChange={
+												disabled
+													? undefined
+													: (personId): void => {
+															void stage({
+																kind: "captain",
+																side: team,
+																personId,
+																group,
+															});
+														}
+											}
+											onFormationChange={
+												disabled
+													? undefined
+													: (formation): void => {
+															void stage({
+																kind: "formation",
+																side: team,
+																formation,
+															});
+														}
+											}
+											selectedPersonId={personId}
+											onManageRotation={
+												disabled
+													? undefined
+													: (slot, label): void => {
+															task.clear();
+															setRotation({ side: team, slot, label, group });
+														}
+											}
+											onAdd={
+												disabled
+													? undefined
+													: (id, slot): void => {
+															void stage({
+																kind: "add",
+																personId: id,
+																side: team,
+																slot,
+																ageGroup:
+																	group === "combined" ? undefined : group,
+															});
+														}
+											}
+											onSwap={
+												disabled
+													? undefined
+													: (id, otherId): void => {
+															void stage({
+																kind: "swap",
+																personId: id,
+																otherId,
+															});
+														}
+											}
+											onPlace={
+												disabled
+													? undefined
+													: (id, slot): void => {
+															void stage({
+																kind: "place",
+																side: team,
+																personId: id,
+																slot,
+															});
+														}
+											}
+										/>
+									))}
+								</PoolBoardColumns>
+							</PoolBoardGroup>
+						</PoolBoardSection>
+					))}
 			</Stack>
 			{rotation ? (
 				<LineupPositionPicker
@@ -528,6 +544,6 @@ export const LineupEditor = ({
 					onConfirm={async (): Promise<void> => onRegenerate()}
 				/>
 			) : undefined}
-		</Stack>
+		</LineupWorkspace>
 	);
 };

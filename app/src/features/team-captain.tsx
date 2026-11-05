@@ -1,40 +1,33 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { Select, Text } from "../design-system";
+import { LineupRoleMenu } from "../design-system";
 import { memberName } from "../domain/app-rules";
 import type { LineupSide } from "../domain/lineup";
-
 export const TeamCaptain = ({
 	side,
 	people,
 	personId,
 	onChange,
+	displayName,
 }: {
 	side: LineupSide;
 	people: string[];
 	personId?: string;
-	onChange?: (personId?: string) => void;
+	displayName?: string;
+	onChange?: (id?: string) => void;
 }): ReactElement | undefined => {
 	const { data } = useApp();
-	return onChange ? (
-		<Select
-			hideLabel
-			compact
+	if (!onChange && !personId) return undefined;
+	return (
+		<LineupRoleMenu
+			roleLabel="Capt."
 			label={`${side === "black" ? "Black" : "White"} captain`}
-			value={personId ?? "none"}
-			options={[
-				{ value: "none", label: "Set captain" },
-				...people.map((id) => ({
-					value: id,
-					label: memberName(data, id),
-					person: { id, name: memberName(data, id) },
-				})),
-			]}
-			onValueChange={(id): void => {
-				if (id) onChange(id === "none" ? undefined : id);
-			}}
+			people={people.map((id) => ({ id, name: memberName(data, id) }))}
+			personId={personId}
+			displayName={
+				displayName ?? (personId ? memberName(data, personId) : undefined)
+			}
+			onChange={onChange}
 		/>
-	) : personId ? (
-		<Text variant="caption">Captain · {memberName(data, personId)}</Text>
-	) : undefined;
+	);
 };

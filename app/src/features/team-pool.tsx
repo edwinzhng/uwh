@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
 import {
 	Avatar,
+	LineupRoleMenu,
 	PoolBoard,
 	type PoolBoardSpot,
 	Row,
@@ -15,13 +16,15 @@ import {
 	formationOptions,
 	formationPositions,
 	type LineupSide,
+	lineupPeople,
+	lineupSlotAbbreviation,
 	lineupSlotLabel,
 	lineupSnapshot,
 	lineupTeamPeople,
 } from "../domain/lineup";
+import { lineupDisplayNames } from "../domain/lineup-display-name";
 import type { AgeGroup } from "../domain/player-coaching";
 import { TeamCaptain } from "./team-captain";
-import { TeamStrength } from "./team-strength";
 
 export const TeamPool = ({
 	plan,
@@ -56,14 +59,21 @@ export const TeamPool = ({
 		group === "combined" ||
 		(plan.assignments?.find((entry) => entry.personId === id)?.ageGroup ??
 			"adult") === group;
+	const displayNames = lineupDisplayNames(
+		[
+			...lineupPeople(snapshot).filter(inGroup),
+			...(plan.referees ?? []).map((referee) => referee.personId),
+		].map((id) => ({ id, name: memberName(data, id) })),
+	);
 	const captain = plan.captains?.find(
 		(entry) => entry.side === side && inGroup(entry.personId),
 	);
 	const person = (
 		id: string,
-	): { id: string; name: string; captain: boolean } => ({
+	): { id: string; name: string; displayName?: string; captain: boolean } => ({
 		id,
 		name: memberName(data, id),
+		displayName: displayNames.get(id),
 		captain: captain?.personId === id,
 	});
 	const teamPeople = lineupTeamPeople(snapshot, side).filter(inGroup);
@@ -78,6 +88,7 @@ export const TeamPool = ({
 		return {
 			id: String(slot),
 			label: lineupSlotLabel(formation, slot),
+			shortLabel: lineupSlotAbbreviation(formation, slot),
 			person: occupant ? person(occupant.personId) : undefined,
 			substitutes: (snapshot.rotationSlots ?? [])
 				.filter(
@@ -106,45 +117,39 @@ export const TeamPool = ({
 		),
 	].filter((row) => row.length > 0);
 	return (
-		<Stack gap="sm">
+		<Stack gap="xs" grow>
 			<PoolBoard
 				summary={
-					<Row justify="between" wrap>
-						<TeamStrength people={teamPeople} />
-						<Row wrap>
-							<TeamCaptain
-								side={side}
-								people={teamPeople}
-								personId={captain?.personId}
-								onChange={onCaptainChange}
-							/>
-							{onRefereeChange ? (
-								<Select
-									hideLabel
-									compact
-									label={`${side === "black" ? "Black" : "White"} referee`}
-									value={referee?.personId ?? "none"}
-									options={[
-										{ value: "none", label: "Set ref" },
-										...data.members
-											.filter(
-												(member) =>
-													!member.archived &&
-													!member.mergedInto &&
-													member.programs.length > 0,
-											)
-											.map((member) => ({
-												value: member.id,
-												label: member.name,
-												person: { id: member.id, name: member.name },
-											})),
-									]}
-									onValueChange={(id): void => {
-										if (id) onRefereeChange(id === "none" ? undefined : id);
-									}}
-								/>
-							) : undefined}
-						</Row>
+					<Row justify="between" gap="xs">
+						<TeamCaptain
+							side={side}
+							people={teamPeople}
+							personId={captain?.personId}
+							displayName={
+								captain ? displayNames.get(captain.personId) : undefined
+							}
+							onChange={onCaptainChange}
+						/>
+						<LineupRoleMenu
+							roleLabel="Ref."
+							label={`${side === "black" ? "Black" : "White"} referee`}
+							people={data.members
+								.filter(
+									(member) =>
+										!member.archived &&
+										!member.mergedInto &&
+										member.programs.length > 0,
+								)
+								.map((member) => ({ id: member.id, name: member.name }))}
+							personId={referee?.personId}
+							displayName={
+								referee
+									? (displayNames.get(referee.personId) ??
+										memberName(data, referee.personId).split(" ").at(0))
+									: undefined
+							}
+							onChange={onRefereeChange}
+						/>
 					</Row>
 				}
 				key={formation}

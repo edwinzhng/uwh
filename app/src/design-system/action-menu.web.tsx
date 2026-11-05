@@ -28,7 +28,7 @@ export const ActionMenu = ({
 					<Icon name={icon} size="md" tone="secondary" />
 				) : (
 					<>
-						{label}
+						<span className="club-picker-value">{label}</span>
 						<Icon name="chevronDown" tone="secondary" />
 					</>
 				)}

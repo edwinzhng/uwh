@@ -120,7 +120,7 @@ const TeamPanelContent = ({
 		);
 
 	const content = (
-		<Stack gap="sm">
+		<Stack gap="sm" grow={editable && Boolean(plan)}>
 			{editable && plan ? (
 				<LineupEditor
 					key={JSON.stringify([event.id, partId])}
@@ -249,6 +249,7 @@ const TeamPanelContent = ({
 		content
 	) : (
 		<LineupDialog
+			immersive={editable && Boolean(plan)}
 			preview={plan ? <TeamLineupPreview plan={plan} /> : undefined}
 			openRequest={generated?.revision}
 			label={

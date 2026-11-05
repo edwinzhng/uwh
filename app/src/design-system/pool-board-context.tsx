@@ -54,9 +54,10 @@ export const PoolBoardGroup = ({
 			<View
 				style={{
 					overflow: "hidden",
+					flexGrow: 1,
 					borderRadius: corners.panel,
-					padding: space.sm,
-					gap: space.md,
+					padding: space.xs,
+					gap: space.xs,
 					backgroundColor: theme.background.secondary,
 				}}
 			>

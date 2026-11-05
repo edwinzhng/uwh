@@ -44,6 +44,7 @@ export const poolBoardSpotAt = <T>(
 	width: number,
 	x: number,
 	y: number,
+	edgeInset?: number,
 ): T | undefined => {
 	if (width <= 0 || x < 0 || x >= width || y < 0) return;
 	const rowIndex = rows.findIndex((_, index) => {
@@ -52,7 +53,7 @@ export const poolBoardSpotAt = <T>(
 	});
 	const row = rows.at(rowIndex);
 	if (rowIndex < 0 || !row?.length) return;
-	const inset = width * poolBoardRowInset(rows, rowIndex);
+	const inset = width * (edgeInset ?? poolBoardRowInset(rows, rowIndex));
 	if (x < inset || x >= width - inset) return;
 	return row.at(Math.floor((x - inset) / ((width - inset * 2) / row.length)));
 };

@@ -249,16 +249,19 @@ export const DialogContent = ({
 	const bottomPadding = isSheet
 		? Math.max(contentInset, insets.bottom)
 		: contentInset;
-	const bodyPadding: ViewStyle = {
-		padding: intent === "lineup" ? 0 : contentInset,
-		paddingTop: hideHeader ? space.md : space.sm,
-		paddingLeft: Math.max(contentInset, insets.left),
-		paddingRight: Math.max(contentInset, insets.right),
-		paddingBottom: hasFooter ? space.md : bottomPadding,
-	};
+	const bodyPadding: ViewStyle =
+		fullScreen && hideHeader
+			? { padding: 0 }
+			: {
+					padding: intent === "lineup" ? 0 : contentInset,
+					paddingTop: hideHeader ? space.md : space.sm,
+					paddingLeft: Math.max(contentInset, insets.left),
+					paddingRight: Math.max(contentInset, insets.right),
+					paddingBottom: hasFooter ? space.md : bottomPadding,
+				};
 	if (!visible || !stack.canPresent) return undefined;
 	const header =
-		isSheet || !hideHeader ? (
+		fullScreen && hideHeader ? undefined : isSheet || !hideHeader ? (
 			<DialogDragSurface gesture={gesture}>
 				<View
 					{...handlers}
@@ -479,7 +482,7 @@ export const DialogContent = ({
 															style={[
 																bodyPadding,
 																{
-																	flexGrow: 0,
+																	flexGrow: fullScreen ? 1 : 0,
 																	flexShrink: 1,
 																	minHeight: 0,
 																},

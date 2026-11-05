@@ -17,12 +17,15 @@ export const PoolBoardColumns = ({
 			}
 			style={{
 				flexDirection: sideBySide ? "row" : "column",
-				gap: space.md,
+				gap: space.xs,
+				flexGrow: 1,
 				alignItems: "stretch",
 			}}
 		>
 			{Children.map(children, (child) => (
-				<View style={{ flex: sideBySide ? 1 : undefined, minWidth: 0 }}>
+				<View
+					style={{ flex: sideBySide ? 1 : undefined, flexGrow: 1, minWidth: 0 }}
+				>
 					{child}
 				</View>
 			))}
