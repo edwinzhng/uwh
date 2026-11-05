@@ -13,6 +13,7 @@ import Animated, {
 	useAnimatedStyle,
 	useSharedValue,
 } from "react-native-reanimated";
+import { ActionMenu } from "./action-menu";
 import { Avatar } from "./avatar";
 import { PoolAddButton } from "./pool-add-button";
 import type { PoolBoardSpot } from "./pool-board";
@@ -123,51 +124,49 @@ export const PoolPiece = ({
 		zIndex: personId && dragState.get()?.personId === personId ? 2 : 1,
 	}));
 	const trigger = (
-		<GestureDetector gesture={gesture} touchAction={canDrag ? "none" : "auto"}>
-			<Pressable
-				collapsable={false}
-				hitSlop={space.xs}
-				focusable={!spot.person && Boolean(onPress)}
-				accessibilityRole={spot.person ? "image" : onPress ? "button" : "text"}
-				accessibilityLabel={`${spot.label}${spot.person ? ` · ${spot.person.name}${spot.person.captain ? " · Captain" : ""}` : " · Add player"}`}
-				accessibilityState={!spot.person && onPress ? { selected } : undefined}
-				disabled={!onPress && !canDrag}
-				onPress={(): void => {
-					if (!spot.person && !suppressPress.current) onPress?.();
-				}}
-				style={{
-					width: geometry.compactAvatar + space.xxs * 2,
-					height: geometry.compactAvatar + space.xxs * 2,
-					borderRadius: geometry.touch / 2,
-					borderWidth: selected ? geometry.focus : 0,
-					borderStyle: spot.person ? "solid" : "dashed",
-					borderColor: selected ? theme.focus : theme.controlBorder,
-					backgroundColor: selected ? theme.background.selected : "transparent",
-					alignItems: "center",
-					justifyContent: "center",
-				}}
-			>
-				{spot.person ? (
-					<Avatar
-						initials
-						bright
-						compact
-						name={spot.person.name}
-						personId={spot.person.id}
-					/>
-				) : (
-					<Text
-						style={{
-							...typography.small,
-							fontFamily: font.semibold,
-							color: theme.text.primary,
-						}}
-					>
-						+
-					</Text>
-				)}
-			</Pressable>
-		</GestureDetector>
+		<Pressable
+			collapsable={false}
+			hitSlop={space.xs}
+			focusable={!spot.person && Boolean(onPress)}
+			accessibilityRole={spot.person ? "image" : onPress ? "button" : "text"}
+			accessibilityLabel={`${spot.label}${spot.person ? ` · ${spot.person.name}${spot.person.captain ? " · Captain" : ""}` : " · Add player"}`}
+			accessibilityState={!spot.person && onPress ? { selected } : undefined}
+			disabled={!onPress && !canDrag}
+			onPress={(): void => {
+				if (!spot.person && !suppressPress.current) onPress?.();
+			}}
+			style={{
+				width: geometry.compactAvatar + space.xxs * 2,
+				height: geometry.compactAvatar + space.xxs * 2,
+				borderRadius: geometry.touch / 2,
+				borderWidth: selected ? geometry.focus : 0,
+				borderStyle: spot.person ? "solid" : "dashed",
+				borderColor: selected ? theme.focus : theme.controlBorder,
+				backgroundColor: selected ? theme.background.selected : "transparent",
+				alignItems: "center",
+				justifyContent: "center",
+			}}
+		>
+			{spot.person ? (
+				<Avatar
+					initials
+					bright
+					compact
+					name={spot.person.name}
+					personId={spot.person.id}
+				/>
+			) : (
+				<Text
+					style={{
+						...typography.small,
+						fontFamily: font.semibold,
+						color: theme.text.primary,
+					}}
+				>
+					+
+				</Text>
+			)}
+		</Pressable>
 	);
 	if (acceptsDrop)
 		return (
@@ -178,7 +177,7 @@ export const PoolPiece = ({
 						minWidth: 0,
 						alignItems: "center",
 						justifyContent: "center",
-						paddingVertical: geometry.icon + space.xs,
+						paddingVertical: space.xs,
 						borderRadius: corners.panel,
 						borderWidth: geometry.border,
 						borderColor: theme.border,
@@ -188,7 +187,8 @@ export const PoolPiece = ({
 					slotStyle,
 				]}
 			>
-				{onManage || onPress ? (
+				<PoolDropTarget slotId={positionId} scope={scope} drag={dragState} />
+				{spot.addOptions || onManage || onPress ? (
 					<View
 						style={{
 							position: "absolute",
@@ -197,25 +197,44 @@ export const PoolPiece = ({
 							zIndex: 1,
 						}}
 					>
-						<PoolDropTarget
-							slotId={positionId}
-							scope={scope}
-							drag={dragState}
-							contentAlignment="end"
+						<View
+							style={{
+								width: geometry.touch,
+								height: geometry.touch,
+								alignItems: "flex-end",
+							}}
 						>
-							<PoolAddButton
-								label={`Add player to ${spot.label}`}
-								onPress={onManage ?? onPress}
-							/>
-						</PoolDropTarget>
+							{spot.addOptions ? (
+								<ActionMenu
+									add
+									label={`Add player to ${spot.label}`}
+									groups={[
+										{
+											id: "players",
+											items: spot.addOptions.length
+												? spot.addOptions
+												: [
+														{
+															id: "empty",
+															label: "All players selected",
+															isDisabled: true,
+															onSelect: (): void => {},
+														},
+													],
+										},
+									]}
+								/>
+							) : (
+								<PoolAddButton
+									label={`Add player to ${spot.label}`}
+									onPress={onManage ?? onPress}
+								/>
+							)}
+						</View>
 					</View>
 				) : undefined}
 				<View
 					style={{
-						position: "absolute",
-						top: space.xs,
-						left: 0,
-						right: 0,
 						paddingHorizontal: geometry.icon + space.xs,
 						alignItems: "center",
 					}}
@@ -260,40 +279,45 @@ export const PoolPiece = ({
 			</Animated.View>
 		);
 	return (
-		<Animated.View
-			collapsable={false}
-			style={[
-				{
-					width: geometry.touch + space.sm,
-					alignItems: "center",
-					gap: 0,
-				},
-				slotStyle,
-				chipStyle,
-			]}
-		>
-			<PoolDropTarget
-				slotId={positionId}
-				size={geometry.compactAvatar + space.xxs * 2}
-				personId={spot.person?.id}
-				scope={scope}
-				drag={dragState}
+		<GestureDetector gesture={gesture} touchAction={canDrag ? "none" : "auto"}>
+			<Animated.View
+				collapsable={false}
+				style={[
+					{
+						width: geometry.touch + space.lg,
+						padding: space.xxs,
+						borderWidth: geometry.border,
+						borderColor: theme.controlBorder,
+						borderRadius: corners.control,
+						backgroundColor: `${theme.background.card}99`,
+						alignItems: "center",
+						gap: 0,
+					},
+					slotStyle,
+					chipStyle,
+				]}
 			>
+				<PoolDropTarget
+					slotId={positionId}
+					personId={spot.person?.id}
+					scope={scope}
+					drag={dragState}
+				/>
 				{trigger}
-			</PoolDropTarget>
-			<Text
-				pointerEvents="none"
-				numberOfLines={2}
-				style={{
-					...typography.navigation,
-					fontFamily: font.regular,
-					color: theme.text.primary,
-					textAlign: "center",
-					width: "100%",
-				}}
-			>
-				{spot.person?.displayName ?? spot.person?.name}
-			</Text>
-		</Animated.View>
+				<Text
+					pointerEvents="none"
+					numberOfLines={2}
+					style={{
+						...typography.navigation,
+						fontFamily: font.regular,
+						color: theme.text.primary,
+						textAlign: "center",
+						width: "100%",
+					}}
+				>
+					{spot.person?.displayName ?? spot.person?.name}
+				</Text>
+			</Animated.View>
+		</GestureDetector>
 	);
 };

@@ -37,12 +37,8 @@ const Reflections = ({
 				<LoadingContent />
 			) : entries.length || canAdd ? (
 				<SessionRatingSection
-					title={
-						account.personId === member.id
-							? "Your reflections"
-							: "Player reflections"
-					}
-					actionLabel="Reflect"
+					title="Reflections"
+					actionLabel="Add"
 					entries={entries}
 					onAdd={
 						canAdd

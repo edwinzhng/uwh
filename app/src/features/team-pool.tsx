@@ -1,16 +1,14 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
 import {
-	Avatar,
 	LineupRoleMenu,
 	PoolBoard,
 	type PoolBoardSpot,
 	Row,
 	Select,
 	Stack,
-	Text,
 } from "../design-system";
-import { memberName } from "../domain/app-rules";
+import { eventAttendees, memberName } from "../domain/app-rules";
 import type { TeamFormation, TeamPlan } from "../domain/app-types";
 import {
 	formationOptions,
@@ -25,6 +23,7 @@ import {
 import { lineupDisplayNames } from "../domain/lineup-display-name";
 import type { AgeGroup } from "../domain/player-coaching";
 import { TeamCaptain } from "./team-captain";
+import { TeamStrength } from "./team-strength";
 
 export const TeamPool = ({
 	plan,
@@ -34,7 +33,6 @@ export const TeamPool = ({
 	onPlace,
 	onAdd,
 	onSwap,
-	onManageRotation,
 	onFormationChange,
 	onCaptainChange,
 	onRefereeChange,
@@ -46,7 +44,6 @@ export const TeamPool = ({
 	onPlace?: (personId: string, slot: number) => void;
 	onAdd?: (personId: string, slot: number) => void;
 	onSwap?: (personId: string, otherId: string) => void;
-	onManageRotation?: (slot: number, label: string) => void;
 	onFormationChange?: (formation: TeamFormation) => void;
 	onCaptainChange?: (personId?: string) => void;
 	onRefereeChange?: (personId?: string) => void;
@@ -89,6 +86,27 @@ export const TeamPool = ({
 			id: String(slot),
 			label: lineupSlotLabel(formation, slot),
 			shortLabel: lineupSlotAbbreviation(formation, slot),
+			addOptions: onAdd
+				? eventAttendees(data, plan.eventId, plan.partId)
+						.filter(
+							(member) =>
+								!lineupPeople(snapshot).includes(member.id) &&
+								(group === "combined" ||
+									(plan.assignments?.find(
+										(entry) => entry.personId === member.id,
+									)?.ageGroup ??
+										data.playerCoaching?.find(
+											(entry) => entry.personId === member.id,
+										)?.ageGroup ??
+										(member.programs.includes("youth") ? "youth" : "adult")) ===
+										group),
+						)
+						.map((member) => ({
+							id: member.id,
+							label: member.name,
+							onSelect: (): void => onAdd(member.id, slot),
+						}))
+				: undefined,
 			person: occupant ? person(occupant.personId) : undefined,
 			substitutes: (snapshot.rotationSlots ?? [])
 				.filter(
@@ -119,9 +137,11 @@ export const TeamPool = ({
 	return (
 		<Stack gap="xs" grow>
 			<PoolBoard
+				detail={<TeamStrength people={teamPeople} />}
 				summary={
 					<Row justify="between" gap="xs">
 						<TeamCaptain
+							dragScope={group}
 							side={side}
 							people={teamPeople}
 							personId={captain?.personId}
@@ -131,11 +151,13 @@ export const TeamPool = ({
 							onChange={onCaptainChange}
 						/>
 						<LineupRoleMenu
-							roleLabel="Ref."
+							roleLabel="Ref"
+							dragScope={group}
 							label={`${side === "black" ? "Black" : "White"} referee`}
 							people={data.members
 								.filter(
 									(member) =>
+										teamPeople.includes(member.id) &&
 										!member.archived &&
 										!member.mergedInto &&
 										member.programs.length > 0,
@@ -187,11 +209,6 @@ export const TeamPool = ({
 						? selectedPersonId
 						: undefined
 				}
-				onManageRotation={
-					onManageRotation
-						? (slot, label): void => onManageRotation(Number(slot), label)
-						: undefined
-				}
 				onAdd={
 					onAdd
 						? (id, slot): void => {
@@ -214,17 +231,6 @@ export const TeamPool = ({
 						: undefined
 				}
 			/>
-			{referee ? (
-				<Row>
-					<Avatar
-						name={memberName(data, referee.personId)}
-						personId={referee.personId}
-					/>
-					<Text variant="small">
-						Referee · {memberName(data, referee.personId)}
-					</Text>
-				</Row>
-			) : undefined}
 		</Stack>
 	);
 };

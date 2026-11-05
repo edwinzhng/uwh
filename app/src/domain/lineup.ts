@@ -899,13 +899,23 @@ export const editLineup = (
 						].includes(entry.personId),
 					),
 				};
-	const positioned = positionLineupReserves(
-		plan,
-		edit.kind === "rotation"
+	const withTeamRoles =
+		edit.kind === "referee"
 			? withCaptains
 			: {
 					...withCaptains,
-					rotationSlots: lineupRotationSlots(plan, withCaptains),
+					referees: withCaptains.referees?.filter((entry) =>
+						lineupTeamPeople(withCaptains, entry.side).includes(entry.personId),
+					),
+				};
+
+	const positioned = positionLineupReserves(
+		plan,
+		edit.kind === "rotation"
+			? withTeamRoles
+			: {
+					...withTeamRoles,
+					rotationSlots: lineupRotationSlots(plan, withTeamRoles),
 				},
 	);
 	const normalized =
@@ -962,19 +972,30 @@ export const assignLineupPosition = (
 export const validateLineupReferees = (
 	snapshot: LineupSnapshot,
 	members: readonly Member[],
-): string | undefined =>
-	snapshot.referees?.some(
-		(entry) =>
-			!members.some(
-				(member) =>
-					member.id === entry.personId &&
-					!member.archived &&
-					!member.mergedInto &&
-					member.programs.length > 0,
-			),
+): string | undefined => {
+	if (
+		snapshot.referees?.some(
+			(entry) =>
+				!members.some(
+					(member) =>
+						member.id === entry.personId &&
+						!member.archived &&
+						!member.mergedInto &&
+						member.programs.length > 0,
+				),
+		)
 	)
-		? "Choose active club players for referee slots."
-		: undefined;
+		return "Choose active club players for referee slots.";
+	if (
+		snapshot.referees?.some(
+			(entry) =>
+				!lineupTeamPeople(snapshot, entry.side).includes(entry.personId),
+		)
+	)
+		return "Choose a referee from the same team.";
+	return undefined;
+};
+
 export const writeTeamPlan = (
 	previous: TeamPlan | undefined,
 	next: TeamPlan,
@@ -996,7 +1017,31 @@ export const saveLineup = (
 	if (error) throw new Error(error);
 	return writeTeamPlan(
 		plan,
-		{ ...planWithSnapshot(plan, snapshot), published: false },
+		{
+			...planWithSnapshot(plan, snapshot),
+			draftLineup: undefined,
+			published: false,
+		},
 		expectedRevision,
 	);
+};
+
+export const saveLineupDraft = (
+	plan: TeamPlan,
+	snapshot: LineupSnapshot,
+	expectedRevision: number,
+): TeamPlan => {
+	const error = validateLineup(plan, snapshot);
+	if (error) throw new Error(error);
+	return plan.published
+		? writeTeamPlan(plan, { ...plan, draftLineup: snapshot }, expectedRevision)
+		: saveLineup(plan, snapshot, expectedRevision);
+};
+
+export const publishLineup = (plan: TeamPlan): TeamPlan => {
+	const { draftLineup, ...saved } = plan;
+	return {
+		...(draftLineup ? planWithSnapshot(saved, draftLineup) : saved),
+		published: true,
+	};
 };

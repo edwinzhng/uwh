@@ -8,6 +8,7 @@ import {
 	type PlayerCoaching,
 	validatePlayerCoaching,
 } from "../src/domain/player-coaching";
+import { withPlayerPositions } from "../src/domain/position-flow";
 import type { Id } from "./_generated/dataModel";
 import {
 	type MutationCtx,
@@ -209,6 +210,9 @@ export const rankings = query({
 					scores,
 					coachCount: coaches.length,
 					ownCoachId: actor.userId,
+					positions:
+						profile?.positions ?? defaultPlayerCoaching(value).positions,
+					profileRevision: profile?.revision ?? 0,
 				};
 			});
 	},
@@ -342,3 +346,34 @@ export const eraseCoachScores = async (
 			value: { ...team.value, published: false, coachingStale: true },
 		});
 };
+
+export const positions = mutation({
+	args: {
+		personId: v.string(),
+		positions: v.array(positionValue),
+		expectedRevision: v.number(),
+	},
+	handler: async (ctx, args): Promise<void> => {
+		const actor = await requireCoach(ctx);
+		await assertCanonicalMember(ctx, actor.clubId, args.personId);
+		const member = await ctx.db
+			.query("members")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", actor.clubId).eq("value.id", args.personId),
+			)
+			.unique();
+		if (
+			!member ||
+			member.value.archived ||
+			member.value.mergedInto ||
+			!member.value.programs.length
+		)
+			throw new Error("Choose an active player.");
+		const current = await readPlayerCoaching(ctx, actor.clubId, member.value);
+		await writePlayerCoaching(
+			ctx,
+			actor.clubId,
+			withPlayerPositions(current, args.positions, args.expectedRevision),
+		);
+	},
+});

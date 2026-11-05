@@ -8,7 +8,6 @@ import { useApp } from "../demo/app-state";
 import {
 	Badge,
 	Button,
-	Disclosure,
 	EmptyState,
 	LoadingContent,
 	Row,
@@ -31,11 +30,17 @@ const PlanContent = ({
 	event: ClubEvent;
 	partId?: string;
 	service: SessionPlanService;
-}): ReactElement => {
+}): ReactElement | undefined => {
 	const [open, setOpen] = useState(useReviewFlow() === "session-plan");
 	const plan = service.plan;
+	if (
+		!service.loading &&
+		(!plan || (!plan.body && !plan.notes && !plan.media.length)) &&
+		!open
+	)
+		return undefined;
 	return (
-		<Stack gap="sm">
+		<Stack gap="heading">
 			<SectionHeading
 				badge={
 					plan?.published ? <Badge label="Published" compact /> : undefined
@@ -66,19 +71,19 @@ const PlanContent = ({
 			{service.loading || !plan ? (
 				<LoadingContent />
 			) : (
-				<>
+				<Stack gap="section">
 					{plan.body || plan.media.length ? (
 						<Surface>
 							<SessionPlanDetails plan={plan} />
 						</Surface>
 					) : undefined}
 					{plan.notes ? (
-						<Disclosure
-							title="Private coaching notes"
-							summary="Visible to coaching staff only"
-						>
-							<Text>{plan.notes}</Text>
-						</Disclosure>
+						<Stack gap="heading">
+							<SectionHeading>Private coaching notes</SectionHeading>
+							<Surface>
+								<Text variant="small">{plan.notes}</Text>
+							</Surface>
+						</Stack>
 					) : undefined}
 					{!plan.body && !plan.notes && !plan.media.length ? (
 						<EmptyState title="No plan" />
@@ -93,7 +98,7 @@ const PlanContent = ({
 							onClose={(): void => setOpen(false)}
 						/>
 					) : undefined}
-				</>
+				</Stack>
 			)}
 		</Stack>
 	);

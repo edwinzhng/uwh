@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { Text as NativeText, View } from "react-native";
+import { LineupBackdrop } from "./lineup-backdrop";
 import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
@@ -9,7 +10,7 @@ type Team = {
 	label: string;
 	formation: string;
 	side: "black" | "white";
-	rows: { id: string; name: string; positionLabel: string }[][];
+	rows: { id: string; name: string; role?: string; positionLabel: string }[][];
 };
 export const LineupPreview = ({
 	groups,
@@ -36,13 +37,40 @@ export const LineupPreview = ({
 									borderColor: theme.border,
 									borderRadius: corners.panel,
 									backgroundColor: theme.background.card,
+									overflow: "hidden",
 									padding: space.xs,
 								}}
 							>
-								<Stack gap="xs">
-									<Text variant="caption" weight="medium">
-										{team.label} · {team.formation}
-									</Text>
+								<LineupBackdrop />
+								<View style={{ gap: 0 }}>
+									<View
+										style={{
+											flexDirection: "row",
+											alignItems: "center",
+											justifyContent: "space-between",
+											paddingBottom: space.sm,
+											gap: space.xxs,
+										}}
+									>
+										<NativeText
+											numberOfLines={1}
+											style={{
+												...typography.caption,
+												fontFamily: font.medium,
+												color: team.side === "black" ? "#EEF2D9" : "#101710",
+												backgroundColor:
+													team.side === "black" ? "#101710" : "#EEF2D9",
+												paddingHorizontal: space.xs,
+												borderRadius: corners.control,
+												overflow: "hidden",
+											}}
+										>
+											{team.label}
+										</NativeText>
+										<Text variant="caption" lines={1}>
+											{team.formation}
+										</Text>
+									</View>
 									{team.rows.map((row) => (
 										<View
 											key={row.map((person) => person.id).join(":")}
@@ -51,7 +79,7 @@ export const LineupPreview = ({
 												justifyContent: "space-around",
 												gap: space.xxs,
 												minHeight: geometry.touch,
-												paddingVertical: space.xs,
+												paddingVertical: space.xs + space.xxs / 2,
 												alignItems: "center",
 												borderTopWidth: geometry.border,
 												borderColor: theme.border,
@@ -60,7 +88,12 @@ export const LineupPreview = ({
 											{row.map((person) => (
 												<View
 													key={person.id}
-													style={{ flex: 1, minWidth: 0, alignItems: "center" }}
+													style={{
+														flex: 1,
+														minWidth: 0,
+														alignItems: "center",
+														opacity: person.name === "—" ? 0.55 : 1,
+													}}
 												>
 													<View
 														style={{
@@ -99,11 +132,16 @@ export const LineupPreview = ({
 													<Text variant="caption" lines={1}>
 														{person.name}
 													</Text>
+													{person.role ? (
+														<Text variant="small" tone="secondary" lines={1}>
+															({person.role})
+														</Text>
+													) : undefined}
 												</View>
 											))}
 										</View>
 									))}
-								</Stack>
+								</View>
 							</View>
 						))}
 					</View>

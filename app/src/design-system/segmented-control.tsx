@@ -15,6 +15,7 @@ import { useControlSize } from "./use-control-size";
 type Option<T extends string> = {
 	value: T;
 	label: string;
+	count?: number;
 	isDisabled?: boolean;
 };
 type Props<T extends string> = {
@@ -129,6 +130,7 @@ export const SegmentedControl = <T extends string>({
 							<SegmentOption
 								key={option.value}
 								label={option.label}
+								count={option.count}
 								icon={option.icon}
 								value={option.value}
 								groupName={groupName}

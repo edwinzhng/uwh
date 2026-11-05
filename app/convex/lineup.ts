@@ -116,3 +116,17 @@ export const available = query({
 		);
 	},
 });
+
+export const published = query({
+	args: { eventId: v.string() },
+	handler: async (ctx, { eventId }): Promise<boolean> => {
+		const actor = await requireMember(ctx);
+		const plans = await ctx.db
+			.query("teams")
+			.withIndex("by_event", (q) =>
+				q.eq("clubId", actor.clubId).eq("value.eventId", eventId),
+			)
+			.take(14);
+		return plans.some((plan) => plan.value.published);
+	},
+});

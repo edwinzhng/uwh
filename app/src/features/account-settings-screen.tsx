@@ -78,7 +78,7 @@ export const AccountSettingsContent = (): ReactElement => {
 			{signOutOpen ? (
 				<SignOutConfirmation onClose={(): void => setSignOutOpen(false)} />
 			) : undefined}
-			<Stack gap="sm">
+			<Stack gap="heading">
 				<SectionHeading>Notifications</SectionHeading>
 				<NotificationSettings />
 			</Stack>

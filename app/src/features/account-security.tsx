@@ -12,7 +12,7 @@ export const AccountSecurity = (): ReactElement | undefined => {
 	const [status, setStatus] = useState<string>();
 	if (!backend.accountInfo) return undefined;
 	return (
-		<Stack gap="sm">
+		<Stack gap="heading">
 			<SectionHeading>Account & security</SectionHeading>
 			<Surface>
 				<Stack>

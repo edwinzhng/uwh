@@ -35,6 +35,7 @@ export type PoolBoardSpot = {
 	id: string;
 	label: string;
 	shortLabel?: string;
+	addOptions?: readonly { id: string; label: string; onSelect: () => void }[];
 	person?: PoolBoardPerson;
 	substitutes?: PoolBoardPerson[];
 };
@@ -42,6 +43,7 @@ type Props = {
 	label: string;
 	side?: "black" | "white";
 	headerAction?: ReactNode;
+	detail?: ReactNode;
 	summary?: ReactNode;
 	dragScope?: string;
 	rows: PoolBoardSpot[][];
@@ -99,6 +101,7 @@ const PoolRow = ({
 export const PoolBoard = ({
 	label,
 	headerAction,
+	detail,
 	summary,
 	side = "white",
 	dragScope = "default",
@@ -210,20 +213,29 @@ export const PoolBoard = ({
 							flexWrap: "wrap",
 						}}
 					>
-						<Text
+						<View
 							style={{
-								...typography.label,
-								fontFamily: font.semibold,
-								color: side === "black" ? "#EEF2D9" : "#101710",
-								backgroundColor: side === "black" ? "#101710" : "#EEF2D9",
-								paddingHorizontal: space.xs,
-								paddingVertical: space.xxs,
-								borderRadius: corners.control,
-								overflow: "hidden",
+								flexDirection: "row",
+								alignItems: "center",
+								gap: space.xs,
 							}}
 						>
-							{label}
-						</Text>
+							<Text
+								style={{
+									...typography.label,
+									fontFamily: font.semibold,
+									color: side === "black" ? "#EEF2D9" : "#101710",
+									backgroundColor: side === "black" ? "#101710" : "#EEF2D9",
+									paddingHorizontal: space.xs,
+									paddingVertical: space.xxs,
+									borderRadius: corners.control,
+									overflow: "hidden",
+								}}
+							>
+								{label}
+							</Text>
+							{detail}
+						</View>
 						{headerAction ? (
 							<View style={{ maxWidth: "100%", minWidth: 0, flexShrink: 1 }}>
 								{headerAction}

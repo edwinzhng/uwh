@@ -17,28 +17,30 @@ export const MemberFeedback = ({
 	const coach = canCoachMember(account, member);
 	return (
 		<FeedbackErrorBoundary live={source === "convex"}>
-			<Stack gap="lg">
-				<SectionHeading
-					action={coach ? <FeedbackEditor personId={member.id} /> : undefined}
-				>
-					Feedback
-				</SectionHeading>
-				<Surface>
-					<FeedbackList
-						personId={member.id}
-						visibility="published"
-						embedded
-						compactEmpty
-					/>
-					{coach ? (
+			<Stack gap="section">
+				<Stack gap="heading">
+					<SectionHeading
+						action={coach ? <FeedbackEditor personId={member.id} /> : undefined}
+					>
+						Feedback
+					</SectionHeading>
+					<Surface>
 						<FeedbackList
 							personId={member.id}
-							visibility="private"
+							visibility="published"
 							embedded
-							hideEmpty
+							compactEmpty
 						/>
-					) : undefined}
-				</Surface>
+						{coach ? (
+							<FeedbackList
+								personId={member.id}
+								visibility="private"
+								embedded
+								hideEmpty
+							/>
+						) : undefined}
+					</Surface>
+				</Stack>
 				<PersonalClips member={member} />
 			</Stack>
 		</FeedbackErrorBoundary>

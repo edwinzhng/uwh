@@ -1,4 +1,5 @@
 import type { AppData } from "../src/domain/app-types";
+import { lineupSnapshot } from "../src/domain/lineup";
 import { practicePartKey } from "../src/domain/practice-parts";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
@@ -91,7 +92,9 @@ export const notifyChanges = async (
 		);
 		return (
 			plan.published &&
-			(!before?.published || before.revision !== plan.revision)
+			(!before?.published ||
+				JSON.stringify(lineupSnapshot(before)) !==
+					JSON.stringify(lineupSnapshot(plan)))
 		);
 	}))
 		await enqueue(ctx, {

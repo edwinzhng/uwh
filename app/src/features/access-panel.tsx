@@ -17,7 +17,7 @@ export const AccessPanel = (): ReactElement => {
 	const [editing, setEditing] = useState<string>();
 	const editingAccount = accounts.find((entry) => entry.id === editing);
 	return (
-		<Stack gap="sm">
+		<Stack gap="heading">
 			<SectionHeading>Account access</SectionHeading>
 			<Surface>
 				<Stack>

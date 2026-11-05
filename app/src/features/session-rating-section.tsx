@@ -20,12 +20,13 @@ export const SessionRatingSection = ({
 	report: SessionPerformanceService["report"];
 }): ReactElement => (
 	<Surface variant="plain">
-		<Stack gap="sm">
+		<Stack gap="heading">
 			<SectionHeading
 				action={
 					onAdd ? (
 						<Button
 							label={actionLabel}
+							prefix="plus"
 							compact
 							variant="secondary"
 							onPress={onAdd}

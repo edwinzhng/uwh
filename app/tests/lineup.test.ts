@@ -11,6 +11,7 @@ import {
 	normalizeLineup,
 	saveLineup,
 	validateLineup,
+	validateLineupReferees,
 	writeTeamPlan,
 } from "../src/domain/lineup";
 import { formatTeams, positionLabel } from "../src/domain/player-coaching";
@@ -468,4 +469,76 @@ test("moving directly into a position promotes a remaining player in the origina
 		lineupPeople(before).slice().sort(),
 	);
 	expect(validateLineup(plan, moved)).toBeUndefined();
+});
+
+test("private autosave preserves the published lineup and hides draft data until explicit publication", (): void => {
+	const generated = generate();
+	const published = reduceApp(generated, primaryAccount, {
+		type: "publish-teams",
+		eventId: "club-thu",
+		expectedRevision: planFor(generated).revision,
+	});
+	const original = planFor(published);
+	const snapshot = editLineup(original, lineupSnapshot(original), {
+		kind: "formation",
+		side: "black",
+		formation: "3-3",
+	});
+	const action = {
+		type: "save-lineup",
+		privateDraft: true,
+		eventId: "club-thu",
+		expectedRevision: original.revision ?? 0,
+		snapshot,
+	} as const;
+	const saved = reduceApp(published, primaryAccount, action);
+	const draft = planFor(saved);
+	expect(draft.published).toBe(true);
+	expect(draft.blackFormation).toBe(original.blackFormation);
+	expect(draft.draftLineup).toEqual(snapshot);
+	const player = { ...primaryAccount, coachPrograms: [], admin: false };
+	const visible = planFor(visibleAppData(saved, player));
+	expect(visible.draftLineup).toBeUndefined();
+	expect(lineupSnapshot(visible)).toEqual(lineupSnapshot(original));
+	expect(() => reduceApp(saved, primaryAccount, action)).toThrow(
+		"lineup changed",
+	);
+	expect(() =>
+		reduceApp(saved, player, {
+			...action,
+			expectedRevision: draft.revision ?? 0,
+		}),
+	).toThrow();
+	const next = reduceApp(saved, primaryAccount, {
+		type: "publish-teams",
+		eventId: "club-thu",
+		expectedRevision: draft.revision,
+	});
+	expect(planFor(next).draftLineup).toBeUndefined();
+	expect(planFor(visibleAppData(next, player)).blackFormation).toBe("3-3");
+});
+
+test("referees must belong to their team and moving them away clears the role", (): void => {
+	const data = generate();
+	const plan = planFor(data);
+	const black = first(plan.black);
+	const white = first(plan.white);
+	const snapshot = editLineup(plan, lineupSnapshot(plan), {
+		kind: "referee",
+		side: "black",
+		personId: black,
+	});
+	expect(validateLineupReferees(snapshot, data.members)).toBeUndefined();
+	expect(
+		validateLineupReferees(
+			{ ...snapshot, referees: [{ side: "black", personId: white }] },
+			data.members,
+		),
+	).toBe("Choose a referee from the same team.");
+	const swapped = editLineup(plan, snapshot, {
+		kind: "swap",
+		personId: black,
+		otherId: white,
+	});
+	expect(swapped.referees).toEqual([]);
 });

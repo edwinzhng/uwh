@@ -52,9 +52,9 @@ export const ClubLayoutOptionsScreen = (): ReactElement => {
 			/>
 			<ClubSummaryData seasonId={seasonId}>
 				{(registered) => (
-					<Stack gap="xl">
+					<Stack gap="section">
 						{[options.slice(0, 2), options.slice(2)].map((groupOptions) => (
-							<Grid key={groupOptions.at(0)?.value} gap="xl">
+							<Grid key={groupOptions.at(0)?.value} gap="section">
 								{groupOptions.map((option) => (
 									<Stack key={option.value} gap="sm">
 										<Text variant="h4">{option.label}</Text>

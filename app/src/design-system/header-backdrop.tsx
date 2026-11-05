@@ -11,8 +11,12 @@ const Blur = lazy(() =>
 
 export const HeaderBackdrop = ({
 	topInset = 0,
+	edge = "top",
+	fadeInset = 0,
 }: {
 	topInset?: number;
+	edge?: "top" | "bottom";
+	fadeInset?: number;
 }): ReactElement => {
 	const theme = useTheme();
 	const opaque = useReduceTransparency();
@@ -24,7 +28,14 @@ export const HeaderBackdrop = ({
 			pointerEvents="none"
 			accessibilityElementsHidden
 			importantForAccessibility="no-hide-descendants"
-			style={[StyleSheet.absoluteFill, { top: -topInset }]}
+			style={[
+				StyleSheet.absoluteFill,
+				{
+					top: edge === "top" ? -topInset : -fadeInset,
+					bottom: edge === "top" ? -fadeInset : -topInset,
+					transform: edge === "bottom" ? [{ rotate: "180deg" }] : undefined,
+				},
+			]}
 		>
 			{opaque ? (
 				<View

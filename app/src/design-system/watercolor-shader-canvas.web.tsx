@@ -16,9 +16,11 @@ const shaderColor = (hex: string): number[] => [
 const WatercolorShader = ({
 	category,
 	seed,
+	animated = true,
 }: {
 	category: CategoryColor;
 	seed?: string;
+	animated?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
 	const tuning = useWatercolorTuning() ?? watercolorDefaults;
@@ -60,10 +62,10 @@ const WatercolorShader = ({
 						u_pigment: shaderColor(palette.foreground),
 						u_ground: shaderColor(theme.background.card),
 					}}
-					speed={motion ? tuning.speed : 0}
+					speed={motion && animated ? tuning.speed : 0}
 					frame={0}
 					minPixelRatio={1}
-					maxPixelCount={80000}
+					maxPixelCount={animated ? 80000 : 4000000}
 					style={{ position: "absolute", inset: 0, opacity: tuning.intensity }}
 				/>
 			) : undefined}

@@ -108,7 +108,7 @@ export const CoachingHoursReport = ({
 					{coach.practices === 1 ? "completed practice" : "completed practices"}
 				</Text>
 			</SummaryCard>
-			<Stack gap="sm">
+			<Stack gap="heading">
 				<SectionHeading>Practices coached</SectionHeading>
 				{history.length ? (
 					<Surface>

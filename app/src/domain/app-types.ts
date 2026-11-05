@@ -96,6 +96,7 @@ export type EventResponse = {
 	attendance: Attendance;
 };
 export type TeamPlan = {
+	draftLineup?: LineupSnapshot;
 	captains?: { side: "black" | "white"; personId: string }[];
 	revision?: number;
 	fieldSlots?: { personId: string; slot: number }[];
@@ -332,6 +333,7 @@ export type AppAction =
 	  }
 	| {
 			type: "save-lineup";
+			privateDraft?: boolean;
 			partId?: string;
 			eventId: string;
 			expectedRevision: number;

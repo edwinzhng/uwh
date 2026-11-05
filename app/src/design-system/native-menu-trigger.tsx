@@ -1,14 +1,18 @@
 import type { ReactElement } from "react";
 import { Text, View } from "react-native";
 import { Icon, type IconName } from "./icon";
+import { MenuAvatar } from "./menu-avatar";
 import { type PickerLayoutKind, pickerTriggerWidth } from "./picker-layout";
 import { usePickerSizing } from "./picker-layout-context";
-import type { StatusTone } from "./picker-props";
+import type { ChoicePerson, StatusTone } from "./picker-props";
+import { PoolAddGlyph } from "./pool-add-glyph";
 import { useTheme } from "./theme";
 import { control, corners, font, geometry } from "./tokens";
 
 export const NativeMenuTrigger = ({
 	appearance = "field",
+	add,
+	avatar,
 	label,
 	accessibilityLabel = label,
 	icon,
@@ -19,6 +23,8 @@ export const NativeMenuTrigger = ({
 	availableWidth,
 }: {
 	appearance?: "field" | "context";
+	add?: boolean;
+	avatar?: ChoicePerson;
 	label: string;
 	accessibilityLabel?: string;
 	icon?: IconName;
@@ -30,6 +36,23 @@ export const NativeMenuTrigger = ({
 }): ReactElement => {
 	const theme = useTheme();
 	const inDialog = usePickerSizing();
+	if (add || avatar)
+		return (
+			<View
+				accessible
+				accessibilityRole="button"
+				accessibilityLabel={accessibilityLabel}
+				accessibilityState={{ disabled: isDisabled }}
+				style={{
+					width: geometry.touch,
+					height: geometry.touch,
+					alignItems: avatar ? "center" : "flex-end",
+					justifyContent: avatar ? "center" : "flex-start",
+				}}
+			>
+				{avatar ? <MenuAvatar person={avatar} /> : <PoolAddGlyph />}
+			</View>
+		);
 	return (
 		<View
 			accessible

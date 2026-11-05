@@ -30,16 +30,17 @@ const ClipsList = ({
 }): ReactElement => {
 	const router = useRouter();
 	const { account } = useApp();
+	const canAdd = account.admin || account.coachPrograms.length > 0;
 	const open = (params: { id?: string; new?: string }): void =>
 		router.push({
 			pathname: "/resources",
 			params: { kind: "video", person: member.id, ...params },
 		});
 	return (
-		<Surface elevation="none">
-			<Stack gap="sm">
-				<SectionHeading
-					action={
+		<Stack gap="heading">
+			<SectionHeading
+				action={
+					canAdd || state.items.length ? (
 						<Row wrap>
 							{account.admin || account.coachPrograms.length ? (
 								<Button
@@ -59,10 +60,12 @@ const ClipsList = ({
 								/>
 							) : undefined}
 						</Row>
-					}
-				>
-					Shared videos
-				</SectionHeading>
+					) : undefined
+				}
+			>
+				Shared videos
+			</SectionHeading>
+			<Surface>
 				{!state.loading && !state.items.length ? (
 					<Text variant="small" tone="secondary">
 						No videos.
@@ -99,8 +102,8 @@ const ClipsList = ({
 						disabled={false}
 					/>
 				) : undefined}
-			</Stack>
-		</Surface>
+			</Surface>
+		</Stack>
 	);
 };
 const LiveClips = ({ member }: { member: Member }): ReactElement => (

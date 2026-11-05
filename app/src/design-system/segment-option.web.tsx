@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from "react";
+import { Badge } from "./badge";
 import { Icon } from "./icon";
 import type { SegmentOptionProps } from "./segment-option-props";
 import { useTheme } from "./theme";
@@ -6,6 +7,7 @@ import { control, corners, font, geometry, radius, space } from "./tokens";
 
 export const SegmentOption = ({
 	label,
+	count,
 	icon,
 	value,
 	groupName,
@@ -32,6 +34,8 @@ export const SegmentOption = ({
 				boxSizing: "border-box",
 				alignItems: "center",
 				justifyContent: "center",
+				flexDirection: "row",
+				gap: space.xs,
 				minHeight: height,
 				width: icon ? height : undefined,
 				padding: `${control.paddingY - control.segmentInset}px ${icon ? space.none : control.paddingX}px`,
@@ -52,7 +56,7 @@ export const SegmentOption = ({
 				type="radio"
 				name={groupName}
 				value={value}
-				aria-label={label}
+				aria-label={count === undefined ? label : `${label}, ${count} going`}
 				checked={isSelected}
 				disabled={isDisabled}
 				tabIndex={isTabStop && !isDisabled ? 0 : -1}
@@ -93,6 +97,9 @@ export const SegmentOption = ({
 			>
 				{icon ? <Icon name={icon} size="sm" color={foreground} /> : label}
 			</span>
+			{count !== undefined ? (
+				<Badge label={String(count)} compact />
+			) : undefined}
 		</label>
 	);
 };

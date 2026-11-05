@@ -157,7 +157,7 @@ export const ModerationScreen = (): ReactElement => {
 						)}
 					</DataPage>
 					{safety.queue?.restrictions.length ? (
-						<Stack gap="sm">
+						<Stack gap="heading">
 							<SectionHeading>Paused chat access</SectionHeading>
 							<Surface>
 								<List>

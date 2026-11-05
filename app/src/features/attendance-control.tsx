@@ -11,7 +11,8 @@ export const AttendanceControl = ({
 	name,
 	value,
 	disabled,
-	defaultHere = false,
+	onLateAddition,
+	onAbsent,
 }: {
 	eventId: string;
 	partId?: string;
@@ -20,6 +21,8 @@ export const AttendanceControl = ({
 	value: Attendance;
 	disabled: boolean;
 	defaultHere?: boolean;
+	onLateAddition?: () => void;
+	onAbsent?: () => void;
 }): ReactElement => {
 	const { dispatch } = useApp();
 	const task = useFormTask();
@@ -40,7 +43,7 @@ export const AttendanceControl = ({
 		);
 	};
 	return (
-		<Select<Attendance>
+		<Select<Attendance | "addition">
 			label={`Attendance · ${name}`}
 			hideLabel
 			compact
@@ -49,12 +52,18 @@ export const AttendanceControl = ({
 			options={[
 				{ value: "present", label: "Here", tone: "success" },
 				{ value: "late", label: "Late", tone: "warning" },
-				{ value: "absent", label: "No-show", tone: "danger" },
-				...(!defaultHere || value === "unmarked"
-					? [{ value: "unmarked" as const, label: "Not marked" }]
+				{ value: "absent", label: "Absent", tone: "danger" },
+				{ value: "unmarked", label: "No reply" },
+				...(onLateAddition
+					? [{ value: "addition" as const, label: "Late addition" }]
 					: []),
 			]}
 			onValueChange={(attendance): void => {
+				if (attendance === "addition") {
+					onLateAddition?.();
+					return;
+				}
+				if (attendance === "absent") onAbsent?.();
 				if (attendance) mark(attendance);
 			}}
 		/>

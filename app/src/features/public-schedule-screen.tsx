@@ -49,7 +49,7 @@ const LivePublicScheduleScreen = (): ReactElement => {
 	);
 	return (
 		<AuthLayout title={info?.name ?? "Public schedule"}>
-			<Stack>
+			<Stack gap="heading">
 				<SectionHeading
 					action={
 						<Button

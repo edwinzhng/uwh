@@ -9,18 +9,21 @@ export const TeamCaptain = ({
 	personId,
 	onChange,
 	displayName,
+	dragScope,
 }: {
 	side: LineupSide;
 	people: string[];
 	personId?: string;
 	displayName?: string;
+	dragScope?: string;
 	onChange?: (id?: string) => void;
 }): ReactElement | undefined => {
 	const { data } = useApp();
 	if (!onChange && !personId) return undefined;
 	return (
 		<LineupRoleMenu
-			roleLabel="Capt."
+			roleLabel="Captain"
+			dragScope={dragScope}
 			label={`${side === "black" ? "Black" : "White"} captain`}
 			people={people.map((id) => ({ id, name: memberName(data, id) }))}
 			personId={personId}

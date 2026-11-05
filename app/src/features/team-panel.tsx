@@ -1,6 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { useApp, useAppStatus } from "../demo/app-state";
 import {
+	ActionMenu,
 	Badge,
 	Button,
 	EmptyState,
@@ -100,7 +101,15 @@ const TeamPanelContent = ({
 				}}
 			/>
 		) : undefined;
-	if (!plan && !canGenerate) return undefined;
+	if (!plan && !canGenerate)
+		return (
+			<Stack gap="heading">
+				<SectionHeading>Teams</SectionHeading>
+				<Surface>
+					<EmptyState title="Teams not published" />
+				</Surface>
+			</Stack>
+		);
 	if (!plan && editable)
 		return (
 			<>
@@ -115,20 +124,19 @@ const TeamPanelContent = ({
 				>
 					Teams
 				</SectionHeading>
+				<Surface>
+					<EmptyState title="Teams not published" />
+				</Surface>
 				{generationDialog}
 			</>
 		);
 
 	const content = (
-		<Stack gap="sm" grow={editable && Boolean(plan)}>
+		<Stack gap="heading" grow={editable && Boolean(plan)}>
 			{editable && plan ? (
 				<LineupEditor
 					key={JSON.stringify([event.id, partId])}
 					plan={plan}
-					onRegenerate={(): void => setOptions(true)}
-					canRegenerate={
-						canGenerate && eventAttendees(data, event.id, partId).length >= 2
-					}
 					resetRevision={
 						generated?.eventId === event.id && generated.partId === partId
 							? generated.revision
@@ -242,22 +250,74 @@ const TeamPanelContent = ({
 					)}
 				</>
 			)}
-			{generationDialog}
 		</Stack>
 	);
 	return inline && readOnly ? (
 		content
 	) : (
-		<LineupDialog
-			immersive={editable && Boolean(plan)}
-			preview={plan ? <TeamLineupPreview plan={plan} /> : undefined}
-			openRequest={generated?.revision}
-			label={
-				plan ? "Open lineup" : editable ? "Generate teams" : "View team status"
-			}
-		>
-			{content}
-		</LineupDialog>
+		<>
+			{generationDialog}
+			{copyState !== "ready" ? (
+				<Text
+					variant="caption"
+					tone={copyState === "failed" ? "danger" : "secondary"}
+				>
+					{copyState === "copied"
+						? "Teams copied"
+						: "Couldn’t copy teams. Try again."}
+				</Text>
+			) : undefined}
+			<LineupDialog
+				actions={
+					editable && plan ? (
+						<ActionMenu
+							label="Team options"
+							icon="more"
+							isDisabled={busy}
+							groups={[
+								{
+									id: "teams",
+									items: [
+										{
+											id: "copy",
+											label: "Copy teams",
+											icon: "copy",
+											isDisabled: stale,
+											onSelect: (): void => {
+												void copy();
+											},
+										},
+										{
+											id: "regenerate",
+											label: "Regenerate teams",
+											icon: "users",
+											isDisabled:
+												!canGenerate ||
+												eventAttendees(data, event.id, partId).length < 2,
+											onSelect: (): void => setOptions(true),
+										},
+									],
+								},
+							]}
+						/>
+					) : undefined
+				}
+				immersive={editable && Boolean(plan)}
+				preview={
+					plan?.published ? (
+						<TeamLineupPreview plan={plan} />
+					) : (
+						<Surface>
+							<EmptyState title="Teams not published" />
+						</Surface>
+					)
+				}
+				openRequest={generated?.revision}
+				label={plan ? "Edit" : editable ? "Generate teams" : "View team status"}
+			>
+				{content}
+			</LineupDialog>
+		</>
 	);
 };
 

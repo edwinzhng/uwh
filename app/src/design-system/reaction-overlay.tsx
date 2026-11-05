@@ -11,13 +11,20 @@ import {
 	useWindowDimensions,
 	View,
 } from "react-native";
+import Animated, {
+	Easing,
+	useAnimatedStyle,
+	useSharedValue,
+	withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Dialog } from "./dialog";
 import type { MessageReactionProps } from "./message-reaction-props";
 import { QuickReactions } from "./quick-reactions";
 import { ReactionContent } from "./reaction-content";
 import { useTheme } from "./theme";
-import { corners, elevation, geometry, space } from "./tokens";
+import { corners, elevation, geometry, motion, space } from "./tokens";
+import { useMotion } from "./use-motion";
 
 export const ReactionOverlay = ({
 	anchor,
@@ -43,6 +50,9 @@ export const ReactionOverlay = ({
 	| "onSelect"
 > & { anchor: RefObject<View | null> }): ReactElement => {
 	const theme = useTheme();
+	const animate = useMotion();
+	const opacity = useSharedValue(0);
+	const revealStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
 	const viewport = useWindowDimensions();
 	const insets = useSafeAreaInsets();
 	const [quickPresented, setQuickPresented] = useState(false);
@@ -57,6 +67,7 @@ export const ReactionOverlay = ({
 	const height = geometry.touch + space.xs * 2 + (error ? geometry.touch : 0);
 	useLayoutEffect(() => {
 		if (!isOpen || mode !== "quick") {
+			opacity.set(0);
 			setPosition(undefined);
 			return;
 		}
@@ -89,6 +100,7 @@ export const ReactionOverlay = ({
 		};
 	}, [
 		anchor,
+		opacity,
 		isOpen,
 		mode,
 		viewport.width,
@@ -107,6 +119,14 @@ export const ReactionOverlay = ({
 				navigationBarTranslucent
 				onRequestClose={dismiss}
 				onShow={(): void => {
+					opacity.set(
+						withTiming(1, {
+							duration: animate
+								? motion.duration.fast
+								: motion.duration.instant,
+							easing: Easing.bezier(...motion.easing.out),
+						}),
+					);
 					if (Platform.OS === "ios") setQuickPresented(true);
 				}}
 				onDismiss={(): void => setQuickPresented(false)}
@@ -124,19 +144,22 @@ export const ReactionOverlay = ({
 						disabled={isDisabled}
 						style={{ position: "absolute", inset: 0 }}
 					/>
-					<View
-						style={{
-							position: "absolute",
-							left: position?.left,
-							top: position?.top,
-							width,
-							padding: space.xs,
-							backgroundColor: theme.background.primary,
-							borderRadius: corners.pill,
-							borderWidth: geometry.border,
-							borderColor: theme.border,
-							...elevation.floating,
-						}}
+					<Animated.View
+						style={[
+							{
+								position: "absolute",
+								left: position?.left,
+								top: position?.top,
+								width,
+								padding: space.xs,
+								backgroundColor: theme.background.primary,
+								borderRadius: corners.pill,
+								borderWidth: geometry.border,
+								borderColor: theme.border,
+								...elevation.floating,
+							},
+							revealStyle,
+						]}
 					>
 						<QuickReactions
 							onSelect={onSelect}
@@ -145,7 +168,7 @@ export const ReactionOverlay = ({
 							isDisabled={isDisabled}
 							error={error}
 						/>
-					</View>
+					</Animated.View>
 				</View>
 			</Modal>
 			<Dialog

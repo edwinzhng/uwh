@@ -1,5 +1,6 @@
 import { Children, type ReactElement, type ReactNode, useState } from "react";
 import { useWindowDimensions, View } from "react-native";
+import { useTheme } from "./theme";
 import { geometry, space } from "./tokens";
 
 export const PoolBoardColumns = ({
@@ -7,6 +8,7 @@ export const PoolBoardColumns = ({
 }: {
 	children: ReactNode;
 }): ReactElement => {
+	const theme = useTheme();
 	const [wide, setWide] = useState(false);
 	const viewport = useWindowDimensions();
 	const sideBySide = wide || viewport.width > viewport.height;
@@ -22,9 +24,18 @@ export const PoolBoardColumns = ({
 				alignItems: "stretch",
 			}}
 		>
-			{Children.map(children, (child) => (
+			{Children.map(children, (child, index) => (
 				<View
-					style={{ flex: sideBySide ? 1 : undefined, flexGrow: 1, minWidth: 0 }}
+					style={{
+						flex: sideBySide ? 1 : undefined,
+						flexGrow: 1,
+						minWidth: 0,
+						borderLeftWidth: sideBySide && index > 0 ? geometry.border : 0,
+						borderTopWidth: !sideBySide && index > 0 ? geometry.border : 0,
+						borderColor: theme.controlBorder,
+						paddingLeft: sideBySide && index > 0 ? space.xs : 0,
+						paddingTop: !sideBySide && index > 0 ? space.sm : 0,
+					}}
 				>
 					{child}
 				</View>

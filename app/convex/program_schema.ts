@@ -26,6 +26,7 @@ export const programRsvpValue = v.object({
 export const programDraftValue = {
 	id: v.string(),
 	name: v.string(),
+	description: v.optional(v.string()),
 	archived: v.boolean(),
 	status: v.union(
 		v.literal("draft"),

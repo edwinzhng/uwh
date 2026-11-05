@@ -33,7 +33,7 @@ export const SeasonSettings = (): ReactElement => {
 		}
 	};
 	return (
-		<Stack gap="sm">
+		<Stack gap="heading">
 			<SectionHeading
 				action={
 					<Button

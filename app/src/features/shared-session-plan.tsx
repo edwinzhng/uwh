@@ -26,7 +26,7 @@ const SharedPlanContent = ({
 	service.loading ? (
 		<LoadingContent />
 	) : service.plan ? (
-		<Stack gap="sm">
+		<Stack gap="heading">
 			{!preview ? (
 				<SectionHeading badge={<Badge label="Published" compact />}>
 					Plan

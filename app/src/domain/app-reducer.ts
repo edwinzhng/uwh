@@ -26,7 +26,9 @@ import {
 	assignLineupPosition,
 	lineupSnapshot,
 	normalizeLineup,
+	publishLineup,
 	saveLineup,
+	saveLineupDraft,
 	validateLineup,
 	validateLineupReferees,
 	writeTeamPlan,
@@ -574,7 +576,9 @@ export const reduceApp = (
 				)
 			)
 				throw new Error("Use the player's current age group.");
-			const next = saveLineup(plan, action.snapshot, action.expectedRevision);
+			const next = action.privateDraft
+				? saveLineupDraft(plan, action.snapshot, action.expectedRevision)
+				: saveLineup(plan, action.snapshot, action.expectedRevision);
 			return {
 				...data,
 				teams: data.teams.map((entry) => (entry === plan ? next : entry)),
@@ -600,12 +604,15 @@ export const reduceApp = (
 				throw new Error("Lineup changed. Regenerate teams before publishing.");
 			if (action.type === "publish-teams") {
 				const refereeIssue = validateLineupReferees(
-					lineupSnapshot(plan),
+					plan.draftLineup ?? lineupSnapshot(plan),
 					data.members,
 				);
 				if (refereeIssue) throw new Error(refereeIssue);
 				if (plan.blackFormation || plan.whiteFormation) {
-					const error = validateLineup(plan, lineupSnapshot(plan));
+					const error = validateLineup(
+						plan,
+						plan.draftLineup ?? lineupSnapshot(plan),
+					);
 					if (error) throw new Error(error);
 				}
 				return {
@@ -614,7 +621,7 @@ export const reduceApp = (
 						entry === plan
 							? writeTeamPlan(
 									plan,
-									{ ...entry, published: true },
+									publishLineup(entry),
 									action.expectedRevision,
 								)
 							: entry,

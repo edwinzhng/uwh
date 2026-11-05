@@ -58,7 +58,7 @@ export const createWatercolorRenderer = (
 			.replace("fragColor=", "gl_FragColor="),
 	);
 	const copy = program(
-		"precision mediump float; varying vec2 uv; uniform sampler2D image; void main(){gl_FragColor=texture2D(image,uv);}",
+		"precision highp float; varying vec2 uv; uniform sampler2D image; uniform float grain; uniform float seed; void main(){float paper=fract(sin(dot(floor(gl_FragCoord.xy),vec2(12.9898,78.233))+seed)*43758.5453)-.5;gl_FragColor=vec4(clamp(texture2D(image,uv).rgb+paper*grain*.18,0.,1.),1.);}",
 	);
 	const buffer = gl.createBuffer();
 	if (!buffer) throw new Error("Watercolor geometry unavailable.");
@@ -71,6 +71,8 @@ export const createWatercolorRenderer = (
 	const materialPosition = gl.getAttribLocation(material, "position");
 	const copyPosition = gl.getAttribLocation(copy, "position");
 	const image = gl.getUniformLocation(copy, "image");
+	const outputGrain = gl.getUniformLocation(copy, "grain");
+	const outputSeed = gl.getUniformLocation(copy, "seed");
 	const uniforms = Object.fromEntries(
 		[
 			"resolution",
@@ -157,7 +159,7 @@ export const createWatercolorRenderer = (
 			gl.uniform2f(uniforms.resolution ?? null, surface.width, surface.height);
 			gl.uniform1f(uniforms.time ?? null, frame.time);
 			gl.uniform1f(uniforms.seed ?? null, frame.seed);
-			gl.uniform1f(uniforms.grain ?? null, frame.grain);
+			gl.uniform1f(uniforms.grain ?? null, 0);
 			gl.uniform1f(uniforms.smoothness ?? null, frame.smoothness);
 			color("base", frame.base);
 			color("pigment", frame.pigment);
@@ -169,6 +171,8 @@ export const createWatercolorRenderer = (
 			gl.activeTexture(gl.TEXTURE0);
 			gl.bindTexture(gl.TEXTURE_2D, surface.texture);
 			gl.uniform1i(image, 0);
+			gl.uniform1f(outputGrain, frame.grain);
+			gl.uniform1f(outputSeed, frame.seed);
 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 		},
 		dispose: (): void => {

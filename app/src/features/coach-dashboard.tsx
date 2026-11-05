@@ -37,7 +37,7 @@ export const CoachDashboard = ({
 				/>
 			)}
 			<CoachingHomeTasks />
-			<Stack gap="sm">
+			<Stack gap="heading">
 				<SectionHeading icon="trophy">Coaching tools</SectionHeading>
 				<Surface>
 					<Stack gap="none">

@@ -1,6 +1,7 @@
 import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { canReadProgress } from "../src/domain/app-rules";
+import { migratedGoalReflection } from "../src/domain/goal-reflection-migration";
 import {
 	type GoalReflection,
 	reflectionMatches,
@@ -117,7 +118,7 @@ export const record = mutation({
 				"Your check-in count changed. Review the current progress and try again.",
 			);
 		const checkIn = Math.min(6, person.value.steps + 1);
-		await ctx.db.insert("goalReflections", {
+		const reflectionId = await ctx.db.insert("goalReflections", {
 			clubId: membership.clubId,
 			personId: input.personId,
 			authorId: membership.userId,
@@ -130,6 +131,19 @@ export const record = mutation({
 			createdAt: Date.now(),
 			checkIn,
 		});
+		const [source, club] = await Promise.all([
+			ctx.db.get(reflectionId),
+			ctx.db.get(membership.clubId),
+		]);
+		if (!source || !club) throw new ConvexError("Reflection unavailable.");
+		await ctx.db.insert(
+			"sessionPerformance",
+			migratedGoalReflection(
+				{ ...source, id: source._id },
+				club.timeZone ?? "America/Edmonton",
+				person.value.name,
+			),
+		);
 		await ctx.db.patch(person._id, {
 			value: { ...person.value, steps: checkIn },
 		});

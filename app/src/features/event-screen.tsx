@@ -16,10 +16,17 @@ import {
 	Tabs,
 	Text,
 } from "../design-system";
-import { canCoach, formatDate, formatTime } from "../domain/app-rules";
+import {
+	canCoach,
+	canRegister,
+	eventResponse,
+	formatDate,
+	formatTime,
+} from "../domain/app-rules";
 import { availableLoanPractice } from "../domain/equipment-loans";
 import { eventTimeRange } from "../domain/event-card-presentation";
 import { eventKindLabel, practiceEvent } from "../domain/event-types";
+import { participatesInPart } from "../domain/practice-parts";
 import { venueName } from "../domain/venue";
 import { ClubShell } from "./club-shell";
 import { EquipmentLoanDialog } from "./equipment-loan-dialog";
@@ -223,6 +230,18 @@ export const EventScreen = (): ReactElement => {
 												...event.parts.map((part) => ({
 													value: part.id,
 													label: part.title,
+													count: data.members.filter((member) => {
+														const response = eventResponse(
+															data,
+															event.id,
+															member.id,
+														);
+														return (
+															canRegister(member, event) &&
+															response.response === "going" &&
+															participatesInPart(response, part.id)
+														);
+													}).length,
 												})),
 											]}
 										/>

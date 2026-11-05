@@ -66,11 +66,7 @@ export const SessionPerformanceCard = ({
 									})
 								}
 							/>
-						) : (
-							<Text variant="caption" tone="secondary">
-								Session date unavailable
-							</Text>
-						)}
+						) : undefined}
 						{entry.canReport ? (
 							<SessionPerformanceReport entry={entry} report={report} />
 						) : undefined}

@@ -42,6 +42,24 @@ export const TeamLineupPreview = ({
 									)?.ageGroup ?? "adult") === group),
 						)?.personId;
 						return {
+							role: personId
+								? [
+										plan.captains?.some(
+											(captain) =>
+												captain.personId === personId && captain.side === side,
+										)
+											? "Captain"
+											: undefined,
+										plan.referees?.some(
+											(referee) =>
+												referee.personId === personId && referee.side === side,
+										)
+											? "Ref"
+											: undefined,
+									]
+										.filter(Boolean)
+										.join(" · ") || undefined
+								: undefined,
 							position,
 							positionLabel: lineupSlotAbbreviation(formation, slot),
 							id: `${group}:${side}:${slot}`,

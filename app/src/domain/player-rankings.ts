@@ -1,9 +1,11 @@
-import type { CoachScore } from "./player-coaching";
+import type { CoachScore, Position } from "./player-coaching";
 
 export type PlayerRanking = {
 	personId: string;
 	name: string;
 	scores: CoachScore[];
+	positions?: Position[];
+	profileRevision?: number;
 	coachCount: number;
 	ownCoachId: string;
 };

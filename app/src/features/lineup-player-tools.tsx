@@ -66,7 +66,7 @@ export const LineupPlayerTools = ({
 	} = controls;
 	return (
 		<Surface variant="subtle">
-			<Stack>
+			<Stack gap="heading">
 				<SectionHeading
 					action={
 						<IconButton

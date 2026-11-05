@@ -5,6 +5,7 @@ import { visibleAppData } from "../src/domain/app-visibility";
 import { addDays } from "../src/domain/calendar-dates";
 import { clubDate } from "../src/domain/event-time";
 import { eventFinished } from "../src/domain/schedule-agenda";
+import { eventWeekday } from "../src/domain/schedule-weekdays";
 import type { Doc } from "./_generated/dataModel";
 import { type QueryCtx, query } from "./_generated/server";
 import { eventRows } from "./action_data";
@@ -37,12 +38,13 @@ const entriesFor = async (
 export const upcoming = query({
 	args: {
 		programId: v.optional(v.string()),
+		weekday: v.optional(v.number()),
 		now: v.number(),
 		paginationOpts: paginationOptsValidator,
 	},
 	handler: async (
 		ctx,
-		{ programId, now, paginationOpts },
+		{ programId, weekday, now, paginationOpts },
 	): Promise<PaginationResult<ScheduleEntry>> => {
 		const actor = await requireMember(ctx);
 		const from = addDays(clubDate(now, "UTC"), -14);
@@ -72,14 +74,25 @@ export const upcoming = query({
 				actor,
 				page.page
 					.map((row) => row.value)
-					.filter((event) => !eventFinished(event, now)),
+					.filter(
+						(event) =>
+							!eventFinished(event, now) &&
+							(weekday === undefined || eventWeekday(event) === weekday),
+					),
 			),
 		};
 	},
 });
 export const recent = query({
-	args: { programId: v.optional(v.string()), now: v.number() },
-	handler: async (ctx, { programId, now }): Promise<ScheduleEntry[]> => {
+	args: {
+		programId: v.optional(v.string()),
+		weekday: v.optional(v.number()),
+		now: v.number(),
+	},
+	handler: async (
+		ctx,
+		{ programId, weekday, now },
+	): Promise<ScheduleEntry[]> => {
 		const actor = await requireMember(ctx);
 		const through = addDays(clubDate(now, "UTC"), 2);
 		const rows = programId
@@ -97,7 +110,10 @@ export const recent = query({
 						q.eq("clubId", actor.clubId).lte("value.date", through),
 					);
 		for await (const row of rows.order("desc")) {
-			if (eventFinished(row.value, now))
+			if (
+				eventFinished(row.value, now) &&
+				(weekday === undefined || eventWeekday(row.value) === weekday)
+			)
 				return entriesFor(ctx, actor, [row.value]);
 		}
 		return [];
@@ -107,12 +123,13 @@ export const recent = query({
 export const historical = query({
 	args: {
 		programId: v.optional(v.string()),
+		weekday: v.optional(v.number()),
 		now: v.number(),
 		paginationOpts: paginationOptsValidator,
 	},
 	handler: async (
 		ctx,
-		{ programId, now, paginationOpts },
+		{ programId, weekday, now, paginationOpts },
 	): Promise<PaginationResult<ScheduleEntry>> => {
 		const actor = await requireMember(ctx);
 		const through = addDays(clubDate(now, "UTC"), 2);
@@ -142,8 +159,33 @@ export const historical = query({
 				actor,
 				page.page
 					.map((row) => row.value)
-					.filter((event) => eventFinished(event, now)),
+					.filter(
+						(event) =>
+							eventFinished(event, now) &&
+							(weekday === undefined || eventWeekday(event) === weekday),
+					),
 			),
 		};
+	},
+});
+
+export const weekdays = query({
+	args: { now: v.number() },
+	handler: async (ctx, { now }): Promise<number[]> => {
+		const actor = await requireMember(ctx);
+		const days = new Set<number>();
+		for await (const row of ctx.db
+			.query("events")
+			.withIndex("by_date", (q) =>
+				q
+					.eq("clubId", actor.clubId)
+					.gte("value.date", addDays(clubDate(now, "UTC"), -14)),
+			)
+			.order("asc")) {
+			if (!row.value.cancelled && !eventFinished(row.value, now))
+				days.add(eventWeekday(row.value));
+			if (days.size === 7) break;
+		}
+		return [...days].sort((a, b) => a - b);
 	},
 });

@@ -26,13 +26,13 @@ export const MemberAdmin = ({
 		(entry) => entry.personId === member.id && !entry.returned,
 	);
 	return (
-		<Stack gap="xl">
+		<Stack gap="section">
 			{member.archived ? (
 				<Badge label="Archived member" kind="warning" />
 			) : undefined}
 			<SeasonMembership personId={member.id} editable={editable}>
 				<MemberTrackers member={member} editable={editable} />
-				<Stack gap="sm">
+				<Stack gap="heading">
 					<SectionHeading>Equipment</SectionHeading>
 					<Surface variant="plain">
 						<Stack>

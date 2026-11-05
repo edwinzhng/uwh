@@ -17,7 +17,7 @@ export const SessionCoaching = ({
 	const { account } = useApp();
 	return (
 		<RoleScope>
-			<Stack gap="xl">
+			<Stack gap="section">
 				{event.seriesId ? (
 					<Row justify="between" wrap>
 						{account.admin && event.seriesId ? (
@@ -31,9 +31,7 @@ export const SessionCoaching = ({
 					</Row>
 				) : undefined}
 				<EventCoaches event={event} />
-				<Stack gap="sm">
-					<SessionPlanSection key={event.id} event={event} />
-				</Stack>
+				<SessionPlanSection key={event.id} event={event} />
 				<TeamPanel event={event} />
 				<SessionPlayerFeedback event={event} />
 			</Stack>

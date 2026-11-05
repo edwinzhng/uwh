@@ -1,3 +1,4 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
 import {
@@ -11,6 +12,7 @@ import {
 	Tabs,
 	Text,
 } from "../design-system";
+import { eventTimeRange } from "../domain/event-card-presentation";
 import {
 	type ProgramCommand,
 	programCommandPayload,
@@ -21,6 +23,7 @@ import {
 	programDraft,
 } from "../domain/programs";
 import { ClubShell } from "./club-shell";
+import { ProgramDetails } from "./program-details";
 import { ProgramEditor } from "./program-editor";
 import { useFormTask } from "./use-form-task";
 import { useOperationKey } from "./use-operation-key";
@@ -29,6 +32,9 @@ import { useReviewFlow } from "./use-review-flow";
 export const ProgramsScreen = (): ReactElement => {
 	const { data, account, dispatch } = useApp();
 	const review = useReviewFlow();
+	const router = useRouter();
+	const { id } = useLocalSearchParams<{ id?: string }>();
+	const selected = clubPrograms(data).find((program) => program.id === id);
 	const [editing, setEditing] = useState<ClubProgram | "new" | undefined>(() =>
 		review === "program-create"
 			? "new"
@@ -67,90 +73,114 @@ export const ProgramsScreen = (): ReactElement => {
 	};
 	return (
 		<ClubShell
-			title="Programs"
+			title={selected?.name ?? "Programs"}
+			back={
+				selected ? (
+					<Button
+						label="Programs"
+						prefix="arrowLeft"
+						variant="ghost"
+						onPress={(): void => router.setParams({ id: undefined })}
+					/>
+				) : undefined
+			}
 			actionPlacement="inline"
 			action={
 				account.admin ? (
 					<Button
-						label="New program"
+						label={selected ? "Edit program" : "New program"}
 						prefix="plus"
-						onPress={(): void => setEditing("new")}
+						onPress={(): void => setEditing(selected ?? "new")}
 					/>
 				) : undefined
 			}
 		>
-			<Stack>
-				<Tabs
-					label="Programs"
-					value={filter}
-					options={[
-						{ value: "active", label: "Active" },
-						{ value: "archived", label: "Archived" },
-					]}
-					onValueChange={setFilter}
-				/>
-				{programs.map((program) => (
-					<NavigationCard
-						key={program.id}
-						title={program.name}
-						icon="layers"
-						label={account.admin ? `Edit ${program.name}` : program.name}
-						description={`${data.members.filter((member) => !member.archived && member.programs.includes(program.id)).length} members · ${program.schedule ? `${program.schedule.start}–${program.schedule.end} · ${program.schedule.venue}` : "No standing schedule"}`}
-						onPress={(): void => {
-							if (account.admin) setEditing(program);
-						}}
-						trailing={
-							<Badge label={program.archived ? "Archived" : program.status} />
-						}
-						accessory={
-							account.admin ? (
-								<ActionMenu
-									label={`Actions for ${program.name}`}
-									icon="more"
-									groups={[
-										{
-											id: "program",
-											items: [
-												{
-													id: "edit",
-													label: "Edit program",
-													onSelect: (): void => setEditing(program),
-												},
-												{
-													id: "archive",
-													label: program.archived ? "Restore" : "Archive",
-													onSelect: (): void => {
-														void archive(program);
-													},
-													isDisabled: task.busy,
-												},
-												{
-													id: "delete",
-													label: "Delete unused program",
-													tone: "danger",
-													onSelect: (): void => {
-														task.clear();
-														setDeleting(program);
-													},
-													isDisabled: task.busy,
-												},
-											],
-										},
-									]}
-								/>
-							) : undefined
-						}
+			{selected ? (
+				<ProgramDetails program={selected} />
+			) : (
+				<Stack>
+					<Tabs
+						label="Programs"
+						value={filter}
+						options={[
+							{ value: "active", label: "Active" },
+							{ value: "archived", label: "Archived" },
+						]}
+						onValueChange={setFilter}
 					/>
-				))}
-				{!programs.length ? (
-					<EmptyState
-						title={
-							filter === "archived" ? "No archived programs" : "No programs"
-						}
-					/>
-				) : undefined}
-				{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
-			</Stack>
+					{programs.map((program) => (
+						<NavigationCard
+							key={program.id}
+							title={program.name}
+							icon="layers"
+							label={`View ${program.name}`}
+							description={[
+								`${data.members.filter((member) => !member.archived && !member.mergedInto && member.programs.includes(program.id)).length} members`,
+								program.schedule
+									? `${eventTimeRange(program.schedule.start, program.schedule.end)} · ${program.schedule.venue}`
+									: undefined,
+							]
+								.filter(Boolean)
+								.join(" · ")}
+							onPress={(): void =>
+								router.push({
+									pathname: "/programs",
+									params: { id: program.id },
+								})
+							}
+							trailing={
+								program.archived ? <Badge label="Archived" /> : undefined
+							}
+							accessory={
+								account.admin ? (
+									<ActionMenu
+										label={`Actions for ${program.name}`}
+										icon="more"
+										groups={[
+											{
+												id: "program",
+												items: [
+													{
+														id: "edit",
+														label: "Edit program",
+														onSelect: (): void => setEditing(program),
+													},
+													{
+														id: "archive",
+														label: program.archived ? "Restore" : "Archive",
+														onSelect: (): void => {
+															void archive(program);
+														},
+														isDisabled: task.busy,
+													},
+													{
+														id: "delete",
+														label: "Delete unused program",
+														tone: "danger",
+														onSelect: (): void => {
+															task.clear();
+															setDeleting(program);
+														},
+														isDisabled: task.busy,
+													},
+												],
+											},
+										]}
+									/>
+								) : undefined
+							}
+						/>
+					))}
+					{!programs.length ? (
+						<EmptyState
+							title={
+								filter === "archived" ? "No archived programs" : "No programs"
+							}
+						/>
+					) : undefined}
+					{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
+				</Stack>
+			)}
 
 			{editing ? (
 				<ProgramEditor

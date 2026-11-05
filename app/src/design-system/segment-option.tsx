@@ -1,5 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { Pressable, Text } from "react-native";
+import { Badge } from "./badge";
 import { Icon } from "./icon";
 import type { SegmentOptionProps } from "./segment-option-props";
 import { useTheme } from "./theme";
@@ -7,6 +8,7 @@ import { control, corners, font, geometry, radius, space } from "./tokens";
 
 export const SegmentOption = ({
 	label,
+	count,
 	icon,
 	isSelected,
 	indicatorReady = false,
@@ -24,7 +26,9 @@ export const SegmentOption = ({
 			accessible
 			focusable={!isDisabled}
 			accessibilityRole="radio"
-			accessibilityLabel={label}
+			accessibilityLabel={
+				count === undefined ? label : `${label}, ${count} going`
+			}
 			accessibilityState={{ checked: isSelected, disabled: isDisabled }}
 			disabled={isDisabled}
 			onPress={onSelect}
@@ -39,6 +43,8 @@ export const SegmentOption = ({
 				paddingVertical: control.paddingY - control.segmentInset,
 				alignItems: "center",
 				justifyContent: "center",
+				flexDirection: "row",
+				gap: space.xs,
 				borderRadius: icon ? radius.round : corners.control,
 				borderWidth: geometry.border,
 				borderColor: !icon
@@ -79,6 +85,9 @@ export const SegmentOption = ({
 					{label}
 				</Text>
 			)}
+			{count !== undefined ? (
+				<Badge label={String(count)} compact />
+			) : undefined}
 		</Pressable>
 	);
 };

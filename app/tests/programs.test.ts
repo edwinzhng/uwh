@@ -51,6 +51,22 @@ const people = initialAppData.members
 	.map((member) => member.id);
 
 describe("programs", () => {
+	test("program descriptions round-trip through editing and persistence", () => {
+		const saved = saveProgram(
+			base(),
+			{ ...draft, description: "  Weekly training for club members.  " },
+			0,
+			people,
+			now,
+		);
+		const program = saved.programs?.find((entry) => entry.id === draft.id);
+		if (!program) throw new Error("Fixture program missing");
+		expect(program.description).toBe("Weekly training for club members.");
+		expect(programDraft(program).description).toBe(program.description);
+		expect(
+			validateProgram({ ...draft, description: "x".repeat(2001) }, base()),
+		).toBe("Keep the description under 2,000 characters");
+	});
 	test("editing a queried program strips persistence-only fields", () => {
 		const saved = saveProgram(base(), draft, 0, people, now);
 		const program = saved.programs?.find((entry) => entry.id === draft.id);

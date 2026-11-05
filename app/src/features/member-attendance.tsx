@@ -32,7 +32,7 @@ const AttendanceContent = ({
 }: ContentProps): ReactElement => {
 	const { data } = useApp();
 	return (
-		<Stack gap="sm">
+		<Stack gap="heading">
 			<SectionHeading
 				action={
 					<Select
@@ -53,7 +53,7 @@ const AttendanceContent = ({
 			<Surface>
 				<Stack>
 					{summary.total > 0 ? (
-						<Row gap="xl" wrap>
+						<Row gap="section" wrap>
 							<Stack gap="xxs">
 								<Text variant="number">
 									{summary.attended === undefined
@@ -79,10 +79,11 @@ const AttendanceContent = ({
 							</Stack>
 						</Row>
 					) : undefined}
-					<Text variant="caption" tone="secondary">
-						{summary.recorded}/{summary.total} attendance records · Unmarked
-						sessions remain in the total.
-					</Text>
+					{summary.recorded > 0 ? (
+						<Text variant="caption" tone="secondary">
+							{summary.recorded} of {summary.total} sessions recorded
+						</Text>
+					) : undefined}
 					{summary.recorded > 0 && summary.points.length ? (
 						<AttendanceChart data={summary.points} />
 					) : (
@@ -90,14 +91,14 @@ const AttendanceContent = ({
 							title={
 								summary.total
 									? "Attendance not recorded"
-									: "No completed practices this season"
+									: "No attendance records"
 							}
 						/>
 					)}
 				</Stack>
 			</Surface>
 			{summary.records.length ? (
-				<Stack gap="sm">
+				<Stack gap="heading">
 					<SectionHeading>Practice history</SectionHeading>
 					<Surface variant="plain">
 						<AttendanceRecords

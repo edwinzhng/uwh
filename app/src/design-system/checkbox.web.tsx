@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { type ReactElement, useEffect, useRef } from "react";
 import { interactiveRow } from "./interactive-row-layout";
 import { useTheme } from "./theme";
 import { font, geometry, lightTheme, space, typography } from "./tokens";
@@ -9,13 +9,19 @@ export const Checkbox = ({
 	onChange,
 	isDisabled = false,
 	compact = false,
+	focusKey,
 }: {
 	label: string;
 	checked: boolean;
 	onChange: (value: boolean) => void;
 	isDisabled?: boolean;
 	compact?: boolean;
+	focusKey?: string;
 }): ReactElement => {
+	const input = useRef<HTMLInputElement>(null);
+	useEffect((): void => {
+		if (focusKey) input.current?.focus();
+	}, [focusKey]);
 	const theme = useTheme();
 	return (
 		<label
@@ -42,6 +48,7 @@ export const Checkbox = ({
 			}}
 		>
 			<input
+				ref={input}
 				disabled={isDisabled}
 				type="checkbox"
 				checked={checked}

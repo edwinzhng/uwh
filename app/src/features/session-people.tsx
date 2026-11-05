@@ -1,7 +1,6 @@
-import type { ReactElement } from "react";
+import { type ReactElement, useContext } from "react";
 import { useApp } from "../demo/app-state";
 import {
-	Badge,
 	ContentRow,
 	Divider,
 	EmptyState,
@@ -13,15 +12,14 @@ import {
 import { canCoach, canRegister, eventResponse } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import { effectiveAttendance } from "../domain/effective-attendance";
-import { participatesInPart, selectedParts } from "../domain/practice-parts";
+import { participatesInPart } from "../domain/practice-parts";
 import { AttendanceControl } from "./attendance-control";
-import { AttendanceFlagBadge } from "./attendance-flag-badge";
+import { AttendanceFlagContext } from "./attendance-flag-context";
 import { AttendanceFlagControl } from "./attendance-flag-control";
 import { AttendanceFlagProvider } from "./attendance-flag-provider";
-import { FeedbackEditor } from "./feedback-editor";
 import { ShoutoutEditor } from "./shoutout-editor";
 
-export const SessionPeople = ({
+const SessionPeopleContent = ({
 	event,
 	partId,
 }: {
@@ -29,132 +27,130 @@ export const SessionPeople = ({
 	partId?: string;
 }): ReactElement => {
 	const { data, account } = useApp();
+	const flags = useContext(AttendanceFlagContext);
 	const staff = account.admin || canCoach(account, event.program);
-	const members = data.members.filter(
-		(member) =>
-			canRegister(member, event) &&
-			participatesInPart(eventResponse(data, event.id, member.id), partId),
-	);
-	const going = members.filter(
-		(member) => eventResponse(data, event.id, member.id).response === "going",
-	).length;
+	const members = data.members.filter((member) => canRegister(member, event));
 	const expected = members.filter((member) => {
 		const response = eventResponse(data, event.id, member.id);
-		return response.response === "going";
+		return (
+			["present", "late"].includes(
+				effectiveAttendance(event, response, partId),
+			) ||
+			(effectiveAttendance(event, response, partId) !== "absent" &&
+				response.response === "going" &&
+				participatesInPart(response, partId)) ||
+			flags?.flags.some(
+				(flag) => flag.personId === member.id && flag.kind === "addition",
+			)
+		);
 	});
+	const going = expected.length;
 	const others = members.filter((member) => !expected.includes(member));
 	const groups = [
 		{ id: "going", label: `${going} going`, members: expected },
-		{ id: "others", label: "Other players", members: others },
+		{ id: "others", label: "Not going", members: others },
 	];
 	return (
-		<AttendanceFlagProvider eventId={event.id}>
-			<Stack gap="xl">
-				{groups
-					.filter((group) => group.members.length > 0)
-					.map((group) => (
-						<Stack key={group.id} gap="sm">
-							<Text variant="label" tone="secondary">
-								{group.label}
-							</Text>
-							<Surface>
-								<Stack gap="sm">
-									{group.members.map((member, index) => {
-										const response = eventResponse(data, event.id, member.id);
-										const label =
-											response.response === "going"
-												? "Going"
-												: response.response === "waiting"
-													? "Waitlist"
-													: response.response === "unavailable"
-														? "Can’t go"
-														: "No reply";
-										return (
-											<Stack key={member.id} gap="sm">
-												{index > 0 ? <Divider /> : undefined}
-												<ContentRow
-													title={member.name}
-													titleLines={1}
-													controlLayout="responsive"
-													headerAction={
-														staff ? (
-															<AttendanceFlagControl
+		<Stack gap="xl">
+			{groups
+				.filter((group) => group.members.length > 0)
+				.map((group) => (
+					<Stack key={group.id} gap="sm">
+						<Text variant="label" tone="secondary">
+							{group.label}
+						</Text>
+						<Surface>
+							<Stack gap="sm">
+								{group.members.map((member, index) => {
+									const response = eventResponse(data, event.id, member.id);
+									return (
+										<Stack key={member.id} gap="sm">
+											{index > 0 ? <Divider /> : undefined}
+											<ContentRow
+												title={member.name}
+												titleLines={1}
+												identity={member.name}
+												identityId={member.id}
+												controlLayout={staff ? "responsive" : "inline"}
+												headerAction={
+													staff && group.id === "going" ? (
+														<AttendanceFlagControl
+															personId={member.id}
+															name={member.name}
+															disabled={event.cancelled}
+														/>
+													) : undefined
+												}
+												description={
+													flags?.flags.find(
+														(flag) => flag.personId === member.id,
+													)?.kind === "addition"
+														? "Late addition"
+														: flags?.flags.find(
+																	(flag) => flag.personId === member.id,
+																)?.kind === "cancellation"
+															? "Late cancellation"
+															: undefined
+												}
+												control={
+													<Row gap="xs" wrap>
+														{canCoach(account, event.program) ? (
+															<AttendanceControl
+																eventId={event.id}
 																personId={member.id}
 																name={member.name}
+																value={effectiveAttendance(
+																	event,
+																	response,
+																	partId,
+																)}
+																defaultHere={group.id === "going"}
+																partId={partId}
 																disabled={event.cancelled}
+																onLateAddition={
+																	group.id === "others" && flags
+																		? (): void =>
+																				flags.set(member.id, "addition")
+																		: undefined
+																}
+																onAbsent={
+																	flags
+																		? (): void => flags.set(member.id)
+																		: undefined
+																}
 															/>
-														) : undefined
-													}
-													identity={staff ? undefined : member.name}
-													metadata={
-														staff ? (
-															<AttendanceFlagBadge personId={member.id} />
-														) : undefined
-													}
-													description={
-														staff && response.response !== "going"
-															? [label, response.absenceReason]
-																	.filter(Boolean)
-																	.join(" · ")
-															: !partId &&
-																	event.parts?.length &&
-																	response.partIds?.length
-																? selectedParts(event, response)
-																		.map((part) => part.title)
-																		.join(" · ")
-																: undefined
-													}
-													control={
-														<Row gap="xs" wrap>
-															{staff ? (
-																<>
-																	{canCoach(account, event.program) ? (
-																		<AttendanceControl
-																			eventId={event.id}
-																			personId={member.id}
-																			name={member.name}
-																			value={effectiveAttendance(
-																				event,
-																				response,
-																				partId,
-																			)}
-																			defaultHere={
-																				response.response === "going"
-																			}
-																			partId={partId}
-																			disabled={event.cancelled}
-																		/>
-																	) : undefined}
-																	{canCoach(account, event.program) ? (
-																		<FeedbackEditor
-																			personId={member.id}
-																			eventId={event.id}
-																		/>
-																	) : undefined}
-																</>
-															) : (
-																<Badge label={label} compact />
-															)}
+														) : undefined}
+														{group.id === "going" ? (
 															<ShoutoutEditor
 																personId={member.id}
 																event={event}
 																label="Shoutout"
 																compact
 															/>
-														</Row>
-													}
-												/>
-											</Stack>
-										);
-									})}
-								</Stack>
-							</Surface>
-						</Stack>
-					))}
-				{!members.length ? (
-					<EmptyState title="No eligible players" />
-				) : undefined}
-			</Stack>
-		</AttendanceFlagProvider>
+														) : undefined}
+													</Row>
+												}
+											/>
+										</Stack>
+									);
+								})}
+							</Stack>
+						</Surface>
+					</Stack>
+				))}
+			{!members.length ? <EmptyState title="No eligible players" /> : undefined}
+		</Stack>
 	);
 };
+
+export const SessionPeople = ({
+	event,
+	partId,
+}: {
+	event: ClubEvent;
+	partId?: string;
+}): ReactElement => (
+	<AttendanceFlagProvider eventId={event.id}>
+		<SessionPeopleContent event={event} partId={partId} />
+	</AttendanceFlagProvider>
+);

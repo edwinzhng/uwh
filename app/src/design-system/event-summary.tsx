@@ -38,9 +38,7 @@ export const EventSummary = ({
 	const theme = useTheme();
 	const [focused, setFocused] = useState(false);
 	const [hovered, setHovered] = useState(false);
-	const metadata = wrappingMetadata(
-		dateLayout === "badge" ? [weekday, time, venue] : [time, venue],
-	);
+	const metadata = wrappingMetadata([time, venue]);
 	const text = (
 		<Stack grow gap="xxs">
 			{dateLayout === "inline" ? (
@@ -48,7 +46,7 @@ export const EventSummary = ({
 					{weekday} {day} {month}
 				</Text>
 			) : undefined}
-			<Text variant={compact ? "small" : "h4"} weight="semibold" lines={2}>
+			<Text variant={compact ? "small" : "h4"} weight="semibold" lines={1}>
 				{title}
 			</Text>
 			{dateLayout === "agenda" ? (
@@ -56,11 +54,7 @@ export const EventSummary = ({
 					{weekday} {day} {month}
 				</Text>
 			) : undefined}
-			<Text
-				variant={compact ? "overline" : "caption"}
-				weight="regular"
-				tone="secondary"
-			>
+			<Text variant="caption" lines={1} weight="regular" tone="secondary">
 				{metadata}
 			</Text>
 		</Stack>
@@ -68,7 +62,8 @@ export const EventSummary = ({
 	return (
 		<View
 			style={{
-				flexDirection: "column",
+				flexDirection: "row",
+				alignItems: "flex-start",
 				gap: space.xs,
 				minWidth: 0,
 			}}
@@ -136,9 +131,7 @@ export const EventSummary = ({
 					</Pressable>
 				</Link>
 			</View>
-			{actions ? (
-				<View style={{ alignSelf: "flex-end" }}>{actions}</View>
-			) : undefined}
+			{actions ? <View style={{ flexShrink: 0 }}>{actions}</View> : undefined}
 		</View>
 	);
 };

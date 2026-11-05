@@ -14,7 +14,9 @@ export const SessionPlanDetails = ({
 				block.image ? (
 					<SessionPlanImage key={block.image.id} image={block.image} />
 				) : block.text ? (
-					<FormattedText key={block.id}>{block.text}</FormattedText>
+					<FormattedText key={block.id} variant="small">
+						{block.text}
+					</FormattedText>
 				) : undefined,
 			)}
 		</Stack>

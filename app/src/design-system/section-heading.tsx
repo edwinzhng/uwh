@@ -22,7 +22,7 @@ export const SectionHeading = ({
 	return (
 		<View
 			style={{
-				minHeight: height,
+				minHeight: action ? height : undefined,
 				flexDirection: "row",
 				alignItems: "center",
 				justifyContent: "space-between",

@@ -1,8 +1,9 @@
 import { useMutation, useQuery } from "convex/react";
-import type { ReactElement, ReactNode } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
 import { Stack, Text } from "../design-system";
+import type { ReportFlag } from "../domain/attendance-report";
 import { AttendanceFlagContext } from "./attendance-flag-context";
 import { useTask } from "./use-task";
 
@@ -34,6 +35,24 @@ const LiveFlags = ({ eventId, children }: Props): ReactElement => {
 		</AttendanceFlagContext.Provider>
 	);
 };
+const PreviewFlags = ({ children, eventId }: Props): ReactElement => {
+	const [flags, setFlags] = useState<ReportFlag[]>([]);
+	return (
+		<AttendanceFlagContext.Provider
+			value={{
+				flags,
+				busy: false,
+				set: (personId, kind): void =>
+					setFlags((current) => [
+						...current.filter((flag) => flag.personId !== personId),
+						...(kind ? [{ eventId, personId, kind }] : []),
+					]),
+			}}
+		>
+			{children}
+		</AttendanceFlagContext.Provider>
+	);
+};
 export const AttendanceFlagProvider = ({
 	eventId,
 	children,
@@ -42,6 +61,6 @@ export const AttendanceFlagProvider = ({
 	return source === "convex" && account.coachPrograms.length ? (
 		<LiveFlags eventId={eventId}>{children}</LiveFlags>
 	) : (
-		children
+		<PreviewFlags eventId={eventId}>{children}</PreviewFlags>
 	);
 };

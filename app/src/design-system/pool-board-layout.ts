@@ -73,7 +73,7 @@ export const poolBoardDropAction = (
 	draggedId: string,
 	fallbackSlot: string,
 ): PoolDropAction | undefined => {
-	const hit = candidates.find(
+	const hits = candidates.filter(
 		({ bounds }) =>
 			bounds &&
 			x >= bounds.x &&
@@ -81,6 +81,7 @@ export const poolBoardDropAction = (
 			y >= bounds.y &&
 			y < bounds.y + bounds.height,
 	);
+	const hit = hits.find((candidate) => candidate.personId) ?? hits.at(0);
 	if (hit?.personId)
 		return hit.personId === draggedId
 			? undefined

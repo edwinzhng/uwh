@@ -10,6 +10,7 @@ type Props = {
 	title: string;
 	description?: string;
 	identity?: string;
+	identityId?: string;
 	control?: ReactNode;
 	metadata?: ReactNode;
 	headerAction?: ReactNode;
@@ -21,6 +22,7 @@ export const ContentRow = ({
 	title,
 	description,
 	identity,
+	identityId,
 	control,
 	metadata,
 	headerAction,
@@ -28,12 +30,10 @@ export const ContentRow = ({
 	titleLines = 2,
 	controlLayout = "inline",
 }: Props): ReactElement => {
-	const { width, fontScale } = useWindowDimensions();
+	const { fontScale } = useWindowDimensions();
 	const [contentWidth, setContentWidth] = useState(0);
 	const separateActions =
-		controlLayout === "responsive"
-			? contentWidth < 600 * fontScale
-			: Boolean(metadata) && width < 400;
+		controlLayout === "responsive" ? contentWidth < 600 * fontScale : false;
 	const identityBlock = (
 		<Stack gap="none" grow>
 			<Row gap="xs">
@@ -60,12 +60,14 @@ export const ContentRow = ({
 			style={{
 				flexDirection: separateActions ? "column" : "row",
 				alignItems: separateActions ? "stretch" : "center",
-				gap: space.sm,
+				gap: separateActions ? space.xxs : space.sm,
 			}}
 		>
 			<View style={{ flex: separateActions ? undefined : 1, minWidth: 0 }}>
 				<Row>
-					{identity ? <Avatar name={identity} /> : undefined}
+					{identity ? (
+						<Avatar name={identity} personId={identityId} initials />
+					) : undefined}
 					{identityBlock}
 				</Row>
 			</View>

@@ -1,28 +1,32 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
-import { IconButton, Stack, Tabs, ToolbarGroup } from "../design-system";
-import { accessiblePrograms } from "../domain/accessible-programs";
+import { IconButton, Stack, ToolbarGroup } from "../design-system";
 import { CalendarExportButton } from "./calendar-export-button";
 import { ClubShell } from "./club-shell";
 import { EventEditor } from "./event-editor";
+import { ScheduleDayTabs } from "./schedule-day-tabs";
 import { SchedulePage } from "./schedule-page";
 import { useClubNow } from "./use-club-now";
 import { useClubToday } from "./use-club-today";
 import { useReviewFlow } from "./use-review-flow";
 
 export const AgendaScreen = (): ReactElement => {
-	const { data, account } = useApp();
+	const { account } = useApp();
 	const router = useRouter();
-	const params = useLocalSearchParams<{ program?: string }>();
+	const params = useLocalSearchParams<{ weekday?: string }>();
 	const review = useReviewFlow();
 	const [create, setCreate] = useState(review === "create-event");
 	const now = useClubNow();
 	const today = useClubToday();
-	const programs = accessiblePrograms(data, account);
-	const programId = programs.some((program) => program.id === params.program)
-		? params.program
-		: undefined;
+	const selectedDay = Number(params.weekday);
+	const weekday =
+		params.weekday !== undefined &&
+		Number.isInteger(selectedDay) &&
+		selectedDay >= 0 &&
+		selectedDay <= 6
+			? selectedDay
+			: undefined;
 	return (
 		<ClubShell
 			title="Schedule"
@@ -41,21 +45,17 @@ export const AgendaScreen = (): ReactElement => {
 			}
 		>
 			<Stack gap="md">
-				<Tabs
-					label="Programs"
-					value={programId ?? "all"}
-					options={[
-						{ value: "all", label: "All" },
-						...programs.map((program) => ({
-							value: program.id,
-							label: program.name,
-						})),
-					]}
-					onValueChange={(value): void =>
-						router.setParams({ program: value === "all" ? undefined : value })
+				<ScheduleDayTabs
+					value={weekday}
+					now={now}
+					onChange={(day): void =>
+						router.setParams({
+							weekday: day === undefined ? undefined : String(day),
+							program: undefined,
+						})
 					}
 				/>
-				<SchedulePage programId={programId} now={now} />
+				<SchedulePage weekday={weekday} now={now} />
 			</Stack>
 			{account.admin && create ? (
 				<EventEditor

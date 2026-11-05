@@ -2,7 +2,6 @@ import { type ReactElement, useState } from "react";
 import { friendlyError } from "../backend/errors";
 import { useApp, useAppStatus } from "../demo/app-state";
 import {
-	ActionMenu,
 	Button,
 	LineupWorkspace,
 	PoolBoardColumns,
@@ -16,44 +15,30 @@ import {
 import { lineupNeedsReview } from "../domain/app-rules";
 import type { TeamPlan } from "../domain/app-types";
 import {
-	formationPositions,
 	type LineupEdit,
-	type LineupSide,
-	lineupLocation,
-	lineupPeople,
 	planWithSnapshot,
 	validateLineup,
 	validateLineupReferees,
 } from "../domain/lineup";
-import { formatTeams, type Position } from "../domain/player-coaching";
-import * as Clipboard from "../platform/clipboard";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
-	commitLineupDraft,
+	acknowledgeLineupAutosave,
 	currentLineupSnapshot,
 	initialLineupDraft,
 	lineupDraftChanged,
 	stageLineupEdit,
-	undoLineupEdit,
 } from "./lineup-editor-state";
-import { LineupPlayerTools } from "./lineup-player-tools";
-import {
-	LineupPositionPicker,
-	type LineupPositionTarget,
-} from "./lineup-position-picker";
+
 import { TeamPool } from "./team-pool";
 import { useFormTask } from "./use-form-task";
+import { useLineupAutosave } from "./use-lineup-autosave";
 import { useLineupDraft } from "./use-lineup-draft";
 
 export const LineupEditor = ({
 	plan,
-	onRegenerate,
-	canRegenerate,
 	resetRevision,
 }: {
 	plan: TeamPlan;
-	onRegenerate: () => void;
-	canRegenerate: boolean;
 	resetRevision?: number;
 }): ReactElement => {
 	const { data, account, workspaceId, source, dispatch } = useApp();
@@ -79,77 +64,20 @@ export const LineupEditor = ({
 	const busy = appBusy || task.busy;
 	const disabled = busy || conflicted || stale;
 	const preview = planWithSnapshot(base, snapshot);
-	const people = lineupPeople(snapshot);
 	const [activeGroup, setActiveGroup] = useState<string>();
-	const [toolsOpen, setToolsOpen] = useState(false);
-	const [personId, setPersonId] = useState<string>();
-	const [side, setSide] = useState<LineupSide>("black");
-	const [role, setRole] = useState<Position>("FORWARD");
-	const [swapId, setSwapId] = useState<string>();
-	const [rotation, setRotation] = useState<LineupPositionTarget>();
-	const [confirmSave, setConfirmSave] = useState(false);
 	const [discarding, setDiscarding] = useState(false);
-	const [regenerating, setRegenerating] = useState(false);
 	const [publishRevision, setPublishRevision] = useState<number>();
-	const [copyState, setCopyState] = useState<"ready" | "copied" | "failed">(
-		"ready",
-	);
 	const stage = async (edit: LineupEdit): Promise<boolean> => {
 		if (disabled) return false;
 		task.clear();
 		try {
 			setDraft((current) => stageLineupEdit(current, edit));
-			setCopyState("ready");
 			setEditError(undefined);
 			return true;
 		} catch (error) {
 			setEditError(friendlyError(error));
 			return false;
 		}
-	};
-	const choosePlayer = (id: string | undefined): void => {
-		setEditError(undefined);
-		setPersonId(id);
-		setSwapId(undefined);
-		const location = id ? lineupLocation(snapshot, id) : undefined;
-		if (location) {
-			setSide(
-				location === "black" || location === "blackBench" ? "black" : "white",
-			);
-			setRole(
-				snapshot.positions.find((entry) => entry.personId === id)?.position ??
-					"FORWARD",
-			);
-		}
-		task.clear();
-	};
-	const move = async (): Promise<void> => {
-		if (!personId) {
-			await task.submit(
-				(): string => "Choose a player",
-				async (): Promise<void> => {},
-			);
-			return;
-		}
-		const formation =
-			side === "black" ? snapshot.blackFormation : snapshot.whiteFormation;
-		const positions: readonly Position[] = formationPositions[formation];
-		const slot = positions.indexOf(role);
-		if (slot < 0) {
-			setEditError("Choose a position in this formation.");
-			return;
-		}
-		await stage({ kind: "add", personId, side, slot });
-	};
-	const swap = async (): Promise<void> => {
-		if (!personId || !swapId) {
-			await task.submit(
-				(): string => "Choose two players",
-				async (): Promise<void> => {},
-			);
-			return;
-		}
-		await stage({ kind: "swap", personId, otherId: swapId });
 	};
 	const save = async (): Promise<boolean> => {
 		const saved = await task.submit(
@@ -164,6 +92,7 @@ export const LineupEditor = ({
 				if (
 					!(await dispatch({
 						type: "save-lineup",
+						privateDraft: true,
 						eventId: base.eventId,
 						partId: base.partId,
 						expectedRevision: base.revision ?? 0,
@@ -173,17 +102,15 @@ export const LineupEditor = ({
 					throw new Error("Couldn’t save. Your draft is kept.");
 			},
 		);
-		if (saved) setDraft(() => commitLineupDraft(draft));
+		if (saved) setDraft((current) => acknowledgeLineupAutosave(current, draft));
 		return saved;
 	};
-	const copy = async (): Promise<void> => {
-		try {
-			await Clipboard.setStringAsync(formatTeams(preview, data.members));
-			setCopyState("copied");
-		} catch {
-			setCopyState("failed");
-		}
-	};
+	useLineupAutosave({
+		snapshot,
+		enabled: changed && !disabled && !task.error && !editError,
+		save,
+	});
+
 	const groups = base.separateYouth
 		? (["adult", "youth"] as const).filter((group) =>
 				base.assignments?.some((entry) => entry.ageGroup === group),
@@ -214,85 +141,42 @@ export const LineupEditor = ({
 								if (group) setActiveGroup(group);
 							}}
 						/>
-					) : undefined}
+					) : (
+						<Text>Teams</Text>
+					)}
 					<Row gap="xs">
-						<ActionMenu
-							label="Lineup options"
-							icon="more"
-							isDisabled={busy}
-							groups={[
-								{
-									id: "edit",
-									items: [
-										{
-											id: "copy",
-											label: "Copy teams",
-											icon: "copy",
-											isDisabled: stale || conflicted,
-											onSelect: (): void => {
-												void copy();
-											},
-										},
-										{
-											id: "regenerate",
-											label: "Regenerate teams",
-											icon: "users",
-											isDisabled: !canRegenerate,
-											onSelect: (): void => {
-												if (changed) setRegenerating(true);
-												else onRegenerate();
-											},
-										},
-										{
-											id: "tools",
-											label: toolsOpen
-												? "Hide player options"
-												: "Players & referees",
-											icon: "settings",
-											onSelect: (): void => setToolsOpen((current) => !current),
-										},
-										{
-											id: "undo",
-											label: "Undo lineup change",
-											icon: "reply",
-											isDisabled: disabled || draft.history.length < 2,
-											onSelect: (): void => {
-												setDraft(undoLineupEdit);
-												setEditError(undefined);
-												task.clear();
-												setCopyState("ready");
-											},
-										},
-										{
-											id: "reload",
-											label: changed
-												? "Discard changes"
-												: "Reload saved lineup",
-											icon: "arrowDown",
-											onSelect: (): void => setDiscarding(true),
-										},
-									],
-								},
-							]}
-						/>
+						{task.error && changed ? (
+							<Button
+								compact
+								variant="ghost"
+								label="Retry save"
+								onPress={(): void => {
+									task.clear();
+									void save();
+								}}
+							/>
+						) : (
+							<Text variant="caption" tone="secondary">
+								{changed || task.busy ? "Saving…" : "Saved"}
+							</Text>
+						)}
 						<Button
-							label="Save"
+							label={
+								base.published
+									? base.draftLineup || changed
+										? "Publish changes"
+										: "Published"
+									: "Publish"
+							}
 							compact
-							variant="secondary"
-							accessibilityLabel="Save lineup changes"
-							isLoading={task.busy}
-							isDisabled={disabled || !changed}
-							onPress={(): void => {
-								if (base.published) setConfirmSave(true);
-								else void save();
-							}}
-						/>
-						<Button
-							label={base.published && !changed ? "Published" : "Publish"}
-							compact
-							isDisabled={disabled || changed || Boolean(base.published)}
+							isDisabled={
+								disabled ||
+								changed ||
+								Boolean(task.error) ||
+								(base.published && !base.draftLineup)
+							}
 							accessibilityLabel={
-								changed ? "Save changes before publishing" : "Publish lineup"
+								changed ? "Saving before publishing" : "Publish lineup"
 							}
 							onPress={(): void => setPublishRevision(base.revision ?? 0)}
 						/>
@@ -300,47 +184,22 @@ export const LineupEditor = ({
 				</Row>
 			}
 		>
-			{copyState !== "ready" ? (
-				<Text
-					variant="caption"
-					tone={copyState === "failed" ? "danger" : "secondary"}
-				>
-					{copyState === "copied"
-						? "Teams copied"
-						: "Couldn’t copy teams. Try again."}
-				</Text>
-			) : undefined}
 			{conflicted ? (
-				<Text variant="small" tone="warning">
-					Saved lineup changed. Your edits are kept; reload to use the latest.
-				</Text>
+				<Stack gap="xs">
+					<Text variant="small" tone="warning">
+						Saved lineup changed. Your edits are kept.
+					</Text>
+					<Button
+						label="Reload latest"
+						variant="secondary"
+						compact
+						onPress={(): void => setDiscarding(true)}
+					/>
+				</Stack>
 			) : stale ? (
 				<Text variant="small" tone="warning">
 					Attendance or player details changed. Regenerate teams.
 				</Text>
-			) : undefined}
-			{toolsOpen ? (
-				<LineupPlayerTools
-					plan={base}
-					snapshot={snapshot}
-					people={people}
-					controls={{
-						personId,
-						choosePlayer,
-						side,
-						setSide,
-						role,
-						setRole,
-						swapId,
-						setSwapId,
-						move,
-						swap,
-					}}
-					disabled={disabled}
-					busy={busy}
-					onClose={(): void => setToolsOpen(false)}
-					stage={stage}
-				/>
 			) : undefined}
 			{task.error || editError ? (
 				<Text variant="small" tone="danger">
@@ -352,7 +211,7 @@ export const LineupEditor = ({
 					.filter((group) => group === visibleGroup)
 					.map((group) => (
 						<PoolBoardSection key={group}>
-							<PoolBoardGroup>
+							<PoolBoardGroup backdrop={false}>
 								<PoolBoardColumns>
 									{(["black", "white"] as const).map((team) => (
 										<TeamPool
@@ -392,15 +251,6 @@ export const LineupEditor = ({
 																side: team,
 																formation,
 															});
-														}
-											}
-											selectedPersonId={personId}
-											onManageRotation={
-												disabled
-													? undefined
-													: (slot, label): void => {
-															task.clear();
-															setRotation({ side: team, slot, label, group });
 														}
 											}
 											onAdd={
@@ -447,43 +297,6 @@ export const LineupEditor = ({
 						</PoolBoardSection>
 					))}
 			</Stack>
-			{rotation ? (
-				<LineupPositionPicker
-					plan={preview}
-					target={rotation}
-					busy={busy}
-					isDisabled={conflicted || stale}
-					error={
-						task.error ??
-						editError ??
-						(conflicted
-							? "Saved lineup changed. Reload it to continue."
-							: stale
-								? "Regenerate teams to continue."
-								: undefined)
-					}
-					onClose={(): void => setRotation(undefined)}
-					onAdd={async (id, slot, ageGroup): Promise<boolean> =>
-						stage({
-							kind: "add",
-							personId: id,
-							side: rotation.side,
-							slot,
-							ageGroup,
-						})
-					}
-				/>
-			) : undefined}
-			{confirmSave ? (
-				<ConfirmationDialog
-					title="Save an unpublished lineup?"
-					description="The current lineup will be hidden from players until you publish it again."
-					confirmLabel="Save changes"
-					isDisabled={disabled}
-					onClose={(): void => setConfirmSave(false)}
-					onConfirm={save}
-				/>
-			) : undefined}
 			{publishRevision !== undefined ? (
 				<ConfirmationDialog
 					title="Publish teams?"
@@ -529,19 +342,7 @@ export const LineupEditor = ({
 					onClose={(): void => setDiscarding(false)}
 					onConfirm={async (): Promise<void> => {
 						setDraft(() => initialLineupDraft(plan));
-						setCopyState("ready");
-						choosePlayer(undefined);
 					}}
-				/>
-			) : undefined}
-			{regenerating ? (
-				<ConfirmationDialog
-					title="Regenerate teams?"
-					description="New teams will replace your unsaved edits only after generation succeeds."
-					confirmLabel="Continue"
-					isDisabled={busy}
-					onClose={(): void => setRegenerating(false)}
-					onConfirm={async (): Promise<void> => onRegenerate()}
 				/>
 			) : undefined}
 		</LineupWorkspace>

@@ -31,8 +31,9 @@ export const MembersScreen = (): ReactElement => {
 	const staff = account.admin || account.coachPrograms.length > 0;
 	const archived = staff && params.status === "archived";
 	const tab =
-		account.coachPrograms.length > 0 && params.tab === "rankings"
-			? "rankings"
+		account.coachPrograms.length > 0 &&
+		["rankings", "matchmaking"].includes(params.tab ?? "")
+			? "matchmaking"
 			: account.admin && params.tab === "invites"
 				? "invites"
 				: "members";
@@ -47,7 +48,11 @@ export const MembersScreen = (): ReactElement => {
 	return (
 		<ClubShell
 			roleTone={
-				tab === "rankings" ? "coach" : tab === "invites" ? "admin" : undefined
+				tab === "matchmaking"
+					? "coach"
+					: tab === "invites"
+						? "admin"
+						: undefined
 			}
 			tabs={
 				staff ? (
@@ -62,8 +67,8 @@ export const MembersScreen = (): ReactElement => {
 							...(account.coachPrograms.length > 0
 								? [
 										{
-											value: "rankings",
-											label: "Rankings",
+											value: "matchmaking",
+											label: "Matchmaking",
 											roleTone: "coach" as const,
 										},
 									]
@@ -94,7 +99,7 @@ export const MembersScreen = (): ReactElement => {
 			}
 		>
 			<TabContent value={tab}>
-				{tab === "rankings" ? (
+				{tab === "matchmaking" ? (
 					<PlayerRankings />
 				) : tab === "invites" ? (
 					<InviteList />

@@ -91,8 +91,8 @@ export const ImportWorkspaceContent = ({
 				.every((field) => mapping[field.key]),
 	);
 	return (
-		<Stack gap="xl">
-			<Stack gap="sm">
+		<Stack gap="section">
+			<Stack gap="heading">
 				<SectionHeading>Import CSV</SectionHeading>
 				<Surface>
 					<Stack>
@@ -230,7 +230,7 @@ export const ImportWorkspaceContent = ({
 			<Surface>
 				<ImportDirectory />
 			</Surface>
-			<Stack gap="sm">
+			<Stack gap="heading">
 				<SectionHeading>Import history</SectionHeading>
 				<Surface>
 					<Stack>{history}</Stack>

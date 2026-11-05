@@ -19,7 +19,7 @@ export const ChatFilterSettings = (): ReactElement => {
 	const [open, setOpen] = useState(false);
 	const [text, setText] = useState("");
 	return (
-		<Stack gap="sm">
+		<Stack gap="heading">
 			<SectionHeading>Message filter</SectionHeading>
 			<Surface>
 				<Stack>

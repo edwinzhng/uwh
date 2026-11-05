@@ -60,7 +60,7 @@ export const AttendanceDashboard = ({
 		return <EmptyState title="Choose a month for a complete report" />;
 	const rows = attendanceDashboardRows(result.rows, sort, band, search);
 	return (
-		<Stack gap="lg">
+		<Stack gap="heading">
 			<Text variant="caption" tone="secondary">
 				{pending
 					? "Complete report · sorted across the full roster"
@@ -103,7 +103,7 @@ export const AttendanceDashboard = ({
 			</Surface>
 			{result.points.length > 1 ? (
 				<Surface>
-					<Stack gap="sm">
+					<Stack gap="heading">
 						<SectionHeading>Attendance over time</SectionHeading>
 						<TrendChart
 							maximum={100}

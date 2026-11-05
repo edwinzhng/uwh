@@ -6,7 +6,7 @@ import {
 	signupOpensValue,
 } from "./event_validator";
 import { goalDetailsValue } from "./goal_schema";
-import { formationValue } from "./lineup_schema";
+import { formationValue, lineupSnapshotValue } from "./lineup_schema";
 import { ageGroupValue, positionValue } from "./player_coaching_schema";
 import { programRsvpValue } from "./program_schema";
 
@@ -128,6 +128,7 @@ export const responsesValue = v.object({
 	),
 });
 export const teamsValue = v.object({
+	draftLineup: v.optional(lineupSnapshotValue),
 	captains: v.optional(
 		v.array(
 			v.object({

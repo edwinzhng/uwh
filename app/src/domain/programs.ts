@@ -34,6 +34,7 @@ export type ProgramSchedule = {
 export type ClubProgram = {
 	id: string;
 	name: string;
+	description?: string;
 	revision: number;
 	archived: boolean;
 	status: "draft" | "active" | "completed";
@@ -46,6 +47,7 @@ export type ProgramDraft = Omit<ClubProgram, "revision">;
 export const programDraft = (program: ClubProgram): ProgramDraft => ({
 	id: program.id,
 	name: program.name,
+	description: program.description,
 	archived: program.archived,
 	status: program.status,
 	kind: program.kind,
@@ -131,6 +133,8 @@ export const validateProgram = (
 	if (rsvpError) return rsvpError;
 	if (!/^[a-zA-Z0-9_-]{1,100}$/.test(draft.id) || draft.id === "all")
 		return "Choose a valid program ID.";
+	if ((draft.description?.length ?? 0) > 2000)
+		return "Keep the description under 2,000 characters";
 	if (!draft.name.trim()) return "Add a program name";
 	if (draft.name.trim().length > 100)
 		return "Keep the program name to 100 characters";
@@ -234,6 +238,7 @@ export const saveProgram = (
 	const program = {
 		...draft,
 		name: draft.name.trim(),
+		description: draft.description?.trim() || undefined,
 		revision: expectedRevision + 1,
 	};
 	const dates =

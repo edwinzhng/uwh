@@ -15,7 +15,7 @@ export const ImportDirectory = (): ReactElement => {
 	const [kind, setKind] = useState<"members" | "events">("members");
 	const [error, setError] = useState("");
 	return (
-		<Stack>
+		<Stack gap="heading">
 			<SectionHeading>Existing IDs</SectionHeading>
 			<Select
 				label="Directory"

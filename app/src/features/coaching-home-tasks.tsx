@@ -21,7 +21,7 @@ import {
 const Tasks = ({ tasks }: { tasks?: CoachingTasks }): ReactElement => {
 	const router = useRouter();
 	return (
-		<Stack gap="sm">
+		<Stack gap="heading">
 			<SectionHeading
 				icon="message"
 				action={

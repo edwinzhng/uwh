@@ -6,9 +6,10 @@ import { useApp } from "../demo/app-state";
 import { HistorySection, LoadingContent } from "../design-system";
 import { clubTimestamp } from "../domain/event-time";
 import { eventFinished } from "../domain/schedule-agenda";
+import { eventWeekday } from "../domain/schedule-weekdays";
 import { AgendaEntries } from "./schedule-entries";
 
-type Props = { programId?: string; now: number };
+type Props = { programId?: string; weekday?: number; now: number };
 const PastEntries = ({
 	entries,
 	loading,
@@ -38,10 +39,14 @@ const PastEntries = ({
 		</HistorySection>
 	);
 };
-const LivePast = ({ programId, now }: Props): ReactElement | undefined => {
+const LivePast = ({
+	programId,
+	weekday,
+	now,
+}: Props): ReactElement | undefined => {
 	const { results, status, loadMore } = usePaginatedQuery(
 		api.schedule_agenda.historical,
-		{ programId, now },
+		{ programId, weekday, now },
 		{ initialNumItems: 1 },
 	);
 	const [target, setTarget] = useState(1);
@@ -65,13 +70,18 @@ const LivePast = ({ programId, now }: Props): ReactElement | undefined => {
 		/>
 	);
 };
-const PreviewPast = ({ programId, now }: Props): ReactElement | undefined => {
+const PreviewPast = ({
+	programId,
+	weekday,
+	now,
+}: Props): ReactElement | undefined => {
 	const { data } = useApp();
 	const [count, setCount] = useState(1);
 	const events = data.events
 		.filter(
 			(event) =>
 				(!programId || event.program === programId) &&
+				(weekday === undefined || eventWeekday(event) === weekday) &&
 				eventFinished(event, now),
 		)
 		.slice()
@@ -99,10 +109,25 @@ const PreviewPast = ({ programId, now }: Props): ReactElement | undefined => {
 };
 export const SchedulePast = (props: Props): ReactElement | undefined => {
 	const { source, workspaceId, account } = useApp();
-	const scope = JSON.stringify([workspaceId, account.id, props.programId]);
+	const scope = JSON.stringify([
+		workspaceId,
+		account.id,
+		props.programId,
+		props.weekday,
+	]);
 	return source === "convex" ? (
-		<LivePast key={scope} programId={props.programId} now={props.now} />
+		<LivePast
+			key={scope}
+			programId={props.programId}
+			weekday={props.weekday}
+			now={props.now}
+		/>
 	) : (
-		<PreviewPast key={scope} programId={props.programId} now={props.now} />
+		<PreviewPast
+			key={scope}
+			programId={props.programId}
+			weekday={props.weekday}
+			now={props.now}
+		/>
 	);
 };

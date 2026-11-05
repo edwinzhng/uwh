@@ -60,16 +60,23 @@ export const visibleAppData = (data: AppData, account: Account): AppData => {
 						absenceReason: undefined,
 					};
 		}),
-		teams: data.teams.filter((entry) => {
-			const event = events.get(entry.eventId);
-			return Boolean(
-				event &&
-					!event.cancelled &&
-					(!entry.partId ||
-						event.parts?.some((part) => part.id === entry.partId)) &&
-					(entry.published || canCoach(account, event.program)),
-			);
-		}),
+		teams: data.teams
+			.filter((entry) => {
+				const event = events.get(entry.eventId);
+				return Boolean(
+					event &&
+						!event.cancelled &&
+						(!entry.partId ||
+							event.parts?.some((part) => part.id === entry.partId)) &&
+						(entry.published || canCoach(account, event.program)),
+				);
+			})
+			.map((entry) => {
+				const event = events.get(entry.eventId);
+				if (event && canCoach(account, event.program)) return entry;
+				const { draftLineup, ...published } = entry;
+				return published;
+			}),
 		plans: Object.fromEntries(
 			Object.entries(data.plans).filter(([eventId]) =>
 				data.events.some(

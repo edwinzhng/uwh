@@ -4,6 +4,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "./button";
 import { Dialog } from "./dialog";
 import { IconButton } from "./icon-button";
+import { RoleTabMarker } from "./role-tab-marker";
+import { Row } from "./row";
 import { SectionHeading } from "./section-heading";
 import { space } from "./tokens";
 
@@ -13,8 +15,10 @@ export const LineupDialog = ({
 	openRequest,
 	preview,
 	immersive = false,
+	actions,
 }: {
 	children: ReactNode;
+	actions?: ReactNode;
 	preview?: ReactNode;
 	immersive?: boolean;
 	label: string;
@@ -28,12 +32,27 @@ export const LineupDialog = ({
 	return (
 		<>
 			<SectionHeading
+				badge={
+					immersive ? (
+						<RoleTabMarker {...{ role: "coach", treatment: "dot" }} />
+					) : undefined
+				}
 				action={
-					<Button
-						label={label}
-						variant="secondary"
-						onPress={(): void => setOpen(true)}
-					/>
+					<Row>
+						{actions}
+						<IconButton
+							label="View lineup full screen"
+							icon="fullscreen"
+							onPress={(): void => setOpen(true)}
+						/>
+						{immersive ? (
+							<Button
+								label={label}
+								variant="secondary"
+								onPress={(): void => setOpen(true)}
+							/>
+						) : undefined}
+					</Row>
 				}
 			>
 				Teams
@@ -53,8 +72,9 @@ export const LineupDialog = ({
 						<View
 							style={{
 								position: "absolute",
-								left: Math.max(space.sm, insets.left),
-								bottom: Math.max(space.sm, insets.bottom),
+								zIndex: 20,
+								right: Math.max(space.sm, insets.right),
+								top: insets.top + space.sm,
 							}}
 						>
 							<IconButton

@@ -2,6 +2,8 @@ import { motionDurations, motionEasings } from "./motion";
 
 export { motionEffects } from "./motion";
 export const space = {
+	section: 24,
+	heading: 8,
 	none: 0,
 	half: 2,
 	xxs: 4,

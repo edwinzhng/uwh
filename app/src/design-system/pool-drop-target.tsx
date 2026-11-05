@@ -1,10 +1,4 @@
-import {
-	createContext,
-	type ReactElement,
-	type ReactNode,
-	useContext,
-	useEffect,
-} from "react";
+import { createContext, type ReactElement, useContext, useEffect } from "react";
 import { Text, View } from "react-native";
 import Animated, {
 	measure,
@@ -14,6 +8,7 @@ import Animated, {
 	useAnimatedStyle,
 	useSharedValue,
 } from "react-native-reanimated";
+import { PoolBoardContext } from "./pool-board-context";
 import type { PoolBoardDrag, PoolDropFrame } from "./pool-board-layout";
 import { poolBoardDropHighlighted } from "./pool-board-layout";
 import { useTheme } from "./theme";
@@ -32,22 +27,19 @@ export const PoolDropTarget = ({
 	personId,
 	scope,
 	drag,
-	children,
-	contentAlignment = "start",
-	size = geometry.touch,
 }: {
 	slotId: string;
 	personId?: string;
 	scope: string;
 	drag: SharedValue<PoolBoardDrag | undefined>;
-	children: ReactNode;
-	contentAlignment?: "start" | "end";
-	size?: number;
 }): ReactElement => {
 	const register = useContext(PoolTargetsContext);
 	const target = useAnimatedRef<View>();
 	const frame = useSharedValue<PoolDropFrame | undefined>(undefined);
 	const theme = useTheme();
+	const boards = useContext(PoolBoardContext);
+	const localHovered = useSharedValue<string | undefined>(undefined);
+	const hoveredPersonId = boards?.hoveredPersonId ?? localHovered;
 	useEffect(
 		() =>
 			register?.(`${personId ?? `add:${slotId}`}`, {
@@ -82,23 +74,37 @@ export const PoolDropTarget = ({
 			} else if (!id) frame.set(undefined);
 		},
 	);
-	const style = useAnimatedStyle(() => ({
-		opacity: poolBoardDropHighlighted(drag.get(), frame.get(), scope, personId)
-			? 1
-			: 0,
+	useAnimatedReaction(
+		() => poolBoardDropHighlighted(drag.get(), frame.get(), scope, personId),
+		(active): void => {
+			if (!personId) return;
+			if (active) hoveredPersonId.set(personId);
+			else if (hoveredPersonId.get() === personId)
+				hoveredPersonId.set(undefined);
+		},
+	);
+	const tooltipStyle = useAnimatedStyle(() => ({
+		opacity:
+			personId &&
+			poolBoardDropHighlighted(drag.get(), frame.get(), scope, personId)
+				? 1
+				: 0,
 	}));
+	const style = useAnimatedStyle(() => ({
+		opacity:
+			poolBoardDropHighlighted(drag.get(), frame.get(), scope, personId) &&
+			(personId || !hoveredPersonId.get())
+				? 1
+				: 0,
+	}));
+
 	return (
 		<View
 			ref={target}
 			collapsable={false}
-			style={{
-				position: "relative",
-				width: size,
-				height: size,
-				alignItems: contentAlignment === "end" ? "flex-end" : "flex-start",
-			}}
+			pointerEvents="none"
+			style={{ position: "absolute", inset: 0, zIndex: 2 }}
 		>
-			{children}
 			<Animated.View
 				accessible={false}
 				accessibilityElementsHidden
@@ -110,43 +116,50 @@ export const PoolDropTarget = ({
 						position: "absolute",
 						inset: 0,
 						borderWidth: geometry.focus,
-						borderStyle: personId ? "solid" : "dotted",
-						borderRadius: corners.pill,
+						borderStyle: "solid",
+						borderRadius: personId ? corners.control : corners.panel,
 						borderColor: theme.focus,
+						backgroundColor: `${theme.focus}12`,
 					},
 					style,
 				]}
 			/>
-			<Animated.View
-				accessible={false}
-				accessibilityElementsHidden
-				importantForAccessibility="no-hide-descendants"
-				aria-hidden
-				pointerEvents="none"
-				style={[
-					{
-						position: "absolute",
-						bottom: "100%",
-						marginBottom: space.xxs,
-						alignSelf: "center",
-						paddingHorizontal: space.xs,
-						borderRadius: corners.item,
-						backgroundColor: theme.brand.background,
-						zIndex: 10,
-					},
-					style,
-				]}
-			>
-				<Text
-					style={{
-						...typography.caption,
-						fontFamily: font.semibold,
-						color: theme.brand.foreground,
-					}}
+			{personId ? (
+				<Animated.View
+					pointerEvents="none"
+					accessible={false}
+					accessibilityElementsHidden
+					importantForAccessibility="no-hide-descendants"
+					aria-hidden
+					style={[
+						{
+							position: "absolute",
+							bottom: "100%",
+							marginBottom: space.xxs,
+							alignSelf: "center",
+							minWidth: geometry.touch + space.sm,
+							paddingHorizontal: space.xs,
+							borderRadius: corners.item,
+							backgroundColor: theme.brand.background,
+							zIndex: 10,
+						},
+						tooltipStyle,
+					]}
 				>
-					{personId ? "Swap" : "Move"}
-				</Text>
-			</Animated.View>
+					<Text
+						numberOfLines={1}
+						style={{
+							...typography.caption,
+							fontFamily: font.semibold,
+							color: theme.brand.foreground,
+							textAlign: "center",
+							flexShrink: 0,
+						}}
+					>
+						Swap
+					</Text>
+				</Animated.View>
+			) : undefined}
 		</View>
 	);
 };

@@ -6,6 +6,7 @@ import {
 	validateLineup,
 } from "../src/domain/lineup";
 import {
+	acknowledgeLineupAutosave,
 	commitLineupDraft,
 	currentLineupSnapshot,
 	initialLineupDraft,
@@ -146,4 +147,24 @@ test("bench drops after a swap retain every other player's pool slot", (): void 
 	expect(after.fieldSlots).toEqual(
 		before.fieldSlots?.filter((entry) => entry.personId !== first),
 	);
+});
+
+test("autosave acknowledges only the submitted snapshot and preserves edits made while saving", (): void => {
+	const submitted = staged();
+	const newer = stageLineupEdit(submitted, {
+		kind: "formation",
+		side: "white",
+		formation: "3-3",
+	});
+	const saved = acknowledgeLineupAutosave(newer, submitted);
+	expect(saved.base.published).toBe(true);
+	expect(saved.base.blackFormation).toBe(plan.blackFormation);
+	expect(saved.base.draftLineup?.blackFormation).toBe("1-3-2");
+	expect(saved.base.revision).toBe(5);
+	expect(currentLineupSnapshot(saved).whiteFormation).toBe("3-3");
+	expect(lineupDraftChanged(saved)).toBe(true);
+	expect(
+		currentLineupSnapshot(initialLineupDraft(saved.base)).blackFormation,
+	).toBe("1-3-2");
+	expect(acknowledgeLineupAutosave(saved, submitted)).toBe(saved);
 });

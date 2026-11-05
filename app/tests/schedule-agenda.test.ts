@@ -214,7 +214,7 @@ test("compact event time ranges keep AM/PM boundaries explicit", async (): Promi
 	const { eventTimeRange } = await import(
 		"../src/domain/event-card-presentation"
 	);
-	expect(eventTimeRange("19:00", "19:45")).toBe("7–7:45 PM");
-	expect(eventTimeRange("11:00", "13:30")).toBe("11 AM–1:30 PM");
-	expect(eventTimeRange("00:00", "01:00")).toBe("12–1 AM");
+	expect(eventTimeRange("19:00", "19:45")).toBe("7–7:45pm");
+	expect(eventTimeRange("11:00", "13:30")).toBe("11am–1:30pm");
+	expect(eventTimeRange("00:00", "01:00")).toBe("12–1am");
 });

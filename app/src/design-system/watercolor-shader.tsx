@@ -19,9 +19,11 @@ import { useWatercolorTuning, watercolorDefaults } from "./watercolor-tuning";
 export const WatercolorShader = ({
 	category,
 	seed,
+	animated = true,
 }: {
 	category: CategoryColor;
 	seed?: string;
+	animated?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
 	const tuning = useWatercolorTuning() ?? watercolorDefaults;
@@ -32,7 +34,7 @@ export const WatercolorShader = ({
 	const phase = useRef(0);
 	const surface = useRef("0:0");
 	const preferences = useRef({
-		active: active && motion,
+		active: active && motion && animated,
 		tuning,
 		palette,
 		ground: theme.background.card,
@@ -82,16 +84,25 @@ export const WatercolorShader = ({
 	}, []);
 	useEffect((): void => {
 		preferences.current = {
-			active: active && motion,
+			active: active && motion && animated,
 			tuning,
 			palette,
 			ground: theme.background.card,
 			seed: materialVariation(seed ?? category) * 1000,
 		};
 		lifecycle.current?.draw();
-	}, [active, motion, tuning, palette, theme.background.card, seed, category]);
+	}, [
+		active,
+		motion,
+		animated,
+		tuning,
+		palette,
+		theme.background.card,
+		seed,
+		category,
+	]);
 	useRenderActivity((isActive): void => {
-		preferences.current.active = motion && isActive;
+		preferences.current.active = motion && isActive && animated;
 		if (preferences.current.active) lifecycle.current?.draw();
 		else lifecycle.current?.pause();
 	});

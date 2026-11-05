@@ -6,6 +6,7 @@ import {
 	lineupSnapshot,
 	normalizeLineup,
 	saveLineup,
+	saveLineupDraft,
 	validateLineup,
 } from "../domain/lineup";
 
@@ -16,7 +17,7 @@ export type LineupDraft = {
 };
 
 export const initialLineupDraft = (base: TeamPlan): LineupDraft => {
-	const saved = lineupSnapshot(base);
+	const saved = base.draftLineup ?? lineupSnapshot(base);
 	const snapshot = validateLineup(base, saved)
 		? lineupSnapshot(normalizeLineup(base))
 		: saved;
@@ -72,3 +73,18 @@ export const receiveGeneratedLineup = (
 	(latest.revision ?? 0) >= revision && (draft.base.revision ?? 0) < revision
 		? initialLineupDraft(latest)
 		: draft;
+
+export const acknowledgeLineupAutosave = (
+	current: LineupDraft,
+	submitted: LineupDraft,
+): LineupDraft => {
+	if ((current.base.revision ?? 0) !== (submitted.base.revision ?? 0))
+		return current;
+	const snapshot = currentLineupSnapshot(submitted);
+	const base = saveLineupDraft(
+		submitted.base,
+		snapshot,
+		submitted.base.revision ?? 0,
+	);
+	return { ...current, base, saved: snapshot };
+};

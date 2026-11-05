@@ -63,7 +63,7 @@ export const ResourceComments = ({
 		}
 	};
 	return (
-		<Stack gap="sm">
+		<Stack gap="heading">
 			<SectionHeading>Comments</SectionHeading>
 			{!resource.archived ? (
 				<Stack gap="sm">

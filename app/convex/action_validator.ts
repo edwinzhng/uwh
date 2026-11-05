@@ -118,6 +118,7 @@ export const appAction = v.union(
 	}),
 	v.object({
 		type: v.literal("save-lineup"),
+		privateDraft: v.optional(v.boolean()),
 		eventId: v.string(),
 		partId: v.optional(v.string()),
 		expectedRevision: v.number(),

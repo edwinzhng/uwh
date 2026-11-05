@@ -20,7 +20,7 @@ export const ImportReview = ({
 }): ReactElement => {
 	const errors = plans.filter((plan) => plan.status === "error").length;
 	return (
-		<Stack>
+		<Stack gap="heading">
 			<SectionHeading>Review</SectionHeading>
 			<Text variant="small">
 				{plans.filter((plan) => plan.status === "create").length} new ·{" "}

@@ -1,4 +1,4 @@
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useEffect, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Icon } from "./icon";
 import { interactiveRow } from "./interactive-row-layout";
@@ -12,18 +12,25 @@ export const Checkbox = ({
 	onChange,
 	isDisabled = false,
 	compact = false,
+	focusKey,
 }: {
 	label: string;
 	checked: boolean;
 	onChange: (value: boolean) => void;
 	isDisabled?: boolean;
 	compact?: boolean;
+	focusKey?: string;
 }): ReactElement => {
+	const trigger = useRef<View>(null);
+	useEffect((): void => {
+		if (focusKey) trigger.current?.focus();
+	}, [focusKey]);
 	const theme = useTheme();
 	const [hovered, setHovered] = useState(false);
 	const [focused, setFocused] = useState(false);
 	return (
 		<Pressable
+			ref={trigger}
 			accessibilityRole="checkbox"
 			accessibilityLabel={label}
 			accessibilityState={{ checked, disabled: isDisabled }}

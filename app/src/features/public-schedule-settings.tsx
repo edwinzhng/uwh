@@ -39,7 +39,7 @@ export const PublicScheduleSettings = (): ReactElement => {
 		}
 	};
 	return (
-		<Stack gap="sm">
+		<Stack gap="heading">
 			<SectionHeading>Public schedule</SectionHeading>
 			<Surface>
 				<Stack>

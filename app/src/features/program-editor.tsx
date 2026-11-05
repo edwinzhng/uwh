@@ -144,6 +144,15 @@ export const ProgramEditor = ({
 							onValueChange={(name): void => setDraft({ ...draft, name })}
 							isDisabled={task.busy}
 						/>
+						<Field
+							label="Description"
+							value={draft.description ?? ""}
+							onValueChange={(description): void =>
+								setDraft({ ...draft, description })
+							}
+							multiline
+							isDisabled={task.busy}
+						/>
 						<Select
 							label="Season"
 							value={draft.seasonId ?? "none"}

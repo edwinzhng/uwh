@@ -13,7 +13,7 @@ export const ConnectedAccounts = (): ReactElement | undefined => {
 	);
 	if (!providers.length) return undefined;
 	return (
-		<Stack>
+		<Stack gap="heading">
 			<Divider />
 			<SectionHeading>Connected accounts</SectionHeading>
 			{providers.flatMap((provider) => {

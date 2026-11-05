@@ -207,7 +207,9 @@ export const AppLayout = ({
 				paddingVertical: space.xs,
 			}}
 		>
-			{workspaceTitle ? <HeaderBackdrop topInset={insets.top} /> : undefined}
+			{workspaceTitle ? (
+				<HeaderBackdrop topInset={insets.top} fadeInset={space.lg} />
+			) : undefined}
 			{back}
 			<View style={{ flex: 1, minWidth: 0, gap: space.xxs }}>
 				{workspaceTitle ?? (
@@ -439,6 +441,7 @@ export const AppLayout = ({
 									style={{
 										paddingTop: nativeHeader ? headerHeight : toolbarClearance,
 										paddingHorizontal: nativeHeader ? space.md : 0,
+										zIndex: layer.sticky,
 									}}
 								>
 									{heading}
@@ -479,7 +482,7 @@ export const AppLayout = ({
 											width: "100%",
 											maxWidth: geometry.content,
 											alignSelf: "center",
-											gap: compactRoot || denseHeader ? space.md : space.xl,
+											gap: space.section,
 										}}
 									>
 										{!workspace ? heading : undefined}
@@ -507,7 +510,7 @@ export const AppLayout = ({
 												: 0) +
 											(workspace ? space.none : wide ? pagePadding : space.md),
 										paddingBottom: workspace ? space.none : pagePadding,
-										gap: workspace ? space.none : space.md,
+										gap: workspace ? space.none : space.section,
 									}}
 								>
 									{!workspace ? heading : undefined}
@@ -535,6 +538,9 @@ export const AppLayout = ({
 										backgroundColor: "transparent",
 									}}
 								>
+									{workspace && workspaceTitle ? (
+										<HeaderBackdrop edge="bottom" fadeInset={space.lg} />
+									) : undefined}
 									<View
 										style={{
 											width: "100%",

@@ -76,8 +76,8 @@ export const SettingsScreen = (): ReactElement => {
 			{!account.admin ? (
 				<Text>You don’t have access to club settings.</Text>
 			) : (
-				<Stack gap="xl">
-					<Stack gap="sm">
+				<Stack gap="section">
+					<Stack gap="heading">
 						<SectionHeading>General</SectionHeading>
 						<Surface>
 							<Stack>
@@ -139,7 +139,7 @@ export const SettingsScreen = (): ReactElement => {
 							</Stack>
 						</Surface>
 					</Stack>
-					<Stack gap="sm">
+					<Stack gap="heading">
 						<SectionHeading
 							action={
 								<Button

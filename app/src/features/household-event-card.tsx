@@ -76,7 +76,12 @@ export const HouseholdEventCard = ({
 					href={{ pathname: "/session", params: { event: event.id } }}
 					dateLayout={dateLayout}
 					compact
-					actions={<SessionReflectionAction event={event} />}
+					actions={
+						<Row gap="xs">
+							<EventPreviewActions event={event} />
+							<SessionReflectionAction event={event} />
+						</Row>
+					}
 				/>
 			</Surface>
 		);
@@ -104,14 +109,14 @@ export const HouseholdEventCard = ({
 							<Text variant="caption" tone="secondary">
 								Not open yet
 							</Text>
-						) : open && response !== "unavailable" && !event.cancelled ? (
+						) : !event.cancelled ? (
 							<Row gap="xs">
 								<EventAttendeesPreview
 									event={event}
 									attendanceCount={attendanceCount}
 								/>
 
-								{!past && !reason && !event.cancelled ? (
+								{!event.cancelled ? (
 									<EventPreviewActions event={event} />
 								) : undefined}
 							</Row>

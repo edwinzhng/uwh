@@ -6,7 +6,11 @@ import {
 	useRef,
 } from "react";
 import { View } from "react-native";
-import { type SharedValue, useSharedValue } from "react-native-reanimated";
+import {
+	type SharedValue,
+	useAnimatedReaction,
+	useSharedValue,
+} from "react-native-reanimated";
 import { LineupBackdrop } from "./lineup-backdrop";
 import type { PoolBoardDrag } from "./pool-board-layout";
 import { useTheme } from "./theme";
@@ -19,17 +23,27 @@ export const PoolBoardContext = createContext<
 			unregister: (id: string) => void;
 			drop: DropTarget;
 			drag: SharedValue<PoolBoardDrag | undefined>;
+			hoveredPersonId: SharedValue<string | undefined>;
 	  }
 	| undefined
 >(undefined);
 export const PoolBoardGroup = ({
 	children,
+	backdrop = true,
 }: {
 	children: ReactNode;
+	backdrop?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
 	const targets = useRef(new Map<string, DropTarget>());
 	const drag = useSharedValue<PoolBoardDrag | undefined>(undefined);
+	const hoveredPersonId = useSharedValue<string | undefined>(undefined);
+	useAnimatedReaction(
+		() => drag.get()?.personId,
+		(id, previous): void => {
+			if (id !== previous) hoveredPersonId.set(undefined);
+		},
+	);
 	const value = useMemo(
 		() => ({
 			register: (id: string, target: DropTarget): void => {
@@ -46,8 +60,9 @@ export const PoolBoardGroup = ({
 				);
 			},
 			drag,
+			hoveredPersonId,
 		}),
-		[drag],
+		[drag, hoveredPersonId],
 	);
 	return (
 		<PoolBoardContext.Provider value={value}>
@@ -55,13 +70,15 @@ export const PoolBoardGroup = ({
 				style={{
 					overflow: "hidden",
 					flexGrow: 1,
-					borderRadius: corners.panel,
+					borderRadius: backdrop ? corners.panel : 0,
 					padding: space.xs,
 					gap: space.xs,
-					backgroundColor: theme.background.secondary,
+					backgroundColor: backdrop
+						? theme.background.secondary
+						: "transparent",
 				}}
 			>
-				<LineupBackdrop />
+				{backdrop ? <LineupBackdrop /> : undefined}
 				{children}
 			</View>
 		</PoolBoardContext.Provider>

@@ -17,8 +17,8 @@ const StrengthLabel = ({
 	return (
 		<Text variant="caption">
 			{summary
-				? `Score · ${summary.scored ? summary.total : "—"}${summary.scored < summary.count ? ` · ${summary.scored}/${summary.count} rated` : ""}`
-				: "Score · —"}
+				? `${summary.scored || !summary.count ? summary.total : "—"} pts${summary.scored < summary.count ? ` · ${summary.scored}/${summary.count} rated` : ""}`
+				: "— pts"}
 		</Text>
 	);
 };

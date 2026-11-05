@@ -29,7 +29,7 @@ const EventCoachList = ({
 		{controls.loading ? (
 			<LoadingContent />
 		) : (
-			<Stack gap="sm">
+			<Stack gap="heading">
 				<SectionHeading
 					action={
 						<Badge

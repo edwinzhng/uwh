@@ -29,7 +29,7 @@ export const SessionPlayerFeedback = ({
 		(person) => canRegister(person, event) && canCoachMember(account, person),
 	);
 	return (
-		<Stack gap="sm">
+		<Stack gap="heading">
 			<SectionHeading>Player feedback</SectionHeading>
 			<Surface>
 				<List separators="full">

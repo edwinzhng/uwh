@@ -43,13 +43,13 @@ export const SeasonMembershipContent = ({
 	const historyOpen = historyScope === scope;
 	const balance = record ? seasonBalance(record) : undefined;
 	return (
-		<Stack gap="xl">
+		<Stack gap="section">
 			<SeasonSelect isDisabled={busy || Boolean(kind)} />
 			{!record || !balance ? (
 				<LoadingContent />
 			) : (
 				<>
-					<Stack gap="sm">
+					<Stack gap="heading">
 						<SectionHeading>Registration</SectionHeading>
 						<Surface>
 							<Stack>
@@ -119,7 +119,7 @@ export const SeasonMembershipContent = ({
 							</Stack>
 						</Surface>
 					</Stack>
-					<Stack gap="sm">
+					<Stack gap="heading">
 						<SectionHeading>Payments</SectionHeading>
 						<Surface>
 							<Stack>
@@ -193,12 +193,12 @@ export const SeasonMembershipContent = ({
 					>
 						<Stack gap="lg">
 							{season === defaultSeasonId ? (
-								<Stack gap="sm">
+								<Stack gap="heading">
 									<SectionHeading>Payment records</SectionHeading>
 									<PaymentHistory personId={personId} />
 								</Stack>
 							) : undefined}
-							<Stack gap="sm">
+							<Stack gap="heading">
 								<SectionHeading>Membership changes</SectionHeading>
 								{history}
 							</Stack>

@@ -296,10 +296,10 @@ test("pool placement preserves exact left/right spots and swaps occupied field o
 	expect(unchanged.fieldSlots).toEqual(source.fieldSlots);
 });
 
-test("referees are independent dual-role slots with active-club validation and published copy", (): void => {
+test("referees stay within their team while keeping playing roles and published copy", (): void => {
 	const snapshot = editLineup(source, lineupSnapshot(source), {
 		kind: "referee",
-		side: "white",
+		side: "black",
 		personId: first(source.black),
 	});
 	expect(lineupPeople(snapshot)).toEqual(lineupPeople(lineupSnapshot(source)));
@@ -327,10 +327,10 @@ test("referees are independent dual-role slots with active-club validation and p
 		}),
 	).toBeDefined();
 	expect(formatTeams(planWithSnapshot(source, snapshot), players)).toContain(
-		"Referee · Player 0",
+		`Referee · ${players.find((member) => member.id === first(source.black))?.name}`,
 	);
 	expect(
-		editLineup(source, snapshot, { kind: "referee", side: "black" }).referees,
+		editLineup(source, snapshot, { kind: "referee", side: "white" }).referees,
 	).toHaveLength(1);
 });
 

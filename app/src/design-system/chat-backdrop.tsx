@@ -1,8 +1,8 @@
 import { LinearGradient } from "expo-linear-gradient";
 import type { ReactElement } from "react";
 import { StyleSheet, View } from "react-native";
-import { MaterialTexture } from "./material-texture";
 import { useTheme } from "./theme";
+import { WatercolorShader } from "./watercolor-shader";
 export const ChatBackdrop = (): ReactElement => {
 	const theme = useTheme();
 	return (
@@ -22,12 +22,7 @@ export const ChatBackdrop = (): ReactElement => {
 					{ opacity: theme.mode === "dark" ? 0.38 : 0.2 },
 				]}
 			>
-				<MaterialTexture
-					category="sky"
-					seed="chat-water"
-					animated={false}
-					rounded={false}
-				/>
+				<WatercolorShader category="sky" seed="chat-water" animated={false} />
 			</View>
 			<LinearGradient
 				colors={

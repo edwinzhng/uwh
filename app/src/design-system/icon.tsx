@@ -34,6 +34,7 @@ import List from "lucide-react-native/icons/list";
 import LockKeyhole from "lucide-react-native/icons/lock-keyhole";
 import LogOut from "lucide-react-native/icons/log-out";
 import MapPin from "lucide-react-native/icons/map-pin";
+import Maximize from "lucide-react-native/icons/maximize";
 import Megaphone from "lucide-react-native/icons/megaphone";
 import Menu from "lucide-react-native/icons/menu";
 import MessageSquare from "lucide-react-native/icons/message-square";
@@ -67,6 +68,7 @@ import { useTheme } from "./theme";
 import { geometry } from "./tokens";
 
 const icons = {
+	fullscreen: Maximize,
 	bold: Bold,
 	italic: Italic,
 	video: Video,

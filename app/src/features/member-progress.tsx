@@ -4,7 +4,6 @@ import { Disclosure, Row, Stack, Surface, Text } from "../design-system";
 import { canCoachMember } from "../domain/app-rules";
 import type { Member } from "../domain/app-types";
 import { goalCategoryLabel } from "../domain/goals";
-import { GoalCheckIn } from "./goal-check-in";
 import { GoalEditor } from "./goal-editor";
 import { GoalRequest } from "./goal-request";
 import { SessionPerformance } from "./session-performance";
@@ -17,7 +16,7 @@ export const MemberProgress = ({
 	const { account } = useApp();
 	const coach = canCoachMember(account, member);
 	return (
-		<Stack gap="xl">
+		<Stack gap="section">
 			<Surface density="compact">
 				<Stack gap="sm">
 					<Row justify="between" wrap>
@@ -42,9 +41,6 @@ export const MemberProgress = ({
 						<Disclosure title="Coaching remarks">
 							<Text variant="small">{member.goalDetails.remarks}</Text>
 						</Disclosure>
-					) : undefined}
-					{member.goal ? (
-						<GoalCheckIn key={member.id} member={member} />
 					) : undefined}
 					<GoalRequest member={member} />
 				</Stack>

@@ -17,7 +17,7 @@ export const MemberTrackers = ({
 	return (
 		<>
 			{trackers.length ? (
-				<Stack gap="sm">
+				<Stack gap="heading">
 					<SectionHeading>Member details</SectionHeading>
 					<Surface>
 						<Stack>
