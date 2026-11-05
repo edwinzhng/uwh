@@ -187,8 +187,28 @@ export const PoolPiece = ({
 					slotStyle,
 				]}
 			>
+				{onManage || onPress ? (
+					<View
+						style={{
+							position: "absolute",
+							top: space.xs,
+							right: space.xs,
+							zIndex: 1,
+						}}
+					>
+						<PoolDropTarget slotId={positionId} scope={scope} drag={dragState}>
+							<PoolAddButton
+								label={`Add player to ${spot.label}`}
+								onPress={onManage ?? onPress}
+							/>
+						</PoolDropTarget>
+					</View>
+				) : undefined}
 				<View
-					style={{ flexDirection: "row", alignItems: "center", gap: space.xxs }}
+					style={{
+						paddingHorizontal: geometry.icon + space.xs,
+						alignItems: "center",
+					}}
 				>
 					<Text
 						style={{
@@ -199,14 +219,6 @@ export const PoolPiece = ({
 					>
 						{spot.shortLabel ?? spot.label}
 					</Text>
-					{onManage || onPress ? (
-						<PoolDropTarget slotId={positionId} scope={scope} drag={dragState}>
-							<PoolAddButton
-								label={`Add player to ${spot.label}`}
-								onPress={onManage ?? onPress}
-							/>
-						</PoolDropTarget>
-					) : undefined}
 				</View>
 				<View
 					style={{
