@@ -1,5 +1,6 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
+import { contentReportSource } from "./content_report_schema";
 import {
 	granularPreferenceFields,
 	notificationSourceFields,
@@ -43,6 +44,7 @@ export const securityTables = {
 		.index("by_user", ["userId"])
 		.index("by_club", ["clubId"]),
 	chatReports: defineTable({
+		contentSource: v.optional(contentReportSource),
 		source: v.optional(
 			v.object({
 				kind: v.literal("sessionPerformance"),

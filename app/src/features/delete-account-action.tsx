@@ -2,14 +2,14 @@ import { type ReactElement, useState } from "react";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useBackend } from "../backend/context";
 import { Button, Dialog, Field, Select, Stack, Text } from "../design-system";
-import { useTask } from "./use-task";
+import { useFormTask } from "./use-form-task";
 
 import { VerifyAccount } from "./verify-account";
 
 export const DeleteAccountAction = (): ReactElement | undefined => {
 	const backend = useBackend();
 	const user = backend.accountInfo;
-	const task = useTask();
+	const task = useFormTask();
 	const [open, setOpen] = useState(false);
 	const [confirmed, setConfirmed] = useState("");
 	const [transferTo, setTransferTo] = useState<Id<"users">>();
@@ -39,18 +39,27 @@ export const DeleteAccountAction = (): ReactElement | undefined => {
 						label="Delete account"
 						variant="danger"
 						isLoading={task.busy}
-						validationError={
-							confirmed !== "DELETE" ||
-							!backend.social?.info?.reauthenticated ||
-							(user.mustTransfer && !transferTo)
-								? "Check the required fields"
-								: undefined
-						}
 						onPress={(): void => {
-							void task.run(async (): Promise<void> => {
-								await backend.deleteAccount?.(undefined, transferTo);
-								await backend.signOut?.();
-							});
+							void task.submit(
+								() =>
+									confirmed !== "DELETE"
+										? "Type DELETE to confirm."
+										: user.appleVerificationRequired
+											? "Verify with Apple before deleting your account."
+											: !backend.social?.info?.reauthenticated
+												? "Verify your identity before deleting your account."
+												: user.mustTransfer && !transferTo
+													? "Choose a new club owner."
+													: undefined,
+								async (): Promise<void> => {
+									if (!backend.deleteAccount)
+										throw new Error(
+											"Account deletion is unavailable. Try again.",
+										);
+									await backend.deleteAccount(undefined, transferTo);
+									await backend.signOut?.();
+								},
+							);
 						}}
 					/>
 				}
@@ -62,8 +71,9 @@ export const DeleteAccountAction = (): ReactElement | undefined => {
 						without these profiles. Children linked to another account remain.
 					</Text>
 					<Text variant="small" tone="secondary">
-						Published coaching feedback stays without your name. Moderation
-						records expire after 90 days.
+						Your coaching feedback, resources and uploaded files will also be
+						deleted. Apple authorization and hosted videos may take additional
+						time to be removed from their providers.
 					</Text>
 					{user.mustTransfer ? (
 						<>

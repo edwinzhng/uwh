@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { ActionMenu } from "../design-system";
-import { formatTime } from "../domain/app-rules";
 import type { EventPart } from "../domain/app-types";
+import { eventTimeRange } from "../domain/event-card-presentation";
 
 export const SectionResponsePicker = ({
 	name,
@@ -34,7 +34,7 @@ export const SectionResponsePicker = ({
 					items: parts.map((part) => ({
 						id: part.id,
 						checked: ids.includes(part.id),
-						label: `${part.title} · ${formatTime(part.start)}–${formatTime(part.end)}`,
+						label: `${part.title} · ${eventTimeRange(part.start, part.end)}`,
 						icon: ids.includes(part.id) ? "checkboxChecked" : "stop",
 						isDisabled: ids.length === 1 && ids.includes(part.id),
 						onSelect: (): void => {

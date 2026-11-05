@@ -111,7 +111,7 @@ export const ClubToolLayout = ({
 							stat={stat(tool)}
 							treatment={
 								treatment === "color"
-									? stat(tool)
+									? tool === "members" || tool === "programs"
 										? "color-field"
 										: "hybrid"
 									: treatment === "scoreboard" && stat(tool)

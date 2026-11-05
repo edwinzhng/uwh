@@ -60,6 +60,7 @@ export const appAction = v.union(
 	}),
 	v.object({
 		type: v.literal("attendance"),
+		lateAddition: v.optional(v.boolean()),
 		partId: v.optional(v.string()),
 		eventId: v.string(),
 		personId: v.string(),

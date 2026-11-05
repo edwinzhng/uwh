@@ -44,7 +44,7 @@ export const EventResponseRow = ({
 								variant="caption"
 								weight="regular"
 								tone="secondary"
-							>{`\u00a0· ${description.replace(/ (AM|PM)\b/g, "\u00a0$1")}`}</Text>
+							>{`\u00a0· ${description.replace(/–/g, "\u2060–\u2060")}`}</Text>
 						) : undefined}
 					</Text>
 				</Stack>

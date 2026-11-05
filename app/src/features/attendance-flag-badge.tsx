@@ -13,6 +13,7 @@ export const AttendanceFlagBadge = ({
 	)?.kind;
 	return flag ? (
 		<Badge
+			compact
 			kind="warning"
 			label={flag === "addition" ? "Late addition" : "Late cancellation"}
 		/>

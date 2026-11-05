@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
-import { initialAppData } from "../src/demo/app-data";
+import { initialAppData, primaryAccount } from "../src/demo/app-data";
+import { reduceApp } from "../src/domain/app-reducer";
 import type { ClubEvent, EventResponse } from "../src/domain/app-types";
 import { attendanceReportRow } from "../src/domain/attendance-report";
 import { attendanceSummary } from "../src/domain/attendance-summary";
@@ -15,6 +16,40 @@ const going: EventResponse = {
 	response: "going",
 	attendance: "unmarked",
 };
+
+test("late additions become Here for the selected part without changing the original RSVP or other marks", (): void => {
+	const response: EventResponse = {
+		...going,
+		response: "unavailable",
+		partIds: ["hockey"],
+		partAttendance: [{ partId: "hockey", attendance: "absent" }],
+	};
+	const data = { ...initialAppData, events: [event], responses: [response] };
+	const action = {
+		type: "attendance" as const,
+		eventId: event.id,
+		personId: player.id,
+		attendance: "present" as const,
+		partId: "training",
+		lateAddition: true,
+	};
+	const next = reduceApp(data, primaryAccount, action);
+	const marked = next.responses.at(0);
+	expect(marked?.response).toBe("unavailable");
+	expect(marked?.partIds).toEqual(["hockey", "training"]);
+	expect(effectiveAttendance(event, marked, "training")).toBe("present");
+	expect(effectiveAttendance(event, marked, "hockey")).toBe("absent");
+	expect(reduceApp(next, primaryAccount, action).responses).toEqual(
+		next.responses,
+	);
+	expect(() =>
+		reduceApp(
+			data,
+			{ ...primaryAccount, admin: false, coachPrograms: [] },
+			action,
+		),
+	).toThrow();
+});
 
 test("Going defaults to Here without turning other responses into attendance", (): void => {
 	expect(effectiveAttendance(event, going)).toBe("present");

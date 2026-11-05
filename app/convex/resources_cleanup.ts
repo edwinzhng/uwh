@@ -43,12 +43,8 @@ export const eraseResources = async (
 		.query("resourceFiles")
 		.withIndex("by_owner", (q) => q.eq("ownerId", userId))
 		.collect()) {
-		if (file.resourceId || file.sessionPlanKey)
-			await ctx.db.patch(file._id, { ownerId: undefined });
-		else {
-			await ctx.storage.delete(file.storageId);
-			await ctx.db.delete(file._id);
-		}
+		await ctx.storage.delete(file.storageId);
+		await ctx.db.delete(file._id);
 	}
 	for (const resource of await ctx.db
 		.query("resources")
@@ -58,9 +54,10 @@ export const eraseResources = async (
 			(id) => !personIds.includes(id),
 		);
 		if (
-			resource.audience === "players" &&
-			resource.personIds.length &&
-			!remaining.length
+			resource.authorId === userId ||
+			(resource.audience === "players" &&
+				resource.personIds.length &&
+				!remaining.length)
 		) {
 			for (const fileId of resourceFileIds(resource)) {
 				const id = ctx.db.normalizeId("resourceFiles", fileId);
@@ -77,13 +74,9 @@ export const eraseResources = async (
 				await ctx.db.delete(comment._id);
 			await ctx.db.delete(resource._id);
 			await releaseYoutubeResource(ctx, clubId, resource._id);
-		} else if (
-			resource.authorId === userId ||
-			remaining.length !== resource.personIds.length
-		) {
+		} else if (remaining.length !== resource.personIds.length) {
 			await ctx.db.patch(resource._id, {
 				personIds: remaining,
-				authorId: resource.authorId === userId ? undefined : resource.authorId,
 			});
 		}
 	}

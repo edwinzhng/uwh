@@ -1,6 +1,13 @@
 import { Temporal } from "@js-temporal/polyfill";
 import type { Doc } from "../convex/_generated/dataModel";
 import {
+	cleanPracticeEvent,
+	combinePractice,
+	combinePracticeResponse,
+	practicePairs,
+	unreliableHistoricalPractice,
+} from "../src/domain/practice-consolidation";
+import {
 	type SourceCalendarEvent,
 	type SourceRow,
 	seasonFor,
@@ -274,13 +281,61 @@ export const buildMigrationSchedule = ({
 			else throw new Error(`Unknown SportEasy presence status: ${status}`);
 		}
 	}
-	return {
-		events: [...events.values()],
-		responses: [...responses].map(([sourceId, entry]) => ({
+	const pairs = practicePairs([...events.values()].map((entry) => entry.value));
+	const canonical = (value: EventValue): EventValue => {
+		const pair = pairs.find(
+			(pair) => pair.training.id === value.id || pair.hockey.id === value.id,
+		);
+		return pair ? combinePractice(pair) : cleanPracticeEvent(value);
+	};
+	const normalizedEvents = [...events.values()]
+		.filter((entry) => !unreliableHistoricalPractice(entry.value))
+		.filter((entry) => !pairs.some((pair) => pair.hockey.id === entry.value.id))
+		.map((entry) => ({ ...entry, value: canonical(entry.value) }));
+	const normalizedResponses = [...responses]
+		.map(([sourceId, entry]) => ({
 			sourceId,
 			value: entry.value,
-		})),
-		sourceEvents,
+		}))
+		.filter(
+			(entry) =>
+				normalizedEvents.some(
+					(event) => event.value.id === entry.value.eventId,
+				) &&
+				!pairs.some((pair) =>
+					[pair.training.id, pair.hockey.id].includes(entry.value.eventId),
+				),
+		);
+	for (const pair of pairs) {
+		const event = combinePractice(pair);
+		const rows = [...responses.values()]
+			.map((entry) => entry.value)
+			.filter((row) =>
+				[pair.training.id, pair.hockey.id].includes(row.eventId),
+			);
+		for (const personId of new Set(rows.map((row) => row.personId))) {
+			const value = combinePracticeResponse(
+				event,
+				personId,
+				rows.find(
+					(row) =>
+						row.eventId === pair.training.id && row.personId === personId,
+				),
+				rows.find(
+					(row) => row.eventId === pair.hockey.id && row.personId === personId,
+				),
+			);
+			normalizedResponses.push({ sourceId: value.id, value });
+		}
+	}
+	return {
+		events: normalizedEvents,
+		responses: normalizedResponses,
+		sourceEvents: new Map(
+			[...sourceEvents]
+				.filter(([, value]) => !unreliableHistoricalPractice(value))
+				.map(([id, value]) => [id, canonical(value)]),
+		),
 		summary: {
 			sporteasyEvents: calendar.length,
 			legacyPractices: legacyPractices.length,
@@ -292,8 +347,8 @@ export const buildMigrationSchedule = ({
 				(row) => row.attended && !sourceEvents.has(`legacy:${row.practiceId}`),
 			).length,
 			presenceColumns: captured.length,
-			events: events.size,
-			responses: responses.size,
+			events: normalizedEvents.length,
+			responses: normalizedResponses.length,
 		},
 	};
 };

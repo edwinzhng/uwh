@@ -14,6 +14,7 @@ import {
 	Surface,
 	TabContent,
 	Tabs,
+	useRouteSelection,
 } from "../design-system";
 import { memberRoles } from "../domain/app-rules";
 import { ClubShell } from "./club-shell";
@@ -29,12 +30,19 @@ export const MembersScreen = (): ReactElement => {
 	const router = useRouter();
 	const params = useLocalSearchParams<{ tab?: string; status?: string }>();
 	const staff = account.admin || account.coachPrograms.length > 0;
-	const archived = staff && params.status === "archived";
+	const tabSelection = useRouteSelection(params.tab ?? "members", (tab): void =>
+		router.setParams({ tab }),
+	);
+	const statusSelection = useRouteSelection(
+		params.status ?? "active",
+		(status): void => router.setParams({ status }),
+	);
+	const archived = staff && statusSelection.value === "archived";
 	const tab =
 		account.coachPrograms.length > 0 &&
-		["rankings", "matchmaking"].includes(params.tab ?? "")
+		["rankings", "matchmaking"].includes(tabSelection.value)
 			? "matchmaking"
-			: account.admin && params.tab === "invites"
+			: account.admin && tabSelection.value === "invites"
 				? "invites"
 				: "members";
 	const [search, setSearch] = useState("");
@@ -61,7 +69,7 @@ export const MembersScreen = (): ReactElement => {
 						label="Members"
 						hideLabel
 						value={tab}
-						onValueChange={(tab): void => router.setParams({ tab })}
+						onValueChange={tabSelection.select}
 						options={[
 							{ value: "members", label: "Members" },
 							...(account.coachPrograms.length > 0
@@ -122,7 +130,7 @@ export const MembersScreen = (): ReactElement => {
 								<SegmentedControl
 									label="Roster"
 									value={archived ? "archived" : "active"}
-									onValueChange={(status): void => router.setParams({ status })}
+									onValueChange={statusSelection.select}
 									options={[
 										{ value: "active", label: "Active" },
 										{ value: "archived", label: "Archived" },
@@ -187,7 +195,7 @@ export const MembersScreen = (): ReactElement => {
 				<MemberEditor
 					open={add}
 					onClose={(): void => setAdd(false)}
-					onInvited={(): void => router.setParams({ tab: "invites" })}
+					onInvited={(): void => tabSelection.select("invites")}
 				/>
 			) : undefined}
 		</ClubShell>

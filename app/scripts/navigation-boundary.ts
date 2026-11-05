@@ -30,8 +30,10 @@ export const inspectNavigationBoundary = (
 			"thread-extras.tsx",
 			"event-preview-actions.tsx",
 			"recognition-summary.tsx",
+			"club-summary-data.tsx",
 		].includes(basename);
-	if (!navigator && !content && !home && !shell) return [];
+	if (!navigator && !content && !home && !shell && !source.includes(".Screen"))
+		return [];
 	const file = ts.createSourceFile(
 		filename,
 		source,
@@ -73,6 +75,35 @@ export const inspectNavigationBoundary = (
 	};
 	const inspect = (node: ts.Node): void => {
 		if (
+			(ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) &&
+			node.tagName.getText(file).endsWith(".Screen")
+		) {
+			const attributes = node.attributes.properties;
+			const named = attributes.some(
+				(attribute) =>
+					ts.isJsxAttribute(attribute) &&
+					attribute.name.getText(file) === "name",
+			);
+			const options = attributes.find(
+				(attribute) =>
+					ts.isJsxAttribute(attribute) &&
+					attribute.name.getText(file) === "options",
+			);
+			if (
+				!named &&
+				options &&
+				ts.isJsxAttribute(options) &&
+				options.initializer &&
+				ts.isJsxExpression(options.initializer) &&
+				options.initializer.expression &&
+				ts.isObjectLiteralExpression(options.initializer.expression)
+			)
+				fail(
+					options,
+					"Dynamic screen options must have stable identity; inline options can cause a native navigation update loop.",
+				);
+		}
+		if (
 			shell &&
 			ts.isImportSpecifier(node) &&
 			["usePathname", "useSegments", "useGlobalSearchParams"].includes(
@@ -94,6 +125,15 @@ export const inspectNavigationBoundary = (
 			);
 		if (navigator && ts.isPropertyAssignment(node)) {
 			const name = node.name.getText(file);
+			if (
+				basename === "app-router.native.tsx" &&
+				name === "headerShown" &&
+				node.initializer.kind !== ts.SyntaxKind.FalseKeyword
+			)
+				fail(
+					node,
+					"Native screens use the shared page toolbar and in-content headings; keep the separate navigator header disabled.",
+				);
 			if (name === "animation") {
 				found.animations += 1;
 				if (

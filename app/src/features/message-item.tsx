@@ -40,6 +40,7 @@ export const MessageItem = memo(
 			<MessageRow
 				outgoing={outgoing}
 				stamp={messageClockLabel(message, data.timeZone)}
+				stampGap={message.pollId ? "lg" : undefined}
 				avatarLabel={outgoing ? undefined : message.author}
 				authorId={
 					accounts.find((entry) => entry.id === message.accountId)?.personId

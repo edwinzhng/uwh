@@ -1,7 +1,9 @@
 import { expect, test } from "bun:test";
 import { createPageReadiness } from "../src/design-system/page-readiness";
 
-const setup = (): {
+const setup = (
+	waitForLayout = true,
+): {
 	changes: boolean[];
 	frame: () => void;
 	controller: ReturnType<typeof createPageReadiness>;
@@ -10,6 +12,7 @@ const setup = (): {
 	const state = { next: 0 };
 	const changes: boolean[] = [];
 	const controller = createPageReadiness({
+		waitForLayout,
 		onChange: (ready): void => {
 			changes.push(ready);
 		},
@@ -31,6 +34,18 @@ const setup = (): {
 		},
 	};
 };
+
+test("tab content responds immediately when data is ready and still waits for an initial query", (): void => {
+	const { controller, changes } = setup(false);
+	controller.update(false, false, "attendance");
+	expect(changes).toEqual([true]);
+	controller.update(false, true, "coaching");
+	expect(changes).toEqual([true, false]);
+	controller.update(false, false, "coaching");
+	expect(changes).toEqual([true, false, true]);
+	controller.update(false, true, "coaching");
+	expect(changes).toEqual([true, false, true]);
+});
 
 test("a new page reveals only after its initial queries and layout frames settle", (): void => {
 	const { controller, frame, changes } = setup();
@@ -152,4 +167,27 @@ test("rapid tab changes cancel the abandoned tab's pending reveal", (): void => 
 	frame();
 	frame();
 	expect(changes).toEqual([true]);
+});
+
+test("changing a tab hides only that tab while the revealed outer page stays interactive", () => {
+	const page = setup();
+	const section = setup();
+	page.controller.update(false, true, "account-one");
+	section.controller.update(false, false, "feedback");
+	section.frame();
+	section.frame();
+	page.controller.update(false, false, "account-one");
+	page.frame();
+	page.frame();
+	expect(page.changes).toEqual([true]);
+	section.controller.update(false, true, "attendance");
+	page.controller.update(false, true, "account-one");
+	page.frame();
+	page.frame();
+	expect(section.changes).toEqual([true, false]);
+	expect(page.changes).toEqual([true]);
+	section.controller.update(false, false, "attendance");
+	section.frame();
+	section.frame();
+	expect(section.changes).toEqual([true, false, true]);
 });

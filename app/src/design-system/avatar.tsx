@@ -81,8 +81,17 @@ export const Avatar = ({
 					style={{
 						fontFamily: font.semibold,
 						fontSize: large
-							? typography.h3.fontSize
-							: typography.small.fontSize,
+							? typography.h4.fontSize
+							: compact || mini
+								? typography.navigation.fontSize
+								: typography.small.fontSize,
+						lineHeight: large
+							? typography.h4.lineHeight
+							: compact || mini
+								? typography.navigation.lineHeight
+								: typography.small.lineHeight,
+						includeFontPadding: false,
+						textAlign: "center",
 						color: colors.foreground,
 					}}
 				>

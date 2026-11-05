@@ -288,6 +288,7 @@ export type AppAction =
 	  }
 	| {
 			type: "attendance";
+			lateAddition?: boolean;
 			partId?: string;
 			eventId: string;
 			personId: string;

@@ -7,6 +7,9 @@ export type LoadingRequest = {
 	pageId?: string;
 };
 export const LoadingPageContext = createContext<string | undefined>(undefined);
+export const PageContentReadyContext = createContext<boolean | undefined>(
+	undefined,
+);
 export const loadingRequestsAtom = atom<Record<string, LoadingRequest>>({});
 export const activeLoadingScope = (
 	requests: Record<string, LoadingRequest>,

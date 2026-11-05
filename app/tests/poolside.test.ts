@@ -47,6 +47,10 @@ test("chat filters preserve one chronological list without mutating input", (): 
 	expect(
 		filteredConversations(threads, "  DM-A  ", "all").map((entry) => entry.id),
 	).toEqual(["dm-a"]);
+	expect(
+		filteredConversations(threads, "", "direct").map((entry) => entry.id),
+	).toEqual(["dm-a"]);
+	expect(filteredConversations(threads, "group", "direct")).toEqual([]);
 	expect(filteredConversations(threads, "NO MATCH", "all")).toEqual([]);
 	expect(threads.at(0)?.id).toBe("dm-a");
 });

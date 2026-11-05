@@ -11,6 +11,7 @@ import {
 } from "../design-system";
 import { displayDate } from "../domain/date-display";
 import type { Resource } from "../domain/resources";
+import { ContentReport } from "./content-report";
 import { ResourceActions } from "./resource-actions";
 import { ResourceComments } from "./resource-comments";
 import { ResourceDocument } from "./resource-document";
@@ -81,6 +82,14 @@ export const ResourceDetails = ({
 					/>
 				</Row>
 				{resource.description ? <Text>{resource.description}</Text> : undefined}
+				<ContentReport
+					source={{
+						kind: "resource",
+						id: resource.id,
+						revision: resource.revision,
+					}}
+					label="Report resource"
+				/>
 				{resource.voiceFileId || resource.voiceTranscript ? (
 					<Stack gap="sm">
 						{resource.voiceFileId ? (

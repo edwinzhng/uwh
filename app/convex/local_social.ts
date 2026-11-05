@@ -2,8 +2,13 @@ import { v } from "convex/values";
 import { importPKCS8, SignJWT } from "jose";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { internalAction, internalMutation } from "./_generated/server";
+import {
+	internalAction,
+	internalMutation,
+	internalQuery,
+} from "./_generated/server";
 import { eraseAccount } from "./account_erasure";
+import { rememberAppleGrant } from "./apple_grants";
 import { requireLocalEmail } from "./auth_mail";
 import { saveAuthUser } from "./auth_users";
 import { connectionPurpose, socialProvider } from "./connection_schema";
@@ -40,6 +45,77 @@ export const provision = internalMutation({
 				emailVerified: email,
 			});
 		return userId;
+	},
+});
+
+export const captureAppleGrant = internalMutation({
+	args: {
+		userId: v.id("users"),
+		email: v.string(),
+		subject: v.string(),
+		encryptedToken: v.string(),
+	},
+	handler: async (
+		ctx,
+		{ userId, email, subject, encryptedToken },
+	): Promise<void> => {
+		requireLocalEmail(email);
+		if ((await ctx.db.get(userId))?.email !== email)
+			throw new Error("Wrong test user.");
+		const account = await ctx.db
+			.query("authAccounts")
+			.withIndex("providerAndAccountId", (q) =>
+				q.eq("provider", "apple").eq("providerAccountId", subject),
+			)
+			.unique();
+		if (account?.userId !== userId)
+			throw new Error("Wrong test Apple account.");
+		await rememberAppleGrant(ctx, userId, subject, encryptedToken);
+	},
+});
+
+export const appleGrantState = internalQuery({
+	args: { email: v.string(), subject: v.string() },
+	handler: async (
+		ctx,
+		{ email, subject },
+	): Promise<{
+		pending: boolean;
+		attached: boolean;
+		attempts: number;
+	} | null> => {
+		requireLocalEmail(email);
+		const grant = await ctx.db
+			.query("appleGrants")
+			.withIndex("by_subject", (q) => q.eq("subject", subject))
+			.unique();
+		return grant
+			? {
+					pending: grant.pending,
+					attached: Boolean(grant.userId),
+					attempts: grant.attempts,
+				}
+			: null;
+	},
+});
+
+export const removeAppleGrant = internalMutation({
+	args: { email: v.string(), subject: v.string() },
+	handler: async (ctx, { email, subject }): Promise<void> => {
+		requireLocalEmail(email);
+		const grant = await ctx.db
+			.query("appleGrants")
+			.withIndex("by_subject", (q) => q.eq("subject", subject))
+			.unique();
+		const account = await ctx.db
+			.query("authAccounts")
+			.withIndex("providerAndAccountId", (q) =>
+				q.eq("provider", "apple").eq("providerAccountId", subject),
+			)
+			.unique();
+		if (account && (await ctx.db.get(account.userId))?.email !== email)
+			throw new Error("Wrong test Apple account.");
+		if (grant) await ctx.db.delete(grant._id);
 	},
 });
 

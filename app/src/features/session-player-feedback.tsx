@@ -10,8 +10,13 @@ import {
 	Stack,
 	Surface,
 } from "../design-system";
-import { canCoachMember, canRegister } from "../domain/app-rules";
+import {
+	canCoachMember,
+	canRegister,
+	eventResponse,
+} from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
+import { effectiveAttendance } from "../domain/effective-attendance";
 import { FeedbackEditor } from "./feedback-editor";
 
 export const SessionPlayerFeedback = ({
@@ -26,7 +31,11 @@ export const SessionPlayerFeedback = ({
 		eventId: string;
 	}>();
 	const players = data.members.filter(
-		(person) => canRegister(person, event) && canCoachMember(account, person),
+		(person) =>
+			canRegister(person, event) &&
+			canCoachMember(account, person) &&
+			effectiveAttendance(event, eventResponse(data, event.id, person.id)) ===
+				"present",
 	);
 	return (
 		<Stack gap="heading">
@@ -68,7 +77,7 @@ export const SessionPlayerFeedback = ({
 						/>
 					))}
 					{!players.length ? (
-						<EmptyState title="No eligible players" />
+						<EmptyState title="No players marked Here" />
 					) : undefined}
 				</List>
 			</Surface>

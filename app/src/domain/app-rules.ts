@@ -19,6 +19,7 @@ import {
 	validatePracticeParts,
 } from "./practice-parts";
 import { applyProgramWindow, validateProgramRsvp } from "./program-rsvp";
+import { indexedEventResponse } from "./response-index";
 import { defaultSeasonId } from "./seasons";
 import { defaultClubTimeZone, validTimeZone } from "./time-zones";
 
@@ -54,9 +55,12 @@ export const eventResponse = (
 	eventId: string,
 	personId: string,
 ): EventResponse =>
-	data.responses.find(
-		(entry) => entry.eventId === eventId && entry.personId === personId,
-	) ?? { eventId, personId, response: "unanswered", attendance: "unmarked" };
+	indexedEventResponse(data.responses, eventId, personId) ?? {
+		eventId,
+		personId,
+		response: "unanswered",
+		attendance: "unmarked",
+	};
 export const eventAttendees = (
 	data: AppData,
 	eventId: string,

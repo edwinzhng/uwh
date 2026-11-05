@@ -4,6 +4,9 @@ const projectId =
 	process.env.EXPO_PUBLIC_EAS_PROJECT_ID ??
 	"8670108c-8259-43e5-8799-f1d4078577e8";
 
+const microphonePermission =
+	"Use your microphone to dictate chat messages and record voice notes on club video clips.";
+
 const config: ExpoConfig = {
 	name: "UWH Club",
 	slug: "calgary-uwh",
@@ -32,7 +35,10 @@ const config: ExpoConfig = {
 		usesAppleSignIn: true,
 		entitlements: { "com.apple.developer.applesignin": ["Default"] },
 		bundleIdentifier: "com.uwhclub.app",
-		infoPlist: { ITSAppUsesNonExemptEncryption: false },
+		infoPlist: {
+			ITSAppUsesNonExemptEncryption: false,
+			NSMicrophoneUsageDescription: microphonePermission,
+		},
 	},
 	android: {
 		package: "com.uwhclub.app",
@@ -44,16 +50,23 @@ const config: ExpoConfig = {
 		favicon: "./assets/app-icon.png",
 	},
 	plugins: [
-		"expo-video",
+		[
+			"expo-video",
+			{ supportsBackgroundPlayback: false, supportsPictureInPicture: false },
+		],
 		[
 			"expo-audio",
-			{ microphonePermission: "Record voice notes on club video clips." },
+			{
+				microphonePermission,
+				enableBackgroundPlayback: false,
+				enableBackgroundRecording: false,
+			},
 		],
 		"expo-notifications",
 		[
 			"expo-speech-recognition",
 			{
-				microphonePermission: "Use your microphone to dictate chat messages.",
+				microphonePermission,
 				speechRecognitionPermission:
 					"Turn your speech into an editable message draft.",
 			},
@@ -64,7 +77,7 @@ const config: ExpoConfig = {
 			{
 				photosPermission: "Choose photos to share with your club.",
 				cameraPermission: false,
-				microphonePermission: "Use your microphone to dictate chat messages.",
+				microphonePermission,
 			},
 		],
 		"expo-router",

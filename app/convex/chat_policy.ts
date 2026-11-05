@@ -1,30 +1,25 @@
 import { v } from "convex/values";
+import { contentPolicyError } from "../src/domain/content-policy";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
 import { memberFor, requireMember } from "./identity";
+import { canChat } from "./moderation";
 
-const normalize = (text: string): string =>
-	text
-		.normalize("NFKC")
-		.toLowerCase()
-		.replace(/[\u200B-\u200D\uFEFF]/g, "");
 export const checkContent = async (
 	ctx: QueryCtx,
 	member: Doc<"memberships">,
 	body: string,
 ): Promise<void> => {
+	if (body.trim() && !(await canChat(ctx, member.userId)))
+		throw new Error(
+			"Sharing is paused for this account. Contact a club administrator.",
+		);
 	const policy = await ctx.db
 		.query("chatPolicies")
 		.withIndex("by_club", (q) => q.eq("clubId", member.clubId))
 		.unique();
-	if (
-		policy?.blockedPhrases.some((phrase) =>
-			normalize(body).includes(normalize(phrase)),
-		)
-	)
-		throw new Error(
-			"This message contains a phrase blocked by your club. Please edit it.",
-		);
+	const error = contentPolicyError(body, policy?.blockedPhrases);
+	if (error) throw new Error(error);
 };
 export const current = query({
 	args: {},

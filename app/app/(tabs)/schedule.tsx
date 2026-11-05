@@ -1,10 +1,13 @@
 import type { ReactElement } from "react";
+import { PrimaryWorkspace } from "../../src/backend/primary-workspace";
 import { NativeTabContent } from "../../src/design-system";
 import { AgendaScreen } from "../../src/features/agenda-screen";
 
 const ScheduleRoute = (): ReactElement => (
-	<NativeTabContent>
-		<AgendaScreen />
-	</NativeTabContent>
+	<PrimaryWorkspace screen="schedule">
+		<NativeTabContent>
+			<AgendaScreen />
+		</NativeTabContent>
+	</PrimaryWorkspace>
 );
 export default ScheduleRoute;

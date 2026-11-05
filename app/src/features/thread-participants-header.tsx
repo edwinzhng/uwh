@@ -1,5 +1,11 @@
 import { useRouter } from "expo-router";
-import { type ReactElement, type ReactNode, useState } from "react";
+import {
+	type ReactElement,
+	type ReactNode,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { useChatSafety } from "../backend/chat-safety";
 import { newId, useApp } from "../demo/app-state";
 import {
@@ -15,13 +21,14 @@ import {
 	Text,
 } from "../design-system";
 import type { Conversation } from "../domain/app-types";
-import {
-	canEditChatAppearance,
-	canRenameChat,
-} from "../domain/chat-appearance";
 import { recipientPersonId } from "../domain/message-recipients";
+import type { PhotoSource } from "../domain/photo-crop";
 import { ChatAppearanceEditor } from "./chat-appearance-editor";
+import { ChatInfoIdentity } from "./chat-info-identity";
 import { ChatNameEditor } from "./chat-name-editor";
+import { releasePhotoUri } from "./photo-uri";
+import { pickPhotoSource } from "./pick-photo-source";
+import { ThreadParticipantsButton } from "./thread-participants-button";
 import { useFormTask } from "./use-form-task";
 import {
 	type ParticipantControls,
@@ -44,8 +51,33 @@ const ParticipantsContent = ({
 	const [view, setView] = useState<"members" | "add" | "picture" | "name">(
 		"members",
 	);
-	const { account } = useApp();
 	const safety = useChatSafety();
+	const [picture, setPicture] = useState<PhotoSource>();
+	const mounted = useRef(true);
+	useEffect(() => {
+		mounted.current = true;
+		return (): void => {
+			mounted.current = false;
+		};
+	}, []);
+	useEffect(
+		() => (picture ? (): void => releasePhotoUri(picture.uri) : undefined),
+		[picture],
+	);
+	const choosePicture = (): void => {
+		task.clear();
+		void task.run(async (): Promise<void> => {
+			const next = await pickPhotoSource();
+			if (!next) return;
+			if (!mounted.current) {
+				releasePhotoUri(next.uri);
+				return;
+			}
+			setPicture(next);
+			setView("picture");
+		});
+	};
+
 	const [selected, setSelected] = useState<string[]>([]);
 	const [search, setSearch] = useState("");
 	const [groupId, setGroupId] = useState(() => `group-${newId()}`);
@@ -65,71 +97,77 @@ const ParticipantsContent = ({
 		);
 	};
 	return (
-		<>
-			<Dialog
-				intent="detail"
-				title="Conversation members"
-				isOpen={view === "members"}
-				onOpenChange={(open): void => {
-					if (!open) onClose();
-				}}
-				footer={
-					state?.canAdd ? (
-						<Button
-							label="Add people"
-							onPress={(): void => {
-								task.clear();
-								setSelected([]);
-								setSearch("");
-								setGroupId(`group-${newId()}`);
-								setView("add");
-							}}
-						/>
-					) : undefined
-				}
-			>
-				{!state ? (
-					<LoadingContent />
-				) : (
-					<Stack>
-						{canEditChatAppearance(thread, account) ? (
-							<Button
-								label="Chat picture"
-								prefix="image"
-								variant="secondary"
-								isDisabled={safety.status?.paused}
-								onPress={(): void => setView("picture")}
+		<Dialog
+			intent="detail"
+			title="Chat info"
+			isOpen
+			onOpenChange={(open): void => {
+				if (!open) onClose();
+			}}
+			footer={
+				state?.canAdd ? (
+					<Button
+						label="Add people"
+						onPress={(): void => {
+							task.clear();
+							setSelected([]);
+							setSearch("");
+							setGroupId(`group-${newId()}`);
+							setView("add");
+						}}
+					/>
+				) : undefined
+			}
+		>
+			{!state ? (
+				<LoadingContent />
+			) : (
+				<Stack>
+					<ChatInfoIdentity
+						thread={thread}
+						pictureDisabled={safety.status?.paused || task.busy}
+						onPicture={choosePicture}
+						onName={(): void => setView("name")}
+					/>
+					<Text variant="small" tone="secondary">
+						{state.members.length}{" "}
+						{state.members.length === 1 ? "member" : "members"}
+					</Text>
+					<List>
+						{state.members.map((member) => (
+							<ListItem
+								key={member.id}
+								title={member.name}
+								avatar={member.name}
+								avatarId={recipientPersonId(member.id)}
 							/>
+						))}
+						{!state.members.length ? (
+							<EmptyState title="No members available" />
 						) : undefined}
-						{canRenameChat(thread, account) ? (
-							<Button
-								label="Chat name"
-								prefix="edit"
-								variant="secondary"
-								onPress={(): void => setView("name")}
-							/>
-						) : undefined}
-						<List>
-							{state.members.map((member) => (
-								<ListItem
-									key={member.id}
-									title={member.name}
-									avatar={member.name}
-									avatarId={recipientPersonId(member.id)}
-								/>
-							))}
-							{!state.members.length ? (
-								<EmptyState title="No members available" />
-							) : undefined}
-						</List>
-					</Stack>
-				)}
-			</Dialog>
-			{view === "name" ? (
-				<ChatNameEditor thread={thread} onClose={onClose} />
+					</List>
+				</Stack>
+			)}
+			{task.error && view === "members" ? (
+				<Text tone="danger" variant="small">
+					{task.error}
+				</Text>
 			) : undefined}
-			{view === "picture" ? (
-				<ChatAppearanceEditor thread={thread} onClose={(): void => onClose()} />
+			{view === "name" ? (
+				<ChatNameEditor
+					thread={thread}
+					onClose={(): void => setView("members")}
+				/>
+			) : undefined}
+			{view === "picture" && picture ? (
+				<ChatAppearanceEditor
+					source={picture}
+					thread={thread}
+					onClose={(): void => {
+						setView("members");
+						setPicture(undefined);
+					}}
+				/>
 			) : undefined}
 			<Dialog
 				intent="picker"
@@ -137,7 +175,7 @@ const ParticipantsContent = ({
 				title={state?.kind === "direct" ? "Start a group" : "Add people"}
 				isOpen={view === "add"}
 				onOpenChange={(open): void => {
-					if (!open && !task.busy) onClose();
+					if (!open && !task.busy) setView("members");
 				}}
 				footer={
 					<Button
@@ -193,7 +231,7 @@ const ParticipantsContent = ({
 					{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
 				</Stack>
 			</Dialog>
-		</>
+		</Dialog>
 	);
 };
 const LiveParticipants = ({
@@ -248,10 +286,8 @@ export const ThreadParticipantsHeader = ({
 			{trigger ? (
 				trigger((): void => setOpen(true))
 			) : (
-				<Button
-					label="Conversation info"
-					icon="users"
-					variant="ghost"
+				<ThreadParticipantsButton
+					thread={thread}
 					onPress={(): void => setOpen(true)}
 				/>
 			)}

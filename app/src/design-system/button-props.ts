@@ -5,6 +5,7 @@ import type { RoleTone } from "./role-glow";
 
 export type ButtonProps = {
 	label: string;
+	count?: number;
 	collapseLabelOnNarrow?: boolean;
 	density?: "standard" | "filter";
 	roleTone?: RoleTone;

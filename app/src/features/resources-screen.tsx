@@ -19,6 +19,7 @@ import {
 	Select,
 	Stack,
 	Tabs,
+	useRouteSelection,
 } from "../design-system";
 import {
 	type Resource,
@@ -119,6 +120,11 @@ const ResourceWorkspace = ({
 						state={state}
 						canManage={canManage}
 						onEdit={setEditor}
+					/>
+				) : state.detailError ? (
+					<EmptyState
+						title="Resource unavailable"
+						description={state.detailError}
 					/>
 				) : (
 					<LoadingContent />
@@ -280,18 +286,20 @@ export const ResourcesScreen = (): ReactElement => {
 		search: "",
 		archived: false,
 	});
+	const kindSelection = useRouteSelection<ResourceFilters["kind"]>(
+		params.kind === "video" || params.kind === "document" ? params.kind : "all",
+		(kind): void =>
+			router.setParams({ kind: kind === "all" ? undefined : kind }),
+	);
 	const effectiveFilters: ResourceFilters = {
 		...filters,
-		kind:
-			params.kind === "video" || params.kind === "document"
-				? params.kind
-				: filters.kind,
+		kind: kindSelection.value,
 	};
 	const changeFilters = (next: ResourceFilters): void => {
 		setFilters(next);
-		const kind = next.kind === "all" ? undefined : next.kind;
-		if (params.kind !== kind) router.setParams({ kind });
+		kindSelection.select(next.kind);
 	};
+
 	return source === "convex" ? (
 		<LiveResources
 			filters={effectiveFilters}

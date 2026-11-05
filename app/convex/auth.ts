@@ -4,6 +4,9 @@ import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
 import { authSessionPolicy } from "../src/domain/auth-session-policy";
 import { authRedirect } from "../src/domain/social-auth";
+import type { Id } from "./_generated/dataModel";
+import { rememberAppleGrant } from "./apple_grants";
+import { encryptAppleToken } from "./apple_token_crypto";
 import { authEmail, authSignInCode, authSignInEmail } from "./auth_email";
 import { withPasswordErrors } from "./auth_errors";
 import { saveAuthUser } from "./auth_users";
@@ -12,7 +15,22 @@ import { socialEnabled } from "./social_config";
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
 	session: authSessionPolicy,
 	callbacks: {
-		createOrUpdateUser: saveAuthUser,
+		createOrUpdateUser: async (ctx, args): Promise<Id<"users">> => {
+			const userId = await saveAuthUser(ctx, args);
+			if (
+				args.type === "oauth" &&
+				args.provider.id === "apple" &&
+				typeof args.profile.appleSubject === "string" &&
+				typeof args.profile.appleEncryptedToken === "string"
+			)
+				await rememberAppleGrant(
+					ctx,
+					userId,
+					args.profile.appleSubject,
+					args.profile.appleEncryptedToken,
+				);
+			return userId;
+		},
 		redirect: async ({ redirectTo }): Promise<string> =>
 			authRedirect(redirectTo, process.env.SITE_URL ?? ""),
 	},
@@ -37,8 +55,12 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
 			? [
 					Apple({
 						allowDangerousEmailAccountLinking: false,
-						profile: (profile) => ({
+						profile: async (profile, tokens) => ({
 							id: profile.sub,
+							appleSubject: profile.sub,
+							appleEncryptedToken: await encryptAppleToken(
+								tokens.refresh_token ?? "",
+							),
 							email: profile.email?.trim().toLowerCase(),
 							emailVerified:
 								profile.email_verified === true ||

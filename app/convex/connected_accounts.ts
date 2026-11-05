@@ -8,6 +8,7 @@ import {
 	type QueryCtx,
 	query,
 } from "./_generated/server";
+import { queueAppleRevocation } from "./apple_grants";
 import { removeAuthSession } from "./auth_sessions";
 import { connectionPurpose, socialProvider } from "./connection_schema";
 import { getAuthUserId } from "./identity";
@@ -23,6 +24,7 @@ type ConnectedAccountsInfo = {
 		provider: string;
 		email: string;
 		canDisconnect: boolean;
+		requiresAppleVerification: boolean;
 	}[];
 };
 
@@ -71,6 +73,12 @@ export const list = query({
 		const verificationExpiresAt = userId
 			? await verificationExpiration(ctx)
 			: 0;
+		const grants = userId
+			? await ctx.db
+					.query("appleGrants")
+					.withIndex("by_user", (q) => q.eq("userId", userId))
+					.collect()
+			: [];
 		return {
 			google: socialEnabled("google"),
 			apple: socialEnabled("apple"),
@@ -92,6 +100,12 @@ export const list = query({
 						account.provider !== "password" &&
 						accounts.some(
 							(other) => other._id !== account._id && usable(other),
+						),
+					requiresAppleVerification:
+						account.provider === "apple" &&
+						!grants.some(
+							(grant) =>
+								!grant.pending && grant.subject === account.providerAccountId,
 						),
 				})),
 		};
@@ -229,6 +243,11 @@ export const finish = internalMutation({
 					"This sign-in belongs to another club account. Accounts with club records can’t be merged here.",
 				);
 			await ctx.db.patch(providerAccount._id, { userId });
+			for (const grant of await ctx.db
+				.query("appleGrants")
+				.withIndex("by_user", (q) => q.eq("userId", sourceId))
+				.collect())
+				await ctx.db.patch(grant._id, { userId });
 			for (const code of await ctx.db
 				.query("authVerificationCodes")
 				.withIndex("accountId", (q) => q.eq("accountId", providerAccount._id))
@@ -271,6 +290,19 @@ export const disconnect = mutation({
 			.collect();
 		if (!accounts.some((other) => other._id !== accountId && usable(other)))
 			throw new Error("Keep at least one working sign-in method.");
+		if (account.provider === "apple") {
+			const grant = await ctx.db
+				.query("appleGrants")
+				.withIndex("by_subject", (q) =>
+					q.eq("subject", account.providerAccountId),
+				)
+				.unique();
+			if (!grant || grant.pending || grant.userId !== userId)
+				throw new Error(
+					"Verify with Apple before disconnecting it so its authorization can be revoked.",
+				);
+			await queueAppleRevocation(ctx, userId, account.providerAccountId);
+		}
 		for (const code of await ctx.db
 			.query("authVerificationCodes")
 			.withIndex("accountId", (q) => q.eq("accountId", accountId))

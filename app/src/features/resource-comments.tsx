@@ -18,6 +18,7 @@ import {
 	validateResourceComment,
 } from "../domain/resources";
 import { ConfirmButton } from "./confirm-button";
+import { ContentReport } from "./content-report";
 import { useFormTask } from "./use-form-task";
 import { useOperationKey } from "./use-operation-key";
 
@@ -101,21 +102,27 @@ export const ResourceComments = ({
 							}
 							description={comment.body}
 							trailing={
-								comment.authorId === account.id || canManage ? (
-									<ConfirmButton
-										label="Remove comment"
-										icon="trash"
-										title="Remove comment?"
-										description="Remove this comment from the resource discussion."
-										confirmLabel="Remove comment"
-										danger
-										variant="ghost"
-										isDisabled={task.busy}
-										onConfirm={(): Promise<boolean> =>
-											task.run(() => state.removeComment(comment.id))
-										}
+								<Row gap="xs" wrap>
+									<ContentReport
+										source={{ kind: "comment", id: comment.id }}
+										label="Report comment"
 									/>
-								) : undefined
+									{comment.authorId === account.id || canManage ? (
+										<ConfirmButton
+											label="Remove comment"
+											icon="trash"
+											title="Remove comment?"
+											description="Remove this comment from the resource discussion."
+											confirmLabel="Remove comment"
+											danger
+											variant="ghost"
+											isDisabled={task.busy}
+											onConfirm={(): Promise<boolean> =>
+												task.run(() => state.removeComment(comment.id))
+											}
+										/>
+									) : undefined}
+								</Row>
 							}
 						/>
 					))}

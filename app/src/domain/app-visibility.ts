@@ -11,7 +11,11 @@ import { canReadFeedback } from "./feedback-access";
 import { practicePartKey } from "./practice-parts";
 import { publicFeedback } from "./shoutouts";
 
-export const visibleAppData = (data: AppData, account: Account): AppData => {
+export const visibleAppData = (
+	data: AppData,
+	account: Account,
+	blockedAccountIds: readonly string[] = [],
+): AppData => {
 	const members = new Map(data.members.map((member) => [member.id, member]));
 	const events = new Map(data.events.map((event) => [event.id, event]));
 	const privatePerson = (id: string): boolean =>
@@ -90,6 +94,7 @@ export const visibleAppData = (data: AppData, account: Account): AppData => {
 			),
 		),
 		feedback: data.feedback
+			.filter((entry) => !blockedAccountIds.includes(entry.authorId))
 			.filter((entry) =>
 				canReadFeedback(entry, account, members.get(entry.personId)),
 			)

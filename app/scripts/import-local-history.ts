@@ -1,6 +1,7 @@
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Doc, Id, TableNames } from "../convex/_generated/dataModel";
+import { practiceProgramId } from "../src/domain/practice-consolidation";
 import { buildMigrationContent } from "./migration-content";
 import { migrationName } from "./migration-identities";
 import { buildMigrationSchedule } from "./migration-schedule";
@@ -163,7 +164,13 @@ const legacyPerson = (id: string): string => {
 	if (!person) throw new Error(`Unmapped legacy player ${id}`);
 	return person.id;
 };
-const program = (id: string): string => (id ? `base44:${id}` : "club");
+const program = (id: string): string => {
+	const source = table("Program").find((row) => row.id === id);
+	return (
+		practiceProgramId(source?.day_of_week ?? "") ??
+		(id ? `base44:${id}` : "club")
+	);
+};
 const calendar = await migrationCalendar(table("Program"));
 const legacyPractices = await readLegacy<{
 	_id: string;
@@ -221,10 +228,18 @@ const seasons = [2024, 2025, 2026].map((year) => ({
 	start: `${year}-09-01`,
 	end: `${year + 1}-08-31`,
 }));
-const programs = table("Program").map(
-	(row): NonNullable<Doc<"clubs">["programs"]>[number] => ({
+const programs = table("Program")
+	.filter(
+		(row, index, rows) =>
+			rows.findIndex(
+				(other) => program(other.id ?? "") === program(row.id ?? ""),
+			) === index,
+	)
+	.map((row): NonNullable<Doc<"clubs">["programs"]>[number] => ({
 		id: program(row.id ?? ""),
-		name: row.name ?? "Program",
+		name: practiceProgramId(row.day_of_week ?? "")
+			? (row.day_of_week ?? "Program")
+			: (row.name ?? "Program"),
 		archived: row.is_active === "false",
 		status: row.status === "active" ? "active" : "completed",
 		kind: row.type === "Training" ? "training" : "hockey",
@@ -238,8 +253,7 @@ const programs = table("Program").map(
 			reminderDays: 1,
 			defaultResponse: "none",
 		},
-	}),
-);
+	}));
 await run("local_migration:configure", {
 	dryRun: false,
 	programs,
@@ -583,26 +597,29 @@ const coachHistory = await readLegacy<{
 	durationMinutes: number;
 }>("practiceCoaches");
 await write(
-	coachHistory.map((row): Entry => {
+	coachHistory.flatMap((row): Entry[] => {
 		const coach = coaches.find((entry) => entry._id === row.coachId);
 		const event = schedule.sourceEvents.get(`legacy:${row.practiceId}`);
+		if (!event) return [];
 		const personId = coach ? legacyPerson(coach.playerId) : undefined;
 		const person = people.find((entry) => entry.id === personId);
 		if (!person || !event)
 			throw new Error("Historical coaching dependency unavailable.");
-		return {
-			sourceId: `legacy:${row._id}`,
-			record: {
-				kind: "coachingHours",
-				value: {
-					coachId: importedActor(person.id),
-					personId: person.id,
-					name: person.name,
-					eventId: event.id,
-					durationMinutes: row.durationMinutes,
+		return [
+			{
+				sourceId: `legacy:${row._id}`,
+				record: {
+					kind: "coachingHours",
+					value: {
+						coachId: importedActor(person.id),
+						personId: person.id,
+						name: person.name,
+						eventId: event.id,
+						durationMinutes: row.durationMinutes,
+					},
 				},
 			},
-		};
+		];
 	}),
 );
 

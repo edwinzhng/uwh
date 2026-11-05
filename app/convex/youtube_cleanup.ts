@@ -99,13 +99,11 @@ export const eraseYoutube = async (
 	for (const row of uploads.filter((row) => row.ownerId === userId)) {
 		await ctx.db.patch(row._id, {
 			ownerId: undefined,
-			...(!row.resourceId ? { expiresAt: Date.now() } : {}),
+			resourceId: undefined,
+			expiresAt: Date.now(),
 		});
-		if (!row.resourceId)
-			await ctx.scheduler.runAfter(
-				60000,
-				internal.youtube_actions.expireUpload,
-				{ id: row._id },
-			);
+		await ctx.scheduler.runAfter(60000, internal.youtube_actions.expireUpload, {
+			id: row._id,
+		});
 	}
 };

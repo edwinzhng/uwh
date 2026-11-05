@@ -10,6 +10,7 @@ import {
 	Text,
 } from "../design-system";
 import { AccountAccessEditor } from "./account-access-editor";
+import { StaffInvites } from "./staff-invites";
 
 export const AccessPanel = (): ReactElement => {
 	const { accounts, source } = useApp();
@@ -59,6 +60,7 @@ export const AccessPanel = (): ReactElement => {
 					) : undefined}
 				</Stack>
 			</Surface>
+			{source === "convex" ? <StaffInvites /> : undefined}
 		</Stack>
 	);
 };

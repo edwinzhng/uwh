@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import type { PlayerCoaching } from "../src/domain/player-coaching";
 import type { PlayerRanking } from "../src/domain/player-rankings";
 import {
+	positionFlowIndex,
 	positionFlowQueue,
 	withPlayerPositions,
 } from "../src/domain/position-flow";
@@ -45,6 +46,14 @@ const profile: PlayerCoaching = {
 	ageGroup: "adult",
 	revision: 4,
 };
+test("position flow skips removed players without hiding remaining players", () => {
+	const queue = positionFlowQueue(players);
+	const remaining = players.filter((player) => player.personId !== "two");
+	expect(positionFlowIndex(queue, remaining, 0)).toBe(1);
+	expect(positionFlowIndex(queue, remaining, 2)).toBe(queue.length);
+	expect(positionFlowIndex(queue, [], 0)).toBe(queue.length);
+	expect(positionFlowIndex([], players, 0)).toBe(0);
+});
 test("one coach can assign multiple positions without changing ratings or demographics", () => {
 	expect(withPlayerPositions(profile, ["FORWARD", "CENTER"], 4)).toEqual({
 		...profile,

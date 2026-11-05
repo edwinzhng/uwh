@@ -8,6 +8,7 @@ import {
 	type QueryCtx,
 	query,
 } from "./_generated/server";
+import { removeReportedContent } from "./content_reports";
 import { memberFor, requireMember } from "./identity";
 import { threadFor } from "./message_access";
 import { eraseMessageAnnouncement } from "./message_announcements_cleanup";
@@ -201,7 +202,16 @@ export const report = mutation({
 				q.eq("reporterId", member.userId).eq("messageId", messageId),
 			)
 			.first();
-		if (duplicate) return;
+		if (duplicate) {
+			const targetId = ctx.db.normalizeId("users", message.value.accountId);
+			if (blockAuthor && targetId)
+				await ctx.db.insert("blocks", {
+					clubId: member.clubId,
+					userId: member.userId,
+					targetId,
+				});
+			return;
+		}
 		const recent = await ctx.db
 			.query("chatReports")
 			.withIndex("by_reporter", (q) =>
@@ -295,7 +305,9 @@ export const review = mutation({
 			throw new Error("Report unavailable.");
 		if (report.state !== "open") return;
 		if (decision === "removed") {
-			if (report.source) await removeReportedPerformance(ctx, report);
+			if (report.contentSource)
+				await removeReportedContent(ctx, member, report);
+			else if (report.source) await removeReportedPerformance(ctx, report);
 			else {
 				const message = await ctx.db
 					.query("messages")

@@ -4,6 +4,7 @@ import { reduceApp } from "../src/domain/app-reducer";
 import type { Account, AppAction, AppData } from "../src/domain/app-types";
 import { visibleAppData } from "../src/domain/app-visibility";
 import { registeredMemberCount } from "../src/domain/club-summary";
+import { submittedContentText } from "../src/domain/content-report";
 import { clubDate, clubTimestamp, signupState } from "../src/domain/event-time";
 import { endMemberEnrollments } from "../src/domain/member-lifecycle";
 import { clubPrograms } from "../src/domain/programs";
@@ -18,12 +19,14 @@ import {
 } from "./_generated/server";
 import { actionData } from "./action_data";
 import { appAction } from "./action_validator";
+import { checkContent } from "./chat_policy";
 import { loadData, saveData } from "./data";
 import { ensureGeneralChat } from "./general_chat";
 import { revokeRemovedHouseholdLinks } from "./household_cleanup";
 import { accountFor, getAuthUserId, requireMember } from "./identity";
 import { rejectMergedAliasAction } from "./member_alias_guard";
 import { applyMessage } from "./message_commands";
+import { blockedIds } from "./moderation";
 import { notifyChanges } from "./notification_events";
 import { claimPendingMessages } from "./pending_messages";
 import {
@@ -33,6 +36,7 @@ import {
 import { screenData } from "./screen_data";
 import { syncEditedSeries, synchronizeSeries } from "./session_series";
 import { scheduleSignup } from "./signup";
+import { resolveStaffInvite } from "./staff_invites";
 import { requireAcceptedTerms } from "./terms_access";
 
 const membershipFor = async (
@@ -104,7 +108,11 @@ export const current = query({
 		return {
 			clubId: membership.clubId,
 			inviteCode: club?.inviteCode ?? membership.clubId,
-			data: visibleAppData(data, account),
+			data: visibleAppData(
+				data,
+				account,
+				await blockedIds(ctx, membership.userId),
+			),
 			account,
 			accounts: memberships.map((entry) =>
 				entry.userId === account.id || account.admin
@@ -130,6 +138,8 @@ export const apply = mutation({
 		const membership = await membershipFor(ctx);
 		if (!membership) throw new Error("Sign in and join a club first.");
 		await requireAcceptedTerms(ctx, membership);
+		const sharedText = submittedContentText(action).join("\n");
+		if (sharedText) await checkContent(ctx, membership, sharedText);
 		const account = accountFor(membership);
 		if (
 			action.type === "save-program" &&
@@ -388,12 +398,20 @@ export const requestToJoin = mutation({
 		const userId = await getAuthUserId(ctx);
 		if (!userId) throw new Error("Sign in first.");
 		const normalizedCode = clubCode.trim().toUpperCase();
-		if (!/^[A-Z0-9]{6}$/.test(normalizedCode))
-			throw new Error("Enter the 6-character invite code.");
-		const club = await ctx.db
-			.query("clubs")
-			.withIndex("by_invite_code", (q) => q.eq("inviteCode", normalizedCode))
-			.unique();
+		if (!/^(?:[A-Z0-9]{6}|[A-Z2-9]{32})$/.test(normalizedCode))
+			throw new Error("Enter a club or staff invite code.");
+		const staffInvite =
+			normalizedCode.length === 32
+				? await resolveStaffInvite(ctx, normalizedCode)
+				: undefined;
+		const club = staffInvite
+			? await ctx.db.get(staffInvite.clubId)
+			: await ctx.db
+					.query("clubs")
+					.withIndex("by_invite_code", (q) =>
+						q.eq("inviteCode", normalizedCode),
+					)
+					.unique();
 		if (!club) throw new Error("Invite code not found.");
 		const clubId = club._id;
 		if (await membershipFor(ctx))
@@ -431,9 +449,14 @@ export const requestToJoin = mutation({
 			name,
 			personId,
 			children: [],
-			coachPrograms: [],
-			admin: false,
+			coachPrograms: staffInvite?.coachPrograms ?? [],
+			admin: staffInvite?.admin ?? false,
 		});
+		if (staffInvite)
+			await ctx.db.patch(staffInvite._id, {
+				uses: staffInvite.uses + 1,
+				revoked: staffInvite.uses + 1 >= staffInvite.maxUses,
+			});
 		await claimPendingMessages(ctx, membershipId);
 		const channels = await ctx.db
 			.query("conversations")

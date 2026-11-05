@@ -3,6 +3,8 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { eraseAccount } from "./account_erasure";
+import { appleVerificationRequired } from "./apple_grants";
+import { checkContent } from "./chat_policy";
 import { recentVerification } from "./connected_accounts";
 import { getAuthUserId, requireMember } from "./identity";
 
@@ -23,6 +25,7 @@ export const current = query({
 		transferTargets: { id: Id<"users">; name: string }[];
 		mustTransfer: boolean;
 		hasPassword: boolean;
+		appleVerificationRequired: boolean;
 	} | null> => {
 		const userId = await getAuthUserId(ctx);
 		if (!userId) return null;
@@ -49,6 +52,7 @@ export const current = query({
 			)
 			.first();
 		return {
+			appleVerificationRequired: await appleVerificationRequired(ctx, userId),
 			hasPassword: Boolean(password?.secret && password.emailVerified),
 			id: userId,
 			email: user?.email?.trim().toLowerCase() ?? "",
@@ -81,6 +85,7 @@ export const updateName = mutation({
 			.withIndex("by_user", (q) => q.eq("userId", userId))
 			.first();
 		if (membership) {
+			await checkContent(ctx, membership, name);
 			await ctx.db.patch(membership._id, { name: name.trim() });
 			const person = await ctx.db
 				.query("members")
@@ -161,6 +166,10 @@ export const remove = internalMutation({
 			throw new Error(
 				"Verify your identity again before deleting your account.",
 			);
+		if (await appleVerificationRequired(ctx, userId))
+			throw new Error(
+				"Verify with Apple before deleting your account so its authorization can be revoked.",
+			);
 		await eraseAccount(ctx, userId, transferTo);
 	},
 });
@@ -175,6 +184,7 @@ export const updateHouseholdInfo = mutation({
 		)
 			throw new Error("You can only edit your household members.");
 		const trimmed = name.trim();
+		await checkContent(ctx, membership, trimmed);
 		if (!trimmed) throw new Error("Add a name");
 		if (trimmed.length > 80) throw new Error("Keep the name to 80 characters");
 		const person = await ctx.db

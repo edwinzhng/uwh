@@ -349,7 +349,7 @@ export const ResourceEditor = ({
 						isDisabled={disabled}
 						options={[
 							{ value: "link", label: "Supported link" },
-							...(kind === "video" && state.youtube
+							...(kind === "video" && state.youtube?.configured
 								? [{ value: "youtube", label: "Upload to YouTube" }]
 								: []),
 							{

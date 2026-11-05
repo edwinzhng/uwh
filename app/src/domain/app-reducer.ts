@@ -233,7 +233,14 @@ export const reduceApp = (
 				),
 			);
 			if (!event || event.cancelled) throw new Error("Practice unavailable.");
-			const current = eventResponse(data, action.eventId, action.personId);
+			const response = eventResponse(data, action.eventId, action.personId);
+			const current =
+				action.lateAddition && action.partId && response.partIds
+					? {
+							...response,
+							partIds: [...new Set([...response.partIds, action.partId])],
+						}
+					: response;
 			if (
 				action.partId &&
 				(!event.parts?.some((part) => part.id === action.partId) ||

@@ -1,7 +1,12 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
-import { IconButton, Stack, ToolbarGroup } from "../design-system";
+import {
+	IconButton,
+	Stack,
+	ToolbarGroup,
+	useRouteSelection,
+} from "../design-system";
 import { CalendarExportButton } from "./calendar-export-button";
 import { ClubShell } from "./club-shell";
 import { EventEditor } from "./event-editor";
@@ -19,9 +24,17 @@ export const AgendaScreen = (): ReactElement => {
 	const [create, setCreate] = useState(review === "create-event");
 	const now = useClubNow();
 	const today = useClubToday();
-	const selectedDay = Number(params.weekday);
+	const selection = useRouteSelection(
+		params.weekday ?? "all",
+		(weekday): void =>
+			router.setParams({
+				weekday: weekday === "all" ? undefined : weekday,
+				program: undefined,
+			}),
+	);
+	const selectedDay = Number(selection.value);
 	const weekday =
-		params.weekday !== undefined &&
+		selection.value !== "all" &&
 		Number.isInteger(selectedDay) &&
 		selectedDay >= 0 &&
 		selectedDay <= 6
@@ -49,10 +62,7 @@ export const AgendaScreen = (): ReactElement => {
 					value={weekday}
 					now={now}
 					onChange={(day): void =>
-						router.setParams({
-							weekday: day === undefined ? undefined : String(day),
-							program: undefined,
-						})
+						selection.select(day === undefined ? "all" : String(day))
 					}
 				/>
 				<SchedulePage weekday={weekday} now={now} />

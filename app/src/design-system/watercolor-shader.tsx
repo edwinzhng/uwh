@@ -2,15 +2,23 @@ import { type ExpoWebGLRenderingContext, GLView } from "expo-gl";
 import {
 	type ReactElement,
 	useCallback,
+	useContext,
 	useEffect,
 	useRef,
 	useState,
 } from "react";
 import { PixelRatio, StyleSheet, View } from "react-native";
+import { LoadingPageContext } from "./loading-state";
+import { MaterialTexture } from "./material-texture";
 import { materialVariation } from "./material-variation";
 import { useTheme } from "./theme";
-import { type CategoryColor, categoryPalette } from "./tokens";
+import {
+	type CategoryColor,
+	categoryPalette,
+	motion as motionTokens,
+} from "./tokens";
 import { useMotion } from "./use-motion";
+import { usePageLoading } from "./use-page-loading";
 import { useRenderActivity } from "./use-render-activity";
 import { useScreenActive } from "./use-screen-active";
 import { createWatercolorRenderer } from "./watercolor-renderer";
@@ -29,6 +37,12 @@ export const WatercolorShader = ({
 	const tuning = useWatercolorTuning() ?? watercolorDefaults;
 	const active = useScreenActive();
 	const motion = useMotion();
+	const page = useContext(LoadingPageContext);
+	const [presented, setPresented] = useState<string>();
+	const [fallback, setFallback] = useState(false);
+	const [failed, setFailed] = useState(false);
+	const unavailable = useRef(false);
+	const presentationFrame = useRef(0);
 	const palette = categoryPalette[theme.mode][category];
 	const [size, setSize] = useState({ width: 0, height: 0 });
 	const phase = useRef(0);
@@ -110,11 +124,28 @@ export const WatercolorShader = ({
 		() => (): void => {
 			lifecycle.current?.dispose();
 			lifecycle.current = undefined;
+			cancelAnimationFrame(presentationFrame.current);
 		},
 		[],
 	);
 
 	const surfaceKey = `${Math.round(size.width * PixelRatio.get())}:${Math.round(size.height * PixelRatio.get())}`;
+	const painted = presented === surfaceKey;
+	usePageLoading(page !== undefined && !painted && !fallback && !failed);
+	useEffect(() => {
+		if (painted || failed || fallback) return;
+		const timeout = setTimeout((): void => {
+			unavailable.current = true;
+			setFallback(true);
+		}, motionTokens.duration.extended);
+		return (): void => clearTimeout(timeout);
+	}, [painted, failed, fallback]);
+	useEffect((): void => {
+		if (!fallback && !failed) return;
+		cancelAnimationFrame(presentationFrame.current);
+		lifecycle.current?.dispose();
+		lifecycle.current = undefined;
+	}, [fallback, failed]);
 	return (
 		<View
 			pointerEvents="none"
@@ -139,14 +170,44 @@ export const WatercolorShader = ({
 				{ overflow: "hidden", backgroundColor: palette.background },
 			]}
 		>
-			{size.width > 0 && size.height > 0 ? (
+			<View
+				style={[
+					StyleSheet.absoluteFill,
+					{ opacity: fallback || failed ? 1 : 0 },
+				]}
+			>
+				<MaterialTexture
+					category={category}
+					seed={seed}
+					animated={false}
+					rounded={false}
+				/>
+			</View>
+			{!failed && !fallback && size.width > 0 && size.height > 0 ? (
 				<GLView
 					key={surfaceKey}
 					msaaSamples={0}
 					onContextCreate={(gl): void => {
-						if (surface.current === surfaceKey) onContextCreate(gl);
+						if (surface.current !== surfaceKey || unavailable.current) return;
+						try {
+							onContextCreate(gl);
+							cancelAnimationFrame(presentationFrame.current);
+							presentationFrame.current = requestAnimationFrame((): void => {
+								presentationFrame.current = requestAnimationFrame((): void => {
+									if (surface.current === surfaceKey) setPresented(surfaceKey);
+								});
+							});
+						} catch {
+							unavailable.current = true;
+							lifecycle.current?.dispose();
+							lifecycle.current = undefined;
+							setFailed(true);
+						}
 					}}
-					style={[StyleSheet.absoluteFill, { opacity: tuning.intensity }]}
+					style={[
+						StyleSheet.absoluteFill,
+						{ opacity: painted ? tuning.intensity : 0 },
+					]}
 				/>
 			) : undefined}
 		</View>

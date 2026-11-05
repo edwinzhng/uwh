@@ -24,6 +24,8 @@
 		"verify:messages": "bun scripts/verify-messaging.ts",
 		"verify:calendars": "bun scripts/verify-calendars.ts",
 		"verify:security": "bun scripts/verify-security.ts",
+		"verify:content-safety": "bun scripts/verify-content-safety.ts",
+		"verify:staff-invites": "bun scripts/verify-staff-invites.ts",
 		"verify:invites": "bun scripts/verify-invites.ts",
 		"verify:message-readiness": "bun scripts/verify-message-readiness.ts",
 		"verify:performance": "bun scripts/verify-performance.ts",
@@ -67,7 +69,8 @@
 		"update:production": "EXPO_NO_DOTENV=1 bunx eas-cli@27.3.0 update --channel production --environment production --clear-cache",
 		"check:native": "bun scripts/check-native-safety.ts",
 		"check:tests": "bun scripts/check-test-boundary.ts",
-		"web:connected": "EXPO_PUBLIC_DEMO_MODE=false EXPO_PUBLIC_REVIEW_MODE=false expo start --clear --web --port 4299"
+		"web:connected": "EXPO_PUBLIC_DEMO_MODE=false EXPO_PUBLIC_REVIEW_MODE=false expo start --clear --web --port 4299",
+		"verify:workflows": "bun test tests/workflow-selection.test.ts tests/workflow-attendance.test.ts tests/dialog-stack.test.ts tests/dialog-state.test.ts tests/page-readiness.test.ts tests/lineup-editor-state.test.ts tests/app-workflows.test.ts tests/product-workflows.test.ts"
 	},
 	"dependencies": {
 		"@auth/core": "0.41.3",

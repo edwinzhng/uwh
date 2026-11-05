@@ -63,6 +63,7 @@ import { tokenStorage } from "./token-storage";
 import { useInvites } from "./use-invites";
 import { useRetainedQuery } from "./use-retained-query";
 import { useSocialAuth } from "./use-social-auth";
+import { workspaceRequest } from "./workspace-request";
 
 const url =
 	process.env.EXPO_PUBLIC_REVIEW_MODE === "true"
@@ -100,21 +101,7 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 				: path.slice(1);
 	const workspaceResult = useRetainedQuery(
 		api.club.current,
-		isAuthenticated
-			? {
-					screen,
-					id:
-						screen === "session"
-							? (params.event ?? params.id)
-							: screen === "fitness" || screen === "resources"
-								? params.person
-								: screen === "member" ||
-										screen === "membership" ||
-										screen === "account"
-									? (params.id ?? selected)
-									: undefined,
-				}
-			: "skip",
+		isAuthenticated ? workspaceRequest(screen, params, selected) : "skip",
 	);
 	const accountInfo = useQuery(
 		api.account.current,

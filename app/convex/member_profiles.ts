@@ -10,6 +10,7 @@ import {
 } from "../src/domain/member-profile";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
+import { checkContent } from "./chat_policy";
 import { accountFor, memberFor, requireMember } from "./identity";
 
 export const avatars = query({
@@ -95,6 +96,7 @@ export const save = mutation({
 	},
 	handler: async (ctx, input): Promise<void> => {
 		const actor = await requireMember(ctx);
+		await checkContent(ctx, actor, input.name);
 		const person = await profilePerson(ctx, actor.clubId, input.personId);
 		if (!canEditMemberProfile(actor, person.value))
 			throw new ConvexError("You can only edit active household profiles.");

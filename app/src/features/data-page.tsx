@@ -8,6 +8,7 @@ import { getFunctionName } from "convex/server";
 import { type ReactElement, type ReactNode, useState } from "react";
 import { useApp } from "../demo/app-state";
 import { InfiniteScroll, LoadingBoundary } from "../design-system";
+import { createQueryPageCache } from "./query-page-cache";
 
 type PageConfig<Query extends PaginatedQueryReference> = {
 	query: Query;
@@ -32,11 +33,28 @@ const LiveDataPage = <Query extends PaginatedQueryReference>({
 		config.args,
 		{ initialNumItems: config.size ?? 30 },
 	);
+	const [cache] = useState(() =>
+		createQueryPageCache<PaginatedQueryItem<Query>>(),
+	);
+	const key = JSON.stringify(config.args);
+	const size = config.size ?? 30;
+	if (status !== "LoadingFirstPage")
+		cache.write(key, {
+			items: results.slice(0, size),
+			complete: status === "Exhausted" && results.length <= size,
+		});
+	const cached = status === "LoadingFirstPage" ? cache.read(key) : undefined;
+	const items = cached?.items ?? results;
 	return (
 		<>
-			<LoadingBoundary loading={status === "LoadingFirstPage"} gap="sm">
+			<LoadingBoundary
+				loading={status === "LoadingFirstPage" && !cached}
+				gap="sm"
+			>
 				{(): ReactNode =>
-					children(results, { complete: status === "Exhausted" })
+					children(items, {
+						complete: cached?.complete ?? status === "Exhausted",
+					})
 				}
 			</LoadingBoundary>
 			{config.showMore !== false &&
@@ -79,19 +97,25 @@ export const DataPage = <Query extends PaginatedQueryReference>({
 	config,
 	children,
 }: Props<Query>): ReactElement => {
-	const { source, account } = useApp();
+	const { source, account, workspaceId } = useApp();
 	const key = JSON.stringify([
 		getFunctionName(config.query),
-		config.args,
 		config.size ?? 30,
+		workspaceId,
 		account.id,
+		account.admin,
+		account.coachPrograms,
+		account.children,
 	]);
 	return source === "convex" ? (
 		<LiveDataPage key={key} config={config}>
 			{children}
 		</LiveDataPage>
 	) : (
-		<PreviewDataPage key={key} config={config}>
+		<PreviewDataPage
+			key={`${key}:${JSON.stringify(config.args)}`}
+			config={config}
+		>
 			{children}
 		</PreviewDataPage>
 	);

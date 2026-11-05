@@ -22,6 +22,7 @@ import {
 	type QueryCtx,
 	query,
 } from "./_generated/server";
+import { checkContent } from "./chat_policy";
 import { accountFor, requireMember } from "./identity";
 import { enqueue } from "./notifications";
 import { canAccessResource, readResource } from "./resources";
@@ -153,6 +154,7 @@ export const save = mutation({
 	},
 	handler: async (ctx, input): Promise<void> => {
 		const actor = await requireMember(ctx);
+		await checkContent(ctx, actor, input.body);
 		if (!actor.coachPrograms.length) throw new Error("Coach access required.");
 		const event = await requirePlanEvent(
 			ctx,

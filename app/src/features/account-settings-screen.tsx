@@ -21,6 +21,7 @@ import {
 } from "../design-system";
 import { AccountHousehold } from "./account-household";
 import { AccountSecurity } from "./account-security";
+import { AppInformationLinks } from "./app-information-links";
 import { NotificationSettings } from "./notification-settings";
 import { SignOutConfirmation } from "./sign-out-confirmation";
 export const AccountSettingsContent = (): ReactElement => {
@@ -83,6 +84,7 @@ export const AccountSettingsContent = (): ReactElement => {
 				<NotificationSettings />
 			</Stack>
 			<AccountHousehold />
+			<AppInformationLinks />
 		</Stack>
 	);
 };

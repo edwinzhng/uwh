@@ -5,6 +5,7 @@ import { formatDate } from "../domain/app-rules";
 import type { CoachingFeedback } from "../domain/app-types";
 import { feedbackKind } from "../domain/feedback-access";
 import { shoutoutLabel } from "../domain/shoutouts";
+import { ContentReport } from "./content-report";
 import { FeedbackDelete } from "./feedback-delete";
 import { FeedbackEditor } from "./feedback-editor";
 import { FeedbackPublish } from "./feedback-publish";
@@ -52,6 +53,12 @@ export const FeedbackCard = ({
 				</Text>
 			) : undefined}
 			{entry.body ? <Text>{entry.body}</Text> : undefined}
+			{entry.authorId !== account.id ? (
+				<ContentReport
+					source={{ kind: "feedback", id: entry.id }}
+					label={isShoutout ? "Report shoutout" : "Report feedback"}
+				/>
+			) : undefined}
 			{editable &&
 			entry.authorId === account.id &&
 			entry.visibility !== "published" ? (

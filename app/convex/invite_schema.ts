@@ -8,6 +8,23 @@ export const inviteDelivery = v.union(
 	v.literal("failed"),
 );
 export const inviteTables = {
+	staffInvites: defineTable({
+		clubId: v.id("clubs"),
+		createdBy: v.optional(v.id("users")),
+		ownerAtIssue: v.optional(v.id("users")),
+		hash: v.string(),
+		admin: v.boolean(),
+		coachPrograms: v.array(v.string()),
+		expiresAt: v.number(),
+		uses: v.number(),
+		maxUses: v.number(),
+		revoked: v.boolean(),
+	})
+		.index("by_hash", ["hash"])
+		.index("by_club", ["clubId"])
+		.index("by_club_active_expiry", ["clubId", "revoked", "expiresAt"])
+		.index("by_sender", ["createdBy"])
+		.index("by_owner", ["ownerAtIssue"]),
 	inviteLimits: defineTable({
 		clubId: v.id("clubs"),
 		key: v.string(),

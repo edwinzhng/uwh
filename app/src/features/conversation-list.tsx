@@ -61,6 +61,7 @@ export const ConversationList = ({
 				options={[
 					{ value: "all", label: "All" },
 					{ value: "unread", label: "Unread" },
+					{ value: "direct", label: "DMs" },
 					{ value: "group", label: "Groups" },
 					{ value: "channel", label: "Programs" },
 				]}
@@ -80,7 +81,9 @@ export const ConversationList = ({
 							? "No matching chats"
 							: filter === "unread"
 								? "No unread chats"
-								: "No chats"
+								: filter === "direct"
+									? "No direct messages"
+									: "No chats"
 					}
 				/>
 			)}

@@ -1,4 +1,5 @@
 import { httpRouter } from "convex/server";
+import { receive as appleNotification } from "./apple_notifications";
 import { auth } from "./auth";
 import { calendarFeed } from "./calendar_http";
 import { download, preflight, upload } from "./image_http";
@@ -20,6 +21,11 @@ import {
 } from "./youtube_http";
 
 const http = httpRouter();
+http.route({
+	path: "/apple/notifications",
+	method: "POST",
+	handler: appleNotification,
+});
 http.route({
 	path: "/youtube/callback",
 	method: "GET",

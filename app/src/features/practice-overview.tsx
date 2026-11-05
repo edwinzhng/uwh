@@ -1,10 +1,7 @@
-import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
-import { useMessaging } from "../backend/messaging-context";
 import { useActivePerson } from "../demo/app-state";
 import {
 	Avatar,
-	NavigationCard,
 	Row,
 	SectionHeading,
 	Stack,
@@ -13,7 +10,6 @@ import {
 } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import { eventTimeRange } from "../domain/event-card-presentation";
-import { programRoomId } from "../domain/managed-rooms";
 import { ResponseControl } from "./response-control";
 import { SharedSessionPlan } from "./shared-session-plan";
 import { TeamPanel } from "./team-panel";
@@ -23,12 +19,7 @@ export const PracticeOverview = ({
 }: {
 	event: ClubEvent;
 }): ReactElement => {
-	const router = useRouter();
 	const person = useActivePerson();
-	const messaging = useMessaging();
-	const room = messaging.threads.find(
-		(thread) => thread.id === programRoomId(event.program),
-	);
 	const blocks = event.parts?.length
 		? event.parts
 		: [
@@ -73,18 +64,6 @@ export const PracticeOverview = ({
 					</Surface>
 				))}
 			</Stack>
-			{room ? (
-				<NavigationCard
-					title="Program chat"
-					description={room.title}
-					label="Open program chat"
-					icon="message"
-					onPress={(): void =>
-						router.push({ pathname: "/conversation", params: { id: room.id } })
-					}
-				/>
-			) : undefined}
-
 			<TeamPanel event={event} readOnly inline />
 			<SharedSessionPlan event={event} />
 		</Stack>

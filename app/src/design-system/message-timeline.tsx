@@ -6,8 +6,9 @@ import {
 	type ViewToken,
 } from "react-native";
 import { Button } from "./button";
-import { EmptyState } from "./empty-state";
 import { LoadingContent } from "./loading-content";
+import { MessageEmptyState } from "./message-empty-state";
+import { MessageViewport } from "./message-viewport";
 import { Stack } from "./stack";
 import { useTheme } from "./theme";
 import { geometry, layer, space } from "./tokens";
@@ -83,59 +84,67 @@ export const MessageTimeline = <T extends { id: string }>({
 					{topOverlay}
 				</View>
 			) : undefined}
-			<FlatList
-				ref={list}
-				contentInsetAdjustmentBehavior="never"
-				automaticallyAdjustContentInsets={false}
-				data={items}
-				inverted={items.length > 0}
-				keyExtractor={(item): string => item.id}
-				renderItem={({ item }): ReactElement => renderItem(item)}
-				style={{ flex: 1 }}
-				contentContainerStyle={{
-					paddingTop: items.length ? space.md : topOverlay ? overlayHeight : 0,
-					paddingBottom: items.length && topOverlay ? overlayHeight : 0,
-				}}
-				keyboardShouldPersistTaps="handled"
-				keyboardDismissMode="on-drag"
-				initialNumToRender={12}
-				maxToRenderPerBatch={12}
-				windowSize={7}
-				maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
-				viewabilityConfig={viewability}
-				onViewableItemsChanged={viewed.current}
-				onScroll={(event): void => {
-					const near = event.nativeEvent.contentOffset.y < geometry.tab;
-					if (atLatest.current !== near) {
-						atLatest.current = near;
-						setAway(!near);
+			<MessageViewport>
+				<FlatList
+					ref={list}
+					contentInsetAdjustmentBehavior="never"
+					automaticallyAdjustContentInsets={false}
+					data={items}
+					inverted={items.length > 0}
+					keyExtractor={(item): string => item.id}
+					renderItem={({ item }): ReactElement => renderItem(item)}
+					style={{ flex: 1 }}
+					contentContainerStyle={{
+						flexGrow: items.length ? undefined : 1,
+						justifyContent: items.length ? undefined : "center",
+						paddingTop: items.length
+							? space.md
+							: topOverlay
+								? overlayHeight
+								: 0,
+						paddingBottom: items.length && topOverlay ? overlayHeight : 0,
+					}}
+					keyboardShouldPersistTaps="handled"
+					keyboardDismissMode="on-drag"
+					initialNumToRender={12}
+					maxToRenderPerBatch={12}
+					windowSize={7}
+					maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+					viewabilityConfig={viewability}
+					onViewableItemsChanged={viewed.current}
+					onScroll={(event): void => {
+						const near = event.nativeEvent.contentOffset.y < geometry.tab;
+						if (atLatest.current !== near) {
+							atLatest.current = near;
+							setAway(!near);
+						}
+					}}
+					scrollEventThrottle={32}
+					onContentSizeChange={(): void => {
+						if (atLatest.current)
+							list.current?.scrollToOffset({ offset: 0, animated: false });
+					}}
+					onEndReached={(): void => {
+						if (canLoadMore && !loadingMore) onLoadMore();
+					}}
+					onEndReachedThreshold={0.2}
+					ListEmptyComponent={
+						loading ? <LoadingContent /> : <MessageEmptyState />
 					}
-				}}
-				scrollEventThrottle={32}
-				onContentSizeChange={(): void => {
-					if (atLatest.current)
-						list.current?.scrollToOffset({ offset: 0, animated: false });
-				}}
-				onEndReached={(): void => {
-					if (canLoadMore && !loadingMore) onLoadMore();
-				}}
-				onEndReachedThreshold={0.2}
-				ListEmptyComponent={
-					loading ? <LoadingContent /> : <EmptyState title="No messages" />
-				}
-				ListFooterComponent={
-					loadingMore ? (
-						<Stack padding="sm">
-							<ActivityIndicator
-								accessibilityLabel="Loading earlier messages"
-								color={theme.text.secondary}
-								animating={canAnimate}
-								hidesWhenStopped={false}
-							/>
-						</Stack>
-					) : undefined
-				}
-			/>
+					ListFooterComponent={
+						loadingMore ? (
+							<Stack padding="sm">
+								<ActivityIndicator
+									accessibilityLabel="Loading earlier messages"
+									color={theme.text.secondary}
+									animating={canAnimate}
+									hidesWhenStopped={false}
+								/>
+							</Stack>
+						) : undefined
+					}
+				/>
+			</MessageViewport>
 			{away ? (
 				<View
 					style={{

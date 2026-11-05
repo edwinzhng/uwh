@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import ts from "typescript";
+import { inspectInteractionBoundary } from "./interaction-boundary";
 import { inspectNavigationBoundary } from "./navigation-boundary";
 
 const visualImports =
@@ -297,6 +298,7 @@ if (import.meta.main) {
 					? []
 					: inspectDesignBoundary(source, file)),
 				...inspectNavigationBoundary(source, file),
+				...inspectInteractionBoundary(source, file),
 			];
 		}),
 	);

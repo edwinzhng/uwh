@@ -1,12 +1,19 @@
-import { type ReactElement, useMemo } from "react";
+import { type ReactElement, useCallback } from "react";
 import Animated, {
+	cancelAnimation,
 	Easing,
-	FadeIn,
 	ReduceMotion,
+	useAnimatedStyle,
+	useSharedValue,
+	withDelay,
+	withTiming,
 } from "react-native-reanimated";
 import type { ContentRevealProps } from "./reveal-props";
 import { motion, space } from "./tokens";
-import { useMotion } from "./use-motion";
+import {
+	useContentRevealEnvironment,
+	useContentRevealPlayback,
+} from "./use-content-reveal";
 
 export const ContentReveal = ({
 	children,
@@ -15,26 +22,39 @@ export const ContentReveal = ({
 	fill = false,
 	gap,
 }: ContentRevealProps): ReactElement => {
-	const canAnimate = useMotion();
-	const entering = useMemo(
-		() =>
-			enabled && canAnimate
-				? FadeIn.duration(motion.duration.slow)
-						.delay(delay)
-						.easing(Easing.bezier(...motion.easing.out))
-						.reduceMotion(ReduceMotion.System)
-				: undefined,
-		[enabled, canAnimate, delay],
-	);
+	const environment = useContentRevealEnvironment(enabled);
+	const opacity = useSharedValue(environment.eligible ? 0 : 1);
+	const show = useCallback((): void => {
+		cancelAnimation(opacity);
+		opacity.set(1);
+	}, [opacity]);
+	const play = useCallback((): void => {
+		opacity.set(0);
+		opacity.set(
+			withDelay(
+				delay,
+				withTiming(1, {
+					duration: motion.duration.slow,
+					easing: Easing.bezier(...motion.easing.out),
+					reduceMotion: ReduceMotion.System,
+				}),
+				ReduceMotion.System,
+			),
+		);
+	}, [opacity, delay]);
+	useContentRevealPlayback(environment, play, show);
+	const appearance = useAnimatedStyle(() => ({ opacity: opacity.get() }));
 	return (
 		<Animated.View
-			entering={entering}
-			style={{
-				minWidth: 0,
-				gap: gap ? space[gap] : undefined,
-				minHeight: fill ? 0 : undefined,
-				flex: fill ? 1 : undefined,
-			}}
+			style={[
+				{
+					minWidth: 0,
+					gap: gap ? space[gap] : undefined,
+					minHeight: fill ? 0 : undefined,
+					flex: fill ? 1 : undefined,
+				},
+				appearance,
+			]}
 		>
 			{children}
 		</Animated.View>

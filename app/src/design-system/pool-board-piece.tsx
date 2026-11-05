@@ -1,6 +1,7 @@
 import {
 	type ReactElement,
 	useCallback,
+	useContext,
 	useEffect,
 	useMemo,
 	useRef,
@@ -8,13 +9,14 @@ import {
 import { Pressable, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
-	runOnJS,
 	type SharedValue,
 	useAnimatedStyle,
 	useSharedValue,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { ActionMenu } from "./action-menu";
 import { Avatar } from "./avatar";
+import { LineupScrollContext } from "./lineup-scroll-context";
 import { PoolAddButton } from "./pool-add-button";
 import type { PoolBoardSpot } from "./pool-board";
 import type { PoolBoardDrag } from "./pool-board-layout";
@@ -46,18 +48,22 @@ export const PoolPiece = ({
 	acceptsDrop?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
+	const scroll = useContext(LineupScrollContext);
+	const setDragging = scroll?.setDragging;
 	const suppressPress = useRef(false);
 	const releaseFrame = useRef(0);
 	useEffect(() => (): void => cancelAnimationFrame(releaseFrame.current), []);
 	const beginDrag = useCallback((): void => {
 		cancelAnimationFrame(releaseFrame.current);
 		suppressPress.current = true;
-	}, []);
+		setDragging?.(true);
+	}, [setDragging]);
 	const endDrag = useCallback((): void => {
+		setDragging?.(false);
 		releaseFrame.current = requestAnimationFrame((): void => {
 			suppressPress.current = false;
 		});
-	}, []);
+	}, [setDragging]);
 	const latest = useRef({ spot, onDrop });
 	latest.current = { spot, onDrop };
 	const x = useSharedValue(0);
@@ -81,42 +87,52 @@ export const PoolPiece = ({
 		},
 		[resetDrag],
 	);
-	const gesture = useMemo(
-		() =>
-			Gesture.Pan()
-				.enabled(canDrag)
-				.minDistance(6)
-				.maxPointers(1)
-				.onStart((event): void => {
-					runOnJS(beginDrag)();
-					if (personId)
-						dragState.set({
-							personId,
-							scope,
-							x: event.absoluteX,
-							y: event.absoluteY,
-						});
-				})
-				.onUpdate((event): void => {
-					x.set(event.translationX);
-					y.set(event.translationY);
-					if (personId)
-						dragState.set({
-							personId,
-							scope,
-							x: event.absoluteX,
-							y: event.absoluteY,
-						});
-				})
-				.onEnd((event): void => {
-					if (personId)
-						runOnJS(drop)(personId, event.absoluteX, event.absoluteY);
-				})
-				.onFinalize((_event, success): void => {
-					if (!success) runOnJS(resetDrag)();
-				}),
-		[canDrag, personId, scope, drop, dragState, x, y, beginDrag, resetDrag],
-	);
+	const gesture = useMemo(() => {
+		const pan = Gesture.Pan()
+			.enabled(canDrag)
+			.minDistance(6)
+			.maxPointers(1)
+			.onStart((event): void => {
+				scheduleOnRN(beginDrag);
+				if (personId)
+					dragState.set({
+						personId,
+						scope,
+						x: event.absoluteX,
+						y: event.absoluteY,
+					});
+			})
+			.onUpdate((event): void => {
+				x.set(event.translationX);
+				y.set(event.translationY);
+				if (personId)
+					dragState.set({
+						personId,
+						scope,
+						x: event.absoluteX,
+						y: event.absoluteY,
+					});
+			})
+			.onEnd((event): void => {
+				if (personId)
+					scheduleOnRN(drop, personId, event.absoluteX, event.absoluteY);
+			})
+			.onFinalize((_event, success): void => {
+				if (!success) scheduleOnRN(resetDrag);
+			});
+		return scroll ? pan.blocksExternalGesture(scroll.gesture) : pan;
+	}, [
+		canDrag,
+		personId,
+		scope,
+		drop,
+		dragState,
+		x,
+		y,
+		beginDrag,
+		resetDrag,
+		scroll,
+	]);
 	const chipStyle = useAnimatedStyle(() => ({
 		transform: [{ translateX: x.get() }, { translateY: y.get() }],
 	}));

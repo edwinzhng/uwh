@@ -77,19 +77,17 @@ test("Sports UIDs remain canonical, legacy merges only exact sport IDs, Monday B
 			],
 		}),
 	);
-	expect(result.events).toHaveLength(2);
+	expect(result.events).toHaveLength(1);
 	expect(result.sourceEvents.get("base44:Event:monday")?.id).toBe(
 		"sporteasy:sport",
 	);
 	expect(result.sourceEvents.get("base44:Event:thursday")).toBeUndefined();
 	expect(result.sourceEvents.get("legacy:exact")?.id).toBe("sporteasy:sport");
-	expect(result.sourceEvents.get("legacy:same-date")?.id).toBe(
-		"legacy:same-date",
-	);
+	expect(result.sourceEvents.get("legacy:same-date")).toBeUndefined();
 	expect(calendar.at(0)?.value.start).toBe("20:30");
 });
 
-test("legacy timestamp and unknown end are retained without shifting to a weekday mentioned in notes", (): void => {
+test("historical events with unknown end times are excluded rather than inferred from notes", (): void => {
 	const result = buildMigrationSchedule(
 		input({
 			legacyPractices: [
@@ -101,12 +99,9 @@ test("legacy timestamp and unknown end are retained without shifting to a weekda
 			],
 		}),
 	);
-	const value = result.events.at(0)?.value;
-	expect(value?.date).toBe("2026-01-30");
-	expect(value?.start).toBe("01:00");
-	expect(value?.end).toBe("01:00");
-	expect(value?.seasonId).toBe("2025-2026");
-	expect(value?.description).toContain("End time not recorded");
+	expect(result.events).toEqual([]);
+	expect(result.responses).toEqual([]);
+	expect(result.sourceEvents.has("legacy:source")).toBe(false);
 });
 
 test("Base44 sessions use a unique actual Monday practice or retain their own source date and program times", (): void => {
@@ -299,4 +294,50 @@ test("presence uses verified explicit UID columns rather than same-date matching
 			columns: [{ index: 0, eventId: "unknown" }],
 		}),
 	).toThrow("Missing SportEasy");
+});
+
+test("future imports combine Thursday sessions, retain both source aliases, and preserve partial attendance", () => {
+	const training = {
+		...event("training", "2026-11-05", "19:45"),
+		end: "20:30",
+	};
+	const hockey = {
+		...event("hockey", "2026-11-05", "20:30"),
+		kind: "hockey" as const,
+		end: "21:30",
+	};
+	const result = buildMigrationSchedule(
+		input({
+			calendar: [
+				{ uid: "training", value: training },
+				{ uid: "hockey", value: hockey },
+			],
+			legacyPractices: [
+				{
+					_id: "training",
+					date: Date.parse("2026-11-06T02:45:00Z"),
+					sporteasyId: "training",
+				},
+			],
+			legacyAttendance: [
+				{
+					_id: "attended",
+					practiceId: "training",
+					playerId: "person",
+					attended: true,
+				},
+			],
+		}),
+	);
+	expect(result.events).toHaveLength(1);
+	expect(result.events.at(0)?.value.title).toBe("Thursday Practice");
+	expect(result.events.at(0)?.value.parts).toHaveLength(2);
+	expect(result.sourceEvents.get("sporteasy:hockey")?.id).toBe(
+		"sporteasy:training",
+	);
+	expect(result.responses.at(0)?.value.partIds).toEqual(["training"]);
+	expect(result.responses.at(0)?.value.partAttendance).toEqual([
+		{ partId: "training", attendance: "present" },
+		{ partId: "hockey", attendance: "unmarked" },
+	]);
 });

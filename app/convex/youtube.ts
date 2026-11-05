@@ -11,6 +11,7 @@ import {
 	query,
 } from "./_generated/server";
 import { requireMember } from "./identity";
+import { youtubeOAuthClient } from "./youtube_config";
 
 export const youtubeActor = async (
 	ctx: QueryCtx,
@@ -39,9 +40,7 @@ export const status = query({
 			.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
 			.unique();
 		return {
-			configured: Boolean(
-				process.env.YOUTUBE_CLIENT_ID && process.env.YOUTUBE_CLIENT_SECRET,
-			),
+			configured: Boolean(youtubeOAuthClient()),
 			channelName: connection?.channelName,
 		};
 	},
@@ -52,9 +51,9 @@ export const authorize = internalMutation({
 		const actor = await youtubeActor(ctx);
 		if (!actor.admin)
 			throw new Error("An administrator must connect the club channel.");
-		const clientId = process.env.YOUTUBE_CLIENT_ID;
+		const client = youtubeOAuthClient();
 		const site = process.env.CONVEX_SITE_URL;
-		if (!clientId || !site || !process.env.YOUTUBE_CLIENT_SECRET)
+		if (!client || !site)
 			throw new Error("YouTube uploads need administrator setup first.");
 		for (const row of await ctx.db
 			.query("youtubeAuthorizations")
@@ -68,7 +67,7 @@ export const authorize = internalMutation({
 			expiresAt: Date.now() + 600000,
 		});
 		const params = new URLSearchParams({
-			client_id: clientId,
+			client_id: client.clientId,
 			redirect_uri: `${site}/youtube/callback`,
 			response_type: "code",
 			scope: "https://www.googleapis.com/auth/youtube.force-ssl",

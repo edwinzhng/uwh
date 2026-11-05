@@ -13,8 +13,9 @@ import {
 	Stack,
 	Text,
 } from "../design-system";
-import { formatDate, formatTime, validateEvent } from "../domain/app-rules";
+import { formatDate, validateEvent } from "../domain/app-rules";
 import type { ClubEvent, EventDraft } from "../domain/app-types";
+import { eventTimeRange } from "../domain/event-card-presentation";
 import { toggleEventParts } from "../domain/event-part-draft";
 import {
 	eventDraft,
@@ -171,8 +172,7 @@ export const EventEditor = ({
 		<Stack>
 			<Text variant="label">{draft.title}</Text>
 			<Text>
-				{formatDate(draft.date)} · {formatTime(draft.start)}–
-				{formatTime(draft.end)}
+				{formatDate(draft.date)} · {eventTimeRange(draft.start, draft.end)}
 			</Text>
 			{draft.venue ? <Text tone="secondary">{draft.venue}</Text> : undefined}
 			{scope !== "single" ? (

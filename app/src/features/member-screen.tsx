@@ -11,6 +11,7 @@ import {
 	TabContent,
 	Tabs,
 	Text,
+	useRouteSelection,
 } from "../design-system";
 import { canReadProgress } from "../domain/app-rules";
 import { ClubShell } from "./club-shell";
@@ -40,15 +41,19 @@ export const MemberScreen = (): ReactElement => {
 		? data.members.find((entry) => entry.id === params.id)
 		: active;
 	const router = useRouter();
-	const setTab = (tab: string): void =>
-		router.setParams({ tab, feedback: undefined });
+	const selection = useRouteSelection(
+		params.tab ?? "",
+		(tab): void => router.setParams({ tab, feedback: undefined }),
+		member?.id,
+	);
+	const setTab = selection.select;
 	const progress = member ? canReadProgress(account, member) : false;
 	const tab =
-		params.tab === "progress"
+		selection.value === "progress"
 			? "fitness"
-			: params.tab === "feedback" && params.feedback === "self"
+			: selection.value === "feedback" && params.feedback === "self"
 				? "goals"
-				: (params.tab ?? (progress ? "fitness" : "profile"));
+				: selection.value || (progress ? "fitness" : "profile");
 	const tabs: {
 		value: string;
 		label: string;

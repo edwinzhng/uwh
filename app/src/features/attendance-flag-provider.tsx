@@ -17,9 +17,9 @@ const LiveFlags = ({ eventId, children }: Props): ReactElement => {
 			value={{
 				flags: flags ?? [],
 				busy: task.busy || !flags,
-				set: (personId, kind): void => {
+				set: (personId, kind, partId): void => {
 					void task.run(async (): Promise<void> => {
-						await save({ eventId, personId, kind });
+						await save({ eventId, personId, kind, partId });
 					});
 				},
 			}}
@@ -36,17 +36,34 @@ const LiveFlags = ({ eventId, children }: Props): ReactElement => {
 	);
 };
 const PreviewFlags = ({ children, eventId }: Props): ReactElement => {
+	const { dispatch } = useApp();
+	const task = useTask();
 	const [flags, setFlags] = useState<ReportFlag[]>([]);
 	return (
 		<AttendanceFlagContext.Provider
 			value={{
 				flags,
-				busy: false,
-				set: (personId, kind): void =>
-					setFlags((current) => [
-						...current.filter((flag) => flag.personId !== personId),
-						...(kind ? [{ eventId, personId, kind }] : []),
-					]),
+				busy: task.busy,
+				set: (personId, kind, partId): void => {
+					void task.run(async (): Promise<void> => {
+						if (
+							kind === "addition" &&
+							!(await dispatch({
+								type: "attendance",
+								eventId,
+								personId,
+								partId,
+								attendance: "present",
+								lateAddition: true,
+							}))
+						)
+							throw new Error("Couldn’t add player. Try again.");
+						setFlags((current) => [
+							...current.filter((flag) => flag.personId !== personId),
+							...(kind ? [{ eventId, personId, kind }] : []),
+						]);
+					});
+				},
 			}}
 		>
 			{children}

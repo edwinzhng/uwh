@@ -1,59 +1,39 @@
-import { type ReactElement, useEffect, useState } from "react";
-import {
-	Button,
-	Dialog,
-	EditableAvatar,
-	Row,
-	Stack,
-	Text,
-} from "../design-system";
+import { type ReactElement, useState } from "react";
+import { Button, Dialog, Row, Stack, Text } from "../design-system";
 import type { Conversation } from "../domain/app-types";
-import {
-	type ChatAppearance,
-	sameChatAppearance,
-} from "../domain/chat-appearance";
+import type { ChatAppearance } from "../domain/chat-appearance";
 import {
 	defaultPhotoCrop,
 	type PhotoCrop,
 	type PhotoSource,
 } from "../domain/photo-crop";
 import { cropProfilePhoto } from "./crop-profile-photo";
-import { releasePhotoUri } from "./photo-uri";
-import { pickPhotoSource } from "./pick-photo-source";
 import { ProfilePhotoCropper } from "./profile-photo-cropper";
 import { useFormTask } from "./use-form-task";
 import { useImageService } from "./use-image-service";
-import { usePhotoUri } from "./use-photo-uri";
 
 export const ChatAppearanceForm = ({
 	thread,
+	source,
 	save,
 	onClose,
 }: {
 	thread: Conversation;
+	source: PhotoSource;
 	save: (next: ChatAppearance, expected: ChatAppearance) => Promise<void>;
 	onClose: () => void;
 }): ReactElement => {
 	const [snapshot] = useState(thread);
-	const [input, setInput] = useState<ChatAppearance>({
-		avatarIcon: thread.avatarIcon,
-		avatarImageId: thread.avatarImageId,
-	});
-	const [source, setSource] = useState<PhotoSource>();
 	const [crop, setCrop] = useState<PhotoCrop>(defaultPhotoCrop);
+	const [uploaded, setUploaded] = useState<{ crop: PhotoCrop; id: string }>();
 	const [uploads, setUploads] = useState<string[]>([]);
 	const service = useImageService();
-	const photo = usePhotoUri(input.avatarImageId, service);
 	const task = useFormTask();
-	useEffect(
-		() => (source ? (): void => releasePhotoUri(source.uri) : undefined),
-		[source],
-	);
 	const discard = async (keep?: string): Promise<void> => {
 		if (!service) return;
 		await Promise.all(
 			uploads
-				.filter((id) => id !== keep && id !== thread.avatarImageId)
+				.filter((id) => id !== keep && id !== snapshot.avatarImageId)
 				.map((id) => service.remove(id)),
 		);
 	};
@@ -65,31 +45,36 @@ export const ChatAppearanceForm = ({
 	};
 	const submit = (): void => {
 		void task.submit(
-			() =>
-				source && !service
-					? "Photo storage is unavailable. Try again."
-					: undefined,
+			() => (!service ? "Photo storage is unavailable. Try again." : undefined),
 			async (): Promise<void> => {
-				if (source && service) {
-					const image = await service.upload(
-						thread.id,
-						await cropProfilePhoto(source, crop),
-						"Chat picture",
-					);
-					setUploads((current) => [...current, image.id]);
-					setInput({ avatarImageId: image.id });
-					setSource(undefined);
-				} else {
-					await save(input, snapshot);
-					await discard(input.avatarImageId);
-					onClose();
+				if (!service) return;
+				const reuse =
+					uploaded &&
+					uploaded.crop.x === crop.x &&
+					uploaded.crop.y === crop.y &&
+					uploaded.crop.zoom === crop.zoom;
+				const imageId = reuse
+					? uploaded.id
+					: (
+							await service.upload(
+								thread.id,
+								await cropProfilePhoto(source, crop),
+								"Chat picture",
+							)
+						).id;
+				if (!reuse) {
+					setUploaded({ crop, id: imageId });
+					setUploads((current) => [...current, imageId]);
 				}
+				await save({ avatarImageId: imageId }, snapshot);
+				await discard(imageId);
+				onClose();
 			},
 		);
 	};
 	return (
 		<Dialog
-			title={source ? "Adjust chat picture" : "Chat picture"}
+			title="Chat picture"
 			intent="picker"
 			isOpen
 			isDismissDisabled={task.busy}
@@ -97,82 +82,30 @@ export const ChatAppearanceForm = ({
 				if (!open && !task.busy) close();
 			}}
 			footer={
-				<Row wrap>
+				<Row>
 					<Button
-						label={source ? "Cancel crop" : "Cancel"}
+						label="Cancel"
 						variant="ghost"
 						isDisabled={task.busy}
-						onPress={(): void => {
-							if (source) {
-								task.clear();
-								setSource(undefined);
-							} else close();
-						}}
+						onPress={close}
 					/>
 					<Button
-						label={source ? "Use photo" : "Save"}
-						accessibilityLabel={source ? "Use photo" : "Save chat picture"}
+						label="Save"
+						accessibilityLabel="Save chat picture"
 						isLoading={task.busy}
-						isDisabled={!source && sameChatAppearance(input, snapshot)}
 						onPress={submit}
 					/>
 				</Row>
 			}
 		>
 			<Stack>
-				{source ? (
-					<ProfilePhotoCropper
-						source={source}
-						crop={crop}
-						onChange={setCrop}
-						isDisabled={task.busy}
-					/>
-				) : (
-					<>
-						<Row justify="center" gap="md">
-							<EditableAvatar
-								name={thread.title}
-								initials
-								uri={photo.uri}
-								label={
-									input.avatarImageId
-										? "Change chat photo"
-										: "Choose chat photo"
-								}
-								isDisabled={task.busy}
-								onPress={(): void => {
-									void task.run(async (): Promise<void> => {
-										const next = await pickPhotoSource();
-										if (next) {
-											setCrop(defaultPhotoCrop);
-											setSource(next);
-										}
-									});
-								}}
-							/>
-							<Stack grow gap="xxs">
-								<Text variant="h4" lines={2}>
-									{thread.title}
-								</Text>
-								<Text variant="caption" tone="secondary">
-									Tap picture to choose a photo
-								</Text>
-							</Stack>
-						</Row>
-						{photo.failed ? (
-							<Button
-								label="Retry photo"
-								variant="ghost"
-								onPress={photo.retry}
-							/>
-						) : undefined}
-					</>
-				)}
-				{task.error ? (
-					<Text tone="danger" variant="small">
-						{task.error}
-					</Text>
-				) : undefined}
+				<ProfilePhotoCropper
+					source={source}
+					crop={crop}
+					onChange={setCrop}
+					isDisabled={task.busy}
+				/>
+				{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
 			</Stack>
 		</Dialog>
 	);

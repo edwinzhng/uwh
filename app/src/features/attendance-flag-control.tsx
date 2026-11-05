@@ -6,10 +6,12 @@ export const AttendanceFlagControl = ({
 	personId,
 	name,
 	disabled,
+	partId,
 }: {
 	personId: string;
 	name: string;
 	disabled: boolean;
+	partId?: string;
 }): ReactElement | undefined => {
 	const context = useContext(AttendanceFlagContext);
 	if (!context) return undefined;
@@ -25,12 +27,12 @@ export const AttendanceFlagControl = ({
 					items: [
 						{
 							id: "addition",
-							label: "Last-minute addition",
-							onSelect: (): void => context.set(personId, "addition"),
+							label: "Late addition",
+							onSelect: (): void => context.set(personId, "addition", partId),
 						},
 						{
 							id: "cancellation",
-							label: "Last-minute cancellation",
+							label: "Late cancellation",
 							onSelect: (): void => context.set(personId, "cancellation"),
 						},
 						{

@@ -1,7 +1,6 @@
 import { materials as sharedMaterials } from "@uwhclub/design-system/materials";
 
 export type { GlassMaterial } from "@uwhclub/design-system/materials";
-export const headerFade = { start: 0.35, end: 0.85 };
 export const materials = {
 	...sharedMaterials,
 	blur: { ...sharedMaterials.blur, floating: 16 },

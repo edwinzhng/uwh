@@ -1,10 +1,11 @@
-import { type ReactElement, useState } from "react";
-import { Button } from "./button";
+import { type ReactElement, useRef, useState } from "react";
 import { Dialog } from "./dialog";
+import { Divider } from "./divider";
+import { List } from "./list";
+import { ListItem } from "./list-item";
 import type { PersonPickerProps } from "./person-picker-props";
 import { ProfileOption } from "./profile-option";
 import { ProfileTrigger } from "./profile-trigger";
-import { Row } from "./row";
 import { Stack } from "./stack";
 
 export const PersonPicker = ({
@@ -14,6 +15,11 @@ export const PersonPicker = ({
 	account,
 }: PersonPickerProps): ReactElement | undefined => {
 	const [open, setOpen] = useState(false);
+	const pending = useRef<(() => void) | undefined>(undefined);
+	const closeAndRun = (action: () => void): void => {
+		pending.current = action;
+		setOpen(false);
+	};
 	const person = options.find((option) => option.id === value);
 	const canSwitch = options.length > 1;
 	if (!person || (!canSwitch && !account)) return undefined;
@@ -28,7 +34,15 @@ export const PersonPicker = ({
 			<Dialog
 				title="Profiles"
 				isOpen={open}
-				onOpenChange={setOpen}
+				onOpenChange={(next): void => {
+					if (next) pending.current = undefined;
+					setOpen(next);
+				}}
+				onAfterClose={(): void => {
+					const action = pending.current;
+					pending.current = undefined;
+					action?.();
+				}}
 				footer={false}
 			>
 				<Stack gap="sm">
@@ -40,49 +54,41 @@ export const PersonPicker = ({
 								personId={option.id}
 								isSelected={option.id === value}
 								onPress={(): void => {
-									setOpen(false);
-									onValueChange(option.id);
+									closeAndRun((): void => onValueChange(option.id));
 								}}
 							/>
 						))}
 					</Stack>
 					{account ? (
-						<Row wrap gap="xs">
-							{account.onProfile ? (
-								<Button
-									label="View profile"
-									variant="secondary"
-									compact
-									prefix="user"
-									onPress={(): void => {
-										setOpen(false);
-										account.onProfile?.();
-									}}
+						<Stack gap="sm">
+							<Divider />
+							<List separators="full">
+								{account.onProfile ? (
+									<ListItem
+										title="View profile"
+										icon="user"
+										onPress={(): void => {
+											if (account.onProfile) closeAndRun(account.onProfile);
+										}}
+									/>
+								) : undefined}
+								<ListItem
+									title="Settings"
+									icon="gear"
+									onPress={(): void => closeAndRun(account.onSettings)}
 								/>
-							) : undefined}
-							<Button
-								label="Settings"
-								variant="secondary"
-								compact
-								prefix="gear"
-								onPress={(): void => {
-									setOpen(false);
-									account.onSettings();
-								}}
-							/>
-							{account.onSignOut ? (
-								<Button
-									label="Sign out"
-									variant="ghost"
-									compact
-									prefix="signOut"
-									onPress={(): void => {
-										setOpen(false);
-										account.onSignOut?.();
-									}}
-								/>
-							) : undefined}
-						</Row>
+								{account.onSignOut ? (
+									<ListItem
+										title="Sign out"
+										icon="signOut"
+										showChevron={false}
+										onPress={(): void => {
+											if (account.onSignOut) closeAndRun(account.onSignOut);
+										}}
+									/>
+								) : undefined}
+							</List>
+						</Stack>
 					) : undefined}
 				</Stack>
 			</Dialog>

@@ -26,8 +26,16 @@ export const eraseSessionPlans = async (
 				.withIndex("by_author", (q) => q.eq("updatedBy", userId))
 	).collect();
 	for (const row of rows) {
-		if (removeClub) await ctx.db.delete(row._id);
-		else if (row.clubId === clubId)
-			await ctx.db.patch(row._id, { updatedBy: undefined });
+		if (removeClub || row.clubId === clubId) {
+			for (const file of await ctx.db
+				.query("resourceFiles")
+				.withIndex("by_club", (q) => q.eq("clubId", row.clubId))
+				.filter((q) => q.eq(q.field("sessionPlanKey"), row.key))
+				.collect()) {
+				await ctx.storage.delete(file.storageId);
+				await ctx.db.delete(file._id);
+			}
+			await ctx.db.delete(row._id);
+		}
 	}
 };

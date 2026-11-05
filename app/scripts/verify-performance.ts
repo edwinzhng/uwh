@@ -4,6 +4,8 @@ import type { PaginationResult } from "convex/server";
 import { api, internal } from "../convex/_generated/api";
 import { balance } from "../src/domain/app-rules";
 import { attendanceSummary } from "../src/domain/attendance-summary";
+import { eventFinished } from "../src/domain/schedule-agenda";
+import { eventWeekday } from "../src/domain/schedule-weekdays";
 import { localRun } from "./local-checks";
 import { createVerificationRun } from "./verification-fixtures";
 
@@ -72,6 +74,33 @@ try {
 		return items;
 	};
 	const now = Date.parse("2026-09-08T18:00:00Z");
+	const filteredStart = performance.now();
+	const firstFiltered = await owner.query(api.schedule_agenda.historical, {
+		weekday: 4,
+		now,
+		paginationOpts: { cursor: null, numItems: 20 },
+	});
+	const filteredMs = Math.round(performance.now() - filteredStart);
+	assert(firstFiltered.page.length <= 20);
+	assert(
+		firstFiltered.page.every(
+			({ event }) => eventWeekday(event) === 4 && eventFinished(event, now),
+		),
+	);
+	const filtered = await allPages((cursor) =>
+		owner.query(api.schedule_agenda.historical, {
+			weekday: 4,
+			now,
+			paginationOpts: { cursor, numItems: 20 },
+		}),
+	);
+	assert.deepEqual(
+		filtered.map(({ event }) => event.id).sort(),
+		full.data.events
+			.filter((event) => eventWeekday(event) === 4 && eventFinished(event, now))
+			.map((event) => event.id)
+			.sort(),
+	);
 	const events = await allPages((cursor) =>
 		owner.query(api.pages.schedule, {
 			view: "past",
@@ -277,7 +306,7 @@ try {
 		full.data.events.find((event) => event.id === "archive-1"),
 	);
 	console.log(
-		`Performance checks passed: 400 events, 2,000 attendance records, 400 feedback entries, and 120-item directories/payment/return/report/notice histories. Schedule workspace ${fullBytes} → ${compactBytes} bytes (${Math.round((1 - compactBytes / fullBytes) * 100)}% less), scoped request ${scopedMs} ms. Permissions, paging, season totals, concurrent payments and unrelated history preserved.`,
+		`Performance checks passed: 400 events, 2,000 attendance records, 400 feedback entries, and 120-item directories/payment/return/report/notice histories. Schedule workspace ${fullBytes} → ${compactBytes} bytes (${Math.round((1 - compactBytes / fullBytes) * 100)}% less), scoped request ${scopedMs} ms, first weekday-filtered page ${filteredMs} ms. Permissions, filtered paging, season totals, concurrent payments and unrelated history preserved.`,
 	);
 } finally {
 	await run.close();

@@ -1,9 +1,11 @@
-import { type ReactElement, useLayoutEffect, useRef } from "react";
-import { pageMotionAllowed } from "./page-motion-input";
+import { type ReactElement, useCallback, useRef } from "react";
 import { playPageReveal } from "./page-reveal-playback.web";
 import type { ContentRevealProps } from "./reveal-props";
 import { space } from "./tokens";
-import { useMotion } from "./use-motion";
+import {
+	useContentRevealEnvironment,
+	useContentRevealPlayback,
+} from "./use-content-reveal";
 
 export const ContentReveal = ({
 	children,
@@ -13,23 +15,19 @@ export const ContentReveal = ({
 	gap,
 }: ContentRevealProps): ReactElement => {
 	const element = useRef<HTMLDivElement>(null);
-	const allowed = useMotion() && enabled;
-	const initial = useRef({ allowed, delay });
 	const playback = useRef<Pick<Animation, "cancel"> | undefined>(undefined);
-	useLayoutEffect(() => {
-		const animation = element.current
-			? playPageReveal(
-					element.current,
-					initial.current.allowed && pageMotionAllowed(),
-					initial.current.delay,
-				)
-			: undefined;
-		playback.current = animation;
-		return (): void => animation?.cancel();
+	const environment = useContentRevealEnvironment(enabled);
+	const show = useCallback((): void => {
+		playback.current?.cancel();
+		playback.current = undefined;
+		if (element.current) element.current.style.opacity = "1";
 	}, []);
-	useLayoutEffect((): void => {
-		if (!allowed) playback.current?.cancel();
-	}, [allowed]);
+	const play = useCallback((): void => {
+		if (!element.current) return;
+		element.current.style.opacity = "1";
+		playback.current = playPageReveal(element.current, true, delay);
+	}, [delay]);
+	useContentRevealPlayback(environment, play, show);
 	return (
 		<div
 			ref={element}
@@ -40,6 +38,7 @@ export const ContentReveal = ({
 				gap: gap ? space[gap] : undefined,
 				minHeight: fill ? 0 : undefined,
 				flex: fill ? 1 : undefined,
+				opacity: environment.eligible ? 0 : 1,
 			}}
 		>
 			{children}

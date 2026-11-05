@@ -31,11 +31,18 @@ export const eraseMemberProfiles = async (
 		if (
 			input.removeClub ||
 			personIds.has(photo.personId) ||
-			(!photo.attached && photo.ownerId === input.userId)
+			photo.ownerId === input.userId
 		) {
+			for (const profile of await ctx.db
+				.query("memberProfiles")
+				.withIndex("by_photo", (q) => q.eq("photoId", photo._id))
+				.collect())
+				await ctx.db.patch(profile._id, {
+					photoId: undefined,
+					revision: profile.revision + 1,
+				});
 			await ctx.storage.delete(photo.storageId);
 			await ctx.db.delete(photo._id);
-		} else if (photo.ownerId === input.userId)
-			await ctx.db.patch(photo._id, { ownerId: undefined });
+		}
 	}
 };

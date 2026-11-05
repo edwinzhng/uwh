@@ -7,6 +7,7 @@ import {
 	View,
 	type ViewStyle,
 } from "react-native";
+import { type Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
 	useAnimatedRef,
 	useAnimatedStyle,
@@ -23,6 +24,7 @@ type Props = Omit<ScrollViewProps, "onScroll"> & {
 	fadeTone?: "primary" | "secondary";
 	edgeFades?: boolean;
 	revealRef?: Ref<ScrollAreaHandle>;
+	scrollGesture?: ReturnType<typeof Gesture.Native>;
 };
 
 export type ScrollAreaHandle = {
@@ -36,6 +38,7 @@ export const ScrollArea = ({
 	onContentSizeChange,
 	onTouchStart,
 	revealRef,
+	scrollGesture,
 	fadeTone = "primary",
 	edgeFades = true,
 	horizontal = false,
@@ -83,6 +86,34 @@ export const ScrollArea = ({
 		maxWidth: "100%",
 		overscrollBehavior: Platform.OS === "web" ? "contain" : undefined,
 	};
+	const viewportContent = (
+		<Animated.ScrollView
+			ref={scroll}
+			{...props}
+			horizontal={horizontal}
+			style={scrollStyle}
+			onScroll={onScroll}
+			onTouchStart={(event): void => {
+				if (revealRef !== undefined && revealRef !== null) interrupt();
+				onTouchStart?.(event);
+			}}
+			scrollEventThrottle={16}
+			onLayout={(event): void => {
+				viewport.set(
+					horizontal
+						? event.nativeEvent.layout.width
+						: event.nativeEvent.layout.height,
+				);
+				onLayout?.(event);
+			}}
+			onContentSizeChange={(width, height): void => {
+				content.set(horizontal ? width : height);
+				onContentSizeChange?.(width, height);
+			}}
+		>
+			{children}
+		</Animated.ScrollView>
+	);
 	return (
 		<PaginationViewport.Provider value={scroll}>
 			<View
@@ -91,32 +122,13 @@ export const ScrollArea = ({
 					style,
 				]}
 			>
-				<Animated.ScrollView
-					ref={scroll}
-					{...props}
-					horizontal={horizontal}
-					style={scrollStyle}
-					onScroll={onScroll}
-					onTouchStart={(event): void => {
-						if (revealRef !== undefined && revealRef !== null) interrupt();
-						onTouchStart?.(event);
-					}}
-					scrollEventThrottle={16}
-					onLayout={(event): void => {
-						viewport.set(
-							horizontal
-								? event.nativeEvent.layout.width
-								: event.nativeEvent.layout.height,
-						);
-						onLayout?.(event);
-					}}
-					onContentSizeChange={(width, height): void => {
-						content.set(horizontal ? width : height);
-						onContentSizeChange?.(width, height);
-					}}
-				>
-					{children}
-				</Animated.ScrollView>
+				{scrollGesture && Platform.OS !== "web" ? (
+					<GestureDetector gesture={scrollGesture}>
+						{viewportContent}
+					</GestureDetector>
+				) : (
+					viewportContent
+				)}
 				{edgeFades ? (
 					<>
 						<Animated.View

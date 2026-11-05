@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import type { MemberProfileState } from "../backend/use-member-profile";
 import { Avatar, Button, Row, Stack, Surface, Text } from "../design-system";
 import type { Member } from "../domain/app-types";
+import { ContentReport } from "./content-report";
 import { MemberCapNumberEditor } from "./member-cap-number-editor";
 import { MemberProfileEditor } from "./member-profile-editor";
 import { usePhotoUri } from "./use-photo-uri";
@@ -52,6 +53,10 @@ export const MemberProfileCard = ({
 						Loading profile…
 					</Text>
 				) : undefined}
+				<ContentReport
+					source={{ kind: "profile", id: member.id }}
+					label="Report profile"
+				/>
 			</Stack>
 		</Surface>
 	);

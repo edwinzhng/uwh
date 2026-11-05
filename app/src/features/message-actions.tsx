@@ -17,6 +17,7 @@ import type { Message } from "../domain/app-types";
 import { hasVisibleMessageContent } from "../domain/message-content";
 import * as Clipboard from "../platform/clipboard";
 import { ConfirmationDialog } from "./confirmation-dialog";
+import { useFormTask } from "./use-form-task";
 import type { MessageReactionControls } from "./use-message-reaction";
 import { useTask } from "./use-task";
 
@@ -35,6 +36,7 @@ export const MessageActions = ({
 	const safety = useChatSafety();
 	const tools = useThreadTools();
 	const task = useTask();
+	const reportTask = useFormTask();
 	const [reporting, setReporting] = useState(false);
 	const [reason, setReason] = useState("");
 	const [blockAuthor, setBlockAuthor] = useState(false);
@@ -79,7 +81,7 @@ export const MessageActions = ({
 									setReporting(true);
 									setReason("");
 									setBlockAuthor(false);
-									task.clear();
+									reportTask.clear();
 								},
 							},
 							{
@@ -187,23 +189,27 @@ export const MessageActions = ({
 
 			<Dialog
 				intent="form"
-				isDismissDisabled={task.busy}
+				isDismissDisabled={reportTask.busy}
 				title="Report message"
 				isOpen={reporting}
 				onOpenChange={(open): void => {
-					if (!task.busy) setReporting(open);
+					if (!reportTask.busy) setReporting(open);
 				}}
 				footer={
 					<Button
 						label="Send report"
-						isLoading={task.busy}
-						validationError={!reason.trim() ? "Add a reason" : undefined}
+						isLoading={reportTask.busy}
 						onPress={(): void => {
-							void task.run(async (): Promise<void> => {
-								await safety.report?.(message.id, reason, blockAuthor);
-								setReporting(false);
-								setCopyState("Report sent");
-							});
+							void reportTask.submit(
+								() => (!reason.trim() ? "Add a reason" : undefined),
+								async (): Promise<void> => {
+									if (!safety.report)
+										throw new Error("Reporting is unavailable. Try again.");
+									await safety.report(message.id, reason, blockAuthor);
+									setReporting(false);
+									setCopyState("Report sent");
+								},
+							);
 						}}
 					/>
 				}
@@ -218,16 +224,18 @@ export const MessageActions = ({
 						onValueChange={setReason}
 						multiline
 						maxLength={1000}
+						isDisabled={reportTask.busy}
 					/>
 					<Toggle
 						label="Also block this account"
 						description="Hide their messages and stop direct messages."
 						value={blockAuthor}
+						isDisabled={reportTask.busy}
 						onValueChange={setBlockAuthor}
 					/>
-					{task.error ? (
+					{reportTask.error ? (
 						<Text variant="small" tone="danger">
-							{task.error}
+							{reportTask.error}
 						</Text>
 					) : undefined}
 				</Stack>
@@ -240,7 +248,7 @@ export const MessageActions = ({
 			<ContextActionMenu
 				label="Message actions"
 				groups={groups}
-				isDisabled={busy || task.busy || reaction.pending}
+				isDisabled={busy || task.busy || reportTask.busy || reaction.pending}
 			>
 				{children}
 			</ContextActionMenu>

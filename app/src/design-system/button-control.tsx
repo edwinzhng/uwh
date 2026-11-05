@@ -5,6 +5,7 @@ import {
 	View,
 	type ViewStyle,
 } from "react-native";
+import { Badge } from "./badge";
 import { buttonColors } from "./button-colors";
 import { activateButton } from "./button-feedback";
 import type { ButtonProps } from "./button-props";
@@ -21,6 +22,7 @@ import { useControlSize } from "./use-control-size";
 
 export const ButtonControl = ({
 	label,
+	count,
 	density = "standard",
 	roleTone: explicitRole,
 	validationError,
@@ -82,7 +84,9 @@ export const ButtonControl = ({
 		minWidth: icon ? controlSize : undefined,
 		alignSelf: icon ? "center" : "stretch",
 		paddingHorizontal: icon
-			? space.none
+			? count === undefined
+				? space.none
+				: space.xs
 			: filter
 				? space.md
 				: compact
@@ -175,6 +179,9 @@ export const ButtonControl = ({
 							{label}
 						</NativeText>
 					)}
+					{count !== undefined ? (
+						<Badge label={String(count)} compact />
+					) : undefined}
 				</View>
 			</Pressable>
 			{attempted && validationError && !blocked ? (

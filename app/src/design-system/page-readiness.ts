@@ -1,9 +1,11 @@
 export const createPageReadiness = ({
 	scheduleFrame,
 	onChange,
+	waitForLayout = true,
 }: {
 	scheduleFrame: (callback: () => void) => () => void;
 	onChange: (ready: boolean) => void;
+	waitForLayout?: boolean;
 }): {
 	update: (
 		routeLoading: boolean,
@@ -26,6 +28,12 @@ export const createPageReadiness = ({
 	};
 	const settle = (): void => {
 		cancel();
+		if (!waitForLayout) {
+			state.shown = true;
+			state.ready = true;
+			onChange(true);
+			return;
+		}
 		state.cancel = scheduleFrame((): void => {
 			state.cancel = scheduleFrame((): void => {
 				state.cancel = undefined;

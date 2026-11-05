@@ -4,7 +4,7 @@ import { Avatar } from "./avatar";
 import { useButtonHaptics } from "./haptics";
 import { Icon, type IconName } from "./icon";
 import { useTheme } from "./theme";
-import { corners, geometry } from "./tokens";
+import { corners, geometry, opacity } from "./tokens";
 import { ToolbarHighlight } from "./toolbar-highlight";
 
 export const EditableAvatar = ({
@@ -14,6 +14,7 @@ export const EditableAvatar = ({
 	initials,
 	label,
 	isDisabled = false,
+	hoverOverlay = false,
 	onPress,
 }: {
 	name: string;
@@ -22,6 +23,7 @@ export const EditableAvatar = ({
 	initials?: boolean;
 	label: string;
 	isDisabled?: boolean;
+	hoverOverlay?: boolean;
 	onPress: () => void;
 }): ReactElement => {
 	const theme = useTheme();
@@ -56,6 +58,23 @@ export const EditableAvatar = ({
 			}}
 		>
 			<Avatar name={name} uri={uri} icon={icon} initials={initials} large />
+			{hoverOverlay && !isDisabled && (hovered || focused || pressed) ? (
+				<View
+					pointerEvents="none"
+					accessible={false}
+					style={{
+						position: "absolute",
+						inset: 0,
+						borderRadius: corners.pill,
+						backgroundColor: theme.background.contrast,
+						opacity: opacity.backdrop,
+						alignItems: "center",
+						justifyContent: "center",
+					}}
+				>
+					<Icon name="image" color={theme.text.contrast} />
+				</View>
+			) : undefined}
 			<ToolbarHighlight active={!isDisabled && (hovered || pressed)} />
 			<View
 				pointerEvents="none"

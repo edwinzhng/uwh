@@ -28,7 +28,9 @@ import {
 	type QueryCtx,
 	query,
 } from "./_generated/server";
+import { checkContent } from "./chat_policy";
 import { accountFor, requireMember } from "./identity";
+import { blockedIds } from "./moderation";
 import { enqueue } from "./notifications";
 import {
 	resourceCategory,
@@ -76,6 +78,8 @@ export const canAccessResource = async (
 	actor: Doc<"memberships">,
 	resource: Doc<"resources">,
 ): Promise<boolean> =>
+	(!resource.authorId ||
+		!(await blockedIds(ctx, actor.userId)).includes(resource.authorId)) &&
 	canReadResource(
 		resource.audience === "programs" ? await resourceActor(ctx, actor) : actor,
 		resource,
@@ -158,6 +162,7 @@ export const list = query({
 			numItems: Math.min(40, Math.max(1, args.paginationOpts.numItems)),
 			maximumRowsRead: 200,
 		});
+		const blocked = await blockedIds(ctx, actor.userId);
 		const access = result.page.some(
 			(resource) => resource.audience === "programs",
 		)
@@ -165,6 +170,7 @@ export const list = query({
 			: actor;
 		const visible = result.page.filter(
 			(resource) =>
+				(!resource.authorId || !blocked.includes(resource.authorId)) &&
 				canReadResource(access, resource) &&
 				(!args.kind || resource.kind === args.kind) &&
 				(!args.category ||
@@ -207,13 +213,17 @@ export const details = query({
 			.withIndex("by_resource", (q) => q.eq("resourceId", id))
 			.order("desc")
 			.take(101);
-		const comments: ResourceComment[] = rows.slice(0, 100).map((row) => ({
-			id: row._id,
-			authorId: row.authorId,
-			authorName: row.authorName,
-			body: row.body,
-			createdAt: row.createdAt,
-		}));
+		const blocked = await blockedIds(ctx, actor.userId);
+		const comments: ResourceComment[] = rows
+			.slice(0, 100)
+			.filter((row) => !blocked.includes(row.authorId))
+			.map((row) => ({
+				id: row._id,
+				authorId: row.authorId,
+				authorName: row.authorName,
+				body: row.body,
+				createdAt: row.createdAt,
+			}));
 		return {
 			resource: await summary(ctx, resource, true),
 			comments,
@@ -237,6 +247,13 @@ export const save = mutation({
 			throw new Error("Coach or admin access required.");
 		const error = validateResource(draft);
 		if (error) throw new Error(error);
+		await checkContent(
+			ctx,
+			actor,
+			[draft.title, draft.description, draft.voiceTranscript]
+				.filter(Boolean)
+				.join("\n"),
+		);
 		if (!key || key.length > 100)
 			throw new Error("Reopen this form and try again.");
 		const previous = id
@@ -398,6 +415,7 @@ export const comment = mutation({
 			throw new Error("Restore this resource before adding a comment.");
 		const error = validateResourceComment(body);
 		if (error) throw new Error(error);
+		await checkContent(ctx, actor, body);
 		if (!key || key.length > 100)
 			throw new Error("Reopen this form and try again.");
 		const existing = await ctx.db

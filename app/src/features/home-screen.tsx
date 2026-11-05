@@ -9,6 +9,7 @@ import {
 	HomeCardTreatmentContext,
 	homeCardTreatment,
 	TabContent,
+	useRouteSelection,
 } from "../design-system";
 import { canCoach } from "../domain/app-rules";
 import { nextCoachingEvent } from "../domain/home";
@@ -31,12 +32,22 @@ const HomeContent = (): ReactElement => {
 			? homeCardTreatment(params.reviewCards)
 			: undefined;
 	const [workspaces, setWorkspaces] = useAtom(homeWorkspaceAtom);
-	const workspace =
+	const routeWorkspace =
 		canCoach(account) &&
 		(params.view === "coaching" ||
 			(params.view !== "personal" && workspaces[account.id] === "coaching"))
 			? "coaching"
 			: "personal";
+	const selection = useRouteSelection(
+		routeWorkspace,
+		(value): void => {
+			setWorkspaces((current) => ({ ...current, [account.id]: value }));
+			router.setParams({ view: value });
+		},
+		account.id,
+	);
+	const workspace = canCoach(account) ? selection.value : "personal";
+
 	const now = useClubNow();
 	const coaching = nextCoachingEvent(data, account, now);
 	return (
@@ -53,13 +64,7 @@ const HomeContent = (): ReactElement => {
 								{ value: "personal", label: "Player" },
 								{ value: "coaching", label: "Coach" },
 							]}
-							onValueChange={(value): void => {
-								setWorkspaces((current) => ({
-									...current,
-									[account.id]: value,
-								}));
-								router.setParams({ view: value });
-							}}
+							onValueChange={selection.select}
 						/>
 					</GlassPanel>
 				) : undefined

@@ -4,7 +4,6 @@ import {
 	useMutation,
 	usePaginatedQuery,
 	useQueries,
-	useQuery,
 } from "convex/react";
 import { atom, useAtom } from "jotai";
 import { useMemo, useState } from "react";
@@ -120,24 +119,22 @@ export const useLiveResources = (
 				},
 		{ initialNumItems: 25 },
 	);
-	const detail = useQuery(
-		api.resources.details,
-		id && !options.optionalDetail ? { id: id as Id<"resources"> } : "skip",
-	);
 	const optionalQueries = useMemo((): RequestForQueries => {
-		if (!id || !options.optionalDetail) return {};
+		if (!id) return {};
 		return {
 			resource: {
 				query: api.resources.details,
 				args: { id: id as Id<"resources"> },
 			},
 		};
-	}, [id, options.optionalDetail]);
+	}, [id]);
 	const optional: { resource?: Detail | Error } = useQueries(optionalQueries);
 	const optionalDetail = optional.resource;
 	const detailError =
 		optionalDetail instanceof Error
-			? "This attachment is unavailable or you don’t have access."
+			? options.optionalDetail
+				? "This attachment is unavailable or you don’t have access."
+				: "This resource was removed, blocked, or is no longer available."
 			: undefined;
 	const save = useMutation(api.resources.save);
 	const archive = useMutation(api.resources.archive);
@@ -147,18 +144,12 @@ export const useLiveResources = (
 		youtube,
 		items: list.results,
 		loading: id
-			? options.optionalDetail
-				? optionalDetail === undefined
-				: detail === undefined
+			? optionalDetail === undefined
 			: list.status === "LoadingFirstPage",
 		loadingMore: list.status === "LoadingMore",
 		loadMore:
 			list.status === "CanLoadMore" ? (): void => list.loadMore(25) : undefined,
-		detail: options.optionalDetail
-			? optionalDetail instanceof Error
-				? undefined
-				: optionalDetail
-			: detail,
+		detail: optionalDetail instanceof Error ? undefined : optionalDetail,
 		detailError,
 		save: async (draft, key, previous): Promise<string> =>
 			save({

@@ -25,23 +25,16 @@ const fixture = async (name: string): Promise<ConvexHttpClient> => {
 };
 try {
 	const owner = await fixture("Report coach");
-	const clubId = await owner.mutation(api.club.create, {
+	await owner.mutation(api.club.create, {
 		name: "Report test",
 		samples: true,
 	});
 	const player = await fixture("Report parent");
-	await player.mutation(api.club.requestToJoin, { clubCode: clubId });
+	const club = await owner.query(api.club.current, {});
+	assert(club);
+	await player.mutation(api.club.requestToJoin, { clubCode: club.inviteCode });
 	const state = await owner.query(api.club.current, { screen: "settings" });
-	const request = state?.requests.at(0);
-	assert(request);
 	assert(state);
-	await owner.mutation(api.club.approveRequest, {
-		requestId: request.id,
-		personId: "jamie",
-		children: ["sam"],
-		coachPrograms: [],
-		admin: false,
-	});
 	const external = await fixture("Foreign coach");
 	await external.mutation(api.club.create, {
 		name: "Foreign report",
@@ -89,10 +82,20 @@ try {
 		(await owner.query(api.attendance_reports.eventFlags, { eventId })).length,
 		1,
 	);
+	const marked = await owner.query(api.club.current, {
+		screen: "session",
+		id: eventId,
+	});
+	assert.equal(
+		marked?.data.responses.find(
+			(entry) => entry.eventId === eventId && entry.personId === "sam",
+		)?.attendance,
+		"present",
+	);
 	const args = {
 		seasonId: "2026-2027",
 		month: "2026-09",
-		search: "Sam",
+		search: marked?.data.members.find((entry) => entry.id === "sam")?.name,
 		paginationOpts: { cursor: null, numItems: 10 },
 	};
 	const timings: number[] = [];
@@ -102,8 +105,10 @@ try {
 		timings.push(Math.round(performance.now() - start));
 		const row = report.page.find((entry) => entry.id === "sam");
 		assert(row);
-		assert.equal(row.attended, 100);
-		assert.equal(row.onTime, 0);
+		assert.equal(
+			row.cells.find((entry) => entry.eventId === eventId)?.attendance,
+			"present",
+		);
 		assert.equal(row.additions, 1);
 	}
 	const compare = await owner.query(api.attendance_reports.comparison, {
@@ -111,7 +116,11 @@ try {
 		personIds: ["sam", "mila"],
 	});
 	assert.equal(compare.rows.length, 2);
-	assert.equal(compare.rows.at(0)?.points.at(0)?.value, 100);
+	assert.equal(
+		compare.rows.at(0)?.cells.find((entry) => entry.eventId === eventId)
+			?.attendance,
+		"present",
+	);
 	await assert.rejects(player.query(api.attendance_reports.roster, args));
 	await assert.rejects(
 		player.query(api.attendance_reports.eventFlags, { eventId }),

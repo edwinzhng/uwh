@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { youtubePosition } from "../convex/youtube_api";
+import { youtubeOAuthClient } from "../convex/youtube_config";
 import {
 	validateYoutubeUpload,
 	youtubeReceivedBytes,
@@ -9,6 +10,39 @@ import {
 } from "../src/domain/youtube-upload";
 
 describe("YouTube uploads", (): void => {
+	test("reuses Google sign-in credentials unless a complete dedicated client is configured", (): void => {
+		const google = {
+			AUTH_GOOGLE_ID: "fixture-google-id",
+			AUTH_GOOGLE_SECRET: "fixture-google-secret",
+		};
+		expect(youtubeOAuthClient(google)).toEqual({
+			clientId: "fixture-google-id",
+			clientSecret: "fixture-google-secret",
+		});
+		expect(
+			youtubeOAuthClient({
+				...google,
+				YOUTUBE_CLIENT_ID: "fixture-youtube-id",
+				YOUTUBE_CLIENT_SECRET: "fixture-youtube-secret",
+			}),
+		).toEqual({
+			clientId: "fixture-youtube-id",
+			clientSecret: "fixture-youtube-secret",
+		});
+		expect(
+			youtubeOAuthClient({
+				...google,
+				YOUTUBE_CLIENT_ID: "fixture-youtube-id",
+			}),
+		).toBeUndefined();
+		expect(
+			youtubeOAuthClient({
+				...google,
+				YOUTUBE_CLIENT_SECRET: "fixture-youtube-secret",
+			}),
+		).toBeUndefined();
+		expect(youtubeOAuthClient({})).toBeUndefined();
+	});
 	test("recognizes equivalent video links so editing a URL does not delete the same video", (): void => {
 		expect(youtubeVideoId("https://youtu.be/abcdefghijk")).toBe("abcdefghijk");
 		expect(

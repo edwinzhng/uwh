@@ -1,4 +1,5 @@
 import { youtubeReceivedBytes } from "../src/domain/youtube-upload";
+import { youtubeOAuthClient } from "./youtube_config";
 
 export const youtubeCredentials = (): {
 	clientId: string;
@@ -7,12 +8,11 @@ export const youtubeCredentials = (): {
 } => {
 	if (process.env.OUTBOUND_DELIVERY_DISABLED === "true")
 		throw new Error("YouTube delivery is disabled in this environment.");
-	const clientId = process.env.YOUTUBE_CLIENT_ID;
-	const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+	const client = youtubeOAuthClient();
 	const site = process.env.CONVEX_SITE_URL;
-	if (!clientId || !clientSecret || !site)
+	if (!client || !site)
 		throw new Error("YouTube uploads need administrator setup first.");
-	return { clientId, clientSecret, redirectUri: `${site}/youtube/callback` };
+	return { ...client, redirectUri: `${site}/youtube/callback` };
 };
 export const youtubeToken = async (refreshToken: string): Promise<string> => {
 	const { clientId, clientSecret } = youtubeCredentials();

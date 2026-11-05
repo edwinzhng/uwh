@@ -14,12 +14,13 @@ import type { ClubEvent } from "../domain/app-types";
 import { effectiveAttendance } from "../domain/effective-attendance";
 import { participatesInPart } from "../domain/practice-parts";
 import { AttendanceControl } from "./attendance-control";
+import { AttendanceFlagBadge } from "./attendance-flag-badge";
 import { AttendanceFlagContext } from "./attendance-flag-context";
 import { AttendanceFlagControl } from "./attendance-flag-control";
 import { AttendanceFlagProvider } from "./attendance-flag-provider";
 import { ShoutoutEditor } from "./shoutout-editor";
 
-const SessionPeopleContent = ({
+export const SessionPeopleContent = ({
 	event,
 	partId,
 }: {
@@ -45,7 +46,8 @@ const SessionPeopleContent = ({
 		);
 	});
 	const going = expected.length;
-	const others = members.filter((member) => !expected.includes(member));
+	const expectedIds = new Set(expected.map((member) => member.id));
+	const others = members.filter((member) => !expectedIds.has(member.id));
 	const groups = [
 		{ id: "going", label: `${going} going`, members: expected },
 		{ id: "others", label: "Not going", members: others },
@@ -71,26 +73,22 @@ const SessionPeopleContent = ({
 												titleLines={1}
 												identity={member.name}
 												identityId={member.id}
-												controlLayout={staff ? "responsive" : "inline"}
+												compactIdentity
+												metadata={<AttendanceFlagBadge personId={member.id} />}
+												controlLayout={
+													staff && group.id === "going"
+														? "responsive"
+														: "inline"
+												}
 												headerAction={
 													staff && group.id === "going" ? (
 														<AttendanceFlagControl
 															personId={member.id}
 															name={member.name}
+															partId={partId}
 															disabled={event.cancelled}
 														/>
 													) : undefined
-												}
-												description={
-													flags?.flags.find(
-														(flag) => flag.personId === member.id,
-													)?.kind === "addition"
-														? "Late addition"
-														: flags?.flags.find(
-																	(flag) => flag.personId === member.id,
-																)?.kind === "cancellation"
-															? "Late cancellation"
-															: undefined
 												}
 												control={
 													<Row gap="xs" wrap>
@@ -104,17 +102,20 @@ const SessionPeopleContent = ({
 																	response,
 																	partId,
 																)}
-																defaultHere={group.id === "going"}
 																partId={partId}
 																disabled={event.cancelled}
 																onLateAddition={
 																	group.id === "others" && flags
 																		? (): void =>
-																				flags.set(member.id, "addition")
+																				flags.set(member.id, "addition", partId)
 																		: undefined
 																}
 																onAbsent={
-																	flags
+																	flags?.flags.some(
+																		(flag) =>
+																			flag.personId === member.id &&
+																			flag.kind === "addition",
+																	)
 																		? (): void => flags.set(member.id)
 																		: undefined
 																}

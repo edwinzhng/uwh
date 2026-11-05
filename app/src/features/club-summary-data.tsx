@@ -4,6 +4,7 @@ import type { ReactElement, ReactNode } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
 import { previewSeasonLedgerAtom } from "../demo/season-ledger-data";
+import { usePageLoading } from "../design-system";
 import { registeredMemberCount } from "../domain/club-summary";
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
 };
 const LiveSummary = ({ seasonId, children }: Props): ReactElement => {
 	const summary = useQuery(api.club.summary, { seasonId });
+	usePageLoading(summary === undefined);
 	return <>{children(summary?.registered)}</>;
 };
 const PreviewSummary = ({ seasonId, children }: Props): ReactElement => {

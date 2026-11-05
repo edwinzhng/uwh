@@ -5,6 +5,7 @@ import type { Notice } from "../domain/app-types";
 import { displayDate, displayDateTime } from "../domain/date-display";
 import { programName } from "../domain/programs";
 import { ConfirmationDialog } from "./confirmation-dialog";
+import { ContentReport } from "./content-report";
 
 export const NoticeCard = ({
 	notice,
@@ -67,6 +68,10 @@ export const NoticeCard = ({
 						) : undefined}
 					</Row>
 					<Text>{notice.body}</Text>
+					<ContentReport
+						source={{ kind: "notice", id: notice.id }}
+						label="Report announcement"
+					/>
 				</Stack>
 			</Surface>
 			{ending ? (

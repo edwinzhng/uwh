@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useState } from "react";
+import { useMessaging } from "../backend/messaging-context";
 import { useApp, useAppStatus } from "../demo/app-state";
 import {
 	ActionMenu,
@@ -15,6 +16,7 @@ import {
 	TabContent,
 	Tabs,
 	Text,
+	useRouteSelection,
 } from "../design-system";
 import {
 	canCoach,
@@ -26,8 +28,10 @@ import {
 import { availableLoanPractice } from "../domain/equipment-loans";
 import { eventTimeRange } from "../domain/event-card-presentation";
 import { eventKindLabel, practiceEvent } from "../domain/event-types";
+import { programRoomId } from "../domain/managed-rooms";
 import { participatesInPart } from "../domain/practice-parts";
 import { venueName } from "../domain/venue";
+import { AttendanceFlagProvider } from "./attendance-flag-provider";
 import { ClubShell } from "./club-shell";
 import { EquipmentLoanDialog } from "./equipment-loan-dialog";
 import { EventEditor } from "./event-editor";
@@ -36,7 +40,7 @@ import { ResponseControl } from "./response-control";
 import { SessionCoaching } from "./session-coaching";
 import { SessionDiscussionButton } from "./session-discussion-button";
 import { SessionGuestManager } from "./session-guest-manager";
-import { SessionPeople } from "./session-people";
+import { SessionPeopleContent } from "./session-people";
 import { SessionSeriesLink } from "./session-series-link";
 import { TournamentPeople } from "./tournament-people";
 import { TournamentSummary } from "./tournament-summary";
@@ -56,13 +60,37 @@ export const EventScreen = (): ReactElement => {
 	const id = eventId ?? legacyId;
 	const { data, account, dispatch } = useApp();
 	const { busy } = useAppStatus();
+	const messaging = useMessaging();
 	const router = useRouter();
 	const event = data.events.find((entry) => entry.id === id);
-	const partId = event?.parts?.some((part) => part.id === selectedPart)
-		? selectedPart
+	const tabSelection = useRouteSelection(
+		selectedTab ?? "overview",
+		(tab): void => router.setParams({ tab }),
+		id,
+	);
+	const partSelection = useRouteSelection(
+		selectedPart ?? "all",
+		(part): void => router.setParams({ part }),
+		id,
+	);
+	const partId = event?.parts?.some((part) => part.id === partSelection.value)
+		? partSelection.value
 		: undefined;
-	const tab = selectedTab ?? "overview";
-	const setTab = (tab: string): void => router.setParams({ tab });
+	const tab = tabSelection.value;
+	const room =
+		event && practiceEvent(event)
+			? messaging.threads.find(
+					(thread) => thread.id === programRoomId(event.program),
+				)
+			: undefined;
+	const setTab = (tab: string): void => {
+		if (tab === "chat" && room)
+			router.push({
+				pathname: "/conversation",
+				params: { id: room.id, fromEvent: event?.id },
+			});
+		else tabSelection.select(tab);
+	};
 	const [cancel, setCancel] = useState(false);
 	const [edit, setEdit] = useState(false);
 	const [loan, setLoan] = useState(false);
@@ -93,6 +121,7 @@ export const EventScreen = (): ReactElement => {
 							label:
 								event?.kind === "tournament" ? "Availability" : "Attendance",
 						},
+						...(room ? [{ value: "chat", label: "Chat" }] : []),
 						...(coach
 							? [
 									{
@@ -170,93 +199,91 @@ export const EventScreen = (): ReactElement => {
 		>
 			{event ? (
 				<>
-					<TabContent value={activeTab}>
-						{activeTab === "overview" ? (
-							practiceEvent(event) ? (
-								<PracticeOverview event={event} />
-							) : (
-								<Stack>
-									<Surface>
-										<Stack>
-											<Row gap="xs" wrap>
-												<Badge
-													label={
-														data.seasons.find(
-															(season) =>
-																season.id === (event.seasonId ?? "2026-2027"),
-														)?.name ?? "2026–2027"
-													}
-												/>
-												<Badge label={eventKindLabel(event.kind)} />
-												{event.seriesId ? (
-													<Badge label="Recurring" />
+					<AttendanceFlagProvider key={event.id} eventId={event.id}>
+						<TabContent value={activeTab}>
+							{activeTab === "overview" ? (
+								practiceEvent(event) ? (
+									<PracticeOverview event={event} />
+								) : (
+									<Stack>
+										<Surface>
+											<Stack>
+												<Row gap="xs" wrap>
+													<Badge
+														label={
+															data.seasons.find(
+																(season) =>
+																	season.id === (event.seasonId ?? "2026-2027"),
+															)?.name ?? "2026–2027"
+														}
+													/>
+													<Badge label={eventKindLabel(event.kind)} />
+													{event.seriesId ? (
+														<Badge label="Recurring" />
+													) : undefined}
+												</Row>
+												<Text variant="h4">{event.venue}</Text>
+												<Text variant="small">{event.description}</Text>
+												{event.parts?.map((part) => (
+													<Text key={part.id} variant="small" tone="secondary">
+														{part.title} ·{" "}
+														{eventTimeRange(part.start, part.end)}
+													</Text>
+												))}
+												<ResponseControl event={event} />
+												<SessionDiscussionButton event={event} />
+												{account.admin && event.seriesId ? (
+													<SessionGuestManager event={event} />
 												) : undefined}
-											</Row>
-											<Text variant="h4">{event.venue}</Text>
-											<Text variant="small">{event.description}</Text>
-											{event.parts?.map((part) => (
-												<Text key={part.id} variant="small" tone="secondary">
-													{part.title} · {formatTime(part.start)}–
-													{formatTime(part.end)}
-												</Text>
-											))}
-											<ResponseControl event={event} />
-											<SessionDiscussionButton event={event} />
-											{account.admin && event.seriesId ? (
-												<SessionGuestManager event={event} />
-											) : undefined}
-											{event.seriesId ? (
-												<SessionSeriesLink seriesId={event.seriesId} />
-											) : undefined}
-										</Stack>
-									</Surface>
-									{event.kind === "tournament" ? (
-										<TournamentSummary event={event} />
-									) : undefined}
-								</Stack>
-							)
-						) : activeTab === "people" ? (
-							event.kind === "tournament" ? (
-								<TournamentPeople event={event} />
+												{event.seriesId ? (
+													<SessionSeriesLink seriesId={event.seriesId} />
+												) : undefined}
+											</Stack>
+										</Surface>
+										{event.kind === "tournament" ? (
+											<TournamentSummary event={event} />
+										) : undefined}
+									</Stack>
+								)
+							) : activeTab === "people" ? (
+								event.kind === "tournament" ? (
+									<TournamentPeople event={event} />
+								) : (
+									<Stack>
+										{event.parts?.length ? (
+											<SegmentedControl
+												label="Practice part"
+												value={partId ?? "all"}
+												onValueChange={partSelection.select}
+												options={[
+													{ value: "all", label: "All" },
+													...event.parts.map((part) => ({
+														value: part.id,
+														label: part.title,
+														count: data.members.filter((member) => {
+															const response = eventResponse(
+																data,
+																event.id,
+																member.id,
+															);
+															return (
+																canRegister(member, event) &&
+																response.response === "going" &&
+																participatesInPart(response, part.id)
+															);
+														}).length,
+													})),
+												]}
+											/>
+										) : undefined}
+										<SessionPeopleContent event={event} partId={partId} />
+									</Stack>
+								)
 							) : (
-								<Stack>
-									{event.parts?.length ? (
-										<SegmentedControl
-											label="Practice part"
-											value={partId ?? "all"}
-											onValueChange={(part): void => router.setParams({ part })}
-											options={[
-												{ value: "all", label: "All" },
-												...event.parts.map((part) => ({
-													value: part.id,
-													label: part.title,
-													count: data.members.filter((member) => {
-														const response = eventResponse(
-															data,
-															event.id,
-															member.id,
-														);
-														return (
-															canRegister(member, event) &&
-															response.response === "going" &&
-															participatesInPart(response, part.id)
-														);
-													}).length,
-												})),
-											]}
-										/>
-									) : undefined}
-									<SessionPeople
-										key={`${event.id}:${partId}`}
-										event={event}
-										partId={partId}
-									/>
-								</Stack>
-							)
-						) : (
-							<SessionCoaching key={event.id} event={event} />
-						)}
-					</TabContent>
+								<SessionCoaching key={event.id} event={event} />
+							)}
+						</TabContent>
+					</AttendanceFlagProvider>
 					<Dialog
 						intent="confirmation"
 						isDismissDisabled={busy}

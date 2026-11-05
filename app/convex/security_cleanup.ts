@@ -3,6 +3,11 @@ import { internalMutation } from "./_generated/server";
 export const expire = internalMutation({
 	args: {},
 	handler: async (ctx): Promise<void> => {
+		for (const receipt of await ctx.db
+			.query("appleNotificationReceipts")
+			.withIndex("by_expiration", (q) => q.lt("expiresAt", Date.now()))
+			.take(100))
+			await ctx.db.delete(receipt._id);
 		for (const row of await ctx.db
 			.query("youtubeAuthorizations")
 			.withIndex("by_expiration", (q) => q.lt("expiresAt", Date.now()))

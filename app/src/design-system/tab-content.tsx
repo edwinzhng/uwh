@@ -1,4 +1,5 @@
-import { Fragment, type ReactElement, type ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
+import { PageReady } from "./page-ready";
 import { Stack } from "./stack";
 
 export const TabContent = ({
@@ -9,6 +10,14 @@ export const TabContent = ({
 	children: ReactNode;
 }): ReactElement => (
 	<Stack gap="xl">
-		<Fragment key={value}>{children}</Fragment>
+		<PageReady
+			contentKey=""
+			layoutKey={value}
+			fill={false}
+			registerWithParent
+			waitForLayout={false}
+		>
+			{children}
+		</PageReady>
 	</Stack>
 );

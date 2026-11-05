@@ -6,6 +6,15 @@ const primaryDestinations = [
 	"/club",
 ];
 
+export const pageContentKey = (
+	route: string,
+	params: Record<string, string | string[] | undefined>,
+): string =>
+	JSON.stringify([
+		route,
+		...["id", "event", "person"].map((key) => params[key] ?? ""),
+	]);
+
 export const pagePathname = (routeName: string): string =>
 	routeName === "index" || routeName === "(tabs)" ? "/" : `/${routeName}`;
 

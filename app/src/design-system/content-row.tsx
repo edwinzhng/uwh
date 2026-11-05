@@ -11,6 +11,7 @@ type Props = {
 	description?: string;
 	identity?: string;
 	identityId?: string;
+	compactIdentity?: boolean;
 	control?: ReactNode;
 	metadata?: ReactNode;
 	headerAction?: ReactNode;
@@ -23,6 +24,7 @@ export const ContentRow = ({
 	description,
 	identity,
 	identityId,
+	compactIdentity = false,
 	control,
 	metadata,
 	headerAction,
@@ -37,13 +39,15 @@ export const ContentRow = ({
 	const identityBlock = (
 		<Stack gap="none" grow>
 			<Row gap="xs">
-				<Stack grow gap="none">
+				<View style={{ minWidth: 0, flexShrink: 1 }}>
 					<Text variant={titleVariant} lines={titleLines}>
 						{title}
 					</Text>
-				</Stack>
+				</View>
 				{metadata}
-				{separateActions ? headerAction : undefined}
+				{separateActions && headerAction ? (
+					<View style={{ marginLeft: "auto" }}>{headerAction}</View>
+				) : undefined}
 			</Row>
 			{description ? (
 				<Text variant="small" tone="secondary">
@@ -64,9 +68,14 @@ export const ContentRow = ({
 			}}
 		>
 			<View style={{ flex: separateActions ? undefined : 1, minWidth: 0 }}>
-				<Row>
+				<Row gap="xs">
 					{identity ? (
-						<Avatar name={identity} personId={identityId} initials />
+						<Avatar
+							name={identity}
+							personId={identityId}
+							mini={compactIdentity}
+							initials
+						/>
 					) : undefined}
 					{identityBlock}
 				</Row>

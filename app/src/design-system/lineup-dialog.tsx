@@ -40,14 +40,17 @@ export const LineupDialog = ({
 				action={
 					<Row>
 						{actions}
-						<IconButton
-							label="View lineup full screen"
-							icon="fullscreen"
-							onPress={(): void => setOpen(true)}
-						/>
+						{!immersive ? (
+							<IconButton
+								label="View lineup full screen"
+								icon="fullscreen"
+								onPress={(): void => setOpen(true)}
+							/>
+						) : undefined}
 						{immersive ? (
 							<Button
 								label={label}
+								prefix="fullscreen"
 								variant="secondary"
 								onPress={(): void => setOpen(true)}
 							/>

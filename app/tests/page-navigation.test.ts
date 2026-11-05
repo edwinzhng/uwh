@@ -6,7 +6,34 @@ import { sectionNavigationPresentation } from "../src/design-system/section-navi
 import {
 	isAccountDestination,
 	isPrimaryDestination,
+	pageContentKey,
 } from "../src/domain/page-navigation";
+
+test("filters and tabs preserve the page frame, while entity changes reset readiness", () => {
+	const schedule = pageContentKey("schedule", {});
+	expect(
+		pageContentKey("schedule", {
+			weekday: "4",
+			program: "thursday-practice",
+			search: "pool",
+		}),
+	).toBe(schedule);
+	expect(pageContentKey("members", { sort: "name", program: "all" })).toBe(
+		pageContentKey("members", {}),
+	);
+	expect(pageContentKey("session", { event: "one", part: "hockey" })).toBe(
+		pageContentKey("session", { event: "one", part: "training" }),
+	);
+	expect(pageContentKey("session", { event: "two" })).not.toBe(
+		pageContentKey("session", { event: "one" }),
+	);
+	expect(pageContentKey("account", { id: "one", tab: "feedback" })).toBe(
+		pageContentKey("account", { id: "one", tab: "attendance" }),
+	);
+	expect(pageContentKey("account", { id: "two" })).not.toBe(
+		pageContentKey("account", { id: "one" }),
+	);
+});
 
 test("the avatar retains account selection without changing the viewed household profile", (): void => {
 	for (const pathname of [

@@ -47,6 +47,7 @@ import { loadData } from "./data";
 import { equipmentLoanReturns } from "./equipment_loan_returns";
 import { homeAnnouncementPage } from "./home_announcement";
 import { accountFor, memberFor } from "./identity";
+import { blockedIds } from "./moderation";
 
 const eventTypeValue = v.optional(
 	v.union(
@@ -462,6 +463,7 @@ export const feedback = query({
 		if (!member) return empty();
 		const account = accountFor(actor);
 		const progress = canReadProgress(account, member.value);
+		const blocked = await blockedIds(ctx, actor.userId);
 		const own = canManagePerson(account, personId);
 		if (kind === "shoutout" && !own) return empty();
 		if (!progress && !own) return empty();
@@ -472,6 +474,12 @@ export const feedback = query({
 			.query("feedback")
 			.withIndex("by_person_date", (q) =>
 				q.eq("clubId", actor.clubId).eq("value.personId", personId),
+			)
+			.filter((q) =>
+				q.and(
+					q.eq(1, 1),
+					...blocked.map((id) => q.neq(q.field("value.authorId"), id)),
+				),
 			)
 			.filter((q) =>
 				q.and(
@@ -508,6 +516,7 @@ export const shoutouts = query({
 		const actor = await memberFor(ctx);
 		if (!actor) return empty();
 		const recipients = shoutoutRecipientIds(accountFor(actor), personId);
+		const blocked = await blockedIds(ctx, actor.userId);
 		if (!recipients.length) return empty();
 		const rows = personId
 			? ctx.db
@@ -524,6 +533,12 @@ export const shoutouts = query({
 							.eq("value.visibility", "published"),
 					);
 		const result = await rows
+			.filter((q) =>
+				q.and(
+					q.eq(1, 1),
+					...blocked.map((id) => q.neq(q.field("value.authorId"), id)),
+				),
+			)
 			.filter((q) =>
 				q.and(
 					q.eq(q.field("value.kind"), "shoutout"),

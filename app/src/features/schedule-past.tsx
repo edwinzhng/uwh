@@ -47,24 +47,23 @@ const LivePast = ({
 	const { results, status, loadMore } = usePaginatedQuery(
 		api.schedule_agenda.historical,
 		{ programId, weekday, now },
-		{ initialNumItems: 1 },
+		{ initialNumItems: 20 },
 	);
 	const [target, setTarget] = useState(1);
 	useEffect(() => {
-		if (status === "CanLoadMore" && results.length < target)
-			loadMore(Math.min(20, target - results.length));
+		if (status === "CanLoadMore" && results.length < target) loadMore(20);
 	}, [status, results.length, target, loadMore]);
 	return (
 		<PastEntries
-			entries={results}
+			entries={results.slice(0, target)}
 			loading={
 				status === "LoadingFirstPage" ||
 				status === "LoadingMore" ||
 				(results.length < target && status !== "Exhausted")
 			}
 			loadMore={
-				status !== "Exhausted"
-					? (): void => setTarget(results.length + 10)
+				status !== "Exhausted" || results.length > target
+					? (): void => setTarget((current) => current + 10)
 					: undefined
 			}
 		/>

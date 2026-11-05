@@ -1,6 +1,6 @@
 import { isPrimaryDestination, pagePathname } from "../domain/page-navigation";
 
-const headerlessRoutes = [
+const instantRoutes = [
 	"(tabs)",
 	"join",
 	"auth-callback",
@@ -8,16 +8,16 @@ const headerlessRoutes = [
 	"otp-test",
 ];
 
-export const nativeHeaderRoute = (name: string): boolean =>
+export const nativeDetailRoute = (name: string): boolean =>
 	Boolean(name) &&
 	!isPrimaryDestination(pagePathname(name)) &&
-	!headerlessRoutes.includes(name);
+	!instantRoutes.includes(name);
 
 export const nativeStackAnimation = (
 	name: string,
 	motionEnabled: boolean,
 ): "default" | "none" =>
-	motionEnabled && nativeHeaderRoute(name) ? "default" : "none";
+	motionEnabled && nativeDetailRoute(name) ? "default" : "none";
 
 const routeTitles: Record<string, string> = {
 	"(tabs)": "Home",

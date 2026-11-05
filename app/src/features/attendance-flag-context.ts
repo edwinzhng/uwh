@@ -5,7 +5,7 @@ export const AttendanceFlagContext = createContext<
 	| {
 			flags: ReportFlag[];
 			busy: boolean;
-			set: (personId: string, kind?: AttendanceFlag) => void;
+			set: (personId: string, kind?: AttendanceFlag, partId?: string) => void;
 	  }
 	| undefined
 >(undefined);

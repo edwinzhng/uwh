@@ -1,14 +1,5 @@
-import {
-	Stack as RouterStack,
-	useIsFocused,
-	useLocalSearchParams,
-	useRoute,
-} from "expo-router";
-import {
-	getDefaultHeaderHeight,
-	HeaderHeightContext,
-} from "expo-router/react-navigation";
-import { type ReactElement, type ReactNode, useContext, useState } from "react";
+import { useIsFocused, useLocalSearchParams, useRoute } from "expo-router";
+import { type ReactElement, type ReactNode, useState } from "react";
 import {
 	KeyboardAvoidingView,
 	Platform,
@@ -16,12 +7,14 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { pageContentKey } from "../domain/page-navigation";
+import { BackNavigation } from "./back-navigation";
 import { ChatBackdrop } from "./chat-backdrop";
+import { ChatHeaderBackdrop } from "./chat-header-backdrop";
 import { chatSidebarWidth, useChatSidebar } from "./chat-workspace";
 import { CompactPageHeading } from "./compact-page-heading";
 import { HeaderBackdrop } from "./header-backdrop";
 import { nativeTabsAvailable } from "./native-navigation";
-import { nativeHeaderRoute } from "./native-navigation-model";
 import { PageMaterialBackground } from "./page-material-background";
 import { PageReady } from "./page-ready";
 import { PageTitle } from "./page-title";
@@ -85,15 +78,8 @@ export const AppLayout = ({
 	const insets = useSafeAreaInsets();
 	const route = useRoute();
 	const routeParameters = useLocalSearchParams();
-	const contentKey = JSON.stringify(routeParameters);
+	const contentKey = pageContentKey(route.name, routeParameters);
 	const nativeNavigation = nativeTabsAvailable();
-	const nativeHeader = Platform.OS !== "web" && nativeHeaderRoute(route.name);
-	const measuredHeaderHeight = useContext(HeaderHeightContext);
-	const headerHeight = nativeHeader
-		? measuredHeaderHeight && measuredHeaderHeight > 0
-			? measuredHeaderHeight
-			: getDefaultHeaderHeight(dimensions, false, insets.top)
-		: 0;
 	const bottomClearance =
 		nativeNavigation &&
 		["index", "schedule", "messages", "club"].includes(route.name)
@@ -102,15 +88,15 @@ export const AppLayout = ({
 	const wide = width >= geometry.wide && !nativeNavigation;
 	const keyboard = useKeyboardVisible();
 	const workspace = presentation === "workspace";
-	const compactRoot = primaryDestination && !nativeHeader;
+	const compactRoot = primaryDestination;
 	const denseHeader =
-		headerLayout !== "current" &&
-		!nativeHeader &&
-		!workspace &&
-		!primaryDestination;
+		headerLayout !== "current" && !workspace && !primaryDestination;
 	const integratedHeader = denseHeader && headerLayout === "integrated";
+	const backControl = back ? (
+		<BackNavigation>{back}</BackNavigation>
+	) : undefined;
 	const glassBack = back ? (
-		<ToolbarGroup label="Back navigation">{back}</ToolbarGroup>
+		<ToolbarGroup label="Back navigation">{backControl}</ToolbarGroup>
 	) : undefined;
 	const toolbarBack =
 		compactRoot || (denseHeader && headerLayout !== "compact")
@@ -151,7 +137,7 @@ export const AppLayout = ({
 			tabs
 		);
 	const pagePadding = wide ? space.xxl : space.lg;
-	const floatingToolbar = !nativeHeader && (!workspace || primaryDestination);
+	const floatingToolbar = !workspace || primaryDestination;
 	const toolbarClearance = floatingToolbar
 		? denseHeader
 			? toolbarHeight
@@ -179,17 +165,6 @@ export const AppLayout = ({
 				large={headerLayout === "content"}
 			/>
 		)
-	) : nativeHeader && workspaceTitle ? undefined : nativeHeader ? (
-		subtitle || headingAction ? (
-			<Row justify="between" align="center" wrap>
-				{subtitle ? (
-					<Text variant="small" tone="secondary">
-						{subtitle}
-					</Text>
-				) : undefined}
-				{headingAction}
-			</Row>
-		) : undefined
 	) : compactRoot ? (
 		subtitle || titleAccessory ? (
 			<Stack gap="xs">
@@ -208,9 +183,9 @@ export const AppLayout = ({
 			}}
 		>
 			{workspaceTitle ? (
-				<HeaderBackdrop topInset={insets.top} fadeInset={space.lg} />
+				<ChatHeaderBackdrop topInset={insets.top} />
 			) : undefined}
-			{back}
+			{backControl}
 			<View style={{ flex: 1, minWidth: 0, gap: space.xxs }}>
 				{workspaceTitle ?? (
 					<>
@@ -237,7 +212,7 @@ export const AppLayout = ({
 						alignSelf: "flex-start",
 					}}
 				>
-					{back}
+					{backControl}
 				</View>
 			) : undefined}
 			{title ? (
@@ -295,7 +270,7 @@ export const AppLayout = ({
 			style={{
 				flex: 1,
 				opacity: visible ? 1 : 0,
-				paddingTop: nativeHeader ? 0 : insets.top,
+				paddingTop: insets.top,
 				paddingLeft: insets.left,
 				paddingRight: insets.right,
 			}}
@@ -303,46 +278,7 @@ export const AppLayout = ({
 			<PageMaterialBackground
 				showGrid={route.name !== "messages" && route.name !== "conversation"}
 			/>
-			{nativeHeader && title ? (
-				<RouterStack.Screen
-					options={{
-						title,
-						headerTitle: toolbarCenter
-							? (): ReactNode => toolbarCenter
-							: workspaceTitle
-								? (): ReactNode => workspaceTitle
-								: titleAccessory
-									? (): ReactNode => (
-											<Row gap="xs">
-												<Text variant="h4" lines={1}>
-													{title}
-												</Text>
-												{titleAccessory}
-											</Row>
-										)
-									: undefined,
-						headerTitleAlign: toolbarCenter
-							? "center"
-							: workspaceTitle
-								? "left"
-								: undefined,
-						headerLeft:
-							toolbarLeading || back
-								? (): ReactNode => toolbarLeading ?? back
-								: undefined,
-						headerBackVisible: toolbarLeading || back ? false : undefined,
-						headerRight: (): ReactNode =>
-							workspaceTitle ? (
-								action
-							) : (
-								<ToolbarGroup nativeHeader>
-									{accessory}
-									{profile}
-								</ToolbarGroup>
-							),
-					}}
-				/>
-			) : undefined}
+			{workspace && workspaceTitle ? <ChatBackdrop /> : undefined}
 			<KeyboardAvoidingView
 				behavior={Platform.OS === "ios" ? "padding" : undefined}
 				enabled={Platform.OS !== "web" && !primaryDestination}
@@ -357,7 +293,6 @@ export const AppLayout = ({
 					/>
 				) : undefined}
 				<View style={{ flex: 1, minWidth: 0 }}>
-					{workspace && workspaceTitle ? <ChatBackdrop /> : undefined}
 					{floatingToolbar ? (
 						<View
 							onLayout={
@@ -432,15 +367,14 @@ export const AppLayout = ({
 					<PageReady
 						loading={loading}
 						contentKey={contentKey}
-						layoutKey={`${headerHeight}:${toolbarHeight}:${width}:${insets.top}:${insets.left}:${insets.right}:${insets.bottom}`}
+						layoutKey={`${toolbarHeight}:${width}:${insets.top}:${insets.left}:${insets.right}:${insets.bottom}`}
 					>
 						<Stack grow gap="none">
 							{compactRoot && title ? <PageTitle title={title} /> : undefined}
 							{workspace && heading ? (
 								<View
 									style={{
-										paddingTop: nativeHeader ? headerHeight : toolbarClearance,
-										paddingHorizontal: nativeHeader ? space.md : 0,
+										paddingTop: toolbarClearance,
 										zIndex: layer.sticky,
 									}}
 								>
@@ -457,7 +391,6 @@ export const AppLayout = ({
 										paddingHorizontal: wide ? space.lg : space.md,
 										paddingTop:
 											(workspace && heading ? 0 : toolbarClearance) +
-											(nativeHeader && !workspace ? headerHeight : 0) +
 											(denseHeader
 												? space.xs
 												: workspace
@@ -505,9 +438,6 @@ export const AppLayout = ({
 												: space.md,
 										paddingTop:
 											(workspace && heading ? 0 : toolbarClearance) +
-											(nativeHeader && (!workspace || workspaceTitle)
-												? headerHeight
-												: 0) +
 											(workspace ? space.none : wide ? pagePadding : space.md),
 										paddingBottom: workspace ? space.none : pagePadding,
 										gap: workspace ? space.none : space.section,
@@ -538,9 +468,6 @@ export const AppLayout = ({
 										backgroundColor: "transparent",
 									}}
 								>
-									{workspace && workspaceTitle ? (
-										<HeaderBackdrop edge="bottom" fadeInset={space.lg} />
-									) : undefined}
 									<View
 										style={{
 											width: "100%",

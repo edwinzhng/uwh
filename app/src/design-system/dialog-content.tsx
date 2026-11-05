@@ -53,6 +53,7 @@ import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, geometry, layer, motion, opacity, space } from "./tokens";
 import { useDialogDrag } from "./use-dialog-drag";
+import { useDialogFocusReturn } from "./use-dialog-focus-return";
 import { DialogStackParent, useDialogStack } from "./use-dialog-stack";
 import { useMotion } from "./use-motion";
 import { useVisibleViewport } from "./use-visible-viewport";
@@ -88,6 +89,7 @@ export const DialogContent = ({
 	isDismissDisabled = false,
 	focusKey,
 }: DialogProps): ReactElement | undefined => {
+	useDialogFocusReturn();
 	const theme = useTheme();
 	const treatment = useGlassPreview();
 	const preview =
@@ -459,14 +461,14 @@ export const DialogContent = ({
 															showRim={!fullScreen}
 														/>
 													) : undefined}
-													{!scrollable || fullScreen ? header : undefined}
+													{header}
 													{scrollable ? (
 														<ScrollArea
 															key={focusKey}
 															edgeFades={false}
-															stickyHeaderIndices={
-																header && !fullScreen ? [0] : undefined
-															}
+															bounces={false}
+															alwaysBounceVertical={false}
+															overScrollMode="never"
 															keyboardShouldPersistTaps="handled"
 															style={{
 																flexGrow: fullScreen ? 1 : 0,
@@ -474,7 +476,6 @@ export const DialogContent = ({
 																minHeight: 0,
 															}}
 														>
-															{fullScreen ? undefined : header}
 															<View style={bodyPadding}>{children}</View>
 														</ScrollArea>
 													) : (

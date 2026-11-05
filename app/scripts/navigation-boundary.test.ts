@@ -1,6 +1,61 @@
 import { expect, test } from "bun:test";
 import { inspectNavigationBoundary } from "./navigation-boundary";
 
+test("club summary queries register readiness before metric card materials appear", (): void => {
+	const source =
+		"const Summary = () => { const summary = useQuery(api.club.summary, {}); return children(summary?.registered); };";
+	expect(
+		inspectNavigationBoundary(source, "src/features/club-summary-data.tsx"),
+	).toHaveLength(1);
+	expect(
+		inspectNavigationBoundary(
+			source.replace(
+				"return children",
+				"usePageLoading(summary === undefined); return children",
+			),
+			"src/features/club-summary-data.tsx",
+		),
+	).toHaveLength(0);
+});
+
+test("dynamic native headers reject inline navigation options while static named screens remain valid", (): void => {
+	expect(
+		inspectNavigationBoundary(
+			"<RouterStack.Screen options={{ title, headerRight: () => <Account /> }} />",
+			"src/design-system/native-screen-header.tsx",
+		),
+	).toHaveLength(1);
+	expect(
+		inspectNavigationBoundary(
+			"<RouterStack.Screen options={options} />",
+			"src/design-system/native-screen-header.tsx",
+		),
+	).toHaveLength(0);
+	expect(
+		inspectNavigationBoundary(
+			'<RouterStack.Screen name="session" options={{ title: "Practice" }} />',
+			"app/_layout.tsx",
+		),
+	).toHaveLength(0);
+});
+
+test("native navigator headers stay disabled so page titles and controls have one shared owner", (): void => {
+	const options =
+		"const options = { headerShown: false, animation: nativeStackAnimation(route.name, motion), contentStyle: { backgroundColor: theme.background.canvas } };";
+	expect(
+		inspectNavigationBoundary(
+			options,
+			"src/design-system/app-router.native.tsx",
+		),
+	).toHaveLength(0);
+	expect(
+		inspectNavigationBoundary(
+			options.replace("headerShown: false", "headerShown: true"),
+			"src/design-system/app-router.native.tsx",
+		),
+	).toHaveLength(1);
+});
+
 test("navigation requires instant transitions and opaque route surfaces", (): void => {
 	const valid =
 		'const options = { animation: "none", contentStyle: { backgroundColor: theme.background.canvas } };';

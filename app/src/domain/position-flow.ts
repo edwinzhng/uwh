@@ -1,4 +1,21 @@
+import {
+	type PlayerCoaching,
+	type Position,
+	validatePlayerCoaching,
+} from "./player-coaching";
 import type { PlayerRanking } from "./player-rankings";
+
+export const positionFlowIndex = (
+	queue: readonly string[],
+	players: readonly PlayerRanking[],
+	cursor: number,
+): number => {
+	const index = queue.findIndex(
+		(id, index) =>
+			index >= cursor && players.some((player) => player.personId === id),
+	);
+	return index < 0 ? queue.length : index;
+};
 
 export const positionFlowQueue = (
 	players: readonly PlayerRanking[],
@@ -15,12 +32,6 @@ export const positionFlowQueue = (
 		)
 		.map((player) => player.personId),
 ];
-
-import {
-	type PlayerCoaching,
-	type Position,
-	validatePlayerCoaching,
-} from "./player-coaching";
 
 export const withPlayerPositions = (
 	current: PlayerCoaching,

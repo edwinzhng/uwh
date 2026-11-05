@@ -4,7 +4,7 @@ import {
 	conversationCategory,
 } from "./messaging";
 
-export type ChatFilter = "all" | "unread" | "group" | "channel";
+export type ChatFilter = "all" | "unread" | "direct" | "group" | "channel";
 
 export const filteredConversations = (
 	threads: readonly ConversationSummary[],

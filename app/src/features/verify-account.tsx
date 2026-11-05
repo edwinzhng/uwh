@@ -11,20 +11,26 @@ export const VerifyAccount = (): ReactElement => {
 	const task = useTask();
 	return (
 		<Stack gap="sm">
-			{social?.info?.reauthenticated ? (
+			{social?.info?.reauthenticated &&
+			!backend.accountInfo?.appleVerificationRequired ? (
 				<Text variant="small" tone="success">
 					Identity verified.
 				</Text>
 			) : (
 				<>
 					<Text variant="small">
-						Verify your identity to delete your account.
+						{backend.accountInfo?.appleVerificationRequired
+							? "Verify with Apple to revoke its authorization when your account is deleted."
+							: "Verify your identity to delete your account."}
 					</Text>
 					{socialProviders
-						.filter((provider) =>
-							social?.info?.accounts.some(
-								(account) => account.provider === provider,
-							),
+						.filter(
+							(provider) =>
+								(!backend.accountInfo?.appleVerificationRequired ||
+									provider === "apple") &&
+								social?.info?.accounts.some(
+									(account) => account.provider === provider,
+								),
 						)
 						.map((provider) => (
 							<Button
@@ -40,7 +46,8 @@ export const VerifyAccount = (): ReactElement => {
 								}}
 							/>
 						))}
-					{backend.accountInfo?.email ? (
+					{backend.accountInfo?.email &&
+					!backend.accountInfo.appleVerificationRequired ? (
 						<AuthForm verificationEmail={backend.accountInfo.email} />
 					) : undefined}
 				</>

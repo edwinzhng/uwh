@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { ConvexHttpClient } from "convex/browser";
 import { api, internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
+import { encryptAppleToken } from "../convex/apple_token_crypto";
 import type {
 	AccountConnectionPurpose,
 	SocialProvider,
@@ -244,6 +245,69 @@ try {
 		}),
 		/Verify your email/,
 	);
+	const unlinkApple = await socialUser("apple");
+	const unlinkRequest = await request(owner, "apple");
+	const unlinkProof = await session(unlinkApple.userId, unlinkApple.email);
+	await owner.client.action(api.connection_actions.complete, {
+		requestId: unlinkRequest,
+		token: unlinkProof.token,
+	});
+	const unlinkMethod = (
+		await owner.client.query(api.connected_accounts.list, {})
+	).accounts.find((account) => account.provider === "apple");
+	assert(unlinkMethod?.canDisconnect && unlinkMethod.requiresAppleVerification);
+	await assert.rejects(
+		owner.client.mutation(api.connected_accounts.disconnect, {
+			accountId: unlinkMethod.id,
+		}),
+		/Verify with Apple/,
+	);
+	assert(unlinkApple.subject);
+	await localRun(
+		"local_social:captureAppleGrant",
+		internal.local_social.captureAppleGrant,
+		{
+			userId: owner.userId,
+			email: owner.email,
+			subject: unlinkApple.subject,
+			encryptedToken: await encryptAppleToken(
+				"fictional-unlink-token",
+				Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString(
+					"base64",
+				),
+			),
+		},
+	);
+	assert.equal(
+		(await owner.client.query(api.connected_accounts.list, {})).accounts.find(
+			(account) => account.id === unlinkMethod.id,
+		)?.requiresAppleVerification,
+		false,
+	);
+	await owner.client.mutation(api.connected_accounts.disconnect, {
+		accountId: unlinkMethod.id,
+	});
+	const unlinkGrant = await localRun(
+		"local_social:appleGrantState",
+		internal.local_social.appleGrantState,
+		{ email: owner.email, subject: unlinkApple.subject },
+	);
+	assert(unlinkGrant?.pending && !unlinkGrant.attached);
+	assert.equal(
+		(await owner.client.query(api.account.current, {}))?.id,
+		owner.userId,
+	);
+	assert.equal(
+		(await owner.client.query(api.connected_accounts.list, {})).accounts.some(
+			(account) => account.id === unlinkMethod.id,
+		),
+		false,
+	);
+	await localRun(
+		"local_social:removeAppleGrant",
+		internal.local_social.removeAppleGrant,
+		{ email: owner.email, subject: unlinkApple.subject },
+	);
 	const apple = await socialUser("apple");
 	const appleMethod = (
 		await apple.client.query(api.connected_accounts.list, {})
@@ -314,8 +378,39 @@ try {
 		(await apple.client.query(api.connected_accounts.list, {})).reauthenticated,
 		true,
 	);
+	await assert.rejects(
+		apple.client.action(api.account_actions.deleteAccount, {}),
+		/Verify with Apple/,
+	);
+	assert(apple.subject);
+	await localRun(
+		"local_social:captureAppleGrant",
+		internal.local_social.captureAppleGrant,
+		{
+			userId: apple.userId,
+			email: apple.email,
+			subject: apple.subject,
+			encryptedToken: await encryptAppleToken(
+				"fictional-refresh-token",
+				Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString(
+					"base64",
+				),
+			),
+		},
+	);
 	await apple.client.action(api.account_actions.deleteAccount, {});
 	assert.equal(await apple.client.query(api.account.current, {}), null);
+	const pendingGrant = await localRun(
+		"local_social:appleGrantState",
+		internal.local_social.appleGrantState,
+		{ email: apple.email, subject: apple.subject },
+	);
+	assert(pendingGrant?.pending && !pendingGrant.attached);
+	await localRun(
+		"local_social:removeAppleGrant",
+		internal.local_social.removeAppleGrant,
+		{ email: apple.email, subject: apple.subject },
+	);
 	console.log(
 		"Social auth checks passed: verified email linking, different-email connections, preserved club data, wrong-session and stale-proof rejection, last-method protection, conflict isolation, session revocation and password-free account deletion. Provider browser handshakes require configured credentials.",
 	);

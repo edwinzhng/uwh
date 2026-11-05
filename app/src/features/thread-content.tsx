@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { type ReactElement, useMemo, useState } from "react";
 import { useChatSafety } from "../backend/chat-safety";
 import { useApp } from "../demo/app-state";
@@ -44,6 +44,7 @@ export const ThreadContent = ({
 }: ThreadContentProps): ReactElement => {
 	const { account, source, data } = useApp();
 	const router = useRouter();
+	const { fromEvent } = useLocalSearchParams<{ fromEvent?: string }>();
 	const safety = useChatSafety();
 	const [replyId, setReplyId] = useState<string>();
 	const [latestVisible, setLatestVisible] = useState<string>();
@@ -100,10 +101,18 @@ export const ThreadContent = ({
 			back={
 				<Row gap="xxs">
 					<Button
-						label="Chats"
+						label={fromEvent ? "Back to practice" : "Chats"}
 						icon="arrowLeft"
 						variant="ghost"
-						onPress={(): void => router.dismissTo("/messages")}
+						onPress={(): void => {
+							if (fromEvent && router.canGoBack()) router.back();
+							else if (fromEvent)
+								router.replace({
+									pathname: "/session",
+									params: { event: fromEvent },
+								});
+							else router.dismissTo("/messages");
+						}}
 					/>
 				</Row>
 			}

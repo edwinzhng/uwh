@@ -14,14 +14,18 @@ import {
 	Surface,
 } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
+import { practicePartKey } from "../domain/practice-parts";
+import { ContentReport } from "./content-report";
 import { SessionPlanDetails } from "./session-plan-details";
 
 const SharedPlanContent = ({
 	service,
 	preview = false,
+	planKey,
 }: {
 	service: SharedSessionPlanService;
 	preview?: boolean;
+	planKey: string;
 }): ReactElement | undefined =>
 	service.loading ? (
 		<LoadingContent />
@@ -34,6 +38,14 @@ const SharedPlanContent = ({
 			) : undefined}
 			<Surface>
 				<SessionPlanDetails plan={service.plan} />
+				<ContentReport
+					source={{
+						kind: "sessionPlan",
+						id: planKey,
+						revision: service.plan.revision,
+					}}
+					label="Report plan"
+				/>
 			</Surface>
 		</Stack>
 	) : preview ? (
@@ -51,6 +63,7 @@ const LiveSharedPlan = ({
 }): ReactElement => (
 	<SharedPlanContent
 		service={useLiveSharedSessionPlan(eventId, partId)}
+		planKey={practicePartKey(eventId, partId)}
 		preview={preview}
 	/>
 );
@@ -65,6 +78,7 @@ const PreviewSharedPlan = ({
 }): ReactElement => (
 	<SharedPlanContent
 		service={usePreviewSharedSessionPlan(eventId, partId)}
+		planKey={practicePartKey(eventId, partId)}
 		preview={preview}
 	/>
 );

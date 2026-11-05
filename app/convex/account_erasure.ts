@@ -2,6 +2,7 @@ import { clubTimestamp } from "../src/domain/event-time";
 import { removeLineupPeople } from "../src/domain/lineup";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
+import { queueAppleRevocation } from "./apple_grants";
 import { loadData } from "./data";
 import { eraseDevelopment } from "./development_cleanup";
 import { eraseEquipmentLoans } from "./equipment_loans_cleanup";
@@ -52,6 +53,7 @@ export const eraseAccount = async (
 	transferTo?: Id<"users">,
 ): Promise<void> => {
 	const user = await ctx.db.get(userId);
+	await queueAppleRevocation(ctx, userId);
 	await eraseEquipmentLoans(ctx, { userId, removeClub: false });
 	await eraseHouseholdLinks(ctx, { userId, removeClub: false });
 	const membership = await ctx.db
@@ -145,6 +147,7 @@ export const eraseAccount = async (
 				"pushJobs",
 				"joinRequests",
 				"clubInvites",
+				"staffInvites",
 				"inviteLimits",
 				"seasonRecords",
 				"seasonLedger",
@@ -334,16 +337,8 @@ export const eraseAccount = async (
 			))
 				await ctx.db.delete(row._id);
 			for (const row of rows.feedback) {
-				if (
-					personIds.has(row.value.personId) ||
-					(row.value.authorId === userId &&
-						row.value.visibility !== "published")
-				)
+				if (personIds.has(row.value.personId) || row.value.authorId === userId)
 					await ctx.db.delete(row._id);
-				else if (row.value.authorId === userId)
-					await ctx.db.patch(row._id, {
-						value: { ...row.value, authorId: "deleted-account" },
-					});
 			}
 			for (const row of rows.teams)
 				await ctx.db.patch(row._id, {
@@ -479,6 +474,10 @@ export const eraseAccount = async (
 				.withIndex("by_club", (q) => q.eq("clubId", membership.clubId))
 				.collect()) {
 				await ctx.db.patch(report._id, {
+					reason:
+						report.reporterId === userId
+							? "Reporter deleted account."
+							: report.reason,
 					reporterId:
 						report.reporterId === userId ? undefined : report.reporterId,
 					reviewedBy:
@@ -489,6 +488,7 @@ export const eraseAccount = async (
 								author: "Deleted account",
 								body: "",
 								source: undefined,
+								contentSource: undefined,
 								imageIds: [],
 							}
 						: {}),
@@ -608,5 +608,15 @@ export const eraseAccount = async (
 			createdBy: undefined,
 			...(invite.state === "pending" ? { state: "revoked" as const } : {}),
 		});
+	for (const invite of await ctx.db
+		.query("staffInvites")
+		.withIndex("by_sender", (q) => q.eq("createdBy", userId))
+		.collect())
+		await ctx.db.patch(invite._id, { createdBy: undefined, revoked: true });
+	for (const invite of await ctx.db
+		.query("staffInvites")
+		.withIndex("by_owner", (q) => q.eq("ownerAtIssue", userId))
+		.collect())
+		await ctx.db.patch(invite._id, { ownerAtIssue: undefined, revoked: true });
 	if (user) await ctx.db.delete(userId);
 };

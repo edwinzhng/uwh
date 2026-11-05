@@ -13,6 +13,7 @@ import {
 	signInEmailError,
 	validEmailSignInCode,
 } from "../domain/email-sign-in";
+import { AppInformationLinks } from "./app-information-links";
 import { SocialSignIn } from "./social-sign-in";
 import { useFormTask } from "./use-form-task";
 
@@ -141,6 +142,7 @@ export const AuthForm = ({
 						/>
 					</Row>
 				) : undefined}
+				{!verificationEmail ? <AppInformationLinks /> : undefined}
 			</Stack>
 		</PageReveal>
 	);

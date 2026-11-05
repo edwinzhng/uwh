@@ -1,17 +1,14 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import type { ReactElement } from "react";
-import { HeaderBackdrop } from "./header-backdrop";
+import type { AppRouterProps } from "./app-router-props";
 import {
-	nativeHeaderRoute,
 	nativeRouteTitle,
 	nativeStackAnimation,
 } from "./native-navigation-model";
 import { useTheme } from "./theme";
 import { useMotion } from "./use-motion";
 
-const headerBackground = (): ReactElement => <HeaderBackdrop />;
-
-export const AppRouter = (): ReactElement => {
+export const AppRouter = ({ renderScreen }: AppRouterProps): ReactElement => {
 	const theme = useTheme();
 	const motionEnabled = useMotion();
 	const base = theme.mode === "dark" ? DarkTheme : DefaultTheme;
@@ -30,16 +27,16 @@ export const AppRouter = (): ReactElement => {
 			}}
 		>
 			<Stack
+				screenLayout={
+					renderScreen
+						? ({ route, children }): ReactElement =>
+								renderScreen(route.name, { ...route.params }, children)
+						: undefined
+				}
 				initialRouteName="(tabs)"
 				screenOptions={({ route }) => ({
 					title: nativeRouteTitle(route.name),
-					headerShown: nativeHeaderRoute(route.name),
-					headerBackButtonDisplayMode: "generic",
-					headerTransparent: true,
-					headerBackground,
-					headerTintColor: theme.text.primary,
-					headerStyle: { backgroundColor: "transparent" },
-					headerShadowVisible: false,
+					headerShown: false,
 					freezeOnBlur: true,
 					animation: nativeStackAnimation(route.name, motionEnabled),
 					gestureEnabled: true,

@@ -118,7 +118,7 @@ export const HomePractice = ({
 						<Badge label="Response needed" kind="neutral" />
 					) : undefined}
 					<Text tone="primary">{formatDate(event.date)}</Text>
-					<Text variant="caption" tone="primary">
+					<Text variant="caption" tone="primary" lines={1}>
 						{formatTimeLocation(
 							eventTimeRange(event.start, event.end),
 							venueName(event.venue),

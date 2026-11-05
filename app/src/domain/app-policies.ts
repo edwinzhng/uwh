@@ -19,7 +19,7 @@ export const appPolicies: AppPolicy[] = [
 			[
 				"How we use and share information",
 				"We use information to operate the app, manage club access, deliver communications, and prevent abuse. Club information is shared according to membership, roles, and the feature’s audience. Reporting a message shares that message and its attachments with club moderators.",
-				"Service providers process information for hosting, authentication, email, and notifications, including Convex, Resend, Expo, Apple, and Google. Information may be processed outside your country. We do not sell personal information or use it for targeted advertising.",
+				"Service providers process information for hosting, authentication, email, and notifications, including Convex, Resend, Expo, Vercel, Apple, and Google. Clubs may connect YouTube to host training videos. Information may be processed outside your country. We do not sell personal information or use it for targeted advertising.",
 			],
 			[
 				"Permissions and children’s profiles",
@@ -28,7 +28,7 @@ export const appPolicies: AppPolicy[] = [
 			],
 			[
 				"Retention and deletion",
-				"We keep information while needed to provide the service. You can request account deletion in the app or contact us. Deletion removes account credentials and personal records; some shared content is anonymized, and historical attendance may remain. Child profiles managed by another account may also remain. Club owners may need to transfer ownership before deleting their account.",
+				"Delete your account in Account settings → Account & security → Delete account. Deletion removes credentials, personal profiles, messages, coaching feedback, resources, comments and uploaded files associated with your account. Historical attendance remains without deleted profiles; child profiles linked to another account remain. Club owners with other members must transfer ownership first. Apple authorization tokens are stored encrypted for revocation and removed after Apple confirms it. External authorization and hosted-video cleanup are retried if their providers are unavailable. Moderation records expire after 90 days, with deleted account identities and authored content removed.",
 			],
 			[
 				"Your choices and contact",

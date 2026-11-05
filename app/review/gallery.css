@@ -107,11 +107,6 @@ article {
 	aspect-ratio: 1280 / 853;
 	max-width: 100%;
 }
-.frame-host[data-viewport="desktop"] iframe {
-	width: 1280px;
-	height: 853px;
-	transform-origin: top left;
-}
 iframe {
 	display: block;
 	width: 100%;
@@ -122,6 +117,11 @@ iframe {
 }
 article[data-interact="true"] iframe {
 	pointer-events: auto;
+}
+.frame-host[data-viewport="desktop"] iframe {
+	width: 1280px;
+	height: 853px;
+	transform-origin: top left;
 }
 article[data-interact="true"] {
 	border-color: #d8ff63;

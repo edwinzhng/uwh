@@ -25,3 +25,7 @@
 - Use real interactive before/after components. On phones mount only the current pair of two frames; destroy offscreen contexts. Bound desktop live rendering.
 - Record only meaningful results with environment and limitations; keep temporary captures and review diaries out of tracked source.
 - Keep reusable source restrictions in `check:design`, `check:native` and `check:tests`; test those rules with inline fixtures. Product tests import and exercise behavior rather than asserting source-code strings. Invalid public component combinations are checked by `tests/component-api.typecheck.ts` during typecheck.
+
+- URL-backed tabs and filters use `useRouteSelection`; changing a filter must not key/remount the shared content or attendance workflow. Entity changes still reset their workflow scope.
+- `bun run verify:workflows` checks bounded selection histories, exhaustive attendance transitions, dialog lifecycle, readiness and lineup workflows. Failures include the action sequence; these checks cover the modeled rules, not every UI, backend or device behavior.
+- Pull requests run the app checks and site motion checks in GitHub Actions. Keep these checks green before merging; native gesture/performance approval still needs a release build on a device.

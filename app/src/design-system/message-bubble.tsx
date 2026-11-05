@@ -10,7 +10,7 @@ import { MessageMenuPosition } from "./message-menu-position";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { ThemeScope } from "./theme-scope";
-import { corners, geometry, space } from "./tokens";
+import { corners, geometry, type SpaceToken, space } from "./tokens";
 
 export const MessageBubble = ({
 	children,
@@ -20,6 +20,7 @@ export const MessageBubble = ({
 	authorId,
 	avatarLabel,
 	stamp,
+	stampGap = "none",
 	reactions,
 	reactionOpen = false,
 	actions,
@@ -34,6 +35,7 @@ export const MessageBubble = ({
 	authorId?: string;
 	avatarLabel?: string;
 	stamp?: string;
+	stampGap?: SpaceToken;
 	reactions?: ReactNode;
 	reactionOpen?: boolean;
 	actions?: ReactNode;
@@ -73,7 +75,14 @@ export const MessageBubble = ({
 			>
 				{children}
 				{stamp ? (
-					<View style={{ alignSelf: "flex-end", paddingTop: space.xxs }}>
+					<View
+						style={{
+							alignSelf: "flex-end",
+							paddingTop: space.xxs,
+							marginTop: space[stampGap],
+							flexShrink: 0,
+						}}
+					>
 						<Text variant="navigation" tone="secondary">
 							{stamp}
 						</Text>

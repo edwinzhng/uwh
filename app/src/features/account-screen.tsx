@@ -1,7 +1,7 @@
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import type { ReactElement } from "react";
 import { useActivePerson } from "../demo/app-state";
-import { Stack, TabContent, Tabs } from "../design-system";
+import { Stack, TabContent, Tabs, useRouteSelection } from "../design-system";
 import {
 	accountSection,
 	accountSectionParams,
@@ -19,7 +19,12 @@ export const AccountScreen = (): ReactElement => {
 	const person = useActivePerson();
 	const router = useRouter();
 	const params = useLocalSearchParams<{ tab?: string; feedback?: string }>();
-	const tab = accountSection(params.tab ?? "membership", params.feedback);
+	const selection = useRouteSelection(
+		accountSection(params.tab ?? "membership", params.feedback),
+		(value): void => router.setParams(accountSectionParams(value)),
+		person.id,
+	);
+	const tab = selection.value;
 	if (params.tab === "settings" || params.tab === "household")
 		return (
 			<Redirect
@@ -41,9 +46,7 @@ export const AccountScreen = (): ReactElement => {
 					hideLabel
 					label="Account"
 					value={tab}
-					onValueChange={(value): void =>
-						router.setParams(accountSectionParams(value))
-					}
+					onValueChange={selection.select}
 					options={accountSections}
 				/>
 			}

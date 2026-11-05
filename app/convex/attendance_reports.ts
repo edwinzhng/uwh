@@ -1,7 +1,8 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import { canRegister } from "../src/domain/app-rules";
+import { reduceApp } from "../src/domain/app-reducer";
+import { canCoach, canRegister } from "../src/domain/app-rules";
 import {
 	attendanceDashboard,
 	attendanceDay,
@@ -16,7 +17,8 @@ import { defaultSeasonId, initialSeasons } from "../src/domain/seasons";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, type QueryCtx, query } from "./_generated/server";
 import { attendanceFlagValue } from "./attendance_report_schema";
-import { requireMember } from "./identity";
+import { loadData, saveData } from "./data";
+import { accountFor, requireMember } from "./identity";
 
 const coach = async (ctx: QueryCtx): Promise<Doc<"memberships">> => {
 	const actor = await requireMember(ctx);
@@ -238,6 +240,7 @@ export const setFlag = mutation({
 		eventId: v.string(),
 		personId: v.string(),
 		kind: v.optional(attendanceFlagValue),
+		partId: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
 		const actor = await coach(ctx);
@@ -267,10 +270,30 @@ export const setFlag = mutation({
 		if (
 			!event ||
 			event.value.cancelled ||
+			!canCoach(accountFor(actor), event.value.program) ||
 			!member ||
 			!canRegister(member.value, event.value)
 		)
 			throw new Error("Player or event unavailable.");
+		if (args.kind === "addition") {
+			const { data, rows } = await loadData(ctx, actor.clubId, {
+				select: { responses: [`${args.eventId}:${args.personId}`] },
+				rows: { events: [event], members: [member] },
+			});
+			await saveData(
+				ctx,
+				actor.clubId,
+				rows,
+				reduceApp(data, accountFor(actor), {
+					type: "attendance",
+					eventId: args.eventId,
+					personId: args.personId,
+					partId: args.partId,
+					attendance: "present",
+					lateAddition: true,
+				}),
+			);
+		}
 		if (!args.kind) {
 			if (existing) await ctx.db.delete(existing._id);
 			return;
@@ -278,7 +301,8 @@ export const setFlag = mutation({
 		if (existing) await ctx.db.patch(existing._id, { kind: args.kind });
 		else
 			await ctx.db.insert("eventAttendanceFlags", {
-				...args,
+				eventId: args.eventId,
+				personId: args.personId,
 				kind: args.kind,
 				clubId: actor.clubId,
 			});

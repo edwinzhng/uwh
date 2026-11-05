@@ -3,7 +3,7 @@ import { type ReactElement, type ReactNode, useEffect, useState } from "react";
 import { AccessibilityInfo } from "react-native";
 import { trackPageMotionInput } from "./page-motion-input";
 import { reduceMotionAtom } from "./theme";
-import { MotionContext } from "./use-motion";
+import { MotionContext, MotionSettingsReadyContext } from "./use-motion";
 
 export const MotionProvider = ({
 	children,
@@ -12,9 +12,12 @@ export const MotionProvider = ({
 }): ReactElement => {
 	useEffect(trackPageMotionInput, []);
 	const forced = useAtomValue(reduceMotionAtom);
-	const [systemReduced, setSystemReduced] = useState(true);
+	const [systemReduced, setSystemReduced] = useState<boolean>();
 	useEffect(() => {
-		void AccessibilityInfo.isReduceMotionEnabled().then(setSystemReduced);
+		void AccessibilityInfo.isReduceMotionEnabled().then(
+			setSystemReduced,
+			(): void => setSystemReduced(true),
+		);
 		const subscription = AccessibilityInfo.addEventListener(
 			"reduceMotionChanged",
 			setSystemReduced,
@@ -22,6 +25,10 @@ export const MotionProvider = ({
 		return (): void => subscription.remove();
 	}, []);
 	return (
-		<MotionContext value={!forced && !systemReduced}>{children}</MotionContext>
+		<MotionSettingsReadyContext value={systemReduced !== undefined}>
+			<MotionContext value={!forced && systemReduced === false}>
+				{children}
+			</MotionContext>
+		</MotionSettingsReadyContext>
 	);
 };

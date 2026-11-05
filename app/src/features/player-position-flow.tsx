@@ -1,7 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { Button, Dialog, EmptyState, Stack, Text } from "../design-system";
 import type { PlayerRanking } from "../domain/player-rankings";
-import { positionFlowQueue } from "../domain/position-flow";
+import { positionFlowIndex, positionFlowQueue } from "../domain/position-flow";
 import {
 	PlayerPositionCard,
 	type SavePlayerPositions,
@@ -21,7 +21,8 @@ export const PlayerPositionFlow = ({
 	const [queue] = useState(() => positionFlowQueue(players, initialPersonId));
 	const [cursor, setCursor] = useState(0);
 	const [busy, setBusy] = useState(false);
-	const id = queue.at(cursor);
+	const index = positionFlowIndex(queue, players, cursor);
+	const id = queue.at(index);
 	const player = players.find((entry) => entry.personId === id);
 	return (
 		<Dialog
@@ -44,7 +45,7 @@ export const PlayerPositionFlow = ({
 						player={player}
 						save={save}
 						onBusy={setBusy}
-						onSaved={(): void => setCursor((current) => current + 1)}
+						onSaved={(): void => setCursor(index + 1)}
 					/>
 				) : (
 					<EmptyState title="Positions complete" />

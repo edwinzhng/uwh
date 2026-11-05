@@ -63,6 +63,8 @@ export const ModerationScreen = (): ReactElement => {
 	const reviewPreview = useSetAtom(previewPerformanceReportReview);
 	const [pause, setPause] = useState(false);
 	const report = selected;
+	const contentSource =
+		report && "contentSource" in report ? report.contentSource : undefined;
 	const review = async (
 		decision: "removed" | "dismissed",
 	): Promise<boolean> => {
@@ -158,7 +160,7 @@ export const ModerationScreen = (): ReactElement => {
 					</DataPage>
 					{safety.queue?.restrictions.length ? (
 						<Stack gap="heading">
-							<SectionHeading>Paused chat access</SectionHeading>
+							<SectionHeading>Paused sharing</SectionHeading>
 							<Surface>
 								<List>
 									{safety.queue?.restrictions.map((entry) => (
@@ -194,9 +196,11 @@ export const ModerationScreen = (): ReactElement => {
 						title={
 							report?.author === "Deleted account"
 								? "Reported content"
-								: report?.source
-									? "Reported session feedback"
-									: "Reported message"
+								: contentSource
+									? "Reported content"
+									: report?.source
+										? "Reported session feedback"
+										: "Reported message"
 						}
 						isOpen={Boolean(report)}
 						onOpenChange={(open): void => {
@@ -221,27 +225,35 @@ export const ModerationScreen = (): ReactElement => {
 									/>
 									<ConfirmButton
 										label={
-											report.source
-												? "Remove session feedback"
-												: "Remove message"
+											contentSource
+												? "Remove reported content"
+												: report.source
+													? "Remove session feedback"
+													: "Remove message"
 										}
 										title={
-											report.source
-												? "Remove session feedback?"
-												: "Remove message?"
+											contentSource
+												? "Remove reported content?"
+												: report.source
+													? "Remove session feedback?"
+													: "Remove message?"
 										}
 										description={
-											(report.source
-												? "Remove this reported feedback version from the player’s history. Newer feedback will not be removed."
-												: "Remove this message and its photos for everyone. This can’t be undone.") +
+											(contentSource
+												? "Remove the reported content and its uploaded media. Newer edits will not be removed."
+												: report.source
+													? "Remove this reported feedback version from the player’s history. Newer feedback will not be removed."
+													: "Remove this message and its photos for everyone. This can’t be undone.") +
 											(pause
 												? " This account’s chat access will also be paused."
 												: "")
 										}
 										confirmLabel={
-											report.source
-												? "Remove session feedback"
-												: "Remove message"
+											contentSource
+												? "Remove reported content"
+												: report.source
+													? "Remove session feedback"
+													: "Remove message"
 										}
 										danger
 										variant="danger"
@@ -274,7 +286,7 @@ export const ModerationScreen = (): ReactElement => {
 							!report.source &&
 							report.subjectId ? (
 								<Toggle
-									label="Pause this account’s chat access"
+									label="Pause this account’s sharing"
 									value={pause}
 									onValueChange={setPause}
 								/>

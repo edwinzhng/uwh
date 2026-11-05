@@ -18,6 +18,7 @@ const entriesFor = async (
 	actor: Doc<"memberships">,
 	events: ClubEvent[],
 ): Promise<ScheduleEntry[]> => {
+	if (!events.length) return [];
 	const responses = await eventRows(
 		ctx,
 		actor.clubId,

@@ -19,6 +19,8 @@ export const ConnectedAccountRow = ({
 	const task = useTask();
 	const [open, setOpen] = useState(false);
 	const name = providerName(provider);
+	const verifyApple =
+		account?.canDisconnect && account.requiresAppleVerification;
 	return (
 		<Stack gap="sm">
 			<ContentRow
@@ -32,17 +34,31 @@ export const ConnectedAccountRow = ({
 				}
 				control={
 					<Button
-						label={account ? "Disconnect" : "Connect"}
+						label={
+							verifyApple
+								? "Verify with Apple"
+								: account
+									? "Disconnect"
+									: "Connect"
+						}
 						variant="ghost"
 						isLoading={task.busy}
 						isDisabled={
 							account ? !account.canDisconnect : !social?.info?.[provider]
 						}
 						onPress={(): void => {
-							if (account) setOpen(true);
+							if (verifyApple) {
+								void task.run(async (): Promise<void> => {
+									if (!social)
+										throw new Error("Apple verification is unavailable.");
+									await social.connect("apple", "verify");
+								});
+							} else if (account) setOpen(true);
 							else
 								void task.run(async (): Promise<void> => {
-									await social?.connect(provider);
+									if (!social)
+										throw new Error("Connecting accounts is unavailable.");
+									await social.connect(provider);
 								});
 						}}
 					/>
@@ -63,7 +79,9 @@ export const ConnectedAccountRow = ({
 						isLoading={task.busy}
 						onPress={(): void => {
 							void task.run(async (): Promise<void> => {
-								if (account) await social?.disconnect(account.id);
+								if (!account || !social)
+									throw new Error("Connected account unavailable.");
+								await social.disconnect(account.id);
 								setOpen(false);
 							});
 						}}

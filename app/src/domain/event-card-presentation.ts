@@ -1,11 +1,16 @@
-import { formatTime } from "./app-rules";
+const compactTime = (time: string): { clock: string; period: string } => {
+	const [hour, minute] = time.split(":");
+	const hours = Number(hour);
+	return {
+		clock: `${hours % 12 || 12}${minute === "00" ? "" : `:${minute}`}`,
+		period: hours < 12 ? "am" : "pm",
+	};
+};
 
 export const eventTimeRange = (start: string, end: string): string => {
-	const from = formatTime(start).replace(":00", "");
-	const to = formatTime(end).replace(":00", "");
-	return `${from.endsWith("AM") === to.endsWith("AM") ? from.replace(/ (AM|PM)$/, "") : from}–${to}`
-		.replace(/\s/g, "")
-		.toLowerCase();
+	const from = compactTime(start);
+	const to = compactTime(end);
+	return `${from.clock}${from.period === to.period ? "" : from.period}–${to.clock}${to.period}`;
 };
 
 export const eventDateParts = (

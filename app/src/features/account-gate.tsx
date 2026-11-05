@@ -1,12 +1,14 @@
 import { type ReactElement, useState } from "react";
 import { useBackend } from "../backend/context";
 import { AuthLayout, Button, Field, Stack, Text } from "../design-system";
+import { AppInformationLinks } from "./app-information-links";
 import { AuthForm } from "./auth-form";
-import { useTask } from "./use-task";
+import { DeleteAccountAction } from "./delete-account-action";
+import { useFormTask } from "./use-form-task";
 
 export const AccountGate = (): ReactElement => {
 	const backend = useBackend();
-	const task = useTask();
+	const task = useFormTask();
 	const [club, setClub] = useState("");
 	return (
 		<AuthLayout
@@ -37,18 +39,24 @@ export const AccountGate = (): ReactElement => {
 						onValueChange={(value): void =>
 							setClub(value.replace(/[^a-z0-9]/gi, "").toUpperCase())
 						}
-						maxLength={6}
+						maxLength={32}
+						isDisabled={task.busy}
 					/>
 					<Button
 						label="Join"
 						isLoading={task.busy}
-						validationError={
-							!club.trim() ? "Enter your invite code" : undefined
-						}
 						onPress={(): void => {
-							void task.run(async (): Promise<void> => {
-								await backend.joinClub?.(club);
-							});
+							void task.submit(
+								() =>
+									/^(?:[A-Z0-9]{6}|[A-Z2-9]{32})$/.test(club)
+										? undefined
+										: "Enter a club or staff invite code.",
+								async (): Promise<void> => {
+									if (!backend.joinClub)
+										throw new Error("Joining is unavailable.");
+									await backend.joinClub(club);
+								},
+							);
 						}}
 					/>
 					{task.error ? (
@@ -56,6 +64,18 @@ export const AccountGate = (): ReactElement => {
 							{task.error}
 						</Text>
 					) : undefined}
+					<Button
+						label="Sign out"
+						variant="ghost"
+						isDisabled={task.busy}
+						onPress={(): void => {
+							void task.run(async (): Promise<void> => {
+								await backend.signOut?.();
+							});
+						}}
+					/>
+					<DeleteAccountAction />
+					<AppInformationLinks />
 				</Stack>
 			)}
 		</AuthLayout>
