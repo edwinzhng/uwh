@@ -149,6 +149,7 @@ export const PoolPiece = ({
 			>
 				{spot.person ? (
 					<Avatar
+						initials
 						bright
 						compact
 						name={spot.person.name}
