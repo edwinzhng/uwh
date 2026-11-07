@@ -17,6 +17,7 @@ import {
 	sameResourceDraft,
 	validateResource,
 	validateResourceComment,
+	validateStoredResourceMedia,
 } from "../src/domain/resources";
 import { canReadSessionPlanImage } from "../src/domain/session-plan";
 import { internal } from "./_generated/api";
@@ -98,8 +99,12 @@ const summary = async (
 	ctx: QueryCtx,
 	resource: Doc<"resources">,
 	includePeople = false,
+	includeFile = false,
 ): Promise<Resource> => {
-	const file = resource.fileId ? await ctx.db.get(resource.fileId) : undefined;
+	const file =
+		includeFile && resource.fileId
+			? await ctx.db.get(resource.fileId)
+			: undefined;
 	const people = includePeople
 		? await Promise.all(
 				resource.personIds.map(async (personId): Promise<[string, string]> => {
@@ -225,7 +230,7 @@ export const details = query({
 				createdAt: row.createdAt,
 			}));
 		return {
-			resource: await summary(ctx, resource, true),
+			resource: await summary(ctx, resource, true, true),
 			comments,
 			limited: rows.length > 100,
 		};
@@ -491,6 +496,12 @@ export const registerFile = internalMutation({
 		if (!actor || !canManageResources(actor))
 			throw new Error("Coach or admin access required.");
 		await requireAcceptedTerms(ctx, actor);
+		const stored = await ctx.db.system.get(file.storageId);
+		const error = validateStoredResourceMedia(file, {
+			size: stored?.size ?? 0,
+			mime: stored?.contentType,
+		});
+		if (error) throw new Error(error);
 		const pending = await ctx.db
 			.query("resourceFiles")
 			.withIndex("by_owner_resource", (q) =>
@@ -521,18 +532,34 @@ export const registerFile = internalMutation({
 });
 export const readableFile = internalQuery({
 	args: {
-		userId: v.id("users"),
+		userId: v.optional(v.id("users")),
+		playbackSession: v.optional(v.string()),
 		resourceId: v.string(),
 		slot: v.optional(resourceFileSlot),
 	},
 	handler: async (
 		ctx,
-		{ userId, resourceId, slot = "primary" },
+		{ userId, playbackSession, resourceId, slot = "primary" },
 	): Promise<Doc<"resourceFiles"> | null> => {
-		const actor = await actorFor(ctx, userId);
+		const sessionId = playbackSession
+			? ctx.db.normalizeId("authSessions", playbackSession)
+			: undefined;
+		const session = sessionId ? await ctx.db.get(sessionId) : undefined;
+		const viewer = playbackSession
+			? session && session.expirationTime > Date.now()
+				? session.userId
+				: undefined
+			: userId;
+		if (!viewer) return null;
+		const actor = await actorFor(ctx, viewer);
 		const id = ctx.db.normalizeId("resources", resourceId);
 		const resource = id ? await ctx.db.get(id) : undefined;
-		if (!actor || !resource || !(await canAccessResource(ctx, actor, resource)))
+		if (
+			!actor ||
+			!resource ||
+			!(await hasAcceptedTerms(ctx, actor)) ||
+			!(await canAccessResource(ctx, actor, resource))
+		)
 			return null;
 		const fileId =
 			slot === "primary"

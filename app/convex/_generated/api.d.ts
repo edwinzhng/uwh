@@ -159,6 +159,7 @@ import type * as push_transport from "../push_transport.js";
 import type * as request_body from "../request_body.js";
 import type * as resource_http from "../resource_http.js";
 import type * as resource_ingest from "../resource_ingest.js";
+import type * as resource_playback from "../resource_playback.js";
 import type * as resource_stream from "../resource_stream.js";
 import type * as resource_upload from "../resource_upload.js";
 import type * as resources from "../resources.js";
@@ -371,6 +372,7 @@ declare const fullApi: ApiFromModules<{
   request_body: typeof request_body;
   resource_http: typeof resource_http;
   resource_ingest: typeof resource_ingest;
+  resource_playback: typeof resource_playback;
   resource_stream: typeof resource_stream;
   resource_upload: typeof resource_upload;
   resources: typeof resources;

@@ -44,13 +44,14 @@ export const screenData = async (
 		"settings",
 		"programs",
 	].includes(screen);
-	const notices = await ctx.db
-		.query("notices")
-		.withIndex("by_date", (q) => q.eq("clubId", clubId))
-		.order("desc")
-		.take(20);
 	const select: DataSelection = { members: roster ? true : people };
-	const rows: Partial<Rows> = { notices };
+	const rows: Partial<Rows> = {};
+	if (screen === "programs")
+		rows.notices = await ctx.db
+			.query("notices")
+			.withIndex("by_date", (q) => q.eq("clubId", clubId))
+			.order("desc")
+			.take(20);
 	if (["home", "account"].includes(screen)) {
 		rows.events = await homeEvents(ctx, member, screen);
 		rows.responses = await eventRows(

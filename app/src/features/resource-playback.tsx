@@ -35,7 +35,12 @@ export const ResourcePlayback = ({
 				slot === "voice" ? (
 					<MediaAudio uri={media.uri} label="Coach voice note" />
 				) : (
-					<MediaVideo uri={media.uri} label={resource.title} autoPlay />
+					<MediaVideo
+						uri={media.uri}
+						label={resource.title}
+						autoPlay
+						onRetry={media.retry}
+					/>
 				)
 			) : slot === "primary" ? (
 				<MediaPoster

@@ -18,14 +18,21 @@ export const MediaVideo = ({
 	uri,
 	label,
 	autoPlay = false,
+	onRetry,
 }: {
 	uri: string;
 	label: string;
 	autoPlay?: boolean;
+	onRetry?: () => void;
 }): ReactElement => {
 	return nativeFeatureAvailable("ExpoVideo") ? (
 		<Suspense fallback={<Text variant="caption">Loading video…</Text>}>
-			<VideoPlayer uri={uri} label={label} autoPlay={autoPlay} />
+			<VideoPlayer
+				uri={uri}
+				label={label}
+				autoPlay={autoPlay}
+				onRetry={onRetry}
+			/>
 		</Suspense>
 	) : (
 		<UnavailableVideo />

@@ -65,9 +65,11 @@ export type ResourceState = {
 		name: string,
 		purpose?: ResourceFilePurpose,
 	) => Promise<ResourceFile>;
+	videoUrl?: (resource: Resource, signal: AbortSignal) => Promise<string>;
 	read: (
 		resource: Resource,
 		slot: ResourceFileSlot,
+		signal?: AbortSignal,
 	) => Promise<{ blob: Blob; name: string; mime: string }>;
 	open: (resource: Resource) => Promise<void>;
 };
@@ -91,7 +93,7 @@ const requestFile = async (
 		},
 	);
 	if (!response.ok) {
-		const payload: { error?: string } = await response.json();
+		const payload: { error?: string } = await response.json().catch(() => ({}));
 		throw new Error(payload.error ?? "Could not open this document.");
 	}
 	return response;
@@ -192,11 +194,25 @@ export const useLiveResources = (
 					},
 				)
 			).json(),
+		videoUrl: async (resource, signal): Promise<string> => {
+			const response = await requestFile(
+				token,
+				{ id: resource.id, playback: "1" },
+				{ signal },
+			);
+			const { ticket }: { ticket: string } = await response.json();
+			return `${site}/resources/file?${new URLSearchParams({ id: resource.id, ticket })}`;
+		},
 		read: async (
 			resource,
 			slot,
+			signal,
 		): Promise<{ blob: Blob; name: string; mime: string }> => {
-			const response = await requestFile(token, { id: resource.id, slot });
+			const response = await requestFile(
+				token,
+				{ id: resource.id, slot },
+				{ signal },
+			);
 			const blob = await response.blob();
 			const mime = response.headers.get("Content-Type") ?? blob.type;
 			return {

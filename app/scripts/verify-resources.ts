@@ -425,13 +425,53 @@ try {
 			response.headers.get("content-type"),
 			resourceDemoMedia[purpose].mime,
 		);
-		assert.equal(response.headers.get("cache-control"), "private, no-store");
+		assert.equal(
+			response.headers.get("cache-control"),
+			slot === "thumbnail" ? "private, no-cache" : "private, no-store",
+		);
 		assert.match(response.headers.get("content-disposition") ?? "", /^inline;/);
 		assert.deepEqual(
 			new Uint8Array(await response.arrayBuffer()),
 			new Uint8Array(await resourceDemoBlob(purpose).arrayBuffer()),
 		);
 	}
+	const thumbnail = await request(guardian, { id: videoId, slot: "thumbnail" });
+	const etag = thumbnail.headers.get("etag");
+	assert(etag);
+	await thumbnail.body?.cancel();
+	const revalidate = { headers: { "If-None-Match": etag } };
+	assert.equal(
+		(await request(guardian, { id: videoId, slot: "thumbnail" }, revalidate))
+			.status,
+		304,
+	);
+	assert.equal(
+		(await request(outsider, { id: videoId, slot: "thumbnail" }, revalidate))
+			.status,
+		404,
+	);
+	const playbackParams = { id: videoId, playback: "1" };
+	assert.equal((await request(outsider, playbackParams)).status, 404);
+	const grant = await request(guardian, playbackParams);
+	assert.equal(grant.status, 200);
+	const { ticket }: { ticket: string } = await grant.json();
+	const streamParams = { id: videoId, ticket };
+	const seek = { headers: { Range: "bytes=-16" } };
+	const stream = await request(undefined, streamParams, seek);
+	assert.equal(stream.status, 206);
+	assert.deepEqual(
+		new Uint8Array(await stream.arrayBuffer()),
+		new Uint8Array(await resourceDemoBlob("video").slice(-16).arrayBuffer()),
+	);
+	assert.equal(
+		(await request(undefined, { ...streamParams, id: documentId }, seek))
+			.status,
+		401,
+	);
+	assert.equal(
+		(await request(undefined, { ...streamParams, slot: "voice" }, seek)).status,
+		404,
+	);
 	const range = await request(
 		guardian,
 		{ id: videoId },
@@ -517,6 +557,12 @@ try {
 	});
 	for (const slot of ["primary", "thumbnail", "voice"])
 		assert.equal((await request(guardian, { id: videoId, slot })).status, 404);
+	assert.equal((await request(undefined, streamParams, seek)).status, 404);
+	assert.equal(
+		(await request(guardian, { id: videoId, slot: "thumbnail" }, revalidate))
+			.status,
+		404,
+	);
 	await assert.rejects(
 		guardian.client.query(api.resources.details, { id: videoId }),
 	);
