@@ -3,35 +3,20 @@ export const localAccountToolsAllowed = (
 	backendUrl: string | undefined,
 ): boolean => enabled === "true" && backendUrl === "http://127.0.0.1:3330";
 
-export type LocalSignInMessage = {
-	type: "uwh-local-sign-in";
-	requestId: string;
-	email: string;
-	code: string;
-};
-export const localSignInMessage = (
-	value: unknown,
-): LocalSignInMessage | undefined => {
-	if (
-		typeof value !== "object" ||
-		value === null ||
-		!("type" in value) ||
-		value.type !== "uwh-local-sign-in" ||
-		!("requestId" in value) ||
-		typeof value.requestId !== "string" ||
-		!("email" in value) ||
-		typeof value.email !== "string" ||
-		!("code" in value) ||
-		typeof value.code !== "string" ||
-		!/^\d{6}$/.test(value.code)
-	)
-		return;
-	return {
-		type: value.type,
-		requestId: value.requestId,
-		email: value.email,
-		code: value.code,
-	};
+export type LocalSignInHandoff = { email: string; code: string };
+
+export const localSignInHandoffPath = "/local-login";
+
+export const localSignInHandoffHash = (handoff: LocalSignInHandoff): string =>
+	`#${new URLSearchParams(handoff).toString()}`;
+
+export const localSignInHandoff = (
+	hash: string,
+): LocalSignInHandoff | undefined => {
+	const params = new URLSearchParams(hash.replace(/^#/, ""));
+	const email = params.get("email")?.trim();
+	const code = params.get("code");
+	return email && code && /^\d{6}$/.test(code) ? { email, code } : undefined;
 };
 
 export const localAccountSwitchAllowed = (settings: {

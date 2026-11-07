@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { Linking } from "react-native";
-import { Button, Row, Stack, Text } from "../design-system";
+import { Row, Stack, Text, TextLink } from "../design-system";
 import { useTask } from "./use-task";
 
 const informationLinks = [
@@ -13,12 +13,11 @@ export const AppInformationLinks = (): ReactElement => {
 	const task = useTask();
 	return (
 		<Stack gap="xs">
-			<Row wrap gap="xs">
+			<Row wrap gap="xs" justify="center">
 				{informationLinks.map((link) => (
-					<Button
+					<TextLink
 						key={link.url}
 						label={link.label}
-						variant="ghost"
 						isDisabled={task.busy}
 						onPress={(): void => {
 							void task.run(async (): Promise<void> => {
@@ -29,7 +28,7 @@ export const AppInformationLinks = (): ReactElement => {
 				))}
 			</Row>
 			{task.error ? (
-				<Text variant="small" tone="danger">
+				<Text variant="small" tone="danger" align="center">
 					{task.error}
 				</Text>
 			) : undefined}

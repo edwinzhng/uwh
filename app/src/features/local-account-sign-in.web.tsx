@@ -1,70 +1,57 @@
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useGlobalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { type ReactElement, useEffect, useRef, useState } from "react";
 import { friendlyError } from "../backend/errors";
 import { AuthLayout, Button, Text } from "../design-system";
-import { localSignInMessage } from "../domain/local-account-tools";
+import {
+	type LocalSignInHandoff,
+	localSignInHandoff,
+} from "../domain/local-account-tools";
 
 const pickerOrigin = "http://127.0.0.1:4302";
+const missingHandoff =
+	"This page needs a fresh sign-in from the local account picker.";
+
+const initialHandoff: LocalSignInHandoff | undefined =
+	typeof window === "undefined"
+		? undefined
+		: localSignInHandoff(window.location.hash);
+
+const forgetHandoff = (): void => {
+	if (window.location.hash)
+		window.history.replaceState(
+			window.history.state,
+			"",
+			`${window.location.pathname}${window.location.search}`,
+		);
+};
+
 export const LocalAccountSignIn = (): ReactElement => {
-	const { request } = useGlobalSearchParams<{ request?: string }>();
 	const auth = useAuthActions();
 	const router = useRouter();
+	const [handoff] = useState(initialHandoff);
 	const started = useRef(false);
-	const [error, setError] = useState<string>();
-	useEffect(() => {
-		const opener = window.opener;
-		if (!opener || !request) return;
-		const receive = (event: MessageEvent<unknown>): void => {
-			if (
-				event.origin !== pickerOrigin ||
-				event.source !== opener ||
-				started.current
+	const [failure, setFailure] = useState<string>();
+	const error = handoff ? failure : missingHandoff;
+	useEffect((): void => {
+		forgetHandoff();
+		if (!handoff || started.current) return;
+		started.current = true;
+		void auth
+			.signOut()
+			.then(() =>
+				auth.signIn("email-code", {
+					email: handoff.email,
+					code: handoff.code,
+				}),
 			)
-				return;
-			const message = localSignInMessage(event.data);
-			if (!message || message.requestId !== request) return;
-			started.current = true;
-			void auth
-				.signOut()
-				.then(() =>
-					auth.signIn("email-code", {
-						email: message.email,
-						code: message.code,
-					}),
-				)
-				.then((result): void => {
-					if (!result.signingIn)
-						throw new Error("Local sign-in did not complete.");
-					opener.postMessage(
-						{
-							type: "uwh-local-sign-in-complete",
-							requestId: request,
-							ok: true,
-						},
-						pickerOrigin,
-					);
-					router.replace("/");
-				})
-				.catch((failure: unknown): void => {
-					setError(friendlyError(failure));
-					opener.postMessage(
-						{
-							type: "uwh-local-sign-in-complete",
-							requestId: request,
-							ok: false,
-						},
-						pickerOrigin,
-					);
-				});
-		};
-		window.addEventListener("message", receive);
-		opener.postMessage(
-			{ type: "uwh-local-sign-in-ready", requestId: request },
-			pickerOrigin,
-		);
-		return (): void => window.removeEventListener("message", receive);
-	}, [request, auth, router]);
+			.then((result): void => {
+				if (!result.signingIn)
+					throw new Error("Local sign-in did not complete.");
+				router.replace("/");
+			})
+			.catch((reason: unknown): void => setFailure(friendlyError(reason)));
+	}, [handoff, auth, router]);
 	return (
 		<AuthLayout title="Local account switch">
 			<Text tone={error ? "danger" : "secondary"}>

@@ -141,6 +141,7 @@ export { Surface } from "./surface";
 export { TabContent } from "./tab-content";
 export { Tabs } from "./tabs";
 export { Text } from "./text";
+export { TextLink } from "./text-link";
 export { reduceMotionAtom } from "./theme";
 export { formatTimeLocation } from "./time-location";
 export { TimeSelector } from "./time-selector";

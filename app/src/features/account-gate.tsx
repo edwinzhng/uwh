@@ -12,6 +12,7 @@ export const AccountGate = (): ReactElement => {
 	const [club, setClub] = useState("");
 	return (
 		<AuthLayout
+			footer={<AppInformationLinks />}
 			title={
 				backend.authenticated && backend.accountInfo
 					? "Enter invite code"
@@ -75,7 +76,6 @@ export const AccountGate = (): ReactElement => {
 						}}
 					/>
 					<DeleteAccountAction />
-					<AppInformationLinks />
 				</Stack>
 			)}
 		</AuthLayout>
