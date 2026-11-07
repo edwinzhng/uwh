@@ -9,6 +9,7 @@ import { connectionTables } from "./connection_schema";
 import { developmentTables } from "./development_schema";
 import { equipmentLoanTables } from "./equipment_loans_schema";
 import { fitnessTables } from "./fitness_schema";
+import { homeLayoutTables } from "./home_layout_schema";
 import { householdTables } from "./household_schema";
 import { importTables } from "./import_schema";
 import { inboxTables } from "./inbox_schema";
@@ -94,6 +95,7 @@ export default defineSchema({
 	...seasonTables,
 	...importTables,
 	...householdTables,
+	...homeLayoutTables,
 	...inboxTables,
 	...termsTables,
 	...webPushTables,

@@ -172,6 +172,10 @@ export const savePreviewMemberProfile = atom(
 			...current,
 			[person.id]: {
 				...fields,
+				positionPreferences:
+					input.positionPreferences === undefined
+						? previous?.positionPreferences
+						: fields.positionPreferences,
 				revision: (previous?.revision ?? 0) + 1,
 				lastKey: input.key,
 				lastActorId: account.id,
@@ -250,6 +254,7 @@ export const savePreviewMemberCapNumber = atom(
 				email: previous?.email ?? "",
 				phone: previous?.phone ?? "",
 				photoId: previous?.photoId,
+				positionPreferences: previous?.positionPreferences,
 				capNumber,
 				birthDate:
 					input.birthDate === undefined

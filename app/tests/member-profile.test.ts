@@ -345,3 +345,60 @@ test("coaches update player competition details without changing private contact
 		}),
 	).toThrow("coaches");
 });
+
+test("households can save ordered position preferences but cannot alter coach-set caps", (): void => {
+	const store = createStore();
+	store.set(previewAccountIdAtom, "taylor");
+	const player = store
+		.get(previewDataAtom)
+		.members.find((entry) => entry.id === "sam");
+	if (!player) throw new Error("Fixture unavailable");
+	const base = {
+		personId: player.id,
+		actorId: "taylor",
+		name: player.name,
+		expectedName: player.name,
+		email: "",
+		phone: "",
+		capNumber: "7",
+		revision: 0,
+		key: "preference-order-first-save",
+		positionPreferences: ["GOALIE", "CENTER", "FORWARD"] as (
+			| "GOALIE"
+			| "CENTER"
+			| "FORWARD"
+		)[],
+	};
+	expect(() =>
+		store.set(savePreviewMemberProfile, { ...base, capNumber: "8" }),
+	).toThrow("coaches");
+	store.set(savePreviewMemberProfile, base);
+	expect(store.get(previewMemberProfiles).sam?.positionPreferences).toEqual([
+		"GOALIE",
+		"CENTER",
+		"FORWARD",
+	]);
+	expect(
+		memberProfileProjection(
+			{ ...account, children: [] },
+			player,
+			store.get(previewMemberProfiles).sam,
+		).positionPreferences,
+	).toEqual(["GOALIE", "CENTER", "FORWARD"]);
+	store.set(previewAccountIdAtom, "alex");
+	store.set(savePreviewMemberCapNumber, {
+		personId: "sam",
+		actorId: "alex",
+		capNumber: "9",
+		revision: 1,
+		key: "coach-cap-after-preferences",
+	});
+	expect(store.get(previewMemberProfiles).sam?.positionPreferences).toEqual([
+		"GOALIE",
+		"CENTER",
+		"FORWARD",
+	]);
+	expect(
+		memberProfileError({ ...input, positionPreferences: ["CENTER", "CENTER"] }),
+	).toBeDefined();
+});

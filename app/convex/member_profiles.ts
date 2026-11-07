@@ -72,15 +72,23 @@ export const read = query({
 	args: { personId: v.string() },
 	handler: async (ctx, { personId }): Promise<MemberProfile> => {
 		const actor = await requireMember(ctx);
-		const [person, profile] = await Promise.all([
+		const [person, profile, coaching] = await Promise.all([
 			profilePerson(ctx, actor.clubId, personId),
 			profileRecord(ctx, actor.clubId, personId),
+			ctx.db
+				.query("playerCoaching")
+				.withIndex("by_club_person", (q) =>
+					q.eq("clubId", actor.clubId).eq("personId", personId),
+				)
+				.unique(),
 		]);
-		return memberProfileProjection(
-			accountFor(actor),
-			person.value,
-			profile ?? undefined,
-		);
+		return memberProfileProjection(accountFor(actor), person.value, {
+			email: profile?.email ?? "",
+			phone: profile?.phone ?? "",
+			...profile,
+			revision: profile?.revision ?? 0,
+			competitionGender: profile?.competitionGender ?? coaching?.gender,
+		});
 	},
 });
 export const save = mutation({
@@ -93,6 +101,17 @@ export const save = mutation({
 		email: v.string(),
 		phone: v.string(),
 		capNumber: v.string(),
+		positionPreferences: v.optional(
+			v.array(
+				v.union(
+					v.literal("GOALIE"),
+					v.literal("CENTER"),
+					v.literal("FORWARD"),
+					v.literal("WING"),
+					v.literal("FULL_BACK"),
+				),
+			),
+		),
 		birthDate: v.optional(v.string()),
 		competitionGender: v.optional(
 			v.union(
@@ -160,6 +179,10 @@ export const save = mutation({
 			clubId: actor.clubId,
 			personId: input.personId,
 			capNumber: fields.capNumber,
+			positionPreferences:
+				input.positionPreferences === undefined
+					? previous?.positionPreferences
+					: fields.positionPreferences,
 			birthDate:
 				input.birthDate === undefined ? previous?.birthDate : fields.birthDate,
 			competitionGender:

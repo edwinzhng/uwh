@@ -35,8 +35,8 @@ const LiveCompetition = ({
 				</Text>
 			) : scope === "division" && !result.division ? (
 				<Text tone="secondary" variant="small">
-					Add your date of birth and fitness division in your profile to see
-					your division.
+					Add your date of birth and gender in your profile to see your
+					division.
 				</Text>
 			) : !result.rows.length ? (
 				<Text tone="secondary" variant="small">

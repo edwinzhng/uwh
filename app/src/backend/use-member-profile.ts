@@ -59,7 +59,7 @@ export const useLiveMemberProfile = (member: Member): MemberProfileState => {
 	};
 };
 export const usePreviewMemberProfile = (member: Member): MemberProfileState => {
-	const { account } = useApp();
+	const { account, data } = useApp();
 	const records = useAtomValue(previewMemberProfiles);
 	const save = useSetAtom(savePreviewMemberProfile);
 	const saveCapNumber = useSetAtom(savePreviewMemberCapNumber);
@@ -117,7 +117,16 @@ export const usePreviewMemberProfile = (member: Member): MemberProfileState => {
 		[account.id, store, upload],
 	);
 	return {
-		profile: memberProfileProjection(account, member, records[member.id]),
+		profile: memberProfileProjection(account, member, {
+			email: "",
+			phone: "",
+			...records[member.id],
+			revision: records[member.id]?.revision ?? 0,
+			competitionGender:
+				records[member.id]?.competitionGender ??
+				data.playerCoaching?.find((entry) => entry.personId === member.id)
+					?.gender,
+		}),
 		loading: false,
 		save: async (input): Promise<void> => {
 			save({ ...input, actorId: account.id });

@@ -528,6 +528,7 @@ export const eraseAccount = async (
 		.collect())
 		await removeFeed(ctx, feed);
 	for (const table of [
+		"homeLayouts",
 		"accountConnections",
 		"pushPreferences",
 		"conversationReads",

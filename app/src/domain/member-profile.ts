@@ -1,7 +1,12 @@
 import { canManagePerson } from "./app-rules";
 import type { Account, Member } from "./app-types";
+import {
+	type PositionPreference,
+	positionPreferencesError,
+} from "./position-preferences";
 
 export type MemberProfileFields = {
+	positionPreferences?: PositionPreference[];
 	birthDate?: string;
 	competitionGender?: "male" | "female" | "other";
 	capNumber?: number;
@@ -10,6 +15,7 @@ export type MemberProfileFields = {
 	photoId?: string;
 };
 export type MemberProfile = {
+	positionPreferences?: PositionPreference[];
 	personId: string;
 	name: string;
 	capNumber?: number;
@@ -22,6 +28,7 @@ export type MemberProfile = {
 	canEditCapNumber: boolean;
 };
 export type MemberProfileInput = {
+	positionPreferences?: PositionPreference[];
 	birthDate?: string;
 	competitionGender?: "male" | "female" | "other" | "";
 	name: string;
@@ -89,6 +96,8 @@ export const memberBirthDateError = (
 export const memberProfileError = (
 	input: MemberProfileInput,
 ): string | undefined => {
+	const preferenceError = positionPreferencesError(input.positionPreferences);
+	if (preferenceError) return preferenceError;
 	const birthError = memberBirthDateError(input.birthDate);
 	if (birthError) return birthError;
 	if (!input.name.trim()) return "Add a name";
@@ -121,6 +130,7 @@ export const normalizeMemberProfile = (
 	input: MemberProfileInput,
 ): MemberProfileFields & { name: string } => ({
 	name: input.name.trim(),
+	positionPreferences: input.positionPreferences,
 	birthDate: input.birthDate || undefined,
 	competitionGender: input.competitionGender || undefined,
 	email: input.email.trim().toLowerCase(),
@@ -132,6 +142,7 @@ export const normalizeMemberProfile = (
 });
 export const profileInput = (profile: MemberProfile): MemberProfileInput => ({
 	name: profile.name,
+	positionPreferences: profile.positionPreferences ?? [],
 	birthDate: profile.birthDate ?? "",
 	competitionGender: profile.competitionGender ?? "",
 	capNumber: profile.capNumber?.toString() ?? "",
@@ -146,6 +157,7 @@ export const memberProfileProjection = (
 ): MemberProfile => ({
 	personId: member.id,
 	name: member.name,
+	positionPreferences: fields?.positionPreferences,
 	capNumber: fields?.capNumber,
 	birthDate:
 		canManagePerson(account, member.id) ||
