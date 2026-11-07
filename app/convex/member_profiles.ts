@@ -93,6 +93,17 @@ export const save = mutation({
 		email: v.string(),
 		phone: v.string(),
 		capNumber: v.string(),
+		positionPreferences: v.optional(
+			v.array(
+				v.union(
+					v.literal("GOALIE"),
+					v.literal("CENTER"),
+					v.literal("FORWARD"),
+					v.literal("WING"),
+					v.literal("FULL_BACK"),
+				),
+			),
+		),
 		birthDate: v.optional(v.string()),
 		competitionGender: v.optional(
 			v.union(
@@ -160,6 +171,10 @@ export const save = mutation({
 			clubId: actor.clubId,
 			personId: input.personId,
 			capNumber: fields.capNumber,
+			positionPreferences:
+				input.positionPreferences === undefined
+					? previous?.positionPreferences
+					: fields.positionPreferences,
 			birthDate:
 				input.birthDate === undefined ? previous?.birthDate : fields.birthDate,
 			competitionGender:

@@ -82,6 +82,24 @@ const verify = async (): Promise<void> => {
 		coachPrograms: [],
 		admin: false,
 	});
+	const { rating, ratingKnown, positions, ageGroup, revision } =
+		await owner.client.query(api.player_coaching.profile, { personId });
+	await owner.client.mutation(api.player_coaching.save, {
+		personId,
+		rating,
+		ratingKnown,
+		positions,
+		ageGroup,
+		revision,
+		gender: "female",
+	});
+	for (const client of [self.client, guardian.client]) {
+		const profile: MemberProfile = await client.query(
+			api.member_profiles.read,
+			{ personId },
+		);
+		assert.equal(profile.competitionGender, undefined);
+	}
 	const capAssignment = {
 		personId,
 		capNumber: "12",
@@ -368,10 +386,10 @@ const verify = async (): Promise<void> => {
 	assert.equal(deletionUpload.status, 200);
 	const deletionPhoto: { id: string } = await deletionUpload.json();
 	await self.client.mutation(api.member_profiles.save, {
-		...profileInput(cleared),
+		...profileInput(capCleared),
 		personId,
-		expectedName: cleared.name,
-		revision: cleared.revision,
+		expectedName: capCleared.name,
+		revision: capCleared.revision,
 		key: crypto.randomUUID(),
 		photoId: deletionPhoto.id,
 	});

@@ -6,6 +6,17 @@ export const memberProfileTables = {
 		clubId: v.id("clubs"),
 		personId: v.string(),
 		capNumber: v.optional(v.number()),
+		positionPreferences: v.optional(
+			v.array(
+				v.union(
+					v.literal("GOALIE"),
+					v.literal("CENTER"),
+					v.literal("FORWARD"),
+					v.literal("WING"),
+					v.literal("FULL_BACK"),
+				),
+			),
+		),
 		birthDate: v.optional(v.string()),
 		competitionGender: v.optional(
 			v.union(v.literal("male"), v.literal("female"), v.literal("other")),

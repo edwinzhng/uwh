@@ -36,8 +36,9 @@ export const Avatar = ({
 	const photoId =
 		source && !icon ? avatarPhotoId(source.photos, name, personId) : undefined;
 	const [loaded, setLoaded] = useState<{ id: string; uri: string }>();
+	const [failedUri, setFailedUri] = useState<string>();
 	useEffect(() => {
-		if (uri || !photoId || !source) return;
+		if ((uri && uri !== failedUri) || !photoId || !source) return;
 		const request = { active: true };
 		void source.load(photoId).then((value): void => {
 			if (request.active && value) setLoaded({ id: photoId, uri: value });
@@ -45,10 +46,14 @@ export const Avatar = ({
 		return (): void => {
 			request.active = false;
 		};
-	}, [uri, photoId, source]);
-	const resolvedUri = uri ?? (loaded?.id === photoId ? loaded?.uri : undefined);
+	}, [uri, failedUri, photoId, source]);
+	const resolvedUri =
+		uri && uri !== failedUri
+			? uri
+			: loaded?.id === photoId
+				? loaded?.uri
+				: undefined;
 	const colors = avatarColors(name, bright ? "light" : theme.mode);
-	const [failedUri, setFailedUri] = useState<string>();
 	const size =
 		diameter ??
 		(large

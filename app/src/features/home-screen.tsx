@@ -10,15 +10,13 @@ import {
 	useRouteSelection,
 } from "../design-system";
 import { canCoach } from "../domain/app-rules";
-import { nextCoachingEvent } from "../domain/home";
 import { ClubShell } from "./club-shell";
-import { CoachDashboard } from "./coach-dashboard";
-import { HomeSummary } from "./home-summary";
+import { HomeDashboard } from "./home-dashboard";
 import { homeView, homeWorkspaceAtom } from "./home-workspace-state";
 import { useClubNow } from "./use-club-now";
 
 const HomeContent = (): ReactElement => {
-	const { data, account } = useApp();
+	const { account } = useApp();
 	const router = useRouter();
 	const params = useLocalSearchParams<{
 		view?: string;
@@ -45,17 +43,12 @@ const HomeContent = (): ReactElement => {
 	const workspace = canCoach(account) ? selection.value : "personal";
 
 	const now = useClubNow();
-	const coaching = nextCoachingEvent(data, account, now);
 	return (
 		<ClubShell title="Summary">
 			<TabContent value={workspace}>
-				{workspace === "coaching" ? (
-					<CoachDashboard nextPractice={coaching} />
-				) : (
-					<HomeCardTreatmentContext value={treatment}>
-						<HomeSummary now={now} />
-					</HomeCardTreatmentContext>
-				)}
+				<HomeCardTreatmentContext value={treatment}>
+					<HomeDashboard now={now} view={workspace} />
+				</HomeCardTreatmentContext>
 			</TabContent>
 		</ClubShell>
 	);

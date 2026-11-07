@@ -60,6 +60,8 @@ export { Grid } from "./grid";
 export { hapticsAvailable, hapticsEnabledAtom } from "./haptics";
 export { HistorySection } from "./history-section";
 export type { HistoryControlTreatment } from "./history-section-props";
+export type { HomeCardFramePosition } from "./home-card-frame";
+export { HomeCardFrame } from "./home-card-frame";
 export {
 	HomeCardTreatmentContext,
 	homeCardTreatment,

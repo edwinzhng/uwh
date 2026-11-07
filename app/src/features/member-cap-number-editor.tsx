@@ -59,13 +59,7 @@ export const MemberCapNumberEditor = ({
 							profile.capNumber === undefined ? "" : String(profile.capNumber),
 						);
 						setBirthDate(profile.birthDate ?? "");
-						setGender(
-							profile.competitionGender ??
-								data.playerCoaching?.find(
-									(entry) => entry.personId === profile.personId,
-								)?.gender ??
-								"",
-						);
+						setGender(profile.competitionGender ?? "");
 						setDraft({
 							personId: profile.personId,
 							name: profile.name,
