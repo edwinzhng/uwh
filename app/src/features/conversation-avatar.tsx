@@ -41,8 +41,16 @@ export const ConversationAvatar = ({
 				? people.slice(0, 1)
 				: [{ name: thread.title }]
 			: people;
-	if (kind !== "direct")
-		return <Avatar compact name={thread.title} uri={photo.uri} initials />;
+	if (kind !== "direct" && kind !== "group")
+		return (
+			<Avatar
+				compact
+				name={thread.title}
+				uri={photo.uri}
+				initials
+				roundedSquare
+			/>
+		);
 	return (
 		<AvatarStack name={thread.title} people={visible} imageUri={photo.uri} />
 	);

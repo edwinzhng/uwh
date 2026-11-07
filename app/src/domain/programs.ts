@@ -281,7 +281,20 @@ export const saveProgram = (
 		)
 			return event;
 		if (event.programRsvpManaged)
-			return applyProgramWindow(event, program, now);
+			return applyProgramWindow(
+				draft.kind === "program" &&
+					!event.parts?.length &&
+					event.kind === "training"
+					? { ...event, kind: "program" }
+					: current?.kind === "program" &&
+							draft.kind === "training" &&
+							event.kind === "program" &&
+							!event.parts?.length
+						? { ...event, kind: "training" }
+						: event,
+				program,
+				now,
+			);
 		if (!event.programManaged || event.exception) return event;
 		if (!dates.includes(event.date)) return { ...event, cancelled: true };
 		return applyProgramWindow(

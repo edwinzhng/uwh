@@ -26,6 +26,7 @@ export const ResponseControlContent = ({
 	committed = false,
 	loading = false,
 	quick = false,
+	compactRows = false,
 }: {
 	event: ClubEvent;
 	personId?: string;
@@ -35,6 +36,7 @@ export const ResponseControlContent = ({
 	committed?: boolean;
 	loading?: boolean;
 	quick?: boolean;
+	compactRows?: boolean;
 }): ReactElement => {
 	const { data, dispatch, account, workspaceId } = useApp();
 	const store = useStore();
@@ -128,6 +130,7 @@ export const ResponseControlContent = ({
 					partId={partId}
 					hideLabel={hideLabel}
 					firstDivider={firstDivider}
+					compactRows={compactRows}
 					disabled={busy}
 					isPending={(): boolean =>
 						store.get(pendingResponsesAtom).has(requestKey)

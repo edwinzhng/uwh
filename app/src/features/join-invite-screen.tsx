@@ -10,6 +10,7 @@ import {
 	Stack,
 	Text,
 } from "../design-system";
+import { AppInformationLinks } from "./app-information-links";
 import { AuthForm } from "./auth-form";
 import { useTask } from "./use-task";
 
@@ -32,6 +33,7 @@ const LiveJoinInviteScreen = (): ReactElement => {
 	const openClub = (): void => router.replace("/schedule");
 	return (
 		<AuthLayout
+			footer={<AppInformationLinks />}
 			title={details ? `Join ${details.clubName}` : "Club invitation"}
 		>
 			<Stack>

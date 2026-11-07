@@ -26,3 +26,20 @@ export const eventResponsePresentation = (
 			: response.response === "waiting"
 				? { label: "Waitlisted", tone: "warning", lineup: false }
 				: { label: "Response needed", tone: "warning", lineup: false };
+
+export const scheduleCardTone = ({
+	response,
+	signup,
+	muted,
+}: {
+	response: EventResponse["response"];
+	signup: "open" | "scheduled" | "closed";
+	muted: boolean;
+}): "neutral" | "success" | "danger" | "warning" =>
+	muted || signup === "scheduled" || response === "unanswered"
+		? "neutral"
+		: response === "going"
+			? "success"
+			: response === "unavailable"
+				? "danger"
+				: "warning";

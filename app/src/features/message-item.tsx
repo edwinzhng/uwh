@@ -10,7 +10,6 @@ import {
 	Text,
 } from "../design-system";
 import type { Message } from "../domain/app-types";
-import { chatFirstName } from "../domain/chat-labels";
 import { messageClockLabel } from "../domain/message-presentation";
 import { ChatPollMessage } from "./chat-poll-message";
 import { MessageActions } from "./message-actions";
@@ -52,7 +51,7 @@ export const MessageItem = memo(
 					) : undefined
 				}
 				timeLabel={timeLabel}
-				authorLabel={showAuthor ? chatFirstName(message.author) : undefined}
+				authorLabel={showAuthor ? message.author : undefined}
 				actions={menu?.trigger}
 				actionsFocused={menu?.triggerFocused}
 				contextSurface={menu?.surface}

@@ -46,6 +46,7 @@ export type MenuGroup = {
 
 export type ActionMenuProps = {
 	avatar?: ChoicePerson;
+	avatarDiameter?: number;
 	add?: boolean;
 	accessibilityLabel?: string;
 	compact?: boolean;

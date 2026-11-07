@@ -15,6 +15,7 @@ export const PartResponseControls = ({
 	partId,
 	hideLabel = false,
 	firstDivider = true,
+	compactRows = false,
 	isPending,
 	onRespond,
 }: {
@@ -26,6 +27,7 @@ export const PartResponseControls = ({
 	partId?: string;
 	hideLabel?: boolean;
 	firstDivider?: boolean;
+	compactRows?: boolean;
 	isPending: () => boolean;
 	onRespond: (
 		response: "going" | "unavailable" | "unanswered",
@@ -79,6 +81,7 @@ export const PartResponseControls = ({
 					) : (
 						<EventResponseRow
 							key={part.id}
+							compact={compactRows}
 							label={part.title}
 							divider={index > 0 || firstDivider}
 							description={eventTimeRange(part.start, part.end)}

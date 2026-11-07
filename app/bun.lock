@@ -7,7 +7,6 @@
       "dependencies": {
         "@auth/core": "0.41.3",
         "@base-ui/react": "^1.8.0",
-        "@uwhclub/design-system": "file:../packages/design-system",
         "@convex-dev/auth": "^0.0.95",
         "@emoji-mart/data": "^1.2.1",
         "@emoji-mart/react": "^1.1.1",
@@ -17,6 +16,7 @@
         "@oslojs/crypto": "^1.0.1",
         "@paper-design/shaders-react": "^0.0.82",
         "@react-native-community/datetimepicker": "9.1.0",
+        "@uwhclub/design-system": "file:../packages/design-system",
         "convex": "^1.45.0",
         "decode-uri-component": "file:../packages/safe-uri-component",
         "emoji-mart": "^5.6.0",
@@ -258,8 +258,6 @@
     "@biomejs/cli-win32-arm64": ["@biomejs/cli-win32-arm64@2.4.6", "", { "os": "win32", "cpu": "arm64" }, "sha512-xzThn87Pf3YrOGTEODFGONmqXpTwUNxovQb72iaUOdcw8sBSY3+3WD8Hm9IhMYLnPi0n32s3L3NWU6+eSjfqFg=="],
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.4.6", "", { "os": "win32", "cpu": "x64" }, "sha512-7++XhnsPlr1HDbor5amovPjOH6vsrFOCdp93iKXhFn6bcMUI6soodj3WWKfgEO6JosKU1W5n3uky3WW9RlRjTg=="],
-
-    "@uwhclub/design-system": ["@uwhclub/design-system@file:../packages/design-system", { "peerDependencies": { "react": "^19.2.0" } }],
 
     "@convex-dev/auth": ["@convex-dev/auth@0.0.95", "", { "dependencies": { "@oslojs/crypto": "^1.0.1", "@oslojs/encoding": "^1.1.0", "cookie": "^1.0.1", "is-network-error": "^1.1.0", "jose": "^5.2.2", "jwt-decode": "^4.0.0", "lucia": "^3.2.0", "oauth4webapi": "^3.1.2", "path-to-regexp": "^6.3.0", "server-only": "^0.0.1" }, "peerDependencies": { "@auth/core": "^0.41.1", "convex": "^1.17.0", "react": "^18.2.0 || ^19.0.0-0" }, "optionalPeers": ["react"], "bin": { "auth": "dist/bin.cjs" } }, "sha512-LgUujfXRm7FcdYpTozjn0MHdVFxaxvZdWVFOQEkrL4AkY+k/8E8B4EFjJOG9S8Pq6QWfLJ8MCObeMJg0hAfKzA=="],
 
@@ -586,6 +584,8 @@
     "@types/yargs-parser": ["@types/yargs-parser@21.0.3", "", {}, "sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ=="],
 
     "@ungap/structured-clone": ["@ungap/structured-clone@1.4.0", "", {}, "sha512-1mEZtMKPM09vDmQt5y7YvmN2+DFTP7Tg0EWXdic8/C6VRnpb33e4ghisCIE3WZjsE2N8mf+QV1Zqh7ZFYLWInQ=="],
+
+    "@uwhclub/design-system": ["@uwhclub/design-system@file:../packages/design-system", { "peerDependencies": { "react": "^19.2.0" } }],
 
     "@xmldom/xmldom": ["@xmldom/xmldom@0.8.15", "", {}, "sha512-/5NV/vDALVFDXgLmfsy9TRCBlKwO2LNBFzpzvb9iIj+jR+eSc6DLYYvVOdivT/jm7MtU6TebYuRmzEOI7w40UA=="],
 

@@ -51,6 +51,54 @@ const people = initialAppData.members
 	.map((member) => member.id);
 
 describe("programs", () => {
+	test("enabling a game updates upcoming imported unsplit sessions without changing past or separate-part practices", () => {
+		const saved = saveProgram(
+			base(),
+			{ ...draft, kind: "training" },
+			0,
+			people,
+			now,
+		);
+		const source = saved.events.at(1);
+		if (!source) throw new Error("Missing program event");
+		const future = {
+			...source,
+			id: "imported",
+			programManaged: undefined,
+			programRsvpManaged: true,
+			kind: "training" as const,
+		};
+		const historical = { ...future, id: "past", date: "2026-10-18" };
+		const split = {
+			...future,
+			id: "split",
+			parts: [
+				{
+					id: "training",
+					title: "Training",
+					kind: "training" as const,
+					start: "19:00",
+					end: "20:30",
+				},
+			],
+		};
+		const next = saveProgram(
+			{ ...saved, events: [future, historical, split] },
+			{ ...draft, kind: "program", schedule: undefined },
+			1,
+			people,
+			now,
+		);
+		expect(next.events.find((event) => event.id === "imported")?.kind).toBe(
+			"program",
+		);
+		expect(next.events.find((event) => event.id === "past")?.kind).toBe(
+			"training",
+		);
+		expect(next.events.find((event) => event.id === "split")?.kind).toBe(
+			"training",
+		);
+	});
 	test("program descriptions round-trip through editing and persistence", () => {
 		const saved = saveProgram(
 			base(),

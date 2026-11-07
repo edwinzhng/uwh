@@ -6,6 +6,10 @@ export const memberProfileTables = {
 		clubId: v.id("clubs"),
 		personId: v.string(),
 		capNumber: v.optional(v.number()),
+		birthDate: v.optional(v.string()),
+		competitionGender: v.optional(
+			v.union(v.literal("male"), v.literal("female"), v.literal("other")),
+		),
 		email: v.string(),
 		phone: v.string(),
 		photoId: v.optional(v.id("memberProfilePhotos")),

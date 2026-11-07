@@ -1,236 +1,284 @@
 import { type ReactElement, useState } from "react";
 import { useFitnessActions } from "../backend/fitness-actions";
-import { FitnessData } from "../backend/fitness-data";
+import { FitnessData, type FitnessSnapshot } from "../backend/fitness-data";
 import type { FitnessLogContext } from "../backend/fitness-log-data";
+import { FitnessQuickRosterData } from "../backend/fitness-quick-roster-data";
 import {
+	Avatar,
 	Button,
 	Dialog,
+	EmptyState,
 	InfiniteScroll,
+	LoadingContent,
+	Progress,
+	Row,
 	Select,
 	Stack,
+	Surface,
 	Text,
 } from "../design-system";
 import { canRegister } from "../domain/event-eligibility";
 import { practiceEvent } from "../domain/event-types";
 import { fitnessEntriesError } from "../domain/fitness-model";
-import {
-	fitnessQuickLogSaveLabel,
-	nextFitnessLogPerson,
-} from "../domain/fitness-quick-log";
 import { FitnessResultRow } from "./fitness-result-row";
 import { useClubToday } from "./use-club-today";
 import { useFormTask } from "./use-form-task";
 import { useOperationKey } from "./use-operation-key";
 
-export const FitnessQuickLogForm = ({
-	eventId,
-	onClose,
-	context,
-}: {
+type Props = {
 	eventId?: string;
 	onClose: () => void;
 	context: FitnessLogContext;
-}): ReactElement => {
+};
+
+const QuickLog = ({
+	eventId,
+	onClose,
+	context,
+	tests,
+}: Props & { tests: FitnessSnapshot["tests"] }): ReactElement => {
 	const today = useClubToday();
 	const practices = context.practices
-		.filter((entry) => practiceEvent(entry) && !entry.cancelled)
-		.slice()
+		.filter((event) => practiceEvent(event) && !event.cancelled)
 		.sort((a, b) => b.date.localeCompare(a.date));
 	const [practiceId, setPracticeId] = useState(
 		eventId ??
-			practices.find((entry) => entry.date <= today)?.id ??
+			practices.find((event) => event.date <= today)?.id ??
 			practices.at(-1)?.id ??
 			"",
 	);
 	const [testId, setTestId] = useState("");
-	const [personId, setPersonId] = useState("");
-	const [value, setValue] = useState("");
-	const [notes, setNotes] = useState("");
-	const [saved, setSaved] = useState<string>();
-	const [completed, setCompleted] = useState(false);
-	const event = practices.find((entry) => entry.id === practiceId);
-	const people = context.members
-		.filter((person) => event && canRegister(person, event))
-		.slice()
-		.sort((a, b) => a.name.localeCompare(b.name));
-	const selected =
-		people.find((entry) => entry.id === personId) ?? people.at(0);
-	const nextPersonId = selected
-		? nextFitnessLogPerson(people, selected.id)
-		: undefined;
+	const [skipped, setSkipped] = useState<string[]>([]);
+	const [saved, setSaved] = useState<string[]>([]);
+	const [draft, setDraft] = useState<{
+		personId: string;
+		value: string;
+		notes: string;
+	}>();
 	const task = useFormTask();
 	const operationKey = useOperationKey();
 	const actions = useFitnessActions();
+	const event = practices.find((practice) => practice.id === practiceId);
+	const test =
+		tests.results.find((entry) => entry._id === testId) ?? tests.results.at(0);
 	return (
-		<FitnessData request={{ type: "tests", archived: false }}>
-			{({ tests }) => {
-				const test =
-					tests.results.find((entry) => entry._id === testId) ??
-					tests.results.at(0);
+		<FitnessQuickRosterData event={event} testId={test?._id}>
+			{(roster) => {
+				const present = new Set(roster?.presentIds);
+				const recorded = new Set([...(roster?.recordedIds ?? []), ...saved]);
+				const people = context.members
+					.filter(
+						(person) =>
+							event && present.has(person.id) && canRegister(person, event),
+					)
+					.sort(
+						(a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id),
+					);
+				const remaining = people.filter(
+					(person) => !recorded.has(person.id) && !skipped.includes(person.id),
+				);
+				const selected = remaining.at(0);
+				const completed = people.filter((person) =>
+					recorded.has(person.id),
+				).length;
+				const entry =
+					selected && draft?.personId === selected.id
+						? draft
+						: { personId: selected?.id ?? "", value: "", notes: "" };
+
+				const reset = (): void => {
+					setSkipped([]);
+					setSaved([]);
+					setDraft(undefined);
+					task.clear();
+				};
+
 				return (
 					<Dialog
 						intent="form"
-						isDismissDisabled={task.busy}
-						title={completed ? "Result saved" : "Log swim results"}
-						focusKey={completed ? "complete" : "entry"}
+						title="Log swim results"
 						isOpen
+						isDismissDisabled={task.busy}
 						onOpenChange={(open): void => {
 							if (!open && !task.busy) onClose();
 						}}
 						footer={
-							completed ? (
-								<Button label="Close" onPress={onClose} />
-							) : (
-								<Button
-									label={fitnessQuickLogSaveLabel(nextPersonId)}
-									isLoading={task.busy}
-									isDisabled={!test || !selected}
-									onPress={(): void => {
-										void task.submit(
-											() =>
-												!test || !selected || !event
-													? "Choose a practice, test and player."
-													: !value.trim()
+							selected ? (
+								<Row justify="between" wrap>
+									<Button
+										label="Skip"
+										variant="ghost"
+										isDisabled={task.busy}
+										onPress={(): void => {
+											setSkipped((ids) => [...ids, selected.id]);
+											setDraft(undefined);
+											task.clear();
+										}}
+									/>
+									<Button
+										label={remaining.length > 1 ? "Save & next" : "Save result"}
+										isLoading={task.busy}
+										onPress={(): void => {
+											if (!test || !event) return;
+											void task.submit(
+												() =>
+													!entry.value.trim()
 														? "Add a result."
-														: fitnessEntriesError(test.unit, [
-																{ personId: selected.id, value, notes },
-															]),
-											async (): Promise<void> => {
-												if (!test || !selected || !event) return;
-												const payload = {
-													testId: test._id,
-													eventId: event.id,
-													personId: selected.id,
-													value,
-													notes,
-												};
-												await actions.logResult({
-													...payload,
-													operationKey: operationKey(JSON.stringify(payload)),
-												});
-												setSaved(`Saved for ${selected.name}`);
-												if (nextPersonId) setPersonId(nextPersonId);
-												else setCompleted(true);
-												setValue("");
-												setNotes("");
-											},
-										);
-									}}
-								/>
+														: fitnessEntriesError(test.unit, [entry]),
+												async (): Promise<void> => {
+													const payload = {
+														...entry,
+														testId: test._id,
+														eventId: event.id,
+													};
+													await actions.logResult({
+														...payload,
+														operationKey: operationKey(JSON.stringify(payload)),
+													});
+													setSaved((ids) => [...ids, selected.id]);
+													setDraft(undefined);
+												},
+											);
+										}}
+									/>
+								</Row>
+							) : (
+								<Button label="Done" isDisabled={task.busy} onPress={onClose} />
 							)
 						}
 					>
 						<Stack>
-							{completed ? (
-								<>
-									<Text tone="success">{saved}</Text>
-									<Button
-										label="Log another result"
-										variant="secondary"
-										onPress={(): void => {
-											setCompleted(false);
-											setSaved(undefined);
-											task.clear();
-										}}
+							<Select
+								label="Practice"
+								value={practiceId}
+								isDisabled={task.busy || Boolean(eventId)}
+								options={practices.map((practice) => ({
+									value: practice.id,
+									label: `${practice.date} · ${practice.title}`,
+								}))}
+								onValueChange={(id): void => {
+									setPracticeId(id ?? "");
+									reset();
+								}}
+							/>
+							<Select
+								label="Swim test"
+								value={test?._id ?? ""}
+								isDisabled={task.busy}
+								options={tests.results.map((entry) => ({
+									value: entry._id,
+									label: entry.name,
+								}))}
+								listFooter={
+									<InfiniteScroll
+										loadMore={
+											tests.status === "CanLoadMore"
+												? (): void => tests.loadMore(30)
+												: undefined
+										}
+										loading={tests.status === "LoadingMore"}
+										revision={tests.results.length}
+										disabled={task.busy}
 									/>
-								</>
+								}
+								onValueChange={(id): void => {
+									setTestId(id ?? "");
+									reset();
+								}}
+							/>
+							{context.limited ? (
+								<Text tone="secondary">
+									Quick logging checks the first 500 players.
+								</Text>
+							) : undefined}
+							{tests.status === "LoadingFirstPage" ||
+							(event && test && !roster) ? (
+								<LoadingContent />
+							) : !event || !test ? (
+								<EmptyState title="Choose a practice and swim test" />
+							) : !people.length ? (
+								<EmptyState
+									title="No players marked Here"
+									description="Mark attendance for this practice to build the logging queue."
+								/>
 							) : (
 								<>
-									{context.limited ? (
-										<Text tone="secondary">
-											Quick logging shows the first 500 players. Use the test
-											roster to find additional players.
+									<Stack gap="xs">
+										<Text variant="caption" tone="secondary">
+											{completed} of {people.length} results recorded
 										</Text>
-									) : undefined}
-									<Select
-										label="Practice"
-										value={practiceId}
-										isDisabled={task.busy || Boolean(eventId)}
-										options={practices.map((entry) => ({
-											value: entry.id,
-											label: `${entry.date} · ${entry.title}`,
-										}))}
-										onValueChange={(id): void => {
-											setPracticeId(id ?? "");
-											setPersonId("");
-											setSaved(undefined);
-											task.clear();
-										}}
-									/>
-									<Select
-										listFooter={
-											<InfiniteScroll
-												loadMore={
-													tests.status === "CanLoadMore"
-														? (): void => tests.loadMore(30)
-														: undefined
-												}
-												loading={tests.status === "LoadingMore"}
-												revision={tests.results.length}
-												disabled={task.busy}
-											/>
-										}
-										label="Swim test"
-										value={test?._id ?? ""}
-										isDisabled={task.busy}
-										options={tests.results.map((entry) => ({
-											value: entry._id,
-											label: entry.name,
-										}))}
-										onValueChange={(id): void => {
-											setTestId(id ?? "");
-											setValue("");
-											setNotes("");
-											setSaved(undefined);
-											task.clear();
-										}}
-									/>
-
-									<Select
-										label="Player"
-										value={selected?.id ?? ""}
-										isDisabled={task.busy}
-										options={people.map((entry) => ({
-											value: entry.id,
-											label: entry.name,
-											person: { id: entry.id, name: entry.name },
-										}))}
-										onValueChange={(id): void => {
-											setPersonId(id ?? "");
-											setValue("");
-											setNotes("");
-											setSaved(undefined);
-											task.clear();
-										}}
-									/>
-									{selected && test ? (
-										<FitnessResultRow
-											compact
-											name={selected.name}
-											unit={test.unit}
-											entry={{ personId: selected.id, value, notes }}
-											disabled={task.busy}
-											onChange={(entry): void => {
-												setValue(entry.value);
-												setNotes(entry.notes);
-											}}
+										<Progress
+											label="Swim results recorded"
+											value={completed}
+											max={people.length}
 										/>
+									</Stack>
+									{selected ? (
+										<Surface key={selected.id}>
+											<Stack gap="md">
+												<Row justify="center">
+													<Avatar
+														large
+														name={selected.name}
+														personId={selected.id}
+													/>
+												</Row>
+												<Text variant="h4" align="center">
+													{selected.name}
+												</Text>
+												<FitnessResultRow
+													compact
+													name={selected.name}
+													unit={test.unit}
+													entry={entry}
+													disabled={task.busy}
+													onChange={(next): void => {
+														setDraft(next);
+														task.clear();
+													}}
+												/>
+											</Stack>
+										</Surface>
 									) : (
-										<Text>
-											Add an active swim test and an eligible practice roster
-											first.
-										</Text>
+										<EmptyState
+											title={
+												completed === people.length
+													? "Results complete"
+													: "Reached the end of the roster"
+											}
+										/>
 									)}
-									{saved ? <Text tone="success">{saved}</Text> : undefined}
-									{task.error ? (
-										<Text tone="danger">{task.error}</Text>
+									{skipped.length && !selected && completed < people.length ? (
+										<Button
+											label="Return to skipped players"
+											variant="secondary"
+											onPress={(): void => setSkipped([])}
+										/>
 									) : undefined}
 								</>
 							)}
+							{task.error ? <Text tone="danger">{task.error}</Text> : undefined}
 						</Stack>
 					</Dialog>
 				);
 			}}
-		</FitnessData>
+		</FitnessQuickRosterData>
 	);
 };
+
+export const FitnessQuickLogForm = ({
+	eventId,
+	onClose,
+	context,
+}: Props): ReactElement => (
+	<FitnessData request={{ type: "tests", archived: false }}>
+		{({ tests }) => (
+			<QuickLog
+				eventId={eventId}
+				onClose={onClose}
+				context={context}
+				tests={tests}
+			/>
+		)}
+	</FitnessData>
+);

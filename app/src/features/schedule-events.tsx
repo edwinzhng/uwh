@@ -13,7 +13,7 @@ export const ScheduleEvents = ({
 }): ReactElement => {
 	const { data } = useApp();
 	return (
-		<List gap="sm">
+		<List gap="xs">
 			{events.map((event, index) => (
 				<ContentReveal
 					key={event.id}

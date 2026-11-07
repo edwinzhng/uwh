@@ -33,14 +33,14 @@ export const corners = {
 	menuRow: sharedRadius.md,
 	menu: sharedRadius.md + space.xs,
 	item: sharedRadius.md,
-	panel: sharedRadius.md,
+	panel: sharedRadius.lg,
 	overlay: sharedRadius.xxxl,
 };
 export const font = {
 	heading: "UwhClubDisplay",
-	regular: "UwhClubInter",
-	medium: "UwhClubInterMedium",
-	semibold: "UwhClubInterSemibold",
+	regular: "UwhClubBarlow",
+	medium: "UwhClubBarlowMedium",
+	semibold: "UwhClubBarlowSemibold",
 } as const;
 
 export const elevation = {
@@ -72,24 +72,23 @@ export const typography = {
 		family: "heading",
 		fontSize: 32,
 		lineHeight: 36,
-		textTransform: "uppercase",
 		letterSpacing: -0.4,
 	},
 	h2: {
 		...sharedTypography.h4,
-		family: "semibold",
+		family: "heading",
 		fontSize: 18,
 		lineHeight: 24,
 	},
 	h3: {
 		...sharedTypography.h4,
-		family: "semibold",
+		family: "heading",
 		fontSize: 18,
 		lineHeight: 24,
 	},
 	h4: {
 		...sharedTypography.h4,
-		family: "semibold",
+		family: "heading",
 		fontSize: 18,
 		lineHeight: 24,
 	},
@@ -220,14 +219,14 @@ export const lightTheme: Theme = {
 	dangerAction,
 	colorScales: lightColorScales,
 	background: {
-		canvas: "#F7F8F5",
+		canvas: "#EAF3EE",
 		card: "#FFFFFF",
-		primary: "#F7F8F5",
-		secondary: "#ECEFE9",
-		selected: "#E2E8DF",
-		tertiary: "#E5E9E2",
-		hover: "#ECEFE9",
-		pressed: "#D8DED3",
+		primary: "#EAF3EE",
+		secondary: "#F1F7F3",
+		selected: "#DDEBE2",
+		tertiary: "#E4EFE8",
+		hover: "#F1F7F3",
+		pressed: "#D5E5DA",
 		contrast: "#182018",
 	},
 	text: {
@@ -235,7 +234,7 @@ export const lightTheme: Theme = {
 		secondary: "#465044",
 		contrast: palette.white,
 	},
-	border: "#D8DED3",
+	border: "#C5D8CC",
 	controlBorder: "#697564",
 	accent: {
 		background: "#182018",
@@ -342,6 +341,21 @@ export const darkTheme: Theme = {
 		foreground: darkColorScales.danger.text,
 	},
 };
+
+export const practiceBannerColors = {
+	light: {
+		start: "#D7F4E8",
+		end: "#E1EAFF",
+		label: "#216454",
+		border: "#8FB6AB",
+	},
+	dark: {
+		start: "#19443C",
+		end: "#233A50",
+		label: "#A0EBD4",
+		border: "#537F7A",
+	},
+} as const;
 
 export type SpaceToken = keyof typeof space;
 export type ElevationToken = keyof typeof elevation;

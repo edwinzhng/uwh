@@ -66,7 +66,7 @@ export type ClubEvent = {
 	end: string;
 	venue: string;
 	program: string;
-	kind: "training" | "hockey" | "social" | "tournament" | "meeting";
+	kind: "training" | "hockey" | "program" | "social" | "tournament" | "meeting";
 	signup: "open" | "scheduled" | "closed";
 	repeatInterval?: number;
 	repeatUntil?: string;
@@ -97,11 +97,11 @@ export type EventResponse = {
 };
 export type TeamPlan = {
 	draftLineup?: LineupSnapshot;
-	captains?: { side: "black" | "white"; personId: string }[];
+	captains?: { side: "black" | "white"; personId: string; role?: "vice" }[];
 	revision?: number;
 	fieldSlots?: { personId: string; slot: number }[];
 	rotationSlots?: { personId: string; slot: number }[];
-	referees?: { side: "black" | "white"; personId: string }[];
+	referees?: { side: "black" | "white"; personId: string; role?: "second" }[];
 	blackFormation?: TeamFormation;
 	whiteFormation?: TeamFormation;
 	blackBench?: string[];
@@ -309,6 +309,7 @@ export type AppAction =
 			partId?: string;
 			eventId: string;
 			separateYouth?: boolean;
+			manual?: boolean;
 			excludedPersonIds?: string[];
 	  }
 	| {
@@ -331,6 +332,13 @@ export type AppAction =
 			partId?: string;
 			eventId: string;
 			expectedRevision?: number;
+	  }
+	| {
+			type: "review-lineup-attendance";
+			eventId: string;
+			partId?: string;
+			expectedRevision: number;
+			expectedAttendees: string[];
 	  }
 	| {
 			type: "save-lineup";

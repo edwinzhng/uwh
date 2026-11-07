@@ -54,7 +54,10 @@ export const PageMaterialBackground = ({
 			/>
 			{showGrid ? (
 				<View
-					style={[StyleSheet.absoluteFill, { opacity: 0.12 }]}
+					style={[
+						StyleSheet.absoluteFill,
+						{ opacity: theme.mode === "light" ? 0.025 : 0.12 },
+					]}
 					pointerEvents="none"
 					accessible={false}
 					accessibilityElementsHidden

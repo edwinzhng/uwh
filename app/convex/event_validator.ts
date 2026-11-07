@@ -51,6 +51,7 @@ export const eventDraftValue = v.object({
 	kind: v.union(
 		v.literal("training"),
 		v.literal("hockey"),
+		v.literal("program"),
 		v.literal("social"),
 		v.literal("meeting"),
 		v.literal("tournament"),

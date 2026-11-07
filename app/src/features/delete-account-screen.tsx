@@ -2,12 +2,13 @@ import type { ReactElement } from "react";
 import { useBackend } from "../backend/context";
 import { AuthLayout, Text } from "../design-system";
 import { AccountSecurity } from "./account-security";
+import { AppInformationLinks } from "./app-information-links";
 import { AuthForm } from "./auth-form";
 
 export const DeleteAccountScreen = (): ReactElement => {
 	const backend = useBackend();
 	return (
-		<AuthLayout title="Delete your account">
+		<AuthLayout title="Delete your account" footer={<AppInformationLinks />}>
 			{!backend.available ? (
 				<Text>Account service unavailable.</Text>
 			) : backend.accountInfo ? (

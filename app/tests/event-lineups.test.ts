@@ -11,6 +11,10 @@ import {
 	practiceLineupPart,
 	publishedEventLineups,
 } from "../src/domain/event-lineups";
+import {
+	homeLineupAssignments,
+	homeLineupLabel,
+} from "../src/domain/home-lineup";
 
 const lineupsFor = (
 	event: ClubEvent,
@@ -27,6 +31,14 @@ const lineupsFor = (
 const fixture = initialAppData.events.find((event) => event.id === "club-thu");
 if (!fixture) throw new Error("Practice fixture missing.");
 const event: ClubEvent = fixture;
+
+test("training programs with a game support a single RSVP and whole-session lineup", (): void => {
+	const program: ClubEvent = { ...event, kind: "program", parts: undefined };
+	expect(canCreateEventLineup(program)).toBe(true);
+	expect(canCreateEventLineup(program, "hockey")).toBe(false);
+	expect(canCreateEventLineup({ ...program, kind: "training" })).toBe(false);
+	expect(canCreateEventLineup({ ...program, cancelled: true })).toBe(false);
+});
 const lineup: TeamPlan = {
 	eventId: event.id,
 	partId: "hockey",
@@ -35,6 +47,74 @@ const lineup: TeamPlan = {
 	attendees: ["sam", "taylor"],
 	published: true,
 };
+
+test("home assignments show only published positions for the attending household player", (): void => {
+	const response: EventResponse = {
+		eventId: event.id,
+		personId: "sam",
+		response: "going",
+		attendance: "unmarked",
+	};
+	const published: TeamPlan = {
+		...lineup,
+		blackFormation: "2-3-1",
+		fieldSlots: [{ personId: "sam", slot: 2 }],
+		assignments: [{ personId: "sam", position: "WING", ageGroup: "adult" }],
+		draftLineup: {
+			black: [],
+			white: ["sam"],
+			blackBench: [],
+			whiteBench: [],
+			blackFormation: "2-3-1",
+			whiteFormation: "2-3-1",
+			positions: [{ personId: "sam", position: "FORWARD" }],
+		},
+	};
+	const [assignment] = homeLineupAssignments(
+		event,
+		[published],
+		"sam",
+		response,
+	);
+	expect(assignment?.team).toBe("Black");
+	expect(assignment?.position).toBe("3 · Left wing");
+	expect(assignment?.reserve).toBe(false);
+	if (!assignment) throw new Error("Missing assignment");
+	expect(homeLineupLabel(assignment)).toBe(
+		"Black Team Position: 3 - Left Wing",
+	);
+	expect(
+		homeLineupAssignments(
+			event,
+			[{ ...published, published: false }],
+			"sam",
+			response,
+		),
+	).toEqual([]);
+	expect(
+		homeLineupAssignments(event, [published], "sam", {
+			...response,
+			partIds: ["training"],
+		}),
+	).toEqual([]);
+	expect(homeLineupAssignments(event, [published], "other", response)).toEqual(
+		[],
+	);
+	const reserve = homeLineupAssignments(
+		event,
+		[{ ...published, black: [], whiteBench: ["sam"] }],
+		"sam",
+		response,
+	).at(0);
+	expect(reserve?.team).toBe("White");
+	expect(reserve?.reserve).toBe(true);
+	expect(reserve?.position).toBe("Wing");
+	if (!reserve) throw new Error("Missing reserve assignment");
+	expect(homeLineupLabel(reserve)).toBe("White Team Position: Wing · Reserve");
+	expect(
+		homeLineupAssignments(event, [lineup], "sam", response).at(0)?.position,
+	).toBeUndefined();
+});
 
 test("multipart lineup creation offers hockey blocks and excludes training or all-parts scopes", (): void => {
 	expect(lineupParts(event).map((part) => part.id)).toEqual(["hockey"]);

@@ -21,6 +21,7 @@ import { ClubShell } from "./club-shell";
 import { DataPage } from "./data-page";
 import { InviteList } from "./invite-list";
 import { MemberEditor } from "./member-editor";
+import { MemberRosterRow } from "./member-roster-row";
 import { PlayerRankings } from "./player-rankings";
 import { useSearchTerm } from "./use-search-term";
 
@@ -160,20 +161,24 @@ export const MembersScreen = (): ReactElement => {
 								{(items) => (
 									<Surface>
 										<List>
-											{items.map(({ member }) => (
-												<ListItem
-													key={member.id}
-													title={member.name}
-													avatar={member.name}
-													avatarId={member.id}
-													onPress={() =>
-														router.push({
-															pathname: "/member",
-															params: { id: member.id },
-														})
-													}
-												/>
-											))}
+											{items.map(({ member }) =>
+												account.coachPrograms.length > 0 && !archived ? (
+													<MemberRosterRow key={member.id} member={member} />
+												) : (
+													<ListItem
+														key={member.id}
+														title={member.name}
+														avatar={member.name}
+														avatarId={member.id}
+														onPress={(): void =>
+															router.push({
+																pathname: "/member",
+																params: { id: member.id },
+															})
+														}
+													/>
+												),
+											)}
 											{!items.length ? (
 												<EmptyState
 													title={

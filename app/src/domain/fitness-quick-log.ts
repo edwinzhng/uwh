@@ -9,3 +9,19 @@ export const nextFitnessLogPerson = (
 export const fitnessQuickLogSaveLabel = (
 	nextPersonId: string | undefined,
 ): string => (nextPersonId ? "Save & next" : "Save result");
+
+import type { ClubEvent, EventResponse } from "./app-types";
+import { attendanceForPart, selectedParts } from "./practice-parts";
+
+export const markedHereForFitness = (
+	event: ClubEvent,
+	response?: EventResponse,
+): boolean =>
+	Boolean(
+		response &&
+			(event.parts?.length && response.partAttendance
+				? selectedParts(event, response).some(
+						(part) => attendanceForPart(response, part.id) === "present",
+					)
+				: response.attendance === "present"),
+	);

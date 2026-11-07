@@ -8,6 +8,7 @@ import {
 	fitnessEntriesError,
 	reduceFitness,
 } from "./fitness-model";
+import { markedHereForFitness } from "./fitness-quick-log";
 
 export const logFitnessResult = (
 	state: FitnessState,
@@ -59,6 +60,11 @@ export const logFitnessResult = (
 			return state;
 		throw new Error("A result is already recorded. Open the test to edit it.");
 	}
+	const response = data.responses.find(
+		(entry) => entry.eventId === event.id && entry.personId === person.id,
+	);
+	if (!markedHereForFitness(event, response))
+		throw new Error("Mark this player Here before logging a swim result.");
 	const withSession = previous
 		? state
 		: reduceFitness(state, account, data, {

@@ -36,6 +36,7 @@ export const programDraftValue = {
 	kind: v.union(
 		v.literal("training"),
 		v.literal("hockey"),
+		v.literal("program"),
 		v.literal("social"),
 		v.literal("tournament"),
 		v.literal("meeting"),

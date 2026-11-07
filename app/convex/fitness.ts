@@ -6,10 +6,13 @@ import { canRegister } from "../src/domain/event-eligibility";
 import { clubDate } from "../src/domain/event-time";
 import { practiceEvent } from "../src/domain/event-types";
 import { fitnessLowerIsBetter, parseFitnessValue } from "../src/domain/fitness";
+import { fitnessDivision } from "../src/domain/fitness-division";
 import {
 	fitnessEntriesError,
 	fitnessTestNameError,
 } from "../src/domain/fitness-model";
+import { markedHereForFitness } from "../src/domain/fitness-quick-log";
+import { rankFitnessResults } from "../src/domain/fitness-ranking";
 import type { HomeFitnessSnapshot } from "../src/domain/home-summary";
 import type { PersonalFitnessRow } from "../src/domain/personal-fitness";
 import { initialSeasons } from "../src/domain/seasons";
@@ -123,7 +126,7 @@ export const logContext = query({
 		if (!validDate(args.date)) throw new Error("Choose a valid date.");
 		const [groups, members, selected] = await Promise.all([
 			Promise.all(
-				(["training", "hockey"] as const).flatMap((kind) => [
+				(["training", "hockey", "program"] as const).flatMap((kind) => [
 					ctx.db
 						.query("events")
 						.withIndex("by_club_kind_date", (q) =>
@@ -170,6 +173,61 @@ export const logContext = query({
 			practices,
 			members: members.slice(0, 500).map((row) => row.value),
 			limited: members.length > 500,
+		};
+	},
+});
+
+export const quickLogRoster = query({
+	args: { eventId: v.string(), testId: v.id("fitnessTests") },
+	handler: async (
+		ctx,
+		{ eventId, testId },
+	): Promise<{
+		presentIds: string[];
+		recordedIds: string[];
+	}> => {
+		const test = await testFor(ctx, testId);
+		const event = await ctx.db
+			.query("events")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", test.clubId).eq("value.id", eventId),
+			)
+			.unique();
+		if (
+			!event ||
+			event.value.cancelled ||
+			!practiceEvent(event.value) ||
+			test.archived
+		)
+			return { presentIds: [], recordedIds: [] };
+		const [responses, session] = await Promise.all([
+			ctx.db
+				.query("responses")
+				.withIndex("by_event", (q) =>
+					q.eq("clubId", test.clubId).eq("value.eventId", eventId),
+				)
+				.collect(),
+			ctx.db
+				.query("fitnessSessions")
+				.withIndex("by_test_date", (q) =>
+					q.eq("testId", testId).eq("date", event.value.date),
+				)
+				.unique(),
+		]);
+		const results =
+			session && (!session.eventId || session.eventId === eventId)
+				? await ctx.db
+						.query("fitnessResults")
+						.withIndex("by_session_person", (q) =>
+							q.eq("sessionId", session._id),
+						)
+						.take(500)
+				: [];
+		return {
+			presentIds: responses
+				.filter(({ value }) => markedHereForFitness(event.value, value))
+				.map(({ value }) => value.personId),
+			recordedIds: results.map((result) => result.personId),
 		};
 	},
 });
@@ -737,6 +795,16 @@ export const logResult = mutation({
 				"A result is already recorded. Open the test to edit it.",
 			);
 		}
+		const response = await ctx.db
+			.query("responses")
+			.withIndex("by_club_and_key", (q) =>
+				q
+					.eq("clubId", test.clubId)
+					.eq("value.id", `${args.eventId}:${args.personId}`),
+			)
+			.unique();
+		if (!markedHereForFitness(event.value, response?.value))
+			throw new Error("Mark this player Here before logging a swim result.");
 		if (session.resultCount >= 500)
 			throw new Error("A session supports up to 500 players.");
 		await ctx.db.insert("fitnessResults", {
@@ -917,5 +985,130 @@ export const trends = query({
 				};
 			}),
 		);
+	},
+});
+
+export const competition = query({
+	args: { personId: v.string(), seasonId: v.string() },
+	handler: async (
+		ctx,
+		{ personId, seasonId },
+	): Promise<{
+		division?: string;
+		rows: {
+			testId: string;
+			name: string;
+			unit: "time" | "distance" | "count" | "pass_fail";
+			overallBest?: number;
+			divisionBest?: number;
+			personalBest?: number;
+			overallRank?: number;
+			divisionRank?: number;
+		}[];
+	}> => {
+		const actor = await requireMember(ctx);
+		const [person, club, members, profiles, coaching, tests] =
+			await Promise.all([
+				ctx.db
+					.query("members")
+					.withIndex("by_club_and_key", (q) =>
+						q.eq("clubId", actor.clubId).eq("value.id", personId),
+					)
+					.unique(),
+				ctx.db.get(actor.clubId),
+				ctx.db
+					.query("members")
+					.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+					.take(501),
+				ctx.db
+					.query("memberProfiles")
+					.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+					.take(501),
+				ctx.db
+					.query("playerCoaching")
+					.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+					.take(501),
+				ctx.db
+					.query("fitnessTests")
+					.withIndex("by_club_archive", (q) =>
+						q.eq("clubId", actor.clubId).eq("archived", false),
+					)
+					.take(101),
+			]);
+		if (!person || !canReadProgress(accountFor(actor), person.value))
+			throw new Error("These fitness results are private.");
+		const season = (club?.seasons ?? initialSeasons).find(
+			(entry) => entry.id === seasonId,
+		);
+		if (!season) throw new Error("Season not found.");
+		if (
+			members.length > 500 ||
+			profiles.length > 500 ||
+			coaching.length > 500 ||
+			tests.length > 100
+		)
+			throw new Error("Fitness competition is unavailable for this club size.");
+		const active = new Set(
+			members
+				.filter(({ value }) => !value.archived && !value.mergedInto)
+				.map(({ value }) => value.id),
+		);
+		const genders = new Map(
+			coaching.map((entry) => [entry.personId, entry.gender]),
+		);
+		const divisions = new Map(
+			profiles.map((profile) => [
+				profile.personId,
+				fitnessDivision(
+					profile.birthDate,
+					profile.competitionGender ?? genders.get(profile.personId),
+					season.start,
+				),
+			]),
+		);
+		const division = divisions.get(personId);
+		const rows = await Promise.all(
+			tests.map(async (test) => {
+				const stats = await ctx.db
+					.query("fitnessStats")
+					.withIndex("by_test_person", (q) => q.eq("testId", test._id))
+					.take(2001);
+				if (stats.length > 2000)
+					throw new Error(
+						"Fitness competition is unavailable for this club size.",
+					);
+				const scores = stats
+					.filter((entry) => active.has(entry.personId))
+					.map((entry) => ({ personId: entry.personId, value: entry.best }));
+				const overall = rankFitnessResults(test, scores);
+				const group = division
+					? rankFitnessResults(
+							test,
+							scores.filter(
+								(entry) => divisions.get(entry.personId) === division,
+							),
+						)
+					: [];
+				return {
+					testId: test._id,
+					name: test.name,
+					unit: test.unit,
+					overallBest: overall.at(0)?.value,
+					divisionBest: group.at(0)?.value,
+					personalBest: overall.find((entry) => entry.personId === personId)
+						?.value,
+					overallRank: overall.find((entry) => entry.personId === personId)
+						?.rank,
+					divisionRank: group.find((entry) => entry.personId === personId)
+						?.rank,
+				};
+			}),
+		);
+		return {
+			division,
+			rows: rows.filter(
+				(row) => row.unit !== "pass_fail" && row.overallBest !== undefined,
+			),
+		};
 	},
 });

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import config from "../app.config";
 import { loadingColors } from "../src/design-system/loading-colors";
-import { darkTheme } from "../src/design-system/tokens";
+import { lightTheme } from "../src/design-system/tokens";
 
 const imageGeometry = async (
 	path: string,
@@ -61,8 +61,8 @@ describe("UWH Club app branding", () => {
 		} = await Bun.file(
 			new URL("../public/manifest.webmanifest", import.meta.url),
 		).json();
-		expect(manifest.background_color).toBe(darkTheme.background.canvas);
-		expect(manifest.theme_color).toBe(darkTheme.background.canvas);
+		expect(manifest.background_color).toBe(lightTheme.background.canvas);
+		expect(manifest.theme_color).toBe(lightTheme.background.canvas);
 		expect(manifest.icons.map((icon) => icon.src)).toEqual([
 			"/uwhclub-app-v1-192.png",
 			"/uwhclub-app-v1-512.png",

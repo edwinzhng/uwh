@@ -3,20 +3,15 @@ import { useRouter } from "expo-router";
 import { type ReactElement, useRef } from "react";
 import { api } from "../../convex/_generated/api";
 import { useApp } from "../demo/app-state";
-import {
-	formatTimeLocation,
-	PracticeBanner,
-	usePageLoading,
-} from "../design-system";
+import { PracticeBanner, usePageLoading } from "../design-system";
+import { formatTime } from "../domain/app-rules";
 import {
 	type ChatPractice,
 	chatProgramId,
 	isUpcomingPractice,
 	nextChatPractice,
 } from "../domain/chat-practice";
-import { eventTimeRange } from "../domain/event-card-presentation";
 import { clubTimestamp } from "../domain/event-time";
-import { defaultClubTimeZone } from "../domain/time-zones";
 import { venueName } from "../domain/venue";
 import { useClubNow } from "./use-club-now";
 
@@ -31,17 +26,11 @@ const PracticeLink = ({
 	if (!practice || !isUpcomingPractice(practice.event, now)) return undefined;
 	const { event, attending } = practice;
 	const start = clubTimestamp(event.date, event.start, event.timeZone);
-	const date = new Intl.DateTimeFormat("en", {
-		weekday: "short",
-		month: "short",
-		day: "numeric",
-		timeZone: event.timeZone ?? defaultClubTimeZone,
-	}).format(start);
 	return (
 		<PracticeBanner
 			label={start <= now ? "Practice in progress" : "Next practice"}
 			title={event.title}
-			detail={`${date} · ${formatTimeLocation(eventTimeRange(event.start, event.end), venueName(event.venue))}`}
+			detail={`${formatTime(event.start)} · ${venueName(event.venue)}`}
 			attendance={`${attending} attending`}
 			onPress={(): void =>
 				router.push({ pathname: "/session", params: { event: event.id } })

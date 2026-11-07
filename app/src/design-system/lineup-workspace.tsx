@@ -1,5 +1,5 @@
 import { type ReactElement, type ReactNode, useMemo, useState } from "react";
-import { View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
 import { Gesture } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HeaderBackdrop } from "./header-backdrop";
@@ -10,11 +10,15 @@ import { geometry, space } from "./tokens";
 export const LineupWorkspace = ({
 	children,
 	controls,
+	footer,
 }: {
 	children: ReactNode;
 	controls: ReactNode;
+	footer?: ReactNode;
 }): ReactElement => {
 	const insets = useSafeAreaInsets();
+	const desktop =
+		useWindowDimensions().width >= geometry.wide && Boolean(footer);
 	const [dragging, setDragging] = useState(false);
 	const scrollGesture = useMemo(() => Gesture.Native(), []);
 	const scrollContext = useMemo(
@@ -32,9 +36,9 @@ export const LineupWorkspace = ({
 					scrollGesture={scrollGesture}
 					scrollEnabled={!dragging}
 					edgeFades={false}
-					style={{ flex: 1, minHeight: 0 }}
+					style={{ flexGrow: desktop ? 0 : 1, flexShrink: 1, minHeight: 0 }}
 					contentContainerStyle={{
-						flexGrow: 1,
+						flexGrow: desktop ? 0 : 1,
 						padding: space.xs,
 						paddingTop: headerHeight + space.xs,
 						paddingBottom: Math.max(space.xs, insets.bottom),
@@ -42,8 +46,11 @@ export const LineupWorkspace = ({
 						paddingRight: Math.max(space.xs, insets.right),
 					}}
 				>
-					<View style={{ flexGrow: 1, gap: space.xs }}>{children}</View>
+					<View style={{ flexGrow: desktop ? 0 : 1, gap: space.xs }}>
+						{children}
+					</View>
 				</ScrollArea>
+				{footer}
 				<View
 					onLayout={({ nativeEvent: { layout } }): void =>
 						setHeaderHeight(layout.height)

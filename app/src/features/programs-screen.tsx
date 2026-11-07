@@ -142,12 +142,14 @@ export const ProgramsScreen = (): ReactElement => {
 												items: [
 													{
 														id: "edit",
-														label: "Edit program",
+														label: "Edit",
+														icon: "edit",
 														onSelect: (): void => setEditing(program),
 													},
 													{
 														id: "archive",
 														label: program.archived ? "Restore" : "Archive",
+														icon: program.archived ? "reply" : "archive",
 														onSelect: (): void => {
 															void archive(program);
 														},
@@ -156,6 +158,7 @@ export const ProgramsScreen = (): ReactElement => {
 													{
 														id: "delete",
 														label: "Delete unused program",
+														icon: "trash",
 														tone: "danger",
 														onSelect: (): void => {
 															task.clear();

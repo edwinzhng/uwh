@@ -70,6 +70,7 @@ const EventPreviewActionContent = ({
 				label="Teams"
 				accessibilityLabel={`Teams for ${event.title}`}
 				variant="secondary"
+				density="inline"
 				compact
 				onPress={(): void => setOpen(true)}
 			/>

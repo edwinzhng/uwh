@@ -11,9 +11,9 @@ export const eventKindsForFilter = (
 	filter: EventTypeFilter,
 ): ClubEvent["kind"][] =>
 	filter === "all"
-		? ["training", "hockey", "tournament", "social", "meeting"]
+		? ["training", "hockey", "program", "tournament", "social", "meeting"]
 		: filter === "practice"
-			? ["training", "hockey"]
+			? ["training", "hockey", "program"]
 			: filter === "other"
 				? ["social", "meeting"]
 				: [filter];

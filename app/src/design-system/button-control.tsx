@@ -73,8 +73,13 @@ export const ButtonControl = ({
 	);
 	const glyph = icon ?? prefix;
 	const filter = density === "filter";
-	const faceSize = filter ? geometry.compactControl : controlSize;
-	const textStyle = filter ? typography.small : control.typography;
+	const inline = density === "inline";
+	const faceSize = inline
+		? typography.h4.lineHeight
+		: filter
+			? geometry.compactControl
+			: controlSize;
+	const textStyle = filter || inline ? typography.small : control.typography;
 	const faceStyle: ViewStyle = {
 		flexDirection: "row",
 		alignItems: "center",
@@ -92,7 +97,11 @@ export const ButtonControl = ({
 				: compact
 					? space.xs
 					: control.paddingX,
-		paddingVertical: compact || filter ? space.xxs : control.paddingY,
+		paddingVertical: inline
+			? 0
+			: compact || filter
+				? space.xxs
+				: control.paddingY,
 		borderRadius: round ? faceSize / 2 : corners.button,
 		boxShadow:
 			roleTone && !blocked ? roleGlow(roleTone, theme.mode) : undefined,
@@ -107,6 +116,11 @@ export const ButtonControl = ({
 		<>
 			<Pressable
 				testID={testID}
+				hitSlop={
+					inline
+						? { top: space.xxs, bottom: space.xxs, left: 0, right: 0 }
+						: undefined
+				}
 				accessibilityRole="button"
 				aria-pressed={isSelected}
 				accessibilityLabel={accessibilityLabel ?? label}
@@ -118,7 +132,7 @@ export const ButtonControl = ({
 				}}
 				style={{
 					alignSelf: icon ? "center" : undefined,
-					minHeight: controlSize,
+					minHeight: inline ? faceSize : controlSize,
 					minWidth: icon || compact ? controlSize : undefined,
 					maxWidth: "100%",
 					justifyContent: "center",

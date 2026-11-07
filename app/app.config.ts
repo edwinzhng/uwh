@@ -26,7 +26,7 @@ const config: ExpoConfig = {
 		checkAutomatically: "ON_LOAD",
 		fallbackToCacheTimeout: 0,
 	},
-	userInterfaceStyle: "dark",
+	userInterfaceStyle: "light",
 	experiments: {
 		baseUrl: process.env.EXPO_REVIEW_BASE_PATH ?? "",
 	},

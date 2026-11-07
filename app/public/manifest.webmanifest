@@ -5,8 +5,8 @@
 	"start_url": "/",
 	"scope": "/",
 	"display": "standalone",
-	"background_color": "#121812",
-	"theme_color": "#121812",
+	"background_color": "#EAF3EE",
+	"theme_color": "#EAF3EE",
 	"icons": [
 		{
 			"src": "/uwhclub-app-v1-192.png",

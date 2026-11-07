@@ -13,6 +13,7 @@ export const lineupSnapshotValue = v.object({
 			v.object({
 				side: v.union(v.literal("black"), v.literal("white")),
 				personId: v.string(),
+				role: v.optional(v.literal("vice")),
 			}),
 		),
 	),
@@ -27,6 +28,7 @@ export const lineupSnapshotValue = v.object({
 			v.object({
 				side: v.union(v.literal("black"), v.literal("white")),
 				personId: v.string(),
+				role: v.optional(v.literal("second")),
 			}),
 		),
 	),

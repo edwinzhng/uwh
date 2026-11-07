@@ -61,6 +61,7 @@ export const practices = query({
 					q.or(
 						q.eq(q.field("value.kind"), "training"),
 						q.eq(q.field("value.kind"), "hockey"),
+						q.eq(q.field("value.kind"), "program"),
 					),
 					q.eq(q.field("value.cancelled"), false),
 					q.or(

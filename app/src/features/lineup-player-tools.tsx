@@ -84,8 +84,9 @@ export const LineupPlayerTools = ({
 						<Combobox
 							label={`${team === "black" ? "Black" : "White"} referee`}
 							value={
-								snapshot.referees?.find((entry) => entry.side === team)
-									?.personId
+								snapshot.referees?.find(
+									(entry) => entry.side === team && !entry.role,
+								)?.personId
 							}
 							options={data.members
 								.filter(
@@ -108,7 +109,9 @@ export const LineupPlayerTools = ({
 								});
 							}}
 						/>
-						{snapshot.referees?.some((entry) => entry.side === team) ? (
+						{snapshot.referees?.some(
+							(entry) => entry.side === team && !entry.role,
+						) ? (
 							<Button
 								label={`Clear ${team} referee`}
 								variant="ghost"

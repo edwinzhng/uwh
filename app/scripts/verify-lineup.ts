@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import type { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
+import { eventAttendees } from "../src/domain/app-rules";
 import type { TeamPlan } from "../src/domain/app-types";
 import {
 	editLineup,
@@ -358,8 +359,78 @@ try {
 			},
 		}),
 	);
+	const attendanceChanged = await owner.query(api.club.current, {
+		screen: "session",
+		id: eventId,
+	});
+	assert(attendanceChanged);
+	const attendees = eventAttendees(
+		attendanceChanged.data,
+		eventId,
+		"hockey",
+	).map((member) => member.id);
+	const review = {
+		type: "review-lineup-attendance",
+		eventId,
+		partId: "hockey",
+		expectedRevision: addedPlan.revision ?? 0,
+		expectedAttendees: attendees,
+	} as const;
+	await assert.rejects(viewer.mutation(api.club.apply, { action: review }));
+	await assert.rejects(
+		owner.mutation(api.club.apply, {
+			action: { ...review, expectedAttendees: [] },
+		}),
+	);
+	await owner.mutation(api.club.apply, { action: review });
+	const reviewed = await planFor(owner);
+	assert(!lineupPeople(lineupSnapshot(reviewed)).includes(active));
+	assert.deepEqual(reviewed.attendees.toSorted(), attendees.toSorted());
+	assert.equal(validateLineup(reviewed, lineupSnapshot(reviewed)), undefined);
+	await owner.mutation(api.club.apply, {
+		action: {
+			type: "attendance",
+			eventId,
+			partId: "hockey",
+			personId: active,
+			attendance: "present",
+		},
+	});
+	const restoredAttendance = await owner.query(api.club.current, {
+		screen: "session",
+		id: eventId,
+	});
+	assert(restoredAttendance);
+	const restoredAttendees = eventAttendees(
+		restoredAttendance.data,
+		eventId,
+		"hockey",
+	).map((member) => member.id);
+	await owner.mutation(api.club.apply, {
+		action: {
+			...review,
+			expectedRevision: reviewed.revision ?? 0,
+			expectedAttendees: restoredAttendees,
+		},
+	});
+	const readyToAdd = await planFor(owner);
+	assert(readyToAdd.excludedPersonIds?.includes(active));
+	const manual = editLineup(readyToAdd, lineupSnapshot(readyToAdd), {
+		kind: "add",
+		personId: active,
+		side: "black",
+		slot: 0,
+	});
+	await owner.mutation(api.club.apply, {
+		action: {
+			...save,
+			expectedRevision: readyToAdd.revision ?? 0,
+			snapshot: manual,
+		},
+	});
+	assert(lineupPeople(lineupSnapshot(await planFor(owner))).includes(active));
 	console.log(
-		"Lineup checks passed: real generation, six pool spots, position groups, Yes-only direct addition, exclusions, formation/swap/undo, revision conflicts, part isolation, unpublished audience redaction, staff guards and stale attendance protection.",
+		"Lineup checks passed: generation, manual attendance review, positions, Yes-only addition, exclusions, revision conflicts, part isolation, publication privacy and staff guards.",
 	);
 } finally {
 	await verification.close();

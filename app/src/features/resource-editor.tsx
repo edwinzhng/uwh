@@ -43,6 +43,12 @@ const audienceOptions: { value: ResourceAudience; label: string }[] = [
 	{ value: "programs", label: "Programs" },
 	{ value: "coaches", label: "Coaches" },
 ];
+const audienceIcons = {
+	club: "users",
+	programs: "layers",
+	coaches: "shield",
+	players: "lock",
+} as const satisfies Record<ResourceAudience, string>;
 
 export const ResourceEditor = ({
 	previous,
@@ -273,6 +279,7 @@ export const ResourceEditor = ({
 									items: availableAudienceOptions.map((option) => ({
 										id: option.value,
 										label: option.label,
+										icon: audienceIcons[option.value],
 										checked: audience === option.value,
 										onSelect: (): void => {
 											setAudience(option.value);

@@ -12,6 +12,7 @@ import {
 	Text,
 } from "../design-system";
 import type { Member } from "../domain/app-types";
+import { FitnessCompetition } from "./fitness-competition";
 import { PersonalFitnessCards } from "./personal-fitness-cards";
 import { PersonalFitnessSummary } from "./personal-fitness-summary";
 import { useSeason } from "./use-season";
@@ -28,6 +29,9 @@ export const PersonalFitness = ({
 	const [seasonId] = useSeason();
 	return (
 		<Stack gap="sm">
+			{full ? (
+				<FitnessCompetition personId={member.id} seasonId={seasonId} />
+			) : undefined}
 			{!full ? (
 				<SectionHeading
 					action={

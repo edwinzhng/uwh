@@ -16,7 +16,7 @@ export const LineupRoleMenu = ({
 	dragScope = "combined",
 }: {
 	label: string;
-	roleLabel: "Captain" | "Ref";
+	roleLabel: "Captain" | "Vice Captain" | "Ref" | "2nd Ref";
 	people: readonly { id: string; name: string }[];
 	personId?: string;
 	displayName?: string;
@@ -29,46 +29,44 @@ export const LineupRoleMenu = ({
 		scope: dragScope,
 		onAssign: onChange,
 	});
+	const roleColor =
+		roleLabel === "Ref" || roleLabel === "2nd Ref" ? "#2766C9" : "#C63838";
 	const selected = people.find((person) => person.id === personId);
 	return (
 		<View
 			style={{
-				flexDirection: "row",
 				alignItems: "center",
-				gap: space.xxs,
-				minWidth: 0,
-				maxWidth: "49%",
+				gap: 0,
+				minWidth: geometry.touch + space.sm * 2,
 			}}
 		>
-			<View style={{ flexShrink: 1, minWidth: 0 }}>
-				<Text
-					numberOfLines={1}
-					style={{
-						...typography.caption,
-						fontFamily: font.regular,
-						color: theme.text.secondary,
-					}}
-				>
-					{roleLabel}
-				</Text>
-				{selected ? (
-					<Text
-						numberOfLines={1}
-						style={{
-							...typography.navigation,
-							fontFamily: font.regular,
-							color: theme.text.primary,
-						}}
-					>
-						{displayName ?? selected.name}
-					</Text>
-				) : undefined}
-			</View>
-			<Animated.View ref={target} collapsable={false}>
+			<Text
+				numberOfLines={1}
+				style={{
+					...typography.caption,
+					fontFamily: font.semibold,
+					color: roleColor,
+					marginBottom: space.xxs,
+				}}
+			>
+				{roleLabel === "Vice Captain" ? "VC" : roleLabel.toUpperCase()}
+			</Text>
+			<Animated.View
+				ref={target}
+				collapsable={false}
+				style={{
+					borderWidth: 1,
+					borderStyle: "dashed",
+					borderColor: roleColor,
+					borderRadius: corners.pill,
+					padding: 1,
+				}}
+			>
 				<ActionMenu
 					label={label}
 					accessibilityLabel={label}
 					avatar={{ id: selected?.id, name: selected?.name ?? "" }}
+					avatarDiameter={(geometry.touch + space.xs) * 0.75}
 					isDisabled={!onChange}
 					groups={[
 						{
@@ -104,6 +102,18 @@ export const LineupRoleMenu = ({
 					]}
 				/>
 			</Animated.View>
+			<Text
+				numberOfLines={1}
+				style={{
+					...typography.navigation,
+					fontFamily: font.semibold,
+					color: theme.text.primary,
+					minHeight: typography.navigation.lineHeight,
+					maxWidth: geometry.touch + space.sm * 2,
+				}}
+			>
+				{selected ? (displayName ?? selected.name) : "\u00a0"}
+			</Text>
 		</View>
 	);
 };

@@ -11,7 +11,7 @@ import { MessageEmptyState } from "./message-empty-state";
 import { MessageViewport } from "./message-viewport";
 import { Stack } from "./stack";
 import { useTheme } from "./theme";
-import { geometry, layer, space } from "./tokens";
+import { geometry, space } from "./tokens";
 import { ToolbarGroup } from "./toolbar-group";
 import { useMotion } from "./use-motion";
 
@@ -42,7 +42,6 @@ export const MessageTimeline = <T extends { id: string }>({
 	latest.current = { id: items.at(0)?.id, onLatestVisible };
 	const atLatest = useRef(true);
 	const [away, setAway] = useState(false);
-	const [overlayHeight, setOverlayHeight] = useState(0);
 	const viewed = useRef(
 		({ viewableItems }: { viewableItems: ViewToken<T>[] }): void => {
 			latest.current.onLatestVisible(
@@ -66,17 +65,8 @@ export const MessageTimeline = <T extends { id: string }>({
 		>
 			{topOverlay ? (
 				<View
-					pointerEvents="box-none"
-					onLayout={({ nativeEvent }): void =>
-						setOverlayHeight(nativeEvent.layout.height)
-					}
 					style={{
-						position: "absolute",
-						top: 0,
-						left: 0,
-						right: 0,
-						zIndex: layer.sticky,
-						padding: space.md,
+						paddingHorizontal: space.md,
 						paddingTop: space.xs,
 						gap: space.xs,
 					}}
@@ -97,12 +87,7 @@ export const MessageTimeline = <T extends { id: string }>({
 					contentContainerStyle={{
 						flexGrow: items.length ? undefined : 1,
 						justifyContent: items.length ? undefined : "center",
-						paddingTop: items.length
-							? space.md
-							: topOverlay
-								? overlayHeight
-								: 0,
-						paddingBottom: items.length && topOverlay ? overlayHeight : 0,
+						paddingTop: items.length ? space.md : 0,
 					}}
 					keyboardShouldPersistTaps="handled"
 					keyboardDismissMode="on-drag"

@@ -1,11 +1,9 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { atom, useAtom } from "jotai";
+import { useAtom } from "jotai";
 import type { ReactElement } from "react";
 import { HomeWorkspace } from "../backend/home-workspace";
 import { useApp } from "../demo/app-state";
 import {
-	ContextPicker,
-	GlassPanel,
 	HomeCardTreatmentContext,
 	homeCardTreatment,
 	TabContent,
@@ -16,9 +14,8 @@ import { nextCoachingEvent } from "../domain/home";
 import { ClubShell } from "./club-shell";
 import { CoachDashboard } from "./coach-dashboard";
 import { HomeSummary } from "./home-summary";
+import { homeView, homeWorkspaceAtom } from "./home-workspace-state";
 import { useClubNow } from "./use-club-now";
-
-const homeWorkspaceAtom = atom<Record<string, "personal" | "coaching">>({});
 
 const HomeContent = (): ReactElement => {
 	const { data, account } = useApp();
@@ -32,12 +29,11 @@ const HomeContent = (): ReactElement => {
 			? homeCardTreatment(params.reviewCards)
 			: undefined;
 	const [workspaces, setWorkspaces] = useAtom(homeWorkspaceAtom);
-	const routeWorkspace =
-		canCoach(account) &&
-		(params.view === "coaching" ||
-			(params.view !== "personal" && workspaces[account.id] === "coaching"))
-			? "coaching"
-			: "personal";
+	const routeWorkspace = homeView(
+		canCoach(account),
+		params.view,
+		workspaces[account.id],
+	);
 	const selection = useRouteSelection(
 		routeWorkspace,
 		(value): void => {
@@ -51,25 +47,7 @@ const HomeContent = (): ReactElement => {
 	const now = useClubNow();
 	const coaching = nextCoachingEvent(data, account, now);
 	return (
-		<ClubShell
-			title="Summary"
-			toolbarLeading={
-				canCoach(account) ? (
-					<GlassPanel padding="none" shape="pill" interactive>
-						<ContextPicker
-							label="Home workspace"
-							presentation="menu"
-							value={workspace}
-							options={[
-								{ value: "personal", label: "Player" },
-								{ value: "coaching", label: "Coach" },
-							]}
-							onValueChange={selection.select}
-						/>
-					</GlassPanel>
-				) : undefined
-			}
-		>
+		<ClubShell title="Summary">
 			<TabContent value={workspace}>
 				{workspace === "coaching" ? (
 					<CoachDashboard nextPractice={coaching} />

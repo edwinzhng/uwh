@@ -13,6 +13,7 @@ export const NativeMenuTrigger = ({
 	appearance = "field",
 	add,
 	avatar,
+	avatarDiameter,
 	label,
 	accessibilityLabel = label,
 	icon,
@@ -25,6 +26,7 @@ export const NativeMenuTrigger = ({
 	appearance?: "field" | "context";
 	add?: boolean;
 	avatar?: ChoicePerson;
+	avatarDiameter?: number;
 	label: string;
 	accessibilityLabel?: string;
 	icon?: IconName;
@@ -44,13 +46,17 @@ export const NativeMenuTrigger = ({
 				accessibilityLabel={accessibilityLabel}
 				accessibilityState={{ disabled: isDisabled }}
 				style={{
-					width: geometry.touch,
-					height: geometry.touch,
+					width: avatarDiameter ?? geometry.touch,
+					height: avatarDiameter ?? geometry.touch,
 					alignItems: avatar ? "center" : "flex-end",
 					justifyContent: avatar ? "center" : "flex-start",
 				}}
 			>
-				{avatar ? <MenuAvatar person={avatar} /> : <PoolAddGlyph />}
+				{avatar ? (
+					<MenuAvatar person={avatar} diameter={avatarDiameter} />
+				) : (
+					<PoolAddGlyph />
+				)}
 			</View>
 		);
 	return (

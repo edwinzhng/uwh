@@ -121,3 +121,36 @@ test("decorative feature icons remain distinct from their rounded color plates",
 		}
 	}
 });
+
+test("RSVP controls remain readable and distinguish selected responses", () => {
+	for (const theme of [lightTheme, darkTheme]) {
+		for (const variant of ["rsvp-yes", "rsvp-no"] as const) {
+			for (const interaction of [
+				"rest",
+				"hover",
+				"pressed",
+				"disabled",
+			] as const) {
+				for (const selected of [false, true]) {
+					const colors = buttonColors(theme, variant, interaction, selected);
+					const surfaces =
+						colors.background === "transparent"
+							? [
+									theme.background.card,
+									theme.background.secondary,
+									theme.colorScales.success.subtle,
+									theme.colorScales.danger.subtle,
+								]
+							: [colors.background];
+					for (const surface of surfaces)
+						expect(contrast(colors.foreground, surface)).toBeGreaterThanOrEqual(
+							4.5,
+						);
+				}
+			}
+			expect(buttonColors(theme, variant, "rest", true).background).not.toBe(
+				buttonColors(theme, variant, "rest", false).background,
+			);
+		}
+	}
+});

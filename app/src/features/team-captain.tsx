@@ -5,6 +5,7 @@ import { memberName } from "../domain/app-rules";
 import type { LineupSide } from "../domain/lineup";
 export const TeamCaptain = ({
 	side,
+	roleLabel = "Captain",
 	people,
 	personId,
 	onChange,
@@ -12,6 +13,7 @@ export const TeamCaptain = ({
 	dragScope,
 }: {
 	side: LineupSide;
+	roleLabel?: "Captain" | "Vice Captain";
 	people: string[];
 	personId?: string;
 	displayName?: string;
@@ -22,9 +24,9 @@ export const TeamCaptain = ({
 	if (!onChange && !personId) return undefined;
 	return (
 		<LineupRoleMenu
-			roleLabel="Captain"
+			roleLabel={roleLabel}
 			dragScope={dragScope}
-			label={`${side === "black" ? "Black" : "White"} captain`}
+			label={`${side === "black" ? "Black" : "White"} ${roleLabel.toLowerCase()}`}
 			people={people.map((id) => ({ id, name: memberName(data, id) }))}
 			personId={personId}
 			displayName={

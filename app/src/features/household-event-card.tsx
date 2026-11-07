@@ -3,6 +3,7 @@ import { useActivePerson, useApp } from "../demo/app-state";
 import {
 	Avatar,
 	Badge,
+	EventResponseRow,
 	EventSummary,
 	Row,
 	type ScheduleDateLayout,
@@ -16,9 +17,13 @@ import {
 	eventDateParts,
 	eventTimeRange,
 } from "../domain/event-card-presentation";
-import { eventResponsePresentation } from "../domain/event-response-presentation";
+import {
+	eventResponsePresentation,
+	scheduleCardTone,
+} from "../domain/event-response-presentation";
 import { signupState } from "../domain/event-time";
 import { householdAttendanceReason, householdMembers } from "../domain/home";
+import { pastAttendancePresentation } from "../domain/past-attendance-presentation";
 import { venueName } from "../domain/venue";
 import { EventAttendeesPreview } from "./event-attendees-preview";
 import { EventPreviewActions } from "./event-preview-actions";
@@ -30,137 +35,146 @@ export const HouseholdEventCard = ({
 	event,
 	attendanceCount,
 	past = false,
-	dateLayout = "badge",
-	compactPast = true,
+	dateLayout = "rail",
 }: {
 	event: ClubEvent;
 	attendanceCount?: number;
 	past?: boolean;
 	dateLayout?: ScheduleDateLayout;
-	compactPast?: boolean;
 }): ReactElement => {
 	const { data, account } = useApp();
 	const person = useActivePerson();
 	const date = eventDateParts(event.date);
+	const time = eventTimeRange(event.start, event.end);
 	const reason = householdAttendanceReason(person, event);
+	const visibleReason = person.programs.length > 0 ? reason : undefined;
 	const current = eventResponse(data, event.id, person.id);
-	const response = current.response;
 	const signup = signupState(event, useEventNow(event));
 	const open = signup === "open" && !event.cancelled;
 	const status = eventResponsePresentation(current, event.parts?.length);
+	const pastStatus = pastAttendancePresentation(event, current);
 	const showIdentity =
 		householdMembers(data, account).filter((member) =>
 			canRegister(member, event),
 		).length > 1;
-	const inlineResponse =
-		!past &&
-		!reason &&
-		!event.cancelled &&
-		(!event.parts?.length || !open) &&
-		signup !== "scheduled";
 	const tone =
-		reason || event.cancelled || past || (response === "unanswered" && !open)
-			? "neutral"
-			: status.tone;
-	if (past && compactPast)
-		return (
-			<Surface density="compact">
-				<EventSummary
-					title={event.title}
-					weekday={date.weekday}
-					day={date.day}
-					month={date.month}
-					dateLabel={formatDate(event.date)}
-					time={eventTimeRange(event.start, event.end)}
-					venue={venueName(event.venue)}
-					href={{ pathname: "/session", params: { event: event.id } }}
-					dateLayout={dateLayout}
-					compact
-					actions={
+		past && !reason && !event.cancelled
+			? pastStatus.tone
+			: scheduleCardTone({
+					response: current.response,
+					signup,
+					muted: Boolean(reason || event.cancelled || past),
+				});
+	const showResponse =
+		!past && !reason && !event.cancelled && signup !== "scheduled";
+	return (
+		<Surface
+			density="compact"
+			variant={past || tone === "neutral" ? "subtle" : "default"}
+			borderTone={past ? "neutral" : tone}
+		>
+			<EventSummary
+				title={event.title}
+				weekday={date.weekday}
+				day={date.day}
+				month={date.month}
+				dateLabel={formatDate(event.date)}
+				time={time}
+				venue={venueName(event.venue)}
+				href={{ pathname: "/session", params: { event: event.id } }}
+				dateLayout={dateLayout}
+				compact={false}
+				status={
+					event.cancelled ? (
+						<Badge label="Cancelled" kind="warning" />
+					) : !past && !reason && open && current.response === "waiting" ? (
+						<Badge label={status.label} kind={status.tone} />
+					) : undefined
+				}
+				actions={
+					past ? (
 						<Row gap="xs">
 							<EventPreviewActions event={event} />
 							<SessionReflectionAction event={event} />
 						</Row>
-					}
-				/>
-			</Surface>
-		);
-	return (
-		<Surface
-			density="compact"
-			borderTone={tone}
-			borderStyle={
-				response === "unanswered" && !past && !event.cancelled
-					? "dashed"
-					: "solid"
-			}
-		>
-			<Stack gap="xs">
-				<EventSummary
-					status={
-						event.cancelled ? (
-							<Badge label="Cancelled" kind="warning" />
-						) : !past && !reason && open && response === "waiting" ? (
-							<Badge label={status.label} kind={status.tone} />
-						) : undefined
-					}
-					actions={
-						signup === "scheduled" && !past && !event.cancelled ? (
-							<Text variant="caption" tone="secondary">
-								Not open yet
+					) : !event.cancelled && signup !== "scheduled" ? (
+						<EventPreviewActions event={event} />
+					) : undefined
+				}
+				footer={
+					!event.cancelled ? (
+						<EventAttendeesPreview
+							event={event}
+							attendanceCount={attendanceCount}
+						/>
+					) : undefined
+				}
+			>
+				<Stack gap="none">
+					{showIdentity && !past && signup !== "scheduled" ? (
+						<Row gap="xs">
+							<Avatar name={person.name} personId={person.id} compact />
+							<Text variant="small" weight="medium">
+								{person.name}
 							</Text>
-						) : !event.cancelled ? (
-							<Row gap="xs">
-								<EventAttendeesPreview
-									event={event}
-									attendanceCount={attendanceCount}
-								/>
-
-								{!event.cancelled ? (
-									<EventPreviewActions event={event} />
-								) : undefined}
-							</Row>
-						) : undefined
-					}
-					dateLayout={dateLayout}
-					title={event.title}
-					weekday={date.weekday}
-					day={date.day}
-					month={date.month}
-					dateLabel={formatDate(event.date)}
-					time={eventTimeRange(event.start, event.end)}
-					venue={venueName(event.venue)}
-					href={{ pathname: "/session", params: { event: event.id } }}
-				/>
-				{(showIdentity && signup !== "scheduled") || inlineResponse ? (
-					<Row justify={showIdentity ? "between" : "end"} gap="xs" wrap>
-						{showIdentity ? (
-							<Row gap="xs">
-								<Avatar name={person.name} personId={person.id} compact />
-								<Text variant="small" weight="medium">
-									{person.name}
-								</Text>
-							</Row>
-						) : undefined}
-						{inlineResponse ? (
+						</Row>
+					) : undefined}
+					{showResponse && event.parts?.length && open ? (
+						<ResponseControl
+							event={event}
+							personId={person.id}
+							hideLabel
+							quick
+							compactRows
+							firstDivider={false}
+						/>
+					) : showResponse && open ? (
+						<EventResponseRow label={time} compact divider={false}>
 							<ResponseControl
 								event={event}
 								personId={person.id}
 								hideLabel
 								quick
 							/>
-						) : undefined}
-					</Row>
-				) : undefined}
-				{event.cancelled || past ? undefined : reason ? (
-					<Text variant="caption" tone="secondary">
-						{reason}
-					</Text>
-				) : event.parts?.length && open ? (
-					<ResponseControl event={event} personId={person.id} hideLabel quick />
-				) : undefined}
-				{past ? <SessionReflectionAction event={event} /> : undefined}
-			</Stack>
+						</EventResponseRow>
+					) : (
+						<Row justify="between" gap="xs" wrap>
+							<Text variant="small" tone="secondary">
+								{time}
+							</Text>
+							{past && !event.cancelled && (!reason || visibleReason) ? (
+								<Row gap="xs" wrap>
+									{(reason ? [reason] : pastStatus.labels).map((label) => (
+										<Badge
+											key={label}
+											label={label}
+											kind={reason ? "neutral" : pastStatus.tone}
+										/>
+									))}
+								</Row>
+							) : showResponse ? (
+								<ResponseControl
+									event={event}
+									personId={person.id}
+									hideLabel
+									quick
+								/>
+							) : visibleReason && !past && !event.cancelled ? (
+								<Text variant="caption" tone="secondary">
+									{visibleReason}
+								</Text>
+							) : signup === "scheduled" &&
+								!reason &&
+								!past &&
+								!event.cancelled ? (
+								<Text variant="caption" tone="secondary">
+									Not open yet
+								</Text>
+							) : undefined}
+						</Row>
+					)}
+				</Stack>
+			</EventSummary>
 		</Surface>
 	);
 };

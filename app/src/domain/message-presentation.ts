@@ -77,6 +77,24 @@ export const messageClockLabel = (
 
 export const messageClusterWindowMs = 5 * 60 * 1000;
 
+export const messageClusterLabel = (
+	timestamp: number,
+	timeZone = defaultClubTimeZone,
+	now = Date.now(),
+): string => {
+	const { day, time } = chatFormatters(timeZone);
+	const date =
+		day.format(timestamp) === day.format(now)
+			? "Today"
+			: new Intl.DateTimeFormat("en", {
+					timeZone,
+					weekday: "short",
+					month: "short",
+					day: "numeric",
+				}).format(timestamp);
+	return `${date}, ${time.format(timestamp)}`;
+};
+
 export type MessagePresentation = {
 	showAuthor: boolean;
 	timeLabel?: string;
@@ -99,13 +117,20 @@ export const messagePresentations = (
 	new Map(
 		messages.map((message, index): [string, MessagePresentation] => {
 			const older = messages.at(index + 1);
+			const timestamp = /^\d{4}-\d{2}-\d{2}T/.test(message.time)
+				? Date.parse(message.time)
+				: message.createdAt;
+			const olderTimestamp =
+				older && /^\d{4}-\d{2}-\d{2}T/.test(older.time)
+					? Date.parse(older.time)
+					: older?.createdAt;
 			const difference = older
-				? message.createdAt - older.createdAt
+				? timestamp - (olderTimestamp ?? Number.NaN)
 				: undefined;
 			const validGap =
 				difference !== undefined &&
-				Number.isFinite(message.createdAt) &&
-				Number.isFinite(older?.createdAt) &&
+				Number.isFinite(timestamp) &&
+				Number.isFinite(olderTimestamp) &&
 				difference >= 0;
 			const adjacent =
 				validGap &&
@@ -123,7 +148,7 @@ export const messagePresentations = (
 						message.time.trim() && (older ? !adjacent : !hasOlderMessages)
 							? /^\d{4}-\d{2}-\d{2}T/.test(message.time) &&
 								Number.isFinite(Date.parse(message.time))
-								? chatTimeLabel(Date.parse(message.time), timeZone)
+								? messageClusterLabel(Date.parse(message.time), timeZone)
 								: message.time
 							: undefined,
 				},

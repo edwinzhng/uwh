@@ -13,17 +13,22 @@ import { useReviewFlow } from "./use-review-flow";
 export const GoalEditor = ({ member }: { member: Member }): ReactElement => {
 	const { dispatch, account } = useApp();
 	const { error } = useAppStatus();
-	const proposed = member.id === account.personId;
+	const ownGoal = member.id === account.personId;
+	const savedFocus = ownGoal
+		? (member.pendingGoal ?? member.goal)
+		: member.goal;
+	const savedDetails =
+		ownGoal && member.pendingGoal
+			? member.pendingGoalDetails
+			: member.goalDetails;
+	const editorLabel = savedFocus ? "Edit goal" : "Set goal";
 	const review = useReviewFlow();
 	const [open, setOpen] = useState(review === "structured-goal");
-	const [goal, setGoal] = useState(member.goal);
+	const [goal, setGoal] = useState(savedFocus);
 	const [details, setDetails] = useState<GoalDetails>(
-		member.goalDetails ?? { category: "other", remarks: "" },
+		savedDetails ?? { category: "other", remarks: "" },
 	);
 	const [revision, setRevision] = useState(member.goalRevision ?? 0);
-	const [pendingRevision, setPendingRevision] = useState(
-		member.pendingGoalRevision ?? 0,
-	);
 	const task = useFormTask();
 	const save = (): void => {
 		void task.submit(
@@ -31,8 +36,7 @@ export const GoalEditor = ({ member }: { member: Member }): ReactElement => {
 			async (): Promise<void> => {
 				if (
 					!(await dispatch({
-						type: proposed ? "request-goal" : "set-goal",
-						...(proposed ? { expectedPendingRevision: pendingRevision } : {}),
+						type: "set-goal",
 						personId: member.id,
 						goal,
 						details,
@@ -49,19 +53,15 @@ export const GoalEditor = ({ member }: { member: Member }): ReactElement => {
 	return (
 		<>
 			<Button
-				label={member.goal || member.pendingGoal ? "Edit goal" : "Set goal"}
+				label={editorLabel}
 				variant="secondary"
-				prefix={member.goal || member.pendingGoal ? "edit" : "plus"}
+				compact
+				prefix={savedFocus ? "edit" : "plus"}
 				isDisabled={member.archived}
 				onPress={(): void => {
-					setGoal(proposed ? (member.pendingGoal ?? member.goal) : member.goal);
-					setDetails(
-						(proposed
-							? (member.pendingGoalDetails ?? member.goalDetails)
-							: member.goalDetails) ?? { category: "other", remarks: "" },
-					);
+					setGoal(savedFocus);
+					setDetails(savedDetails ?? { category: "other", remarks: "" });
 					setRevision(member.goalRevision ?? 0);
-					setPendingRevision(member.pendingGoalRevision ?? 0);
 					task.clear();
 					setOpen(true);
 				}}
@@ -69,17 +69,13 @@ export const GoalEditor = ({ member }: { member: Member }): ReactElement => {
 			<Dialog
 				intent="form"
 				isDismissDisabled={task.busy}
-				title={`${member.goal || member.pendingGoal ? "Edit goal" : "Set goal"} · ${member.name}`}
+				title={`${editorLabel} · ${member.name}`}
 				isOpen={open}
 				onOpenChange={(next): void => {
 					if (!task.busy) setOpen(next);
 				}}
 				footer={
-					<Button
-						label={proposed ? "Submit for approval" : "Save goal"}
-						isLoading={task.busy}
-						onPress={save}
-					/>
+					<Button label="Save goal" isLoading={task.busy} onPress={save} />
 				}
 			>
 				<Stack>
@@ -112,8 +108,8 @@ export const GoalEditor = ({ member }: { member: Member }): ReactElement => {
 						isDisabled={task.busy}
 					/>
 					<Text variant="small" tone="secondary">
-						{proposed
-							? "Your coach will review this before it becomes your goal."
+						{ownGoal
+							? "Shared with your linked guardians and coaches. Saving starts a new six-check-in cycle."
 							: `Shared with ${member.name}, linked guardians, and coaches. Saving starts a new six-check-in cycle.`}
 					</Text>
 					{task.error ? (

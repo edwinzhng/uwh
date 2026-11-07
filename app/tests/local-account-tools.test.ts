@@ -4,10 +4,10 @@ import {
 	snapshotEntryAllowed,
 } from "../scripts/local-production/policy";
 import {
-	type LocalSignInMessage,
 	localAccountSwitchAllowed,
 	localAccountToolsAllowed,
-	localSignInMessage,
+	localSignInHandoff,
+	localSignInHandoffHash,
 } from "../src/domain/local-account-tools";
 
 test("local account switching cannot be enabled for production or another backend", (): void => {
@@ -83,15 +83,16 @@ test("historical authors and unverified records are not offered as login account
 	).toEqual([{ id: "verified", name: "Member", email: "member@example.test" }]);
 });
 
-test("account handoffs accept only the expected typed code message", (): void => {
-	const message: LocalSignInMessage = {
-		type: "uwh-local-sign-in",
-		email: "member@example.test",
-		code: "012345",
-		requestId: "request",
-	};
-	expect(localSignInMessage(message)).toEqual(message);
-	expect(localSignInMessage({ ...message, code: "12345" })).toBeUndefined();
-	expect(localSignInMessage({ ...message, type: "sign-in" })).toBeUndefined();
-	expect(localSignInMessage({ ...message, requestId: 1 })).toBeUndefined();
+test("account handoffs round-trip only a six-digit code with an email", (): void => {
+	const handoff = { email: "member+uwh@example.test", code: "012345" };
+	expect(localSignInHandoff(localSignInHandoffHash(handoff))).toEqual(handoff);
+	expect(localSignInHandoff("")).toBeUndefined();
+	expect(localSignInHandoff("#email=member%40example.test")).toBeUndefined();
+	expect(
+		localSignInHandoff("#email=member%40example.test&code=12345"),
+	).toBeUndefined();
+	expect(
+		localSignInHandoff("#email=member%40example.test&code=abcdef"),
+	).toBeUndefined();
+	expect(localSignInHandoff("#email=%20&code=012345")).toBeUndefined();
 });

@@ -25,13 +25,7 @@ export const QuickResponseButtons = ({
 				label={full && response !== "going" ? "Waitlist" : "Yes"}
 				accessibilityLabel={`${name} · ${full && response !== "going" ? "Join waitlist" : "Attending"}`}
 				prefix="check"
-				variant={
-					response === "going"
-						? "solid"
-						: response === "waiting"
-							? "selection"
-							: "secondary"
-				}
+				variant={response === "waiting" ? "selection" : "rsvp-yes"}
 				isSelected={response === "going" || response === "waiting"}
 				isDisabled={disabled}
 				compact
@@ -41,7 +35,7 @@ export const QuickResponseButtons = ({
 				label="No"
 				accessibilityLabel={`${name} · Not attending`}
 				prefix="close"
-				variant={response === "unavailable" ? "danger" : "secondary"}
+				variant="rsvp-no"
 				isSelected={response === "unavailable"}
 				isDisabled={disabled}
 				compact

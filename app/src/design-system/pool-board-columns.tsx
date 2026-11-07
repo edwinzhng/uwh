@@ -27,8 +27,9 @@ export const PoolBoardColumns = ({
 			{Children.map(children, (child, index) => (
 				<View
 					style={{
-						flex: sideBySide ? 1 : undefined,
 						flexGrow: 1,
+						flexShrink: sideBySide ? 1 : 0,
+						flexBasis: sideBySide ? 0 : "auto",
 						minWidth: 0,
 						borderLeftWidth: sideBySide && index > 0 ? geometry.border : 0,
 						borderTopWidth: !sideBySide && index > 0 ? geometry.border : 0,
