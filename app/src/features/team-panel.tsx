@@ -19,13 +19,13 @@ import {
 	canCoach,
 	eventAttendees,
 	lineupNeedsReview,
-	memberName,
 } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import {
 	canCreateEventLineup,
 	practiceLineupPart,
 } from "../domain/event-lineups";
+import { lineupVisibleSides } from "../domain/lineup-visible-sides";
 import { type AgeGroup, formatTeams } from "../domain/player-coaching";
 import * as Clipboard from "../platform/clipboard";
 import { LineupEditor } from "./lineup-editor";
@@ -40,12 +40,14 @@ const TeamPanelContent = ({
 	readOnly = false,
 	showHeading = true,
 	inline = false,
+	playerPersonId,
 }: {
 	event: ClubEvent;
 	partId?: string;
 	readOnly?: boolean;
 	showHeading?: boolean;
 	inline?: boolean;
+	playerPersonId?: string;
 }): ReactElement | undefined => {
 	const { data, account } = useApp();
 	const { busy } = useAppStatus();
@@ -71,6 +73,7 @@ const TeamPanelContent = ({
 			entry.partId === partId &&
 			(!readOnly || entry.published),
 	);
+	const visibleSides = plan ? lineupVisibleSides(plan, playerPersonId) : [];
 	const stale =
 		plan && canCoach(account) ? lineupNeedsReview(data, plan) : false;
 	const groups: (AgeGroup | "combined")[] = plan?.separateYouth
@@ -194,14 +197,33 @@ const TeamPanelContent = ({
 									/>
 								</Row>
 							) : undefined}
+							{playerPersonId && visibleSides.length === 0 ? (
+								<Text variant="small" tone="secondary">
+									You are not assigned to a team for this practice.
+								</Text>
+							) : undefined}
 							<Stack>
 								{groups
 									.filter(
 										(group) =>
-											group === "combined" ||
-											plan.assignments?.some(
-												(entry) => entry.ageGroup === group,
-											),
+											visibleSides.length > 0 &&
+											(!playerPersonId ||
+												group === "combined" ||
+												(plan.assignments?.find(
+													(entry) => entry.personId === playerPersonId,
+												)?.ageGroup ??
+													data.playerCoaching?.find(
+														(entry) => entry.personId === playerPersonId,
+													)?.ageGroup ??
+													(data.members
+														.find((member) => member.id === playerPersonId)
+														?.programs.includes("youth")
+														? "youth"
+														: "adult")) === group) &&
+											(group === "combined" ||
+												plan.assignments?.some(
+													(entry) => entry.ageGroup === group,
+												)),
 									)
 									.map((group) => (
 										<PoolBoardSection
@@ -216,7 +238,7 @@ const TeamPanelContent = ({
 										>
 											<PoolBoardGroup>
 												<PoolBoardColumns>
-													{(["black", "white"] as const).map((side) => (
+													{visibleSides.map((side) => (
 														<TeamPool
 															key={side}
 															plan={plan}
@@ -229,12 +251,6 @@ const TeamPanelContent = ({
 										</PoolBoardSection>
 									))}
 							</Stack>
-							{plan.referees?.map((referee) => (
-								<Text key={referee.side} variant="small">
-									{referee.side === "black" ? "Black" : "White"} referee ·{" "}
-									{memberName(data, referee.personId)}
-								</Text>
-							))}
 						</>
 					) : (
 						<Surface>
@@ -327,12 +343,14 @@ export const TeamPanel = ({
 	readOnly = false,
 	showHeading = true,
 	inline = false,
+	playerPersonId,
 }: {
 	event: ClubEvent;
 	partId?: string;
 	readOnly?: boolean;
 	showHeading?: boolean;
 	inline?: boolean;
+	playerPersonId?: string;
 }): ReactElement => {
 	const { data } = useApp();
 	const selectedPart =
@@ -346,6 +364,7 @@ export const TeamPanel = ({
 				readOnly={readOnly}
 				showHeading={showHeading}
 				inline={inline}
+				playerPersonId={playerPersonId}
 			/>
 		</Stack>
 	);

@@ -189,7 +189,7 @@ const Dashboard = ({
 			</Row>
 			{draft ? (
 				<Text variant="small" tone="secondary">
-					Drag the handle to rearrange cards. Tap − to remove a card.
+					Drag cards to rearrange them. Tap − to remove a card.
 				</Text>
 			) : undefined}
 			{task.error ? (
@@ -206,6 +206,8 @@ const Dashboard = ({
 					{visible.map((id, index) => (
 						<HomeCardFrame
 							key={id}
+							position={index + 1}
+							total={visible.length}
 							label={homeCards.find((card) => card.id === id)?.label ?? id}
 							editing={Boolean(draft)}
 							canMoveUp={index > 0}

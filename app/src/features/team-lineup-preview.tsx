@@ -42,37 +42,63 @@ export const TeamLineupPreview = ({
 									)?.ageGroup ?? "adult") === group),
 						)?.personId;
 						return {
-							role: personId
-								? [
-										plan.captains?.some(
-											(captain) =>
-												captain.personId === personId && captain.side === side,
-										)
-											? "Captain"
-											: undefined,
-										plan.referees?.some(
-											(referee) =>
-												referee.personId === personId && referee.side === side,
-										)
-											? "Ref"
-											: undefined,
-									]
-										.filter(Boolean)
-										.join(" · ") || undefined
-								: undefined,
+							personId,
+							substitutes: (snapshot.rotationSlots ?? [])
+								.filter(
+									(entry) =>
+										entry.slot === slot &&
+										(side === "black"
+											? snapshot.blackBench
+											: snapshot.whiteBench
+										).includes(entry.personId) &&
+										(group === "combined" ||
+											(plan.assignments?.find(
+												(assignment) => assignment.personId === entry.personId,
+											)?.ageGroup ?? "adult") === group),
+								)
+								.map((entry) => ({
+									personId: entry.personId,
+									name: memberName(data, entry.personId),
+								})),
 							position,
 							positionLabel: lineupSlotAbbreviation(formation, slot),
 							id: `${group}:${side}:${slot}`,
-							name: personId
-								? (memberName(data, personId).split(" ").at(0) ??
-									memberName(data, personId))
-								: "—",
+							name: personId ? memberName(data, personId) : "—",
 						};
 					});
 					return {
 						label: side === "black" ? "Black" : "White",
 						formation,
 						side,
+						roles: [
+							...(plan.captains ?? [])
+								.filter(
+									(entry) =>
+										entry.side === side &&
+										(group === "combined" ||
+											(plan.assignments?.find(
+												(assignment) => assignment.personId === entry.personId,
+											)?.ageGroup ?? "adult") === group),
+								)
+								.map((entry) => ({
+									personId: entry.personId,
+									name: memberName(data, entry.personId),
+									role:
+										entry.role === "vice"
+											? ("Vice Captain" as const)
+											: ("Captain" as const),
+								})),
+							...(plan.referees ?? [])
+								.filter((entry) => entry.side === side)
+								.map((entry) => ({
+									personId: entry.personId,
+									name: memberName(data, entry.personId),
+									role:
+										entry.role === "second"
+											? ("2nd Ref" as const)
+											: ("Ref" as const),
+								})),
+						],
 						rows: [
 							spots.filter((spot) => spot.position === "FORWARD"),
 							spots.filter(

@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { useActivePerson } from "../demo/app-state";
+import { useActivePerson, useApp } from "../demo/app-state";
 import {
 	Avatar,
 	Row,
@@ -8,6 +8,7 @@ import {
 	Surface,
 	Text,
 } from "../design-system";
+import { canCoach } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import { eventTimeRange } from "../domain/event-card-presentation";
 import { ResponseControl } from "./response-control";
@@ -20,6 +21,7 @@ export const PracticeOverview = ({
 	event: ClubEvent;
 }): ReactElement => {
 	const person = useActivePerson();
+	const { account } = useApp();
 	const blocks = event.parts?.length
 		? event.parts
 		: [
@@ -64,7 +66,12 @@ export const PracticeOverview = ({
 					</Surface>
 				))}
 			</Stack>
-			<TeamPanel event={event} readOnly inline />
+			<TeamPanel
+				event={event}
+				readOnly
+				inline
+				playerPersonId={canCoach(account) ? undefined : person.id}
+			/>
 			<SharedSessionPlan event={event} />
 		</Stack>
 	);

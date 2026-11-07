@@ -1,16 +1,30 @@
 import type { ReactElement } from "react";
 import { Text as NativeText, View } from "react-native";
+import { Avatar } from "./avatar";
 import { LineupBackdrop } from "./lineup-backdrop";
+import { LineupRolePortrait } from "./lineup-role-portrait";
 import { Stack } from "./stack";
 import { Text } from "./text";
 import { useTheme } from "./theme";
-import { corners, font, geometry, palette, space, typography } from "./tokens";
+import { corners, font, geometry, space, typography } from "./tokens";
 
+type Person = { personId: string; name: string };
 type Team = {
 	label: string;
 	formation: string;
 	side: "black" | "white";
-	rows: { id: string; name: string; role?: string; positionLabel: string }[][];
+	rows: {
+		id: string;
+		name: string;
+		personId?: string;
+		positionLabel: string;
+		substitutes: Person[];
+	}[][];
+	roles: {
+		personId: string;
+		name: string;
+		role: "Captain" | "Vice Captain" | "Ref" | "2nd Ref";
+	}[];
 };
 export const LineupPreview = ({
 	groups,
@@ -42,106 +56,120 @@ export const LineupPreview = ({
 								}}
 							>
 								<LineupBackdrop />
-								<View style={{ gap: 0 }}>
+								<View
+									style={{
+										flexDirection: "row",
+										alignItems: "center",
+										justifyContent: "space-between",
+										paddingBottom: space.sm,
+										gap: space.xxs,
+									}}
+								>
+									<NativeText
+										numberOfLines={1}
+										style={{
+											...typography.caption,
+											fontFamily: font.medium,
+											color: team.side === "black" ? "#EEF2D9" : "#101710",
+											backgroundColor:
+												team.side === "black" ? "#101710" : "#EEF2D9",
+											paddingHorizontal: space.xs,
+											borderRadius: corners.control,
+											overflow: "hidden",
+										}}
+									>
+										{team.label}
+									</NativeText>
+									<Text variant="caption" lines={1}>
+										{team.formation}
+									</Text>
+								</View>
+								{team.rows.map((row) => (
+									<View
+										key={row.map((person) => person.id).join(":")}
+										style={{
+											flexDirection: "row",
+											justifyContent: "space-around",
+											gap: space.xxs,
+											minHeight: geometry.touch,
+											paddingVertical: space.xs,
+											alignItems: "flex-start",
+											borderTopWidth: geometry.border,
+											borderColor: theme.border,
+										}}
+									>
+										{row.map((person) => (
+											<View
+												key={person.id}
+												style={{
+													flex: 1,
+													minWidth: 0,
+													alignItems: "center",
+													gap: space.xxs,
+												}}
+											>
+												<Text variant="caption">{person.positionLabel}</Text>
+												{person.personId ? (
+													<>
+														<Avatar
+															name={person.name}
+															personId={person.personId}
+															initials
+															compact
+														/>
+														<Text variant="caption" lines={1}>
+															{person.name.split(" ").at(0)}
+														</Text>
+													</>
+												) : (
+													<Text variant="caption" tone="secondary">
+														—
+													</Text>
+												)}
+												{person.substitutes.map((sub) => (
+													<View
+														key={sub.personId}
+														style={{ alignItems: "center" }}
+													>
+														<Text variant="caption">Sub</Text>
+														<Avatar
+															name={sub.name}
+															personId={sub.personId}
+															initials
+															compact
+														/>
+														<Text variant="caption" lines={1}>
+															{sub.name.split(" ").at(0)}
+														</Text>
+													</View>
+												))}
+											</View>
+										))}
+									</View>
+								))}
+								{team.roles.length ? (
 									<View
 										style={{
 											flexDirection: "row",
-											alignItems: "center",
+											flexWrap: "wrap",
 											justifyContent: "space-between",
-											paddingBottom: space.sm,
-											gap: space.xxs,
+											gap: space.xs,
+											borderTopWidth: geometry.border,
+											borderColor: theme.border,
+											paddingTop: space.xs,
 										}}
 									>
-										<NativeText
-											numberOfLines={1}
-											style={{
-												...typography.caption,
-												fontFamily: font.medium,
-												color: team.side === "black" ? "#EEF2D9" : "#101710",
-												backgroundColor:
-													team.side === "black" ? "#101710" : "#EEF2D9",
-												paddingHorizontal: space.xs,
-												borderRadius: corners.control,
-												overflow: "hidden",
-											}}
-										>
-											{team.label}
-										</NativeText>
-										<Text variant="caption" lines={1}>
-											{team.formation}
-										</Text>
+										{team.roles.map((role) => (
+											<LineupRolePortrait
+												key={`${role.role}:${role.personId}`}
+												roleLabel={role.role}
+												personId={role.personId}
+												name={role.name}
+												displayName={role.name.split(" ").at(0)}
+											/>
+										))}
 									</View>
-									{team.rows.map((row) => (
-										<View
-											key={row.map((person) => person.id).join(":")}
-											style={{
-												flexDirection: "row",
-												justifyContent: "space-around",
-												gap: space.xxs,
-												minHeight: geometry.touch,
-												paddingVertical: space.xs + space.xxs / 2,
-												alignItems: "center",
-												borderTopWidth: geometry.border,
-												borderColor: theme.border,
-											}}
-										>
-											{row.map((person) => (
-												<View
-													key={person.id}
-													style={{
-														flex: 1,
-														minWidth: 0,
-														alignItems: "center",
-														opacity: person.name === "—" ? 0.55 : 1,
-													}}
-												>
-													<View
-														style={{
-															minWidth: geometry.icon + space.xs,
-															minHeight: geometry.icon + space.xs,
-															paddingHorizontal: space.xxs,
-															paddingVertical: space.xxs,
-															borderRadius: corners.panel,
-															backgroundColor:
-																team.side === "black"
-																	? palette.black
-																	: palette.white,
-															borderWidth: geometry.border,
-															borderColor:
-																team.side === "black"
-																	? theme.text.secondary
-																	: palette.black,
-															alignItems: "center",
-															justifyContent: "center",
-															marginBottom: space.xs,
-														}}
-													>
-														<NativeText
-															style={{
-																...typography.navigation,
-																fontFamily: font.medium,
-																color:
-																	team.side === "black"
-																		? palette.white
-																		: palette.black,
-															}}
-														>
-															{person.positionLabel}
-														</NativeText>
-													</View>
-													<Text variant="caption" lines={1}>
-														{person.name}
-													</Text>
-													{person.role ? (
-														<Text variant="small" tone="secondary" lines={1}>
-															({person.role})
-														</Text>
-													) : undefined}
-												</View>
-											))}
-										</View>
-									))}
-								</View>
+								) : undefined}
 							</View>
 						))}
 					</View>

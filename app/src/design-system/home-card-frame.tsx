@@ -6,14 +6,17 @@ import {
 	useState,
 } from "react";
 import { PanResponder, Pressable, View } from "react-native";
+import { HomeCardDragSurface } from "./home-card-drag-surface";
 import { IconButton } from "./icon-button";
 import { Row } from "./row";
 import { Text } from "./text";
-import { corners, space } from "./tokens";
+import { space } from "./tokens";
 
 export type HomeCardFramePosition = { y: number; height: number };
 export const HomeCardFrame = ({
 	label,
+	position,
+	total,
 	editing,
 	canMoveUp,
 	canMoveDown,
@@ -25,6 +28,8 @@ export const HomeCardFrame = ({
 	children,
 }: {
 	label: string;
+	position: number;
+	total: number;
 	editing: boolean;
 	canMoveUp: boolean;
 	canMoveDown: boolean;
@@ -77,38 +82,22 @@ export const HomeCardFrame = ({
 						<Text variant="small" tone="secondary">
 							{label}
 						</Text>
-						<Row gap="none">
-							<IconButton
-								label={`Move ${label} up`}
-								icon="arrowUp"
-								isDisabled={!canMoveUp}
-								onPress={(): void => onMove(-1)}
-							/>
-							<IconButton
-								label={`Move ${label} down`}
-								icon="arrowDown"
-								isDisabled={!canMoveDown}
-								onPress={(): void => onMove(1)}
-							/>
-							<View
-								{...pan.panHandlers}
-								accessibilityRole="adjustable"
-								accessibilityLabel={`Drag ${label} to reorder`}
-								accessibilityHint="Drag up or down, or use the move buttons."
-								style={{
-									padding: space.sm,
-									borderRadius: corners.item,
-									cursor: "pointer",
-								}}
-							>
-								<Text variant="small">☰</Text>
-							</View>
-						</Row>
 					</Row>
 				</View>
 			) : undefined}
 			{editing ? (
-				<View pointerEvents="none">{children}</View>
+				<View {...pan.panHandlers}>
+					<HomeCardDragSurface
+						position={position}
+						total={total}
+						label={label}
+						canMoveUp={canMoveUp}
+						canMoveDown={canMoveDown}
+						onMove={onMove}
+					>
+						<View pointerEvents="none">{children}</View>
+					</HomeCardDragSurface>
+				</View>
 			) : (
 				<Pressable onLongPress={onEdit} delayLongPress={550}>
 					{children}

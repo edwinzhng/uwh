@@ -101,7 +101,10 @@ export const TeamPool = ({
 	const rolePeople = data.members
 		.filter(
 			(member) =>
-				teamPeople.includes(member.id) &&
+				(teamPeople.includes(member.id) ||
+					(!onRefereeChange &&
+						(referee?.personId === member.id ||
+							secondReferee?.personId === member.id))) &&
 				!member.archived &&
 				!member.mergedInto &&
 				member.programs.length > 0,
