@@ -61,7 +61,6 @@ export const ScheduleCardSample = ({
 				past={state === "past"}
 				attendanceCount={6}
 				dateLayout={dateLayout}
-				compactPast
 			/>
 		</AppContext>
 	);

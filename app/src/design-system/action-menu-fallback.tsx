@@ -13,6 +13,7 @@ export const ActionMenu = ({
 	label,
 	add,
 	avatar,
+	avatarDiameter,
 	accessibilityLabel,
 	compact,
 	icon,
@@ -29,13 +30,13 @@ export const ActionMenu = ({
 					disabled={isDisabled}
 					onPress={(): void => setOpen(true)}
 					style={{
-						width: geometry.touch,
-						height: geometry.touch,
+						width: avatarDiameter ?? geometry.touch,
+						height: avatarDiameter ?? geometry.touch,
 						alignItems: "center",
 						justifyContent: "center",
 					}}
 				>
-					<MenuAvatar person={avatar} />
+					<MenuAvatar person={avatar} diameter={avatarDiameter} />
 				</Pressable>
 			) : add ? (
 				<PoolAddButton

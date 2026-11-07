@@ -2,6 +2,8 @@ import { canManagePerson } from "./app-rules";
 import type { Account, Member } from "./app-types";
 
 export type MemberProfileFields = {
+	birthDate?: string;
+	competitionGender?: "male" | "female" | "other";
 	capNumber?: number;
 	email: string;
 	phone: string;
@@ -12,12 +14,16 @@ export type MemberProfile = {
 	name: string;
 	capNumber?: number;
 	photoId?: string;
+	birthDate?: string;
+	competitionGender?: "male" | "female" | "other";
 	contact?: { email: string; phone: string };
 	revision: number;
 	canEdit: boolean;
 	canEditCapNumber: boolean;
 };
 export type MemberProfileInput = {
+	birthDate?: string;
+	competitionGender?: "male" | "female" | "other" | "";
 	name: string;
 	capNumber: string;
 	email: string;
@@ -32,6 +38,8 @@ export type MemberProfileSave = MemberProfileInput & {
 };
 export type MemberCapNumberSave = {
 	personId: string;
+	birthDate?: string;
+	competitionGender?: "male" | "female" | "other" | "";
 	capNumber: string;
 	revision: number;
 	key: string;
@@ -63,9 +71,26 @@ export const memberCapNumberError = (capNumber: string): string | undefined => {
 		? "Choose a cap number from 1–99"
 		: undefined;
 };
+export const memberBirthDateError = (
+	birthDate?: string,
+): string | undefined => {
+	if (birthDate) {
+		const date = new Date(`${birthDate}T00:00:00Z`);
+		if (
+			!/^\d{4}-\d{2}-\d{2}$/.test(birthDate) ||
+			Number.isNaN(date.getTime()) ||
+			date.toISOString().slice(0, 10) !== birthDate ||
+			date.getTime() > Date.now()
+		)
+			return "Enter a valid date of birth in YYYY-MM-DD format";
+	}
+	return undefined;
+};
 export const memberProfileError = (
 	input: MemberProfileInput,
 ): string | undefined => {
+	const birthError = memberBirthDateError(input.birthDate);
+	if (birthError) return birthError;
 	if (!input.name.trim()) return "Add a name";
 	if (input.name.trim().length > memberProfileLimits.name)
 		return "Keep the name to 80 characters";
@@ -96,6 +121,8 @@ export const normalizeMemberProfile = (
 	input: MemberProfileInput,
 ): MemberProfileFields & { name: string } => ({
 	name: input.name.trim(),
+	birthDate: input.birthDate || undefined,
+	competitionGender: input.competitionGender || undefined,
 	email: input.email.trim().toLowerCase(),
 	phone: input.phone.trim(),
 	capNumber: input.capNumber.trim()
@@ -105,6 +132,8 @@ export const normalizeMemberProfile = (
 });
 export const profileInput = (profile: MemberProfile): MemberProfileInput => ({
 	name: profile.name,
+	birthDate: profile.birthDate ?? "",
+	competitionGender: profile.competitionGender ?? "",
 	capNumber: profile.capNumber?.toString() ?? "",
 	email: profile.contact?.email ?? "",
 	phone: profile.contact?.phone ?? "",
@@ -118,6 +147,16 @@ export const memberProfileProjection = (
 	personId: member.id,
 	name: member.name,
 	capNumber: fields?.capNumber,
+	birthDate:
+		canManagePerson(account, member.id) ||
+		canEditMemberCapNumber(account, member)
+			? fields?.birthDate
+			: undefined,
+	competitionGender:
+		canManagePerson(account, member.id) ||
+		canEditMemberCapNumber(account, member)
+			? fields?.competitionGender
+			: undefined,
 	photoId: fields?.photoId,
 	contact: canManagePerson(account, member.id)
 		? { email: fields?.email ?? "", phone: fields?.phone ?? "" }

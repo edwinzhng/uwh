@@ -3,6 +3,10 @@ import { v } from "convex/values";
 import { canManagePerson } from "../src/domain/app-rules";
 import { publishedEventLineups } from "../src/domain/event-lineups";
 import {
+	type HomeLineupAssignment,
+	homeLineupAssignments,
+} from "../src/domain/home-lineup";
+import {
 	type CarryLineupSource,
 	compatibleCarrySource,
 } from "../src/domain/lineup-carry";
@@ -113,6 +117,50 @@ export const available = query({
 				personId,
 				response?.value,
 			).length > 0
+		);
+	},
+});
+
+export const homeAssignments = query({
+	args: { eventId: v.string() },
+	handler: async (ctx, { eventId }): Promise<HomeLineupAssignment[]> => {
+		const actor = await requireMember(ctx);
+		const event = await ctx.db
+			.query("events")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", actor.clubId).eq("value.id", eventId),
+			)
+			.unique();
+		if (!event || event.value.cancelled) return [];
+		const people = [...new Set([actor.personId, ...actor.children])];
+		const [plans, responses] = await Promise.all([
+			ctx.db
+				.query("teams")
+				.withIndex("by_event", (q) =>
+					q.eq("clubId", actor.clubId).eq("value.eventId", eventId),
+				)
+				.take(14),
+			Promise.all(
+				people.map((personId) =>
+					ctx.db
+						.query("responses")
+						.withIndex("by_club_and_key", (q) =>
+							q
+								.eq("clubId", actor.clubId)
+								.eq("value.id", `${eventId}:${personId}`),
+						)
+						.unique(),
+				),
+			),
+		]);
+		return people.flatMap((personId) =>
+			homeLineupAssignments(
+				event.value,
+				plans.map((plan) => plan.value),
+				personId,
+				responses.find((response) => response?.value.personId === personId)
+					?.value,
+			),
 		);
 	},
 });

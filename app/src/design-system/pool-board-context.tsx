@@ -70,6 +70,7 @@ export const PoolBoardGroup = ({
 				style={{
 					overflow: "hidden",
 					flexGrow: 1,
+					minHeight: 0,
 					borderRadius: backdrop ? corners.panel : 0,
 					padding: space.xs,
 					gap: space.xs,

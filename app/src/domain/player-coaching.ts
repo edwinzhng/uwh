@@ -117,17 +117,17 @@ export const formatTeams = (plan: TeamPlan, members: Member[]): string => {
 						const position = plan.assignments?.find(
 							(entry) => entry.personId === id,
 						)?.position;
-						return `${position ? `${positionLabel(position, formation)} · ` : ""}${members.find((entry) => entry.id === id)?.name ?? "Member"}${plan.captains?.some((entry) => entry.side === side && entry.personId === id) ? " · Captain" : ""}`;
+						return `${position ? `${positionLabel(position, formation)} · ` : ""}${members.find((entry) => entry.id === id)?.name ?? "Member"}${plan.captains?.some((entry) => entry.side === side && entry.personId === id && !entry.role) ? " · Captain" : plan.captains?.some((entry) => entry.side === side && entry.personId === id && entry.role === "vice") ? " · Vice Captain" : ""}`;
 					}),
 					...bench.map(
 						(id) =>
-							`${positionLabel(plan.assignments?.find((entry) => entry.personId === id)?.position ?? "FORWARD", formation)} · ${members.find((entry) => entry.id === id)?.name ?? "Member"}${plan.captains?.some((entry) => entry.side === side && entry.personId === id) ? " · Captain" : ""}`,
+							`${positionLabel(plan.assignments?.find((entry) => entry.personId === id)?.position ?? "FORWARD", formation)} · ${members.find((entry) => entry.id === id)?.name ?? "Member"}${plan.captains?.some((entry) => entry.side === side && entry.personId === id && !entry.role) ? " · Captain" : plan.captains?.some((entry) => entry.side === side && entry.personId === id && entry.role === "vice") ? " · Vice Captain" : ""}`,
 					),
 					...(plan.referees ?? [])
 						.filter((referee) => referee.side === side)
 						.map(
 							(referee) =>
-								`Referee · ${members.find((member) => member.id === referee.personId)?.name ?? "Member"}`,
+								`${referee.role === "second" ? "Second referee" : "Referee"} · ${members.find((member) => member.id === referee.personId)?.name ?? "Member"}`,
 						),
 				].join("\n");
 			}),

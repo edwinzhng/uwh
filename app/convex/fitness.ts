@@ -6,10 +6,12 @@ import { canRegister } from "../src/domain/event-eligibility";
 import { clubDate } from "../src/domain/event-time";
 import { practiceEvent } from "../src/domain/event-types";
 import { fitnessLowerIsBetter, parseFitnessValue } from "../src/domain/fitness";
+import { fitnessDivision } from "../src/domain/fitness-division";
 import {
 	fitnessEntriesError,
 	fitnessTestNameError,
 } from "../src/domain/fitness-model";
+import { rankFitnessResults } from "../src/domain/fitness-ranking";
 import type { HomeFitnessSnapshot } from "../src/domain/home-summary";
 import type { PersonalFitnessRow } from "../src/domain/personal-fitness";
 import { initialSeasons } from "../src/domain/seasons";
@@ -123,7 +125,7 @@ export const logContext = query({
 		if (!validDate(args.date)) throw new Error("Choose a valid date.");
 		const [groups, members, selected] = await Promise.all([
 			Promise.all(
-				(["training", "hockey"] as const).flatMap((kind) => [
+				(["training", "hockey", "program"] as const).flatMap((kind) => [
 					ctx.db
 						.query("events")
 						.withIndex("by_club_kind_date", (q) =>
@@ -917,5 +919,130 @@ export const trends = query({
 				};
 			}),
 		);
+	},
+});
+
+export const competition = query({
+	args: { personId: v.string(), seasonId: v.string() },
+	handler: async (
+		ctx,
+		{ personId, seasonId },
+	): Promise<{
+		division?: string;
+		rows: {
+			testId: string;
+			name: string;
+			unit: "time" | "distance" | "count" | "pass_fail";
+			overallBest?: number;
+			divisionBest?: number;
+			personalBest?: number;
+			overallRank?: number;
+			divisionRank?: number;
+		}[];
+	}> => {
+		const actor = await requireMember(ctx);
+		const [person, club, members, profiles, coaching, tests] =
+			await Promise.all([
+				ctx.db
+					.query("members")
+					.withIndex("by_club_and_key", (q) =>
+						q.eq("clubId", actor.clubId).eq("value.id", personId),
+					)
+					.unique(),
+				ctx.db.get(actor.clubId),
+				ctx.db
+					.query("members")
+					.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+					.take(501),
+				ctx.db
+					.query("memberProfiles")
+					.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+					.take(501),
+				ctx.db
+					.query("playerCoaching")
+					.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+					.take(501),
+				ctx.db
+					.query("fitnessTests")
+					.withIndex("by_club_archive", (q) =>
+						q.eq("clubId", actor.clubId).eq("archived", false),
+					)
+					.take(101),
+			]);
+		if (!person || !canReadProgress(accountFor(actor), person.value))
+			throw new Error("These fitness results are private.");
+		const season = (club?.seasons ?? initialSeasons).find(
+			(entry) => entry.id === seasonId,
+		);
+		if (!season) throw new Error("Season not found.");
+		if (
+			members.length > 500 ||
+			profiles.length > 500 ||
+			coaching.length > 500 ||
+			tests.length > 100
+		)
+			throw new Error("Fitness competition is unavailable for this club size.");
+		const active = new Set(
+			members
+				.filter(({ value }) => !value.archived && !value.mergedInto)
+				.map(({ value }) => value.id),
+		);
+		const genders = new Map(
+			coaching.map((entry) => [entry.personId, entry.gender]),
+		);
+		const divisions = new Map(
+			profiles.map((profile) => [
+				profile.personId,
+				fitnessDivision(
+					profile.birthDate,
+					profile.competitionGender ?? genders.get(profile.personId),
+					season.start,
+				),
+			]),
+		);
+		const division = divisions.get(personId);
+		const rows = await Promise.all(
+			tests.map(async (test) => {
+				const stats = await ctx.db
+					.query("fitnessStats")
+					.withIndex("by_test_person", (q) => q.eq("testId", test._id))
+					.take(2001);
+				if (stats.length > 2000)
+					throw new Error(
+						"Fitness competition is unavailable for this club size.",
+					);
+				const scores = stats
+					.filter((entry) => active.has(entry.personId))
+					.map((entry) => ({ personId: entry.personId, value: entry.best }));
+				const overall = rankFitnessResults(test, scores);
+				const group = division
+					? rankFitnessResults(
+							test,
+							scores.filter(
+								(entry) => divisions.get(entry.personId) === division,
+							),
+						)
+					: [];
+				return {
+					testId: test._id,
+					name: test.name,
+					unit: test.unit,
+					overallBest: overall.at(0)?.value,
+					divisionBest: group.at(0)?.value,
+					personalBest: overall.find((entry) => entry.personId === personId)
+						?.value,
+					overallRank: overall.find((entry) => entry.personId === personId)
+						?.rank,
+					divisionRank: group.find((entry) => entry.personId === personId)
+						?.rank,
+				};
+			}),
+		);
+		return {
+			division,
+			rows: rows.filter(
+				(row) => row.unit !== "pass_fail" && row.overallBest !== undefined,
+			),
+		};
 	},
 });

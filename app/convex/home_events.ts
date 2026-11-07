@@ -66,7 +66,10 @@ export const homeEvents = async (
 	const coaching = member.coachPrograms.length
 		? active
 				.filter(
-					(row) => row.value.kind === "training" || row.value.kind === "hockey",
+					(row) =>
+						row.value.kind === "training" ||
+						row.value.kind === "hockey" ||
+						row.value.kind === "program",
 				)
 				.toSorted((a, b) =>
 					(a.value.date + a.value.start).localeCompare(

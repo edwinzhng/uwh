@@ -66,6 +66,7 @@ export const eventsValue = v.object({
 	kind: v.union(
 		v.literal("training"),
 		v.literal("hockey"),
+		v.literal("program"),
 		v.literal("social"),
 		v.literal("meeting"),
 		v.literal("tournament"),
@@ -134,6 +135,7 @@ export const teamsValue = v.object({
 			v.object({
 				side: v.union(v.literal("black"), v.literal("white")),
 				personId: v.string(),
+				role: v.optional(v.literal("vice")),
 			}),
 		),
 	),
@@ -148,6 +150,7 @@ export const teamsValue = v.object({
 			v.object({
 				side: v.union(v.literal("black"), v.literal("white")),
 				personId: v.string(),
+				role: v.optional(v.literal("second")),
 			}),
 		),
 	),

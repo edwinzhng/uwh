@@ -16,6 +16,8 @@ export const Avatar = ({
 	icon,
 	initials = false,
 	bright = false,
+	roundedSquare = false,
+	diameter,
 }: {
 	name: string;
 	compact?: boolean;
@@ -26,6 +28,8 @@ export const Avatar = ({
 	icon?: IconName;
 	initials?: boolean;
 	bright?: boolean;
+	roundedSquare?: boolean;
+	diameter?: number;
 }): ReactElement => {
 	const theme = useTheme();
 	const source = useContext(AvatarSourceContext);
@@ -45,13 +49,15 @@ export const Avatar = ({
 	const resolvedUri = uri ?? (loaded?.id === photoId ? loaded?.uri : undefined);
 	const colors = avatarColors(name, bright ? "light" : theme.mode);
 	const [failedUri, setFailedUri] = useState<string>();
-	const size = large
-		? geometry.avatar * 2
-		: mini
-			? space.lg
-			: compact
-				? geometry.compactAvatar
-				: geometry.avatar;
+	const size =
+		diameter ??
+		(large
+			? geometry.avatar * 2
+			: mini
+				? space.lg
+				: compact
+					? geometry.compactAvatar
+					: geometry.avatar);
 	return (
 		<View
 			accessible={false}
@@ -61,7 +67,7 @@ export const Avatar = ({
 				height: size,
 				flexShrink: 0,
 				overflow: "hidden",
-				borderRadius: corners.pill,
+				borderRadius: roundedSquare ? corners.panel : corners.pill,
 				borderWidth: geometry.border,
 				borderColor: `${colors.foreground}18`,
 				alignItems: "center",

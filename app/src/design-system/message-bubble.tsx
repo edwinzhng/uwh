@@ -52,11 +52,7 @@ export const MessageBubble = ({
 		Boolean(reaction),
 	);
 	const bubble = (
-		<ThemeScope
-			appearance={
-				outgoing ? (theme.mode === "dark" ? "light" : "dark") : theme.mode
-			}
-		>
+		<ThemeScope appearance={outgoing ? "light" : theme.mode}>
 			<View
 				style={{
 					maxWidth: layout.maxWidth,
@@ -64,6 +60,8 @@ export const MessageBubble = ({
 					flexShrink: 1,
 					minHeight: geometry.touch,
 					borderRadius: corners.panel,
+					borderBottomRightRadius: outgoing ? corners.item : corners.panel,
+					borderBottomLeftRadius: outgoing ? corners.panel : corners.item,
 					backgroundColor: outgoing
 						? chatColors[theme.mode].outgoing
 						: theme.background.primary,
@@ -74,20 +72,6 @@ export const MessageBubble = ({
 				}}
 			>
 				{children}
-				{stamp ? (
-					<View
-						style={{
-							alignSelf: "flex-end",
-							paddingTop: space.xxs,
-							marginTop: space[stampGap],
-							flexShrink: 0,
-						}}
-					>
-						<Text variant="navigation" tone="secondary">
-							{stamp}
-						</Text>
-					</View>
-				) : undefined}
 			</View>
 		</ThemeScope>
 	);
@@ -100,10 +84,32 @@ export const MessageBubble = ({
 			}}
 		>
 			{timeLabel ? (
-				<View style={{ paddingTop: space.md, paddingBottom: space.xs }}>
+				<View
+					style={{
+						paddingTop: space.md,
+						paddingBottom: space.xs,
+						flexDirection: "row",
+						alignItems: "center",
+						gap: space.sm,
+					}}
+				>
+					<View
+						style={{
+							flex: 1,
+							height: geometry.border,
+							backgroundColor: theme.border,
+						}}
+					/>
 					<Text variant="navigation" tone="secondary" align="center">
 						{timeLabel}
 					</Text>
+					<View
+						style={{
+							flex: 1,
+							height: geometry.border,
+							backgroundColor: theme.border,
+						}}
+					/>
 				</View>
 			) : undefined}
 			<View
@@ -134,9 +140,14 @@ export const MessageBubble = ({
 								gap: space.xs,
 							}}
 						>
-							<Text variant="caption" weight="regular" lines={1}>
+							<Text variant="caption" weight="semibold" lines={1}>
 								{authorLabel}
 							</Text>
+							{stamp ? (
+								<Text variant="navigation" tone="secondary">
+									{stamp}
+								</Text>
+							) : undefined}
 						</View>
 					) : undefined}
 					<View style={{ position: "relative" }}>
@@ -177,6 +188,18 @@ export const MessageBubble = ({
 							</MessageMenuPosition>
 						) : undefined}
 					</View>
+					{stamp && (outgoing || !authorLabel) ? (
+						<View
+							style={{
+								alignSelf: outgoing ? "flex-end" : "flex-start",
+								marginTop: space[stampGap],
+							}}
+						>
+							<Text variant="navigation" tone="secondary">
+								{stamp}
+							</Text>
+						</View>
+					) : undefined}
 					{reactions}
 				</View>
 			</View>

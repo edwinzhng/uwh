@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import { darkTheme } from "./tokens";
+import { lightTheme } from "./tokens";
 
 export const WebDocument = ({
 	children,
@@ -16,8 +16,8 @@ export const WebDocument = ({
 				name="viewport"
 				content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
 			/>
-			<meta name="theme-color" content={darkTheme.background.canvas} />
-			<meta name="color-scheme" content="dark" />
+			<meta name="theme-color" content={lightTheme.background.canvas} />
+			<meta name="color-scheme" content="light" />
 			<meta name="apple-mobile-web-app-capable" content="yes" />
 			<meta name="apple-mobile-web-app-title" content="UWH Club" />
 			<link rel="manifest" href="/manifest.webmanifest" />

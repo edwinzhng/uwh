@@ -177,6 +177,7 @@ export const ProgramEditor = ({
 							options={[
 								{ value: "training", label: "Training" },
 								{ value: "hockey", label: "Practice / game" },
+								{ value: "program", label: "Training program with game" },
 								{ value: "tournament", label: "Tournament" },
 								{ value: "social", label: "Social" },
 								{ value: "meeting", label: "Meeting" },
@@ -186,6 +187,12 @@ export const ProgramEditor = ({
 							}}
 							isDisabled={task.busy}
 						/>
+						{draft.kind === "program" ? (
+							<Text variant="caption" tone="secondary">
+								Enables lineups for upcoming unsplit training sessions in this
+								program. Players keep one RSVP.
+							</Text>
+						) : undefined}
 						<Select
 							label="Status"
 							value={draft.status}

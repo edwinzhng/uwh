@@ -14,6 +14,7 @@ import {
 	validateLineupReferees,
 	writeTeamPlan,
 } from "../src/domain/lineup";
+import { reconcileLineupAttendance } from "../src/domain/lineup-attendance";
 import { formatTeams, positionLabel } from "../src/domain/player-coaching";
 
 const member = (index: number): Member => ({
@@ -59,6 +60,40 @@ const first = (ids: string[]): string => {
 	return id;
 };
 
+test("manual lineup starts empty and lets attending players be placed without regeneration", (): void => {
+	const data = rosterFixture();
+	const next = reduceApp(data, primaryAccount, {
+		type: "generate-teams",
+		eventId: "club-thu",
+		expectedRevision: 0,
+		manual: true,
+	});
+	const plan = planFor(next);
+	expect(plan.black).toEqual([]);
+	expect(plan.white).toEqual([]);
+	expect(plan.attendees).toHaveLength(17);
+	expect(plan.excludedPersonIds).toHaveLength(17);
+	const snapshot = editLineup(plan, lineupSnapshot(plan), {
+		kind: "add",
+		personId: "lineup-0",
+		side: "black",
+		slot: 0,
+	});
+	expect(snapshot.black).toEqual(["lineup-0"]);
+	expect(snapshot.excludedPersonIds).not.toContain("lineup-0");
+	expect(validateLineup(plan, snapshot)).toBeUndefined();
+	const empty = { ...data, responses: [] };
+	expect(
+		planFor(
+			reduceApp(empty, primaryAccount, {
+				type: "generate-teams",
+				eventId: "club-thu",
+				manual: true,
+			}),
+		).attendees,
+	).toEqual([]);
+});
+
 test("generation assigns every attendee to a position group without losing or duplicating players", (): void => {
 	const data = generate();
 	const plan = planFor(data);
@@ -77,6 +112,156 @@ test("generation assigns every attendee to a position group without losing or du
 	expect(snapshot.rotationSlots).toHaveLength(4);
 	expect(formatTeams(plan, data.members)).not.toContain("Bench");
 	expect(formatTeams(plan, data.members)).not.toContain("Rating");
+});
+
+test("attendance review preserves teams and permits adding a new player without regeneration", (): void => {
+	const original = generate();
+	const before = planFor(original);
+	const departed = first(before.black);
+	const newcomer = member(17);
+	const changed: AppData = {
+		...original,
+		members: [...original.members, newcomer],
+		responses: [
+			...original.responses.filter((entry) => entry.personId !== departed),
+			{
+				eventId: "club-thu",
+				personId: newcomer.id,
+				response: "going",
+				attendance: "unmarked",
+			},
+		],
+	};
+	const attendees = changed.responses
+		.filter(
+			(entry) => entry.eventId === "club-thu" && entry.response === "going",
+		)
+		.map((entry) => entry.personId);
+	const command = {
+		type: "review-lineup-attendance",
+		eventId: "club-thu",
+		expectedRevision: before.revision ?? 0,
+		expectedAttendees: attendees,
+	} as const;
+	expect(() =>
+		reduceApp(changed, primaryAccount, { ...command, expectedAttendees: [] }),
+	).toThrow("Attendance changed again");
+	expect(() =>
+		reduceApp(changed, primaryAccount, { ...command, expectedRevision: 0 }),
+	).toThrow("changed");
+	const reviewed = reduceApp(changed, primaryAccount, command);
+	const plan = planFor(reviewed);
+	const snapshot = lineupSnapshot(plan);
+	expect(snapshot.black).toEqual(
+		expect.arrayContaining(before.black.filter((id) => id !== departed)),
+	);
+	expect(
+		snapshot.black.every(
+			(id) => before.black.includes(id) || before.blackBench?.includes(id),
+		),
+	).toBe(true);
+	expect(snapshot.white).toEqual(before.white);
+	expect(lineupPeople(snapshot)).not.toContain(departed);
+	expect(snapshot.excludedPersonIds).toContain(newcomer.id);
+	const added = editLineup(plan, snapshot, {
+		kind: "add",
+		personId: newcomer.id,
+		side: "black",
+		slot: 0,
+	});
+	const saved = reduceApp(reviewed, primaryAccount, {
+		type: "save-lineup",
+		eventId: "club-thu",
+		expectedRevision: plan.revision ?? 0,
+		snapshot: added,
+		privateDraft: true,
+	});
+	expect(lineupPeople(lineupSnapshot(planFor(saved)))).toContain(newcomer.id);
+	expect(planFor(saved).white).toEqual(before.white);
+});
+
+test("reviewing attendance keeps the published lineup private until changes are published", (): void => {
+	const generated = generate();
+	const initial = planFor(generated);
+	const published = reduceApp(generated, primaryAccount, {
+		type: "publish-teams",
+		eventId: "club-thu",
+		expectedRevision: initial.revision,
+	});
+	const newcomer = member(17);
+	const changed: AppData = {
+		...published,
+		members: [...published.members, newcomer],
+		responses: [
+			...published.responses,
+			{
+				eventId: "club-thu",
+				personId: newcomer.id,
+				response: "going",
+				attendance: "unmarked",
+			},
+		],
+	};
+	const original = planFor(changed);
+	const attendees = changed.responses
+		.filter(
+			(entry) => entry.eventId === "club-thu" && entry.response === "going",
+		)
+		.map((entry) => entry.personId);
+	const reviewed = planFor(
+		reduceApp(changed, primaryAccount, {
+			type: "review-lineup-attendance",
+			eventId: "club-thu",
+			expectedRevision: original.revision ?? 0,
+			expectedAttendees: attendees,
+		}),
+	);
+	expect(reviewed.published).toBe(true);
+	expect(reviewed.black).toEqual(original.black);
+	expect(reviewed.white).toEqual(original.white);
+	expect(reviewed.draftLineup?.excludedPersonIds).toContain(newcomer.id);
+	expect(() =>
+		reduceApp(
+			{ ...changed, teams: [{ ...original, coachingStale: true }] },
+			primaryAccount,
+			{
+				type: "review-lineup-attendance",
+				eventId: "club-thu",
+				expectedRevision: original.revision ?? 0,
+				expectedAttendees: attendees,
+			},
+		),
+	).toThrow("Player details changed");
+});
+
+test("a reserve can fill a departed starter's spot when age groups are combined", (): void => {
+	const plan = planFor(generate());
+	const snapshot = lineupSnapshot(plan);
+	const reserve = first(snapshot.blackBench);
+	const rotation = snapshot.rotationSlots?.find(
+		(entry) => entry.personId === reserve,
+	);
+	const starter = snapshot.fieldSlots?.find(
+		(entry) =>
+			entry.slot === rotation?.slot && snapshot.black.includes(entry.personId),
+	);
+	if (!starter) throw new Error("Missing starter fixture");
+	const mixed = {
+		...plan,
+		separateYouth: false,
+		assignments: plan.assignments?.map((entry) =>
+			entry.personId === reserve
+				? { ...entry, ageGroup: "youth" as const }
+				: entry,
+		),
+	};
+	const reviewed = reconcileLineupAttendance(
+		mixed,
+		plan.attendees.filter((id) => id !== starter.personId),
+		plan.revision ?? 0,
+	);
+	expect(reviewed.black).toContain(reserve);
+	expect(validateLineup(reviewed, lineupSnapshot(reviewed))).toBeUndefined();
 });
 
 test("rotation saves persist on the coach boundary and reject forged assignments atomically", (): void => {
@@ -541,4 +726,52 @@ test("referees must belong to their team and moving them away clears the role", 
 		otherId: white,
 	});
 	expect(swapped.referees).toEqual([]);
+});
+
+test("optional leadership and referee roles persist independently", (): void => {
+	const data = generate();
+	const plan = planFor(data);
+	const captain = first(plan.black);
+	const vice = first(plan.blackBench ?? []);
+	const primary = editLineup(plan, lineupSnapshot(plan), {
+		kind: "captain",
+		side: "black",
+		personId: captain,
+	});
+	const leadership = editLineup(plan, primary, {
+		kind: "captain",
+		side: "black",
+		role: "vice",
+		personId: vice,
+	});
+	const referee = editLineup(plan, leadership, {
+		kind: "referee",
+		side: "black",
+		personId: captain,
+	});
+	const both = editLineup(plan, referee, {
+		kind: "referee",
+		side: "black",
+		role: "second",
+		personId: vice,
+	});
+	const saved = saveLineup(plan, both, plan.revision ?? 0);
+	expect(saved.captains).toEqual([
+		{ side: "black", personId: captain },
+		{ side: "black", personId: vice, role: "vice" },
+	]);
+	expect(saved.referees).toEqual([
+		{ side: "black", personId: captain },
+		{ side: "black", personId: vice, role: "second" },
+	]);
+	expect(formatTeams(saved, data.members)).toContain("Vice Captain");
+	expect(formatTeams(saved, data.members)).toContain("Second referee");
+	const cleared = editLineup(saved, lineupSnapshot(saved), {
+		kind: "captain",
+		side: "black",
+	});
+	expect(cleared.captains).toEqual([
+		{ side: "black", personId: vice, role: "vice" },
+	]);
+	expect(validateLineupReferees(cleared, data.members)).toBeUndefined();
 });

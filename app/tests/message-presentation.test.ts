@@ -34,6 +34,16 @@ const message = (
 });
 
 describe("message cluster presentation", () => {
+	test("uses original message timestamps when imported records share an insertion time", (): void => {
+		const result = messagePresentations(
+			[
+				message("later", "peer", 2, "2026-11-02T19:12:00Z"),
+				message("earlier", "peer", 1, "2026-11-02T14:26:00Z"),
+			],
+			{ ...context, timeZone: "UTC" },
+		);
+		expect(result.get("later")?.timeLabel).toMatch(/Nov 2.*7:12 PM/);
+	});
 	test("same-author messages share a cluster through the inclusive five-minute boundary", (): void => {
 		const items = [
 			message("latest", "peer", messageClusterWindowMs),

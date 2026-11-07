@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useRef,
 } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
 	type SharedValue,
@@ -15,7 +15,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import { ActionMenu } from "./action-menu";
-import { Avatar } from "./avatar";
+import { LineupPlayerPortrait } from "./lineup-player-portrait";
 import { LineupScrollContext } from "./lineup-scroll-context";
 import { PoolAddButton } from "./pool-add-button";
 import type { PoolBoardSpot } from "./pool-board";
@@ -48,6 +48,8 @@ export const PoolPiece = ({
 	acceptsDrop?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
+	const { width } = useWindowDimensions();
+	const portraitSize = width >= geometry.wide ? 72 : width >= 600 ? 57 : 51;
 	const scroll = useContext(LineupScrollContext);
 	const setDragging = scroll?.setDragging;
 	const suppressPress = useRef(false);
@@ -152,9 +154,9 @@ export const PoolPiece = ({
 				if (!spot.person && !suppressPress.current) onPress?.();
 			}}
 			style={{
-				width: geometry.compactAvatar + space.xxs * 2,
-				height: geometry.compactAvatar + space.xxs * 2,
-				borderRadius: geometry.touch / 2,
+				width: portraitSize,
+				height: portraitSize,
+				borderRadius: portraitSize / 2,
 				borderWidth: selected ? geometry.focus : 0,
 				borderStyle: spot.person ? "solid" : "dashed",
 				borderColor: selected ? theme.focus : theme.controlBorder,
@@ -164,12 +166,13 @@ export const PoolPiece = ({
 			}}
 		>
 			{spot.person ? (
-				<Avatar
-					initials
-					bright
-					compact
+				<LineupPlayerPortrait
 					name={spot.person.name}
 					personId={spot.person.id}
+					displayName={spot.person.displayName}
+					substitute={spot.person.substitute}
+					diameter={portraitSize}
+					field
 				/>
 			) : (
 				<Text
@@ -220,7 +223,7 @@ export const PoolPiece = ({
 								alignItems: "flex-end",
 							}}
 						>
-							{spot.addOptions ? (
+							{spot.addOptions && !onPress ? (
 								<ActionMenu
 									add
 									label={`Add player to ${spot.label}`}
@@ -278,10 +281,17 @@ export const PoolPiece = ({
 					{[
 						...(spot.person ? [spot.person] : []),
 						...(spot.substitutes ?? []),
-					].map((person) => (
+					].map((person, index) => (
 						<PoolPiece
 							key={person.id}
-							spot={{ id: person.id, label: spot.label, person }}
+							spot={{
+								id: person.id,
+								label: spot.label,
+								person: {
+									...person,
+									substitute: Boolean(spot.person) && index > 0,
+								},
+							}}
 							selected={selectedPersonId === person.id}
 							selectedPersonId={selectedPersonId}
 							dragState={dragState}
@@ -300,12 +310,12 @@ export const PoolPiece = ({
 				collapsable={false}
 				style={[
 					{
-						width: geometry.touch + space.lg,
+						width: portraitSize + space.xxs * 2,
 						padding: space.xxs,
-						borderWidth: geometry.border,
-						borderColor: theme.controlBorder,
+						borderWidth: 0,
+						borderColor: "transparent",
 						borderRadius: corners.control,
-						backgroundColor: `${theme.background.card}99`,
+						backgroundColor: "transparent",
 						alignItems: "center",
 						gap: 0,
 					},
@@ -320,19 +330,6 @@ export const PoolPiece = ({
 					drag={dragState}
 				/>
 				{trigger}
-				<Text
-					pointerEvents="none"
-					numberOfLines={2}
-					style={{
-						...typography.navigation,
-						fontFamily: font.regular,
-						color: theme.text.primary,
-						textAlign: "center",
-						width: "100%",
-					}}
-				>
-					{spot.person?.displayName ?? spot.person?.name}
-				</Text>
 			</Animated.View>
 		</GestureDetector>
 	);

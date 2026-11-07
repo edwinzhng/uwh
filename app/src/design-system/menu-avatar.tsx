@@ -8,18 +8,30 @@ import { corners, geometry, space } from "./tokens";
 
 export const MenuAvatar = ({
 	person,
+	diameter,
 }: {
 	person: ChoicePerson;
+	diameter?: number;
 }): ReactElement => {
 	const theme = useTheme();
+	if (diameter && person.name)
+		return (
+			<Avatar
+				name={person.name}
+				personId={person.id}
+				initials
+				bright
+				diameter={diameter}
+			/>
+		);
 	return (
 		<View
 			pointerEvents="none"
 			style={{
-				width: geometry.compactAvatar + space.xxs * 2,
-				height: geometry.compactAvatar + space.xxs * 2,
+				width: diameter ?? geometry.compactAvatar + space.xxs * 2,
+				height: diameter ?? geometry.compactAvatar + space.xxs * 2,
 				borderRadius: corners.pill,
-				borderWidth: geometry.border,
+				borderWidth: diameter ? 0 : geometry.border,
 				borderColor: theme.controlBorder,
 				alignItems: "center",
 				justifyContent: "center",

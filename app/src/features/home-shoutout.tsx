@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import type { ReactElement } from "react";
-import { EditorialQuote, SummaryCard } from "../design-system";
+import { SummaryCard, Text } from "../design-system";
 import { formatDate } from "../domain/app-rules";
 import { type ClubShoutout, shoutoutLabel } from "../domain/shoutouts";
 
@@ -26,9 +26,13 @@ export const HomeShoutout = ({
 			accessibilityLabel={`Shoutouts. For ${latest.personName}. ${latest.body || shoutoutLabel(latest.category)}. ${formatDate(latest.date)}. Read your recognition`}
 		>
 			{latest.body ? (
-				<EditorialQuote text={latest.body} />
+				<Text variant="small" lines={2}>
+					“{latest.body.trim()}”
+				</Text>
 			) : (
-				<EditorialQuote text={shoutoutLabel(latest.category)} quoted={false} />
+				<Text variant="small" lines={2}>
+					{shoutoutLabel(latest.category)}
+				</Text>
 			)}
 		</SummaryCard>
 	);

@@ -37,7 +37,7 @@ export const canCreateEventLineup = (
 	!event.cancelled &&
 	(event.parts?.length
 		? lineupParts(event).some((part) => part.id === partId)
-		: !partId && event.kind === "hockey");
+		: !partId && (event.kind === "hockey" || event.kind === "program"));
 
 export const publishedEventLineups = (
 	event: ClubEvent,

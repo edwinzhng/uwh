@@ -7,6 +7,7 @@ import type {
 import {
 	canEditMemberCapNumber,
 	canEditMemberProfile,
+	memberBirthDateError,
 	memberCapNumberError,
 	memberProfileError,
 	memberProfileLimits,
@@ -216,14 +217,20 @@ export const savePreviewMemberCapNumber = atom(
 			!canEditMemberCapNumber(account, person)
 		)
 			throw new Error("Only assigned coaches can change cap numbers.");
-		const error = memberCapNumberError(input.capNumber);
+		const error =
+			memberCapNumberError(input.capNumber) ??
+			memberBirthDateError(input.birthDate);
 		if (error) throw new Error(error);
 		if (input.key.length < 16 || input.key.length > 100)
 			throw new Error("Reopen the cap number editor and try again.");
 		const capNumber = input.capNumber.trim()
 			? Number(input.capNumber.trim())
 			: undefined;
-		const payload = JSON.stringify({ capNumber });
+		const payload = JSON.stringify({
+			capNumber,
+			birthDate: input.birthDate,
+			competitionGender: input.competitionGender,
+		});
 		const previous = get(previewMemberProfiles)[person.id];
 		if (previous?.lastKey === input.key) {
 			if (
@@ -244,6 +251,14 @@ export const savePreviewMemberCapNumber = atom(
 				phone: previous?.phone ?? "",
 				photoId: previous?.photoId,
 				capNumber,
+				birthDate:
+					input.birthDate === undefined
+						? previous?.birthDate
+						: input.birthDate || undefined,
+				competitionGender:
+					input.competitionGender === undefined
+						? previous?.competitionGender
+						: input.competitionGender || undefined,
 				revision: (previous?.revision ?? 0) + 1,
 				lastKey: input.key,
 				lastActorId: account.id,

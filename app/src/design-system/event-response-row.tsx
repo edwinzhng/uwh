@@ -11,10 +11,12 @@ export const EventResponseRow = ({
 	description,
 	tone = "neutral",
 	divider = true,
+	compact = false,
 	children,
 }: {
 	label: string;
 	divider?: boolean;
+	compact?: boolean;
 	description?: string;
 	tone?: "neutral" | "success" | "danger" | "warning";
 	children: ReactNode;
@@ -23,7 +25,7 @@ export const EventResponseRow = ({
 	return (
 		<View
 			style={{
-				paddingVertical: space.xxs,
+				paddingVertical: compact ? 0 : space.xxs,
 				borderTopWidth: divider ? geometry.border : 0,
 				borderColor: theme.border,
 				borderRadius: 0,

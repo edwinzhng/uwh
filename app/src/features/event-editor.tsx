@@ -289,6 +289,7 @@ export const EventEditor = ({
 								value={draft.kind === "hockey" ? "training" : draft.kind}
 								options={[
 									{ value: "training", label: "Practice" },
+									{ value: "program", label: "Training program with game" },
 									{ value: "social", label: "Social" },
 									{ value: "meeting", label: "Meeting" },
 									{ value: "tournament", label: "Tournament" },
@@ -299,7 +300,9 @@ export const EventEditor = ({
 											...draft,
 											kind,
 											committedRoster:
-												kind === "training" ? draft.committedRoster : false,
+												kind === "training" || kind === "program"
+													? draft.committedRoster
+													: false,
 											parts: undefined,
 											repeat: kind === "tournament" ? "once" : draft.repeat,
 											endDate: undefined,

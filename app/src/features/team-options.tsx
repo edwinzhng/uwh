@@ -5,6 +5,7 @@ import {
 	Dialog,
 	Divider,
 	PersonChoice,
+	SegmentedControl,
 	Stack,
 	Text,
 	Toggle,
@@ -31,6 +32,7 @@ export const TeamOptions = ({
 	const task = useFormTask();
 	const busy = appBusy || task.busy;
 	const [expectedRevision] = useState(plan?.revision ?? 0);
+	const [mode, setMode] = useState<"balanced" | "manual">("balanced");
 	const attendees = eventAttendees(data, eventId, partId);
 	const [separateYouth, setSeparateYouth] = useState(
 		plan?.separateYouth ?? true,
@@ -44,7 +46,7 @@ export const TeamOptions = ({
 		if (
 			await task.submit(
 				(): string | undefined =>
-					attendees.length - excluded.length < 2
+					mode === "balanced" && attendees.length - excluded.length < 2
 						? "Include at least two players."
 						: undefined,
 				async (): Promise<void> => {
@@ -55,6 +57,7 @@ export const TeamOptions = ({
 							eventId,
 							partId,
 							separateYouth,
+							manual: mode === "manual",
 							excludedPersonIds: excluded,
 						}))
 					)
@@ -79,9 +82,11 @@ export const TeamOptions = ({
 			}}
 			footer={
 				<Button
-					label="Generate"
+					label={mode === "manual" ? "Start with empty teams" : "Generate"}
 					isLoading={busy}
-					isDisabled={attendees.length - excluded.length < 2}
+					isDisabled={
+						mode === "balanced" && attendees.length - excluded.length < 2
+					}
 					onPress={(): void => {
 						void generate();
 					}}
@@ -89,41 +94,60 @@ export const TeamOptions = ({
 			}
 		>
 			<Stack>
+				<SegmentedControl
+					label="Starting lineup"
+					value={mode}
+					options={[
+						{ value: "balanced", label: "Balanced teams" },
+						{ value: "manual", label: "Start empty" },
+					]}
+					onValueChange={setMode}
+				/>
 				{plan ? (
 					<Text variant="small" tone="secondary">
-						Replaces the current teams and position assignments.
+						{plan.published
+							? "Replaces the current teams and position assignments. Players will no longer see the published lineup until you publish the new teams."
+							: "Replaces the current teams and position assignments."}
 					</Text>
 				) : undefined}
-				<Toggle
-					label="Separate youth"
-					value={separateYouth}
-					onValueChange={setSeparateYouth}
-					isDisabled={busy}
-				/>
-				<Divider />
-				<Stack gap="xs">
-					<Text variant="caption" tone="secondary">
-						Players · {attendees.length - excluded.length}
+				{mode === "balanced" ? (
+					<>
+						<Toggle
+							label="Separate youth"
+							value={separateYouth}
+							onValueChange={setSeparateYouth}
+							isDisabled={busy}
+						/>
+						<Divider />
+						<Stack gap="xs">
+							<Text variant="caption" tone="secondary">
+								Players · {attendees.length - excluded.length}
+							</Text>
+							<Stack gap="none">
+								{attendees.map((member) => (
+									<PersonChoice
+										key={member.id}
+										name={member.name}
+										personId={member.id}
+										checked={!excluded.includes(member.id)}
+										isDisabled={busy}
+										onChange={(included): void =>
+											setExcluded((current) =>
+												included
+													? current.filter((id) => id !== member.id)
+													: [...current, member.id],
+											)
+										}
+									/>
+								))}
+							</Stack>
+						</Stack>
+					</>
+				) : (
+					<Text variant="small" tone="secondary">
+						Start with empty positions and place attending players yourself.
 					</Text>
-					<Stack gap="none">
-						{attendees.map((member) => (
-							<PersonChoice
-								key={member.id}
-								name={member.name}
-								personId={member.id}
-								checked={!excluded.includes(member.id)}
-								isDisabled={busy}
-								onChange={(included): void =>
-									setExcluded((current) =>
-										included
-											? current.filter((id) => id !== member.id)
-											: [...current, member.id],
-									)
-								}
-							/>
-						))}
-					</Stack>
-				</Stack>
+				)}
 				{task.error ? (
 					<Text variant="small" tone="danger">
 						{task.error}

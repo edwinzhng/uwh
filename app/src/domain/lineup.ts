@@ -77,10 +77,10 @@ export type LineupSide = "black" | "white";
 export type LineupLocation = LineupSide | "blackBench" | "whiteBench";
 export type LineupSnapshot = {
 	excludedPersonIds?: string[];
-	captains?: { side: LineupSide; personId: string }[];
+	captains?: { side: LineupSide; personId: string; role?: "vice" }[];
 	fieldSlots?: { personId: string; slot: number }[];
 	rotationSlots?: { personId: string; slot: number }[];
-	referees?: { side: LineupSide; personId: string }[];
+	referees?: { side: LineupSide; personId: string; role?: "second" }[];
 	black: string[];
 	white: string[];
 	blackBench: string[];
@@ -99,13 +99,14 @@ export type LineupEdit =
 	  }
 	| {
 			kind: "captain";
+			role?: "vice";
 			side: LineupSide;
 			personId?: string;
 			group?: "adult" | "youth" | "combined";
 	  }
 	| { kind: "place"; personId: string; side: LineupSide; slot: number }
 	| { kind: "rotation"; personId: string; slot?: number }
-	| { kind: "referee"; side: LineupSide; personId?: string }
+	| { kind: "referee"; side: LineupSide; personId?: string; role?: "second" }
 	| { kind: "formation"; side: LineupSide; formation: TeamFormation }
 	| {
 			kind: "move";
@@ -479,7 +480,8 @@ export const validateLineup = (
 	const slots = snapshot.fieldSlots ?? lineupSlots(plan, snapshot);
 	const captainKeys =
 		snapshot.captains?.map(
-			(entry) => `${entry.side}:${ageGroup(plan, entry.personId, snapshot)}`,
+			(entry) =>
+				`${entry.side}:${ageGroup(plan, entry.personId, snapshot)}:${entry.role ?? "captain"}`,
 		) ?? [];
 	if (
 		new Set(captainKeys).size !== captainKeys.length ||
@@ -512,12 +514,15 @@ export const validateLineup = (
 	)
 		return "Choose one valid pool position for every active player.";
 	if (
-		(snapshot.referees?.length ?? 0) > 2 ||
-		new Set(snapshot.referees?.map((entry) => entry.side)).size !==
-			(snapshot.referees?.length ?? 0) ||
+		(snapshot.referees?.length ?? 0) > 4 ||
+		new Set(
+			snapshot.referees?.map(
+				(entry) => `${entry.side}:${entry.role ?? "referee"}`,
+			),
+		).size !== (snapshot.referees?.length ?? 0) ||
 		snapshot.referees?.some((entry) => !entry.personId.trim())
 	)
-		return "Choose at most one referee for each side.";
+		return "Choose at most one referee for each role on each side.";
 	if (snapshot.excludedPersonIds?.some((id) => !plan.attendees.includes(id)))
 		return "Only attending players can be excluded.";
 	const expected = plan.attendees.filter(
@@ -699,12 +704,19 @@ export const editLineup = (
 					...(snapshot.captains ?? []).filter(
 						(entry) =>
 							entry.side !== edit.side ||
+							entry.role !== edit.role ||
 							(plan.separateYouth &&
 								edit.group !== undefined &&
 								ageGroup(plan, entry.personId, snapshot) !== edit.group),
 					),
 					...(edit.personId
-						? [{ side: edit.side, personId: edit.personId }]
+						? [
+								{
+									side: edit.side,
+									personId: edit.personId,
+									...(edit.role ? { role: edit.role } : {}),
+								},
+							]
 						: []),
 				],
 			};
@@ -713,10 +725,16 @@ export const editLineup = (
 				...snapshot,
 				referees: [
 					...(snapshot.referees ?? []).filter(
-						(entry) => entry.side !== edit.side,
+						(entry) => entry.side !== edit.side || entry.role !== edit.role,
 					),
 					...(edit.personId
-						? [{ side: edit.side, personId: edit.personId }]
+						? [
+								{
+									side: edit.side,
+									personId: edit.personId,
+									...(edit.role ? { role: edit.role } : {}),
+								},
+							]
 						: []),
 				],
 			};

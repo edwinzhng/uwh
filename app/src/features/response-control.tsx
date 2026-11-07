@@ -14,6 +14,7 @@ type Props = {
 	hideLabel?: boolean;
 	firstDivider?: boolean;
 	quick?: boolean;
+	compactRows?: boolean;
 };
 const LiveResponse = ({
 	event,
@@ -22,6 +23,7 @@ const LiveResponse = ({
 	hideLabel,
 	firstDivider,
 	quick,
+	compactRows,
 }: Props): ReactElement => {
 	const series = useQuery(
 		api.session_series.list,
@@ -38,6 +40,7 @@ const LiveResponse = ({
 			hideLabel={hideLabel}
 			firstDivider={firstDivider}
 			quick={quick}
+			compactRows={compactRows}
 			committed={committed}
 			loading={Boolean(event.seriesId && !series)}
 		/>
@@ -50,6 +53,7 @@ const PreviewResponse = ({
 	hideLabel,
 	firstDivider,
 	quick,
+	compactRows,
 }: Props): ReactElement => {
 	const series = useAtomValue(previewSessionSeries);
 	return (
@@ -60,6 +64,7 @@ const PreviewResponse = ({
 			hideLabel={hideLabel}
 			firstDivider={firstDivider}
 			quick={quick}
+			compactRows={compactRows}
 			committed={series.some((entry) =>
 				entry.seriesIds.includes(event.seriesId ?? ""),
 			)}
@@ -73,6 +78,7 @@ export const ResponseControl = ({
 	hideLabel,
 	firstDivider,
 	quick,
+	compactRows,
 }: Props): ReactElement =>
 	useApp().source === "convex" ? (
 		<LiveResponse
@@ -82,6 +88,7 @@ export const ResponseControl = ({
 			hideLabel={hideLabel}
 			firstDivider={firstDivider}
 			quick={quick}
+			compactRows={compactRows}
 		/>
 	) : (
 		<PreviewResponse
@@ -91,5 +98,6 @@ export const ResponseControl = ({
 			hideLabel={hideLabel}
 			firstDivider={firstDivider}
 			quick={quick}
+			compactRows={compactRows}
 		/>
 	);

@@ -8,6 +8,10 @@ export type PersonPickerProps = {
 	options: readonly PersonChoice[];
 	onValueChange: (id: string) => void;
 	isSelected?: boolean;
+	views?: {
+		value: "personal" | "coaching";
+		onValueChange: (value: "personal" | "coaching") => void;
+	};
 	account?: {
 		onProfile?: () => void;
 		onSettings: () => void;

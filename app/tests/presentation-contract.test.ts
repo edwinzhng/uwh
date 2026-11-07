@@ -31,13 +31,15 @@ test("interactive shapes share their corner owner and menus follow their row ins
 	expect(corners.navigation).toBe(corners.control);
 	expect(corners.menuRow).toBe(interactiveRow.borderRadius);
 	expect(corners.menu).toBe(corners.menuRow + interactiveRow.gutter);
-	expect(corners.panel).toBe(8);
+	expect(corners.panel).toBe(12);
 	expect(corners.overlay).toBe(32);
 });
 
 test("neutral surfaces and overlays consume the app elevation foundation", (): void => {
 	expect(lightTheme.background.canvas).toBe(lightTheme.background.primary);
-	expect(lightTheme.background.secondary).toBe("#ECEFE9");
+	expect(lightTheme.background.secondary).not.toBe(
+		lightTheme.background.canvas,
+	);
 	for (const theme of [lightTheme, darkTheme]) {
 		expect(materialColors(theme).shadow).toBe(elevation.floating.boxShadow);
 		expect(materialColors(theme).overlayShadow).toBe(

@@ -94,6 +94,7 @@ export const appAction = v.union(
 		partId: v.optional(v.string()),
 		eventId: v.string(),
 		separateYouth: v.optional(v.boolean()),
+		manual: v.optional(v.boolean()),
 		excludedPersonIds: v.optional(v.array(v.string())),
 	}),
 	v.object({
@@ -116,6 +117,13 @@ export const appAction = v.union(
 		expectedRevision: v.optional(v.number()),
 		partId: v.optional(v.string()),
 		eventId: v.string(),
+	}),
+	v.object({
+		type: v.literal("review-lineup-attendance"),
+		eventId: v.string(),
+		partId: v.optional(v.string()),
+		expectedRevision: v.number(),
+		expectedAttendees: v.array(v.string()),
 	}),
 	v.object({
 		type: v.literal("save-lineup"),

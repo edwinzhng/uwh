@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { Field, Stack } from "../design-system";
+import { Field, Select, Stack } from "../design-system";
 import type { MemberProfileInput } from "../domain/member-profile";
 
 export const MemberProfileFields = ({
@@ -10,7 +10,13 @@ export const MemberProfileFields = ({
 }: {
 	input: MemberProfileInput;
 	onChange: (
-		field: "name" | "capNumber" | "email" | "phone",
+		field:
+			| "name"
+			| "capNumber"
+			| "email"
+			| "phone"
+			| "birthDate"
+			| "competitionGender",
 		value: string,
 	) => void;
 	isDisabled: boolean;
@@ -35,6 +41,28 @@ export const MemberProfileFields = ({
 				isDisabled={isDisabled}
 			/>
 		) : undefined}
+		<Field
+			label="Date of birth (private)"
+			hint="YYYY-MM-DD · used for fitness divisions"
+			value={input.birthDate ?? ""}
+			onValueChange={(value): void => onChange("birthDate", value)}
+			maxLength={10}
+			isDisabled={isDisabled}
+		/>
+		<Select
+			label="Fitness division"
+			value={input.competitionGender ?? ""}
+			options={[
+				{ value: "", label: "Not set" },
+				{ value: "male", label: "Men" },
+				{ value: "female", label: "Women" },
+				{ value: "other", label: "Other" },
+			]}
+			onValueChange={(value): void =>
+				onChange("competitionGender", value ?? "")
+			}
+			isDisabled={isDisabled}
+		/>
 		<Field
 			label="Phone (private)"
 			inputMode="tel"

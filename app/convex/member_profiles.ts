@@ -3,6 +3,7 @@ import {
 	canEditMemberCapNumber,
 	canEditMemberProfile,
 	type MemberProfile,
+	memberBirthDateError,
 	memberCapNumberError,
 	memberProfileError,
 	memberProfileProjection,
@@ -92,6 +93,15 @@ export const save = mutation({
 		email: v.string(),
 		phone: v.string(),
 		capNumber: v.string(),
+		birthDate: v.optional(v.string()),
+		competitionGender: v.optional(
+			v.union(
+				v.literal(""),
+				v.literal("male"),
+				v.literal("female"),
+				v.literal("other"),
+			),
+		),
 		photoId: v.optional(v.string()),
 	},
 	handler: async (ctx, input): Promise<void> => {
@@ -150,6 +160,12 @@ export const save = mutation({
 			clubId: actor.clubId,
 			personId: input.personId,
 			capNumber: fields.capNumber,
+			birthDate:
+				input.birthDate === undefined ? previous?.birthDate : fields.birthDate,
+			competitionGender:
+				input.competitionGender === undefined
+					? previous?.competitionGender
+					: fields.competitionGender,
 			email: fields.email,
 			phone: fields.phone,
 			photoId: photoId ?? undefined,
@@ -195,6 +211,15 @@ export const saveCapNumber = mutation({
 		personId: v.string(),
 		revision: v.number(),
 		capNumber: v.string(),
+		birthDate: v.optional(v.string()),
+		competitionGender: v.optional(
+			v.union(
+				v.literal(""),
+				v.literal("male"),
+				v.literal("female"),
+				v.literal("other"),
+			),
+		),
 		key: v.string(),
 	},
 	handler: async (ctx, input): Promise<void> => {
@@ -202,14 +227,20 @@ export const saveCapNumber = mutation({
 		const person = await profilePerson(ctx, actor.clubId, input.personId);
 		if (!canEditMemberCapNumber(actor, person.value))
 			throw new ConvexError("Only assigned coaches can change cap numbers.");
-		const error = memberCapNumberError(input.capNumber);
+		const error =
+			memberCapNumberError(input.capNumber) ??
+			memberBirthDateError(input.birthDate);
 		if (error) throw new ConvexError(error);
 		if (input.key.length < 16 || input.key.length > 100)
 			throw new ConvexError("Reopen the cap number editor and try again.");
 		const capNumber = input.capNumber.trim()
 			? Number(input.capNumber.trim())
 			: undefined;
-		const payload = JSON.stringify({ capNumber });
+		const payload = JSON.stringify({
+			capNumber,
+			birthDate: input.birthDate,
+			competitionGender: input.competitionGender,
+		});
 		const previous = await profileRecord(ctx, actor.clubId, input.personId);
 		if (previous?.lastKey === input.key) {
 			if (
@@ -227,6 +258,12 @@ export const saveCapNumber = mutation({
 			);
 		const next = {
 			capNumber,
+			...(input.birthDate === undefined
+				? {}
+				: { birthDate: input.birthDate || undefined }),
+			...(input.competitionGender === undefined
+				? {}
+				: { competitionGender: input.competitionGender || undefined }),
 			revision: (previous?.revision ?? 0) + 1,
 			lastKey: input.key,
 			lastActorId: actor.userId,

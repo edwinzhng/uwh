@@ -4,6 +4,7 @@ import { previewAccountIdAtom, previewDataAtom } from "../src/demo/app-state";
 import {
 	previewMemberProfiles,
 	previewProfilePhotos,
+	savePreviewMemberCapNumber,
 	savePreviewMemberProfile,
 	uploadPreviewProfilePhoto,
 } from "../src/demo/member-profile-state";
@@ -70,12 +71,17 @@ test("profile fields support clearable contacts and strict cap/email/phone valid
 test("only self and linked guardians edit, with contacts redacted from staff and unrelated members", (): void => {
 	const fields = {
 		email: "private@example.test",
+		birthDate: "1993-04-15",
+		competitionGender: "female" as const,
 		phone: "+1 403 555 0100",
 		capNumber: 7,
 		photoId: "photo",
 		revision: 2,
 	};
 	expect(canEditMemberProfile(account, person)).toBe(true);
+	expect(memberProfileProjection(account, person, fields).birthDate).toBe(
+		"1993-04-15",
+	);
 	expect(memberProfileProjection(account, person, fields).contact).toEqual({
 		email: fields.email,
 		phone: fields.phone,
@@ -87,6 +93,12 @@ test("only self and linked guardians edit, with contacts redacted from staff and
 		const projection = memberProfileProjection(staff, person, fields);
 		expect(projection.canEdit).toBe(false);
 		expect(projection.contact).toBeUndefined();
+		expect(projection.birthDate).toBe(
+			staff.coachPrograms.includes("club") ? "1993-04-15" : undefined,
+		);
+		expect(projection.competitionGender).toBe(
+			staff.coachPrograms.includes("club") ? "female" : undefined,
+		);
 		expect(projection.capNumber).toBe(7);
 		expect(projection.photoId).toBe("photo");
 	}
@@ -295,4 +307,41 @@ test("canonical profile edits retain a shared photo still referenced by a preser
 	expect(store.get(previewProfilePhotos).map((photo) => photo.id)).toContain(
 		photoId,
 	);
+});
+
+test("coaches update player competition details without changing private contacts and reject stale or unauthorized edits", (): void => {
+	const store = createStore();
+	const before = store.get(previewMemberProfiles).sam;
+	const draft = {
+		personId: "sam",
+		actorId: "alex",
+		capNumber: "14",
+		birthDate: "2010-04-01",
+		competitionGender: "female" as const,
+		revision: 0,
+		key: "coach-details-first-key",
+	};
+	store.set(savePreviewMemberCapNumber, draft);
+	store.set(savePreviewMemberCapNumber, draft);
+	const saved = store.get(previewMemberProfiles).sam;
+	expect(saved?.birthDate).toBe("2010-04-01");
+	expect(saved?.competitionGender).toBe("female");
+	expect(saved?.capNumber).toBe(14);
+	expect(saved?.phone).toBe(before?.phone);
+	expect(saved?.revision).toBe(1);
+	expect(() =>
+		store.set(savePreviewMemberCapNumber, {
+			...draft,
+			key: "coach-details-stale-key",
+		}),
+	).toThrow("another session");
+	store.set(previewAccountIdAtom, "taylor");
+	expect(() =>
+		store.set(savePreviewMemberCapNumber, {
+			...draft,
+			actorId: "taylor",
+			revision: 1,
+			key: "coach-details-denied-key",
+		}),
+	).toThrow("coaches");
 });

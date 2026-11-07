@@ -30,6 +30,7 @@ export type PoolBoardPerson = {
 	name: string;
 	captain?: boolean;
 	displayName?: string;
+	substitute?: boolean;
 };
 export type PoolBoardSpot = {
 	id: string;
@@ -177,7 +178,9 @@ export const PoolBoard = ({
 						personId,
 						spot.id,
 					);
-					if (action?.kind === "swap") onSwap?.(personId, action.personId);
+					if (spot.addOptions?.some((option) => option.id === personId))
+						onAdd?.(personId, spot.id);
+					else if (action?.kind === "swap") onSwap?.(personId, action.personId);
 					else if (action) (onAdd ?? onPlace)?.(personId, action.slotId);
 					resolve();
 				});
@@ -190,9 +193,13 @@ export const PoolBoard = ({
 	});
 	const dispatchDrop = boards?.drop ?? drop;
 	const press = (spot: PoolBoardSpot): (() => void) | undefined =>
-		!spot.person && onManageRotation
-			? (): void => onManageRotation(spot.id, spot.label)
-			: undefined;
+		selectedPersonId &&
+		onAdd &&
+		spot.addOptions?.some((option) => option.id === selectedPersonId)
+			? (): void => onAdd(selectedPersonId, spot.id)
+			: !spot.person && onManageRotation
+				? (): void => onManageRotation(spot.id, spot.label)
+				: undefined;
 	return (
 		<PoolTargetsContext value={register}>
 			<Animated.View style={[{ gap: space.xs, flexGrow: 1 }, activeStyle]}>

@@ -4,6 +4,8 @@ export type ButtonVariant =
 	| "secondary"
 	| "ghost"
 	| "selection"
+	| "rsvp-yes"
+	| "rsvp-no"
 	| "danger"
 	| "danger-text";
 export type ButtonInteraction = "rest" | "hover" | "pressed" | "disabled";
@@ -20,8 +22,28 @@ export const buttonColors = (
 					? "transparent"
 					: theme.background.secondary,
 			foreground: theme.text.secondary,
-			border: variant === "secondary" ? theme.border : "transparent",
+			border:
+				variant === "secondary" ||
+				variant === "rsvp-yes" ||
+				variant === "rsvp-no"
+					? theme.border
+					: "transparent",
 		};
+	if (variant === "rsvp-yes" || variant === "rsvp-no") {
+		const scale =
+			theme.colorScales[variant === "rsvp-yes" ? "success" : "danger"];
+		return {
+			background: selected
+				? scale.subtle
+				: interaction === "pressed"
+					? theme.background.pressed
+					: interaction === "hover"
+						? theme.background.hover
+						: "transparent",
+			foreground: selected ? scale.text : theme.text.primary,
+			border: selected ? scale.border : theme.controlBorder,
+		};
+	}
 	if (variant === "solid" || variant === "danger") {
 		const colors = variant === "danger" ? theme.dangerAction : theme.accent;
 		return {

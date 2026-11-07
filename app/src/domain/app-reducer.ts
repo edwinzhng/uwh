@@ -33,6 +33,7 @@ import {
 	validateLineupReferees,
 	writeTeamPlan,
 } from "./lineup";
+import { reconcileLineupAttendance } from "./lineup-attendance";
 import { carryForwardLineup } from "./lineup-carry";
 import { setMemberArchived } from "./member-lifecycle";
 import { reduceMessages } from "./message-reducer";
@@ -452,7 +453,7 @@ export const reduceApp = (
 			)
 				throw new Error("Practice part not found.");
 			const attendees = eventAttendees(data, action.eventId, action.partId);
-			if (attendees.length < 2)
+			if (!action.manual && attendees.length < 2)
 				throw new Error("At least two attendees are needed.");
 			const excludedPersonIds = [...new Set(action.excludedPersonIds ?? [])];
 			if (
@@ -461,20 +462,24 @@ export const reduceApp = (
 				)
 			)
 				throw new Error("Only attendees can be excluded.");
-			if (attendees.length - excludedPersonIds.length < 2)
+			if (!action.manual && attendees.length - excludedPersonIds.length < 2)
 				throw new Error("Include at least two players.");
-			const generated = generatePreviewTeams(
-				attendees.map((entry) => ({
-					...defaultPlayerCoaching(entry),
-					...data.playerCoaching?.find((value) => value.personId === entry.id),
-					id: entry.id,
-					name: entry.name,
-					position: entry.position,
-					response: "going",
-					attendance: "unmarked",
-				})),
-				{ separateYouth: action.separateYouth ?? true, excludedPersonIds },
-			);
+			const generated = action.manual
+				? { black: [], white: [] }
+				: generatePreviewTeams(
+						attendees.map((entry) => ({
+							...defaultPlayerCoaching(entry),
+							...data.playerCoaching?.find(
+								(value) => value.personId === entry.id,
+							),
+							id: entry.id,
+							name: entry.name,
+							position: entry.position,
+							response: "going",
+							attendance: "unmarked",
+						})),
+						{ separateYouth: action.separateYouth ?? true, excludedPersonIds },
+					);
 			const previous = data.teams.find(
 				(entry) =>
 					entry.eventId === action.eventId && entry.partId === action.partId,
@@ -483,8 +488,10 @@ export const reduceApp = (
 				previous,
 				normalizeLineup({
 					partId: action.partId,
-					separateYouth: action.separateYouth ?? true,
-					excludedPersonIds,
+					separateYouth: action.manual ? false : (action.separateYouth ?? true),
+					excludedPersonIds: action.manual
+						? attendees.map((entry) => entry.id)
+						: excludedPersonIds,
 					assignments: [...generated.black, ...generated.white].map(
 						(player) => ({
 							personId: player.id,
@@ -542,6 +549,38 @@ export const reduceApp = (
 				expectedRevision: action.expectedRevision,
 			});
 			return { ...data, teams: [...data.teams, carried] };
+		}
+		case "review-lineup-attendance": {
+			requireAccess(
+				Boolean(event && !event.cancelled && canCoach(account, event.program)),
+			);
+			if (
+				action.partId &&
+				!event?.parts?.some((part) => part.id === action.partId)
+			)
+				throw new Error("Practice part not found.");
+			const plan = data.teams.find(
+				(entry) =>
+					entry.eventId === action.eventId && entry.partId === action.partId,
+			);
+			if (!plan) throw new Error("Generate teams first.");
+			const attendees = eventAttendees(data, plan.eventId, plan.partId).map(
+				(member) => member.id,
+			);
+			if (
+				JSON.stringify([...attendees].sort()) !==
+				JSON.stringify([...action.expectedAttendees].sort())
+			)
+				throw new Error("Attendance changed again. Review the latest players.");
+			const next = reconcileLineupAttendance(
+				plan,
+				attendees,
+				action.expectedRevision,
+			);
+			return {
+				...data,
+				teams: data.teams.map((entry) => (entry === plan ? next : entry)),
+			};
 		}
 		case "save-lineup": {
 			requireAccess(

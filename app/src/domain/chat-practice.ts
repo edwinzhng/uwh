@@ -12,7 +12,9 @@ export const chatProgramId = (threadId: string): string | undefined => {
 };
 export const isUpcomingPractice = (event: ClubEvent, now: number): boolean =>
 	!event.cancelled &&
-	(event.kind === "training" || event.kind === "hockey") &&
+	(event.kind === "training" ||
+		event.kind === "hockey" ||
+		event.kind === "program") &&
 	!eventFinished(event, now);
 export const nextChatPractice = (
 	events: readonly ClubEvent[],

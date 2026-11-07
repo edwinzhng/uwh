@@ -2,7 +2,7 @@ import { useQuery } from "convex/react";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { AppContext, useApp } from "../demo/app-state";
-import { Button, Dialog, EmptyState, LoadingContent } from "../design-system";
+import { Dialog, EmptyState, LoadingContent, TextLink } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import { SessionPeople } from "./session-people";
 
@@ -49,11 +49,15 @@ const AttendeesAction = ({ event, attendanceCount }: Props): ReactElement => {
 	const [open, setOpen] = useState(false);
 	return (
 		<>
-			<Button
-				label={attendanceCount === undefined ? "—" : String(attendanceCount)}
-				prefix="users"
-				variant="secondary"
+			<TextLink
 				compact
+				inline
+				label={
+					attendanceCount === undefined
+						? "Attendees"
+						: `${attendanceCount} attending`
+				}
+				role="button"
 				accessibilityLabel={`${attendanceCount === undefined ? "Participants for" : `${attendanceCount} attending`} ${event.title}. View participants`}
 				onPress={(): void => setOpen(true)}
 			/>

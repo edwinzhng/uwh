@@ -6,7 +6,6 @@ import {
 	type PoolBoardSpot,
 	Row,
 	Select,
-	Stack,
 } from "../design-system";
 import { eventAttendees, memberName } from "../domain/app-rules";
 import type { TeamFormation, TeamPlan } from "../domain/app-types";
@@ -35,7 +34,9 @@ export const TeamPool = ({
 	onSwap,
 	onFormationChange,
 	onCaptainChange,
+	onViceCaptainChange,
 	onRefereeChange,
+	onSecondRefereeChange,
 }: {
 	plan: TeamPlan;
 	side: LineupSide;
@@ -46,7 +47,9 @@ export const TeamPool = ({
 	onSwap?: (personId: string, otherId: string) => void;
 	onFormationChange?: (formation: TeamFormation) => void;
 	onCaptainChange?: (personId?: string) => void;
+	onViceCaptainChange?: (personId?: string) => void;
 	onRefereeChange?: (personId?: string) => void;
+	onSecondRefereeChange?: (personId?: string) => void;
 }): ReactElement => {
 	const { data } = useApp();
 	const snapshot = lineupSnapshot(plan);
@@ -55,7 +58,12 @@ export const TeamPool = ({
 	const inGroup = (id: string): boolean =>
 		group === "combined" ||
 		(plan.assignments?.find((entry) => entry.personId === id)?.ageGroup ??
-			"adult") === group;
+			data.playerCoaching?.find((entry) => entry.personId === id)?.ageGroup ??
+			(data.members
+				.find((member) => member.id === id)
+				?.programs.includes("youth")
+				? "youth"
+				: "adult")) === group;
 	const displayNames = lineupDisplayNames(
 		[
 			...lineupPeople(snapshot).filter(inGroup),
@@ -63,7 +71,11 @@ export const TeamPool = ({
 		].map((id) => ({ id, name: memberName(data, id) })),
 	);
 	const captain = plan.captains?.find(
-		(entry) => entry.side === side && inGroup(entry.personId),
+		(entry) => entry.side === side && !entry.role && inGroup(entry.personId),
+	);
+	const viceCaptain = plan.captains?.find(
+		(entry) =>
+			entry.side === side && entry.role === "vice" && inGroup(entry.personId),
 	);
 	const person = (
 		id: string,
@@ -74,7 +86,21 @@ export const TeamPool = ({
 		captain: captain?.personId === id,
 	});
 	const teamPeople = lineupTeamPeople(snapshot, side).filter(inGroup);
-	const referee = plan.referees?.find((entry) => entry.side === side);
+	const referee = plan.referees?.find(
+		(entry) => entry.side === side && !entry.role,
+	);
+	const secondReferee = plan.referees?.find(
+		(entry) => entry.side === side && entry.role === "second",
+	);
+	const rolePeople = data.members
+		.filter(
+			(member) =>
+				teamPeople.includes(member.id) &&
+				!member.archived &&
+				!member.mergedInto &&
+				member.programs.length > 0,
+		)
+		.map((member) => ({ id: member.id, name: member.name }));
 	const spots = formationPositions[formation].map((_, slot) => {
 		const occupant = snapshot.fieldSlots?.find(
 			(entry) =>
@@ -135,11 +161,11 @@ export const TeamPool = ({
 		),
 	].filter((row) => row.length > 0);
 	return (
-		<Stack gap="xs" grow>
-			<PoolBoard
-				detail={<TeamStrength people={teamPeople} />}
-				summary={
-					<Row justify="between" gap="xs">
+		<PoolBoard
+			detail={<TeamStrength people={teamPeople} />}
+			summary={
+				<Row justify="between" gap="xs" align="start" wrap>
+					<Row gap="xs" align="start">
 						<TeamCaptain
 							dragScope={group}
 							side={side}
@@ -150,87 +176,104 @@ export const TeamPool = ({
 							}
 							onChange={onCaptainChange}
 						/>
+						<TeamCaptain
+							roleLabel="Vice Captain"
+							dragScope={group}
+							side={side}
+							people={teamPeople}
+							personId={viceCaptain?.personId}
+							displayName={
+								viceCaptain ? displayNames.get(viceCaptain.personId) : undefined
+							}
+							onChange={onViceCaptainChange}
+						/>
+					</Row>
+					<Row gap="xs" align="start">
 						<LineupRoleMenu
 							roleLabel="Ref"
 							dragScope={group}
 							label={`${side === "black" ? "Black" : "White"} referee`}
-							people={data.members
-								.filter(
-									(member) =>
-										teamPeople.includes(member.id) &&
-										!member.archived &&
-										!member.mergedInto &&
-										member.programs.length > 0,
-								)
-								.map((member) => ({ id: member.id, name: member.name }))}
+							people={rolePeople}
 							personId={referee?.personId}
 							displayName={
-								referee
-									? (displayNames.get(referee.personId) ??
-										memberName(data, referee.personId).split(" ").at(0))
-									: undefined
+								referee ? displayNames.get(referee.personId) : undefined
 							}
 							onChange={onRefereeChange}
 						/>
-					</Row>
-				}
-				key={formation}
-				side={side}
-				dragScope={group}
-				label={
-					onFormationChange
-						? side === "black"
-							? "Black"
-							: "White"
-						: `${side === "black" ? "Black" : "White"} · ${formation}`
-				}
-				headerAction={
-					onFormationChange ? (
-						<Row wrap>
-							<Select
-								label={`${side === "black" ? "Black" : "White"} formation`}
-								hideLabel
-								compact
-								value={formation}
-								options={formationOptions.map((option) => ({
-									value: option.value,
-									label: option.value,
-								}))}
-								onValueChange={(next): void => {
-									if (next) onFormationChange(next);
-								}}
+						{onSecondRefereeChange || secondReferee ? (
+							<LineupRoleMenu
+								roleLabel="2nd Ref"
+								dragScope={group}
+								label={`${side === "black" ? "Black" : "White"} second referee`}
+								people={rolePeople}
+								personId={secondReferee?.personId}
+								displayName={
+									secondReferee
+										? displayNames.get(secondReferee.personId)
+										: undefined
+								}
+								onChange={onSecondRefereeChange}
 							/>
-						</Row>
-					) : undefined
-				}
-				rows={rows}
-				selectedPersonId={
-					selectedPersonId && inGroup(selectedPersonId)
-						? selectedPersonId
-						: undefined
-				}
-				onAdd={
-					onAdd
-						? (id, slot): void => {
-								if (inGroup(id)) onAdd(id, Number(slot));
-							}
-						: undefined
-				}
-				onSwap={
-					onSwap
-						? (id, other): void => {
-								if (inGroup(id) && inGroup(other)) onSwap(id, other);
-							}
-						: undefined
-				}
-				onPlace={
-					onPlace
-						? (personId, slot): void => {
-								if (inGroup(personId)) onPlace(personId, Number(slot));
-							}
-						: undefined
-				}
-			/>
-		</Stack>
+						) : undefined}
+					</Row>
+				</Row>
+			}
+			key={formation}
+			side={side}
+			dragScope={group}
+			label={
+				onFormationChange
+					? side === "black"
+						? "Black"
+						: "White"
+					: `${side === "black" ? "Black" : "White"} · ${formation}`
+			}
+			headerAction={
+				onFormationChange ? (
+					<Row wrap>
+						<Select
+							label={`${side === "black" ? "Black" : "White"} formation`}
+							hideLabel
+							compact
+							value={formation}
+							options={formationOptions.map((option) => ({
+								value: option.value,
+								label: option.value,
+							}))}
+							onValueChange={(next): void => {
+								if (next) onFormationChange(next);
+							}}
+						/>
+					</Row>
+				) : undefined
+			}
+			rows={rows}
+			selectedPersonId={
+				selectedPersonId && inGroup(selectedPersonId)
+					? selectedPersonId
+					: undefined
+			}
+			onAdd={
+				onAdd
+					? (id, slot): void => {
+							if (inGroup(id)) onAdd(id, Number(slot));
+						}
+					: undefined
+			}
+			onSwap={
+				onSwap
+					? (id, other): void => {
+							if (inGroup(id) && inGroup(other)) onSwap(id, other);
+						}
+					: undefined
+			}
+			onPlace={
+				onPlace
+					? (personId, slot): void => {
+							if (inGroup(personId)) onPlace(personId, Number(slot));
+						}
+					: undefined
+			}
+		/>
 	);
 };

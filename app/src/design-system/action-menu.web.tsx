@@ -12,6 +12,7 @@ export const ActionMenu = ({
 	label,
 	add,
 	avatar,
+	avatarDiameter,
 	accessibilityLabel,
 	compact,
 	icon,
@@ -26,9 +27,9 @@ export const ActionMenu = ({
 				style={
 					add || avatar
 						? {
-								width: geometry.touch,
-								height: geometry.touch,
-								minWidth: geometry.touch,
+								width: avatarDiameter ?? geometry.touch,
+								height: avatarDiameter ?? geometry.touch,
+								minWidth: avatarDiameter ?? geometry.touch,
 								padding: 0,
 								border: 0,
 								background: "transparent",
@@ -45,7 +46,7 @@ export const ActionMenu = ({
 				data-icon={icon ? "" : undefined}
 			>
 				{avatar ? (
-					<MenuAvatar person={avatar} />
+					<MenuAvatar person={avatar} diameter={avatarDiameter} />
 				) : add ? (
 					<PoolAddGlyph />
 				) : icon ? (
