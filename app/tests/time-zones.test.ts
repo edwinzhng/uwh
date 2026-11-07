@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import {
+	canonicalTimeZone,
 	defaultClubTimeZone,
 	timeZoneOptions,
 	validTimeZone,
@@ -39,6 +40,17 @@ test("timezone choices include the club default, UTC and Canadian zones without 
 	expect(new Set(timeZoneOptions.map((option) => option.value)).size).toBe(
 		timeZoneOptions.length,
 	);
+});
+
+test("Edmonton links resolve to the club default whatever the runtime's alias handling", (): void => {
+	for (const value of [
+		"America/Edmonton",
+		"america/edmonton",
+		"Canada/Mountain",
+		"America/Yellowknife",
+	])
+		expect(canonicalTimeZone(value)).toBe(defaultClubTimeZone);
+	expect(canonicalTimeZone("America/Regina")).toBe("America/Regina");
 });
 
 test("timezone aliases keep the same scheduling policy", async (): Promise<void> => {

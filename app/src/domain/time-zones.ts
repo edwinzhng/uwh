@@ -1,12 +1,19 @@
 export const defaultClubTimeZone = "America/Edmonton";
 
+const defaultClubTimeZoneLinks = new Set([
+	"America/Yellowknife",
+	"Canada/Mountain",
+]);
 const canonicalZones = new Map<string, string>();
 export const canonicalTimeZone = (value: string): string => {
 	const cached = canonicalZones.get(value);
 	if (cached) return cached;
-	const canonical = new Intl.DateTimeFormat("en", {
+	const resolved = new Intl.DateTimeFormat("en", {
 		timeZone: value,
 	}).resolvedOptions().timeZone;
+	const canonical = defaultClubTimeZoneLinks.has(resolved)
+		? defaultClubTimeZone
+		: resolved;
 	if (canonicalZones.size < 100) canonicalZones.set(value, canonical);
 	return canonical;
 };
