@@ -28,7 +28,7 @@ const event = (id: string, change: Partial<ClubEvent> = {}): ClubEvent => ({
 	...change,
 });
 describe("coach attendance reports", () => {
-	test("unmarked is distinct from absent; late counts as attended", () => {
+	test("unanswered practices count as absent and late counts as attended", () => {
 		const result = attendanceReportRow(
 			player,
 			[event("a"), event("b"), event("c"), event("d")],
@@ -58,13 +58,13 @@ describe("coach attendance reports", () => {
 			],
 			Date.parse("2026-10-01"),
 		);
-		expect(result.recorded).toBe(3);
+		expect(result.recorded).toBe(4);
 		expect(result.total).toBe(4);
 		expect(result.attended).toBe(50);
 		expect(result.onTime).toBe(50);
 		expect(result.additions).toBe(1);
 		expect(result.cancellations).toBe(1);
-		expect(result.cells.at(-1)?.attendance).toBe("unmarked");
+		expect(result.cells.at(-1)?.attendance).toBe("absent");
 		expect(result.points).toEqual([{ date: "2026-09-01", value: 50 }]);
 	});
 	test("eligibility, cancellation and completion control report denominators", () => {

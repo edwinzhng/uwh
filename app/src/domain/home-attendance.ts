@@ -37,7 +37,7 @@ export const homeAttendance = (
 					? event.parts
 					: [{ start: event.start, end: event.end, id: undefined }];
 				const attended = intervals.filter((part) => {
-					const attendance = effectiveAttendance(event, response, part.id);
+					const attendance = effectiveAttendance(event, response, part.id, now);
 					return attendance === "present" || attendance === "late";
 				});
 				const minutes = attended.reduce(

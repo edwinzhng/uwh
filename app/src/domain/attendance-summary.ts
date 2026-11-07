@@ -50,7 +50,12 @@ export const attendanceSummary = (
 			id: event.id,
 			title: event.title,
 			date: event.date,
-			attendance: effectiveAttendance(event, responses.get(event.id)),
+			attendance: effectiveAttendance(
+				event,
+				responses.get(event.id),
+				undefined,
+				now,
+			),
 		}));
 	const recorded = records.filter(
 		(record) => record.attendance !== "unmarked",

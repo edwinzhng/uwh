@@ -22,7 +22,7 @@ const event: ClubEvent = {
 };
 const now = Date.parse("2026-09-08T18:00:00Z");
 
-test("attendance uses all available sessions, including unmarked, while excluding future or ineligible events", (): void => {
+test("attendance uses all available sessions, including automatic absences, while excluding future or ineligible events", (): void => {
 	const data: AppData = {
 		...initialAppData,
 		events: ["present", "late", "absent", "unmarked"]
@@ -47,14 +47,14 @@ test("attendance uses all available sessions, including unmarked, while excludin
 		attended: 50,
 		onTime: 50,
 		total: 4,
-		recorded: 3,
+		recorded: 4,
 	});
 	expect(summary.points).toEqual([
-		{ label: "Sep", onTime: 1, late: 1, absent: 1, unmarked: 1 },
+		{ label: "Sep", onTime: 1, late: 1, absent: 2, unmarked: 0 },
 	]);
 });
 
-test("no recorded attendance retains missing data while reporting zero confirmed attendance", (): void => {
+test("a completed unanswered practice counts as an absence", (): void => {
 	const summary = attendanceSummary(
 		{ ...initialAppData, events: [event], responses: [] },
 		member,
@@ -63,6 +63,6 @@ test("no recorded attendance retains missing data while reporting zero confirmed
 	);
 	expect(summary.attended).toBe(0);
 	expect(summary.onTime).toBeUndefined();
-	expect(summary.recorded).toBe(0);
+	expect(summary.recorded).toBe(1);
 	expect(summary.total).toBe(1);
 });

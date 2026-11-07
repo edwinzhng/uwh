@@ -10,6 +10,7 @@ import {
 	renderCalendar,
 } from "../src/domain/calendar-export";
 import { isHostedCalendarOrigin } from "../src/domain/calendar-links";
+import { defaultProgramRsvp } from "../src/domain/program-rsvp";
 
 const practice: ClubEvent = {
 	id: "practice",
@@ -41,7 +42,7 @@ const projection = personalCalendarEvents(
 const now = Date.parse("2026-09-08T18:00:00Z");
 const entries = reconcileCalendar([], projection, "club", "alex", now);
 
-test("practice part choices keep one calendar entry and revise its time and description", (): void => {
+test("practice parts export separately and removing one preserves the other UID", (): void => {
 	const combined: ClubEvent = {
 		...practice,
 		parts: [
@@ -70,29 +71,49 @@ test("practice part choices keep one calendar entry and revise its time and desc
 	);
 	const hockey = personalCalendarEvents(
 		[combined],
-		[{ ...response, partIds: ["hockey"] }],
+		[{ ...response, declinedPartIds: ["training"] }],
 		"alex",
 		["club"],
 		false,
 	);
-	expect(both).toHaveLength(1);
+	expect(both).toHaveLength(2);
 	expect(hockey).toHaveLength(1);
-	expect(both.at(0)?.description).toContain("Training: 19:45–20:15");
-	expect(hockey.at(0)?.description).not.toContain("Training:");
-	expect(hockey.at(0)?.description).toContain("Hockey: 20:15–21:00");
-	expect((hockey.at(0)?.start ?? 0) - (both.at(0)?.start ?? 0)).toBe(
-		30 * 60000,
+	const legacy = reconcileCalendar([], projection, "club", "alex", now);
+	const original = reconcileCalendar(legacy, both, "club", "alex", now + 1000);
+	expect(
+		original.find((entry) => entry.uid === legacy.at(0)?.uid)?.status,
+	).toBe("CANCELLED");
+	const parsed = new ICAL.Component(
+		ICAL.parse(renderCalendar("Crocs", original)),
 	);
-	const original = reconcileCalendar([], both, "club", "alex", now);
+	const active = parsed
+		.getAllSubcomponents("vevent")
+		.filter((entry) => entry.getFirstPropertyValue("status") === "CONFIRMED")
+		.map((entry) => new ICAL.Event(entry));
+	expect(active.map((entry) => entry.summary)).toEqual([
+		"Training (Training)",
+		"Training (Hockey)",
+	]);
+	expect(active.map((entry) => entry.duration.toSeconds())).toEqual([
+		1800, 2700,
+	]);
+	expect(active.at(1)?.component.getFirstPropertyValue("url")).toBe(
+		"https://app.calgaryuwh.com/session?event=practice&part=hockey",
+	);
 	const updated = reconcileCalendar(
 		original,
 		hockey,
 		"club",
 		"alex",
-		now + 1000,
+		now + 2000,
 	);
-	expect(updated.at(0)?.uid).toBe(original.at(0)?.uid);
-	expect(updated.at(0)?.sequence).toBe(1);
+	expect(
+		updated.find((entry) => entry.title === "Training (Training)")?.status,
+	).toBe("CANCELLED");
+	expect(
+		updated.find((entry) => entry.title === "Training (Hockey)")?.uid,
+	).toBe(active.at(1)?.uid);
+
 	expect(
 		personalCalendarEvents(
 			[combined],
@@ -124,6 +145,49 @@ test("a standard calendar parser reads UTC times and identity", (): void => {
 	expect(event.component.getAllProperties("attendee")).toHaveLength(0);
 });
 
+test("unanswered practices stay tentative through signup close and cancel at the start", (): void => {
+	const start = Date.parse("2026-09-11T01:45:00Z");
+	const event = {
+		...practice,
+		opensAt: start - 3600000,
+		closesAt: start - 1800000,
+	};
+	const at = (
+		time: number,
+		replies: EventResponse[] = [],
+	): ReturnType<typeof personalCalendarEvents> =>
+		personalCalendarEvents([event], replies, "alex", ["club"], false, time);
+	const scheduled = at(start - 3600001);
+	expect(scheduled.at(0)?.title).toBe("Signup not open yet · Training");
+	expect(scheduled.at(0)?.status).toBe("TENTATIVE");
+	expect(at(start - 3600000).at(0)?.title).toBe("RSVP needed · Training");
+	const closed = at(start - 1);
+	expect(closed.at(0)?.title).toBe("Signup closed · Training");
+	const before = reconcileCalendar([], closed, "club", "alex", start - 1);
+	const cancelled = reconcileCalendar(before, at(start), "club", "alex", start);
+	expect(cancelled.at(0)).toMatchObject({
+		uid: before.at(0)?.uid,
+		status: "CANCELLED",
+	});
+	const yes = reconcileCalendar(
+		before,
+		at(start - 1, [response]),
+		"club",
+		"alex",
+		start,
+	);
+	expect(yes.at(0)).toMatchObject({
+		uid: before.at(0)?.uid,
+		status: "CONFIRMED",
+	});
+	expect(at(start - 1, [{ ...response, response: "unavailable" }])).toEqual([]);
+	expect(
+		at(start, [
+			{ ...response, response: "unanswered", attendance: "present" },
+		]).at(0)?.status,
+	).toBe("CONFIRMED");
+});
+
 test("UTF-8 folding and text escaping preserve content without injecting events", (): void => {
 	const title = "🏊 Crocs, club; \\ fins é".repeat(12);
 	const description =
@@ -141,9 +205,15 @@ test("UTF-8 folding and text escaping preserve content without injecting events"
 	expect(event.description).toBe(description.replaceAll("\r\n", "\n"));
 });
 
-test("only personal going responses export; waitlisted events are optional and tentative", (): void => {
+test("personal feeds enforce eligibility and keep waitlists optional", (): void => {
 	expect(
-		personalCalendarEvents([practice], [response], "sam", ["club"], false),
+		personalCalendarEvents(
+			[{ ...practice, programRsvp: defaultProgramRsvp() }],
+			[response],
+			"sam",
+			["youth"],
+			false,
+		),
 	).toHaveLength(0);
 	expect(
 		personalCalendarEvents(
@@ -163,7 +233,7 @@ test("only personal going responses export; waitlisted events are optional and t
 			false,
 		),
 	).toHaveLength(0);
-	for (const state of ["unavailable", "unanswered", "waiting"] as const)
+	for (const state of ["unavailable", "waiting"] as const)
 		expect(
 			personalCalendarEvents(
 				[practice],

@@ -1,11 +1,12 @@
-- Open **Schedule → Sync calendar** or **Account → Calendar**. Select yourself or a linked child. Downloading an `.ics` file creates a snapshot; importing it does not subscribe or receive future RSVP changes.
+- Open **Schedule → Sync** to create a private link and add it to Apple Calendar or Google Calendar. Select profiles when the account manages more than one. **Download a copy** exports a one-time snapshot.
 
-- Signed-in members can create one secret subscription link per personal profile or linked child. In [Google Calendar on a computer](https://support.google.com/calendar/answer/37100?hl=en), use **Other calendars → From URL**. The app opens that settings page and copies the URL in separate direct user actions. Subscription changes appear when Google refreshes the feed; there is no promised refresh interval. Changes made in Google do not change RSVPs in this app.
+- Signed-in members can create one secret subscription link per personal profile or linked child. If Google does not open the subscription prompt, use **Copy link** and [Google Calendar on a computer](https://support.google.com/calendar/answer/37100?hl=en) under **Other calendars → From URL**. Apple and Google subscriptions refresh on the calendar provider’s schedule. Open the event’s UWH Club link to change an RSVP.
 
-- The local API serves `/calendar.ics?token=…` on port 3211. Google cannot fetch `localhost` or `127.0.0.1`. Deploy the mobile Convex backend to a public HTTPS origin and configure `EXPO_PUBLIC_CONVEX_URL` and `EXPO_PUBLIC_CONVEX_SITE_URL` for that deployment. Existing local accounts and tokens are separate from a cloud deployment. No cloud account, OAuth client or external calendar was connected by this implementation.
+- Production calendar URLs use `app.calgaryuwh.com/calendar.ics` and `app.calgaryuwh.com/public-calendar.ics`. Vercel proxies both paths to the production Convex HTTP API and forwards the query string. Existing subscriptions on the Convex hostname continue to work. Local and preview backends retain their own origins.
 
 - App state: Going; Calendar behavior: Confirmed practice, blocks time
-- App state: Not going / unanswered; Calendar behavior: Omitted; a previously exported event becomes cancelled
+- App state: No; Calendar behavior: Omitted. A previously exported entry is cancelled.
+- App state: No response; Calendar behavior: Tentative until practice starts. The title shows whether signup is upcoming, open, or closed. Once signup has closed and the practice starts, an unanswered entry is cancelled and attendance counts as absent unless a coach has recorded a mark.
 - App state: Waitlisted; Calendar behavior: Omitted by default; optionally tentative and does not block time
 - App state: Promoted from waitlist; Calendar behavior: Same event becomes confirmed
 - App state: Event cancelled / no longer eligible; Calendar behavior: Previously exported event becomes cancelled
@@ -13,6 +14,7 @@
 - App state: Practice time, venue or details change; Calendar behavior: Same UID, higher revision on the next fetch
 
 - The feed reads the latest events and responses transactionally. `calendarEntries` preserves UIDs, modification timestamps, revision numbers and cancellation records. Returning to Going restores the same event. Stable output between changes prevents unnecessary calendar churn. Downloads use the same projection and serializer, without historical cancellation records.
+- Practice parts appear as separate events with their own times and UIDs. Private feeds include selected parts only. Existing combined entries are cancelled on the next refresh and replaced by the individual parts.
 
 - Only practice details and that person’s RSVP are exported. Coaching notes, ratings, rosters, messages and finances are excluded. Each fetch checks the feed owner’s current club membership, profile and guardian links. Administrator and coaching roles cannot create subscriptions for arbitrary players.
 

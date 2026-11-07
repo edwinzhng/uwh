@@ -49,10 +49,11 @@ export const HouseholdEventCard = ({
 	const reason = householdAttendanceReason(person, event);
 	const visibleReason = person.programs.length > 0 ? reason : undefined;
 	const current = eventResponse(data, event.id, person.id);
-	const signup = signupState(event, useEventNow(event));
+	const now = useEventNow(event);
+	const signup = signupState(event, now);
 	const open = signup === "open" && !event.cancelled;
 	const status = eventResponsePresentation(current, event.parts?.length);
-	const pastStatus = pastAttendancePresentation(event, current);
+	const pastStatus = pastAttendancePresentation(event, current, now);
 	const showIdentity =
 		householdMembers(data, account).filter((member) =>
 			canRegister(member, event),

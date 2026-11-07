@@ -46,8 +46,8 @@ test("four recorded attendances across eight available sessions is 50%, not 100%
 		attended: 50,
 		total: 8,
 		attendedCount: 4,
-		recorded: 4,
-		unmarked: 4,
+		recorded: 8,
+		unmarked: 0,
 		previous: 100,
 		recent: 0,
 		trend: -100,
@@ -80,7 +80,7 @@ test("membership and snapshots scope available sessions even for legacy events w
 	);
 	expect(row.total).toBe(1);
 	expect(row.attended).toBe(0);
-	expect(row.recorded).toBe(0);
+	expect(row.recorded).toBe(1);
 	expect(row.trend).toBeUndefined();
 	expect(dashboardRow(member, [], [], now).attended).toBeUndefined();
 	expect(attendanceDay(baseline)).toBe(1);
@@ -102,9 +102,9 @@ test("dashboard totals and monthly series are weighted by available sessions; so
 	expect(result).toMatchObject({
 		attended: 2,
 		available: 10,
-		recorded: 2,
+		recorded: 10,
 		rate: 20,
-		coverage: 20,
+		coverage: 100,
 		players: 2,
 	});
 	expect(result.points).toEqual([{ date: "2026-09-01", value: 20 }]);

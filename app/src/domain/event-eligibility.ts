@@ -1,5 +1,8 @@
 import type { ClubEvent, Member } from "./app-types";
-export const canRegister = (member: Member, event: ClubEvent): boolean =>
+export const canRegister = (
+	member: Pick<Member, "id" | "programs" | "archived" | "mergedInto">,
+	event: ClubEvent,
+): boolean =>
 	!member.archived &&
 	!member.mergedInto &&
 	member.programs.length > 0 &&

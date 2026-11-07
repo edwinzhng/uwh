@@ -50,7 +50,7 @@ export const attendanceReportRow = (
 	const cells = events.map((event) => ({
 		eventId: event.id,
 		attendance: eligibleIds.has(event.id)
-			? effectiveAttendance(event, statusByEvent.get(event.id))
+			? effectiveAttendance(event, statusByEvent.get(event.id), undefined, now)
 			: undefined,
 		flag: flagsByEvent.get(event.id),
 	}));
@@ -78,7 +78,12 @@ export const attendanceReportRow = (
 			const monthCells = eligible
 				.filter((event) => event.date.startsWith(month))
 				.map((event) =>
-					effectiveAttendance(event, statusByEvent.get(event.id)),
+					effectiveAttendance(
+						event,
+						statusByEvent.get(event.id),
+						undefined,
+						now,
+					),
 				);
 			return monthCells.length
 				? [

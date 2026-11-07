@@ -3,6 +3,7 @@ import { type PaginationResult, paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { validDate } from "../src/domain/app-rules";
 import type { ClubEvent } from "../src/domain/app-types";
+import { hostedCalendarOrigin } from "../src/domain/calendar-links";
 import { defaultClubTimeZone } from "../src/domain/time-zones";
 import { mutation, query } from "./_generated/server";
 import { requireMember } from "./identity";
@@ -56,7 +57,7 @@ export const info = query({
 			? {
 					name: club.name,
 					timeZone: club.timeZone ?? defaultClubTimeZone,
-					feedUrl: `${process.env.CONVEX_SITE_URL ?? ""}/public-calendar.ics?club=${encodeURIComponent(slug)}`,
+					feedUrl: `${(hostedCalendarOrigin(process.env.CONVEX_SITE_URL) ?? "").replace(/\/$/, "")}/public-calendar.ics?club=${encodeURIComponent(slug)}`,
 				}
 			: null;
 	},

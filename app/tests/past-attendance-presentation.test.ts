@@ -38,7 +38,7 @@ test("distinguishes recorded attendance from RSVP and no response", (): void => 
 	).toEqual({ labels: ["RSVP: No"], tone: "danger" });
 	expect(
 		pastAttendancePresentation(event, { ...response, response: "unanswered" }),
-	).toEqual({ labels: ["No response"], tone: "neutral" });
+	).toEqual({ labels: ["Absent"], tone: "danger" });
 });
 
 test("shows distinct part statuses when attendance or selection differs", (): void => {

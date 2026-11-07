@@ -16,3 +16,9 @@ export const isHostedCalendarOrigin = (origin: string | undefined): boolean => {
 		return false;
 	}
 };
+export const clubAppOrigin = "https://app.calgaryuwh.com";
+
+export const hostedCalendarOrigin = (origin?: string): string | undefined =>
+	origin?.replace(/\/$/, "") === "https://brainy-albatross-874.convex.site"
+		? clubAppOrigin
+		: origin;

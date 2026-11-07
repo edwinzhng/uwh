@@ -5,6 +5,7 @@ export const calendarEntry = v.object({
 	title: v.string(),
 	description: v.string(),
 	location: v.string(),
+	url: v.optional(v.string()),
 	start: v.number(),
 	end: v.number(),
 	status: v.union(

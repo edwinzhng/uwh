@@ -51,13 +51,35 @@ test("late additions become Here for the selected part without changing the orig
 	).toThrow();
 });
 
-test("Going defaults to Here without turning other responses into attendance", (): void => {
+test("Going defaults to Here and unanswered attendance becomes absent at the start", (): void => {
 	expect(effectiveAttendance(event, going)).toBe("present");
-	for (const response of ["waiting", "unavailable", "unanswered"] as const)
+	for (const response of ["waiting", "unavailable"] as const)
 		expect(effectiveAttendance(event, { ...going, response })).toBe("unmarked");
 	expect(effectiveAttendance({ ...event, cancelled: true }, going)).toBe(
 		"unmarked",
 	);
+	const start = Date.parse("2026-09-01T00:00:00Z");
+	const practice = {
+		...event,
+		date: "2026-08-31",
+		start: "18:00",
+		timeZone: "America/Edmonton",
+		closesAt: start - 1800000,
+	};
+	expect(effectiveAttendance(practice, undefined, undefined, start - 1)).toBe(
+		"unmarked",
+	);
+	expect(effectiveAttendance(practice, undefined, undefined, start)).toBe(
+		"absent",
+	);
+	expect(
+		effectiveAttendance(
+			practice,
+			{ ...going, response: "unanswered", attendance: "present" },
+			undefined,
+			start,
+		),
+	).toBe("present");
 	expect(going.attendance).toBe("unmarked");
 	for (const attendance of ["late", "absent", "present"] as const)
 		expect(effectiveAttendance(event, { ...going, attendance })).toBe(

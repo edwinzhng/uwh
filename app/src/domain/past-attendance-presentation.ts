@@ -1,9 +1,19 @@
 import type { ClubEvent, EventResponse } from "./app-types";
+import { unansweredPracticeAbsent } from "./effective-attendance";
 import { attendanceForPart, participatesInPart } from "./practice-parts";
 
 type Status = { label: string; tone: "success" | "danger" | "neutral" };
 
-const pastPartStatus = (response: EventResponse, partId?: string): Status => {
+const pastPartStatus = (
+	event: ClubEvent,
+	response: EventResponse,
+	now: number,
+	partId?: string,
+): Status => {
+	if (unansweredPracticeAbsent(event, now, response, partId))
+		return { label: "Absent", tone: "danger" };
+	if (partId && response.declinedPartIds?.includes(partId))
+		return { label: "RSVP: No", tone: "danger" };
 	if (partId && !participatesInPart(response, partId))
 		return response.response === "unavailable"
 			? { label: "RSVP: No", tone: "danger" }
@@ -24,15 +34,16 @@ const pastPartStatus = (response: EventResponse, partId?: string): Status => {
 export const pastAttendancePresentation = (
 	event: ClubEvent,
 	response: EventResponse,
+	now = Date.now(),
 ): { labels: string[]; tone: Status["tone"] } => {
 	const parts = event.parts?.length
 		? event.parts.map((part) => ({
 				name: part.title,
-				...pastPartStatus(response, part.id),
+				...pastPartStatus(event, response, now, part.id),
 			}))
 		: [];
 	if (!parts.length) {
-		const status = pastPartStatus(response);
+		const status = pastPartStatus(event, response, now);
 		return { labels: [status.label], tone: status.tone };
 	}
 	const first = parts.at(0);

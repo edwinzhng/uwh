@@ -1,35 +1,30 @@
 import { expect, test } from "bun:test";
-import { calendarFeedUrl } from "../src/domain/calendar-links";
+import {
+	calendarFeedUrl,
+	hostedCalendarOrigin,
+} from "../src/domain/calendar-links";
 import {
 	appleCalendarSubscriptionUrl,
-	calendarScopeLabel,
-	calendarViewAfterScopeChange,
-	calendarViewTitle,
 	googleCalendarSubscriptionUrl,
 } from "../src/domain/calendar-workflow";
 
-test("changing subscription scope returns to an explicit preparation choice", (): void => {
-	expect(calendarViewAfterScopeChange("subscribe")).toBe("choose");
-	expect(calendarViewAfterScopeChange("download")).toBe("download");
-	expect(calendarViewAfterScopeChange("choose")).toBe("choose");
-});
-
-test("calendar steps identify one task instead of repeating an export form", (): void => {
-	expect(calendarViewTitle("choose")).toBe("Add to calendar");
-	expect(calendarViewTitle("subscribe")).toBe("Calendar sync");
-	expect(calendarViewTitle("download")).toBe("Download calendar");
-});
-
-test("calendar scope names the selected people without silently switching household identity", (): void => {
-	expect(calendarScopeLabel([])).toBe("Choose at least one person");
-	expect(calendarScopeLabel([{ name: "Edwin" }])).toBe("Edwin");
-	expect(calendarScopeLabel([{ name: "Edwin" }, { name: "Sam" }])).toBe(
-		"Edwin, Sam",
+test("only the production backend uses the club calendar proxy", (): void => {
+	expect(
+		hostedCalendarOrigin("https://brainy-albatross-874.convex.site/"),
+	).toBe("https://app.calgaryuwh.com");
+	expect(hostedCalendarOrigin("https://preview.convex.site")).toBe(
+		"https://preview.convex.site",
+	);
+	expect(hostedCalendarOrigin("http://127.0.0.1:3211")).toBe(
+		"http://127.0.0.1:3211",
 	);
 });
 
 test("Google receives the complete private feed URL as a single parameter", (): void => {
-	const feed = calendarFeedUrl("https://club.convex.site", "private+token/&?=");
+	const feed = calendarFeedUrl(
+		"https://app.calgaryuwh.com",
+		"private+token/&?=",
+	);
 	const subscription = new URL(googleCalendarSubscriptionUrl(feed));
 	expect(subscription.origin).toBe("https://calendar.google.com");
 	expect(subscription.searchParams.get("cid")).toBe(feed);
@@ -38,7 +33,10 @@ test("Google receives the complete private feed URL as a single parameter", (): 
 });
 
 test("Apple receives the same private feed as a subscription instead of a file import", (): void => {
-	const feed = calendarFeedUrl("https://club.convex.site", "private+token/&?=");
+	const feed = calendarFeedUrl(
+		"https://app.calgaryuwh.com",
+		"private+token/&?=",
+	);
 	const apple = new URL(appleCalendarSubscriptionUrl(feed));
 	expect(apple.protocol).toBe("webcal:");
 	expect(apple.host).toBe(new URL(feed).host);

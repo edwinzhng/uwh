@@ -1,14 +1,10 @@
 import type { ClubEvent, EventResponse } from "./app-types";
-import { clubTimestamp } from "./event-time";
-import { selectedParts } from "./practice-parts";
-
-export const calendarPartDescription = (
-	event: ClubEvent,
-	response: Pick<EventResponse, "partIds"> = {},
-): string =>
-	selectedParts(event, response)
-		.map((part) => `${part.title}: ${part.start}–${part.end}`)
-		.join("\n");
+import { clubAppOrigin } from "./calendar-links";
+import { practiceRsvp, unansweredPracticeAbsent } from "./effective-attendance";
+import { canRegister } from "./event-eligibility";
+import { clubTimestamp, signupState } from "./event-time";
+import { practiceEvent } from "./event-types";
+import { attendanceForPart, practicePartKey } from "./practice-parts";
 
 export type CalendarFeedInfo = {
 	personId: string;
@@ -20,6 +16,7 @@ export type CalendarEvent = {
 	title: string;
 	description: string;
 	location: string;
+	url?: string;
 	start: number;
 	end: number;
 	status: "CONFIRMED" | "TENTATIVE" | "CANCELLED";
@@ -30,12 +27,34 @@ export type CalendarEntry = CalendarEvent & {
 	updatedAt: number;
 };
 
+export const calendarEventSlots = (
+	event: ClubEvent,
+	parts: NonNullable<ClubEvent["parts"]> = event.parts ?? [],
+): Pick<CalendarEvent, "eventId" | "title" | "start" | "end">[] =>
+	(parts.length ? parts : [undefined]).map((part) => ({
+		eventId: practicePartKey(event.id, part?.id),
+		title: part ? `${event.title} (${part.title})` : event.title,
+		start: clubTimestamp(
+			event.date,
+			part?.start ?? event.start,
+			event.timeZone,
+		),
+		end: clubTimestamp(
+			part ? event.date : (event.endDate ?? event.date),
+			part?.end ?? event.end,
+			event.timeZone,
+		),
+	}));
+
+export const calendarPendingWindow = 90 * 24 * 60 * 60 * 1000;
+
 export const personalCalendarEvents = (
 	events: ClubEvent[],
 	responses: EventResponse[],
 	personId: string,
 	programs: string[],
 	includeWaitlisted: boolean,
+	now = Date.now(),
 ): CalendarEvent[] => {
 	const byEvent = new Map(
 		responses
@@ -45,55 +64,80 @@ export const personalCalendarEvents = (
 	return events
 		.flatMap((event): CalendarEvent[] => {
 			const response = byEvent.get(event.id);
-			const parts = selectedParts(event, response ?? {});
 			if (
 				event.cancelled ||
-				!programs.length ||
-				(event.eligiblePersonIds !== undefined &&
-					!event.eligiblePersonIds.includes(personId)) ||
-				(response?.response !== "going" &&
-					!(includeWaitlisted && response?.response === "waiting")) ||
-				Boolean(event.parts?.length && !parts.length)
+				!canRegister({ id: personId, programs }, event) ||
+				response?.response === "unavailable"
 			)
 				return [];
-			const waitlisted = response?.response === "waiting";
+			const signup = signupState(event, now);
+			const startsAt = clubTimestamp(event.date, event.start, event.timeZone);
+			const pendingAllowed =
+				practiceEvent(event) && startsAt <= now + calendarPendingWindow;
+			const pendingLabel =
+				signup === "scheduled"
+					? "Signup not open yet"
+					: signup === "closed"
+						? "Signup closed"
+						: "RSVP needed";
 			const tournamentTeam = event.tournamentRoster?.find(
 				(entry) => entry.personId === personId,
 			)?.team;
 			const provisional = event.kind === "tournament" && !tournamentTeam;
-			const start = parts.length
-				? parts.reduce(
-						(time, part) => (part.start < time ? part.start : time),
-						parts.at(0)?.start ?? event.start,
-					)
-				: event.start;
-			const end = parts.length
-				? parts.reduce(
-						(time, part) => (part.end > time ? part.end : time),
-						parts.at(0)?.end ?? event.end,
-					)
-				: event.end;
-			return [
-				{
-					eventId: event.id,
-					title: waitlisted ? `Waitlisted · ${event.title}` : event.title,
-					description: [
-						event.kind === "tournament"
-							? `Availability: Available. Team: ${tournamentTeam ?? "Not assigned"}`
+			const parts = event.parts?.length ? event.parts : [undefined];
+			return parts.flatMap((part): CalendarEvent[] => {
+				const answer = practiceRsvp(response, part?.id);
+				const pending = answer === "unanswered";
+				const marked = response
+					? attendanceForPart(response, part?.id)
+					: "unmarked";
+				const attended = pending && (marked === "present" || marked === "late");
+				const waitlisted = answer === "waiting";
+				if (
+					answer !== "going" &&
+					!attended &&
+					!(
+						pending &&
+						pendingAllowed &&
+						marked !== "absent" &&
+						!unansweredPracticeAbsent(event, now, response, part?.id)
+					) &&
+					!(waitlisted && includeWaitlisted)
+				)
+					return [];
+				const url = `${clubAppOrigin}/session?${new URLSearchParams(part ? { event: event.id, part: part.id } : { event: event.id })}`;
+				const description = [
+					attended
+						? "Attendance: Attended"
+						: pending
+							? pendingLabel
 							: waitlisted
 								? "RSVP: Waitlisted"
-								: "RSVP: Going",
-						calendarPartDescription(event, response),
-						event.description,
-					]
-						.filter(Boolean)
-						.join("\n\n"),
+								: event.kind === "tournament"
+									? `Availability: Available. Team: ${tournamentTeam ?? "Not assigned"}`
+									: "RSVP: Going",
+					event.description,
+					`Open in UWH Club: ${url}`,
+				]
+					.filter(Boolean)
+					.join("\n\n");
+				return calendarEventSlots(event, part ? [part] : []).map((slot) => ({
+					...slot,
+					title:
+						pending && !attended
+							? `${pendingLabel} · ${slot.title}`
+							: waitlisted
+								? `Waitlisted · ${slot.title}`
+								: slot.title,
+					description,
 					location: event.venue,
-					start: clubTimestamp(event.date, start, event.timeZone),
-					end: clubTimestamp(event.endDate ?? event.date, end, event.timeZone),
-					status: waitlisted || provisional ? "TENTATIVE" : "CONFIRMED",
-				},
-			];
+					url,
+					status:
+						(pending && !attended) || waitlisted || provisional
+							? "TENTATIVE"
+							: "CONFIRMED",
+				}));
+			});
 		})
 		.slice()
 		.sort((a, b) => a.start - b.start || a.eventId.localeCompare(b.eventId));
@@ -124,6 +168,7 @@ export const reconcileCalendar = (
 			before.title === event.title &&
 			before.description === event.description &&
 			before.location === event.location &&
+			before.url === event.url &&
 			before.start === event.start &&
 			before.end === event.end &&
 			before.status === event.status;
@@ -204,6 +249,9 @@ export const renderCalendar = (
 			`DTEND:${calendarTime(entry.end)}`,
 			`SUMMARY:${escapeText(entry.title)}`,
 			`LOCATION:${escapeText(entry.location)}`,
+			...(entry.url && entry.status !== "CANCELLED"
+				? [`URL:${entry.url}`]
+				: []),
 			`DESCRIPTION:${escapeText(entry.description)}`,
 			`STATUS:${entry.status}`,
 			`TRANSP:${entry.status === "CONFIRMED" ? "OPAQUE" : "TRANSPARENT"}`,

@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { type ReactElement, useEffect, useState } from "react";
 import { Linking } from "react-native";
 import { api } from "../../convex/_generated/api";
@@ -17,13 +17,12 @@ type Person = { id: string; name: string };
 export const CalendarSubscriptions = ({
 	people,
 	onBusyChange,
-	onCreateLink,
 }: {
 	people: Person[];
 	onBusyChange: (busy: boolean) => void;
-	onCreateLink: () => void;
 }): ReactElement => {
 	const feeds = useQuery(api.calendar.list, {});
+	const enable = useAction(api.calendar_tokens.enable);
 	const disable = useMutation(api.calendar.disable);
 	const task = useTask();
 	const [manage, setManage] = useState(false);
@@ -60,7 +59,7 @@ export const CalendarSubscriptions = ({
 	return (
 		<Stack gap="md">
 			<Text variant="small" tone="secondary">
-				Your calendar app controls how quickly updates appear.
+				Your calendar app controls when updates appear.
 			</Text>
 			{feeds === undefined ? (
 				<Text variant="small" tone="secondary">
@@ -75,10 +74,17 @@ export const CalendarSubscriptions = ({
 					{feeds !== undefined &&
 					!feeds.some((feed) => feed.personId === person.id) ? (
 						<Button
-							label="Create subscription link"
+							label="Create private link"
 							variant="secondary"
 							isDisabled={task.busy}
-							onPress={onCreateLink}
+							onPress={(): void => {
+								void task.run(async (): Promise<void> => {
+									await enable({
+										personId: person.id,
+										includeWaitlisted: false,
+									});
+								});
+							}}
 						/>
 					) : (
 						<Row gap="xs" wrap>

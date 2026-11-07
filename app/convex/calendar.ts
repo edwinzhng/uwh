@@ -1,10 +1,13 @@
 import { v } from "convex/values";
+import type { EventResponse } from "../src/domain/app-types";
 import {
 	type CalendarFeedInfo,
+	calendarPendingWindow,
 	personalCalendarEvents,
 	reconcileCalendar,
 	renderCalendar,
 } from "../src/domain/calendar-export";
+import { clubDate } from "../src/domain/event-time";
 import type { Doc, Id } from "./_generated/dataModel";
 import {
 	internalMutation,
@@ -14,6 +17,54 @@ import {
 } from "./_generated/server";
 import { getAuthUserId } from "./identity";
 import { requireAcceptedTerms } from "./terms_access";
+
+const hasCalendarHistory = (
+	response: EventResponse,
+	includeWaitlisted = false,
+): boolean =>
+	response.response === "going" ||
+	(includeWaitlisted && response.response === "waiting") ||
+	response.attendance === "present" ||
+	response.attendance === "late" ||
+	Boolean(
+		response.partAttendance?.some(
+			({ attendance }) => attendance === "present" || attendance === "late",
+		),
+	);
+
+const calendarEvents = async (
+	ctx: QueryCtx,
+	club: Doc<"clubs">,
+	respondedIds: string[],
+	now: number,
+): Promise<Doc<"events">["value"][]> => {
+	const upcoming = await ctx.db
+		.query("events")
+		.withIndex("by_date", (q) =>
+			q
+				.eq("clubId", club._id)
+				.gte("value.date", clubDate(now, club.timeZone))
+				.lte(
+					"value.date",
+					clubDate(now + calendarPendingWindow, club.timeZone),
+				),
+		)
+		.collect();
+	const upcomingIds = new Set(upcoming.map(({ value }) => value.id));
+	const other = await Promise.all(
+		[...new Set(respondedIds)]
+			.filter((id) => !upcomingIds.has(id))
+			.map((id) =>
+				ctx.db
+					.query("events")
+					.withIndex("by_club_and_key", (q) =>
+						q.eq("clubId", club._id).eq("value.id", id),
+					)
+					.unique(),
+			),
+	);
+	return [...upcoming, ...other].flatMap((row) => (row ? [row.value] : []));
+};
 
 const membershipForUser = async (
 	ctx: QueryCtx,
@@ -188,34 +239,26 @@ export const read = internalMutation({
 				.withIndex("by_feed", (q) => q.eq("feedId", feed._id))
 				.collect(),
 		]);
-		if (!club || !member) return null;
-		const eventIds = [
-			...new Set(
-				responses
-					.filter(
-						(row) =>
-							row.value.response === "going" ||
-							(feed.includeWaitlisted && row.value.response === "waiting"),
-					)
-					.map((row) => row.value.eventId),
-			),
-		];
-		const events = await Promise.all(
-			eventIds.map((id) =>
-				ctx.db
-					.query("events")
-					.withIndex("by_club_and_key", (q) =>
-						q.eq("clubId", feed.clubId).eq("value.id", id),
-					)
-					.unique(),
-			),
+		if (!club || !member || member.value.archived || member.value.mergedInto)
+			return null;
+		const now = Date.now();
+		const events = await calendarEvents(
+			ctx,
+			club,
+			responses
+				.filter(({ value }) =>
+					hasCalendarHistory(value, feed.includeWaitlisted),
+				)
+				.map(({ value }) => value.eventId),
+			now,
 		);
 		const projected = personalCalendarEvents(
-			events.flatMap((entry) => (entry ? [entry.value] : [])),
+			events,
 			responses.map((entry) => entry.value),
 			feed.personId,
 			member.value.programs,
 			feed.includeWaitlisted,
+			now,
 		);
 		const entries = reconcileCalendar(
 			previous.map((entry) => entry.value),
@@ -270,37 +313,30 @@ export const householdSnapshot = query({
 				return { person, responses };
 			}),
 		);
-		const ids = [
-			...new Set(
-				household.flatMap(({ responses }) =>
-					responses
-						.filter((row) => row.value.response === "going")
-						.map((row) => row.value.eventId),
-				),
+		const now = Date.now();
+		const events = await calendarEvents(
+			ctx,
+			club,
+			household.flatMap(({ responses }) =>
+				responses
+					.filter(({ value }) => hasCalendarHistory(value))
+					.map(({ value }) => value.eventId),
 			),
-		];
-		const events = await Promise.all(
-			ids.map((id) =>
-				ctx.db
-					.query("events")
-					.withIndex("by_club_and_key", (q) =>
-						q.eq("clubId", membership.clubId).eq("value.id", id),
-					)
-					.unique(),
-			),
+			now,
 		);
 		return renderCalendar(
 			club.name,
 			household.flatMap(({ person, responses }) =>
-				person
+				person && !person.value.archived && !person.value.mergedInto
 					? reconcileCalendar(
 							[],
 							personalCalendarEvents(
-								events.flatMap((row) => (row ? [row.value] : [])),
+								events,
 								responses.map((row) => row.value),
 								person.value.id,
 								person.value.programs,
 								false,
+								now,
 							).map((event) => ({
 								...event,
 								title: `${event.title} · ${person.value.name}`,

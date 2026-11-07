@@ -19,6 +19,7 @@ import { AttendanceFlagContext } from "./attendance-flag-context";
 import { AttendanceFlagControl } from "./attendance-flag-control";
 import { AttendanceFlagProvider } from "./attendance-flag-provider";
 import { ShoutoutEditor } from "./shoutout-editor";
+import { useEventNow } from "./use-event-now";
 
 export const SessionPeopleContent = ({
 	event,
@@ -28,6 +29,7 @@ export const SessionPeopleContent = ({
 	partId?: string;
 }): ReactElement => {
 	const { data, account } = useApp();
+	const now = useEventNow(event);
 	const flags = useContext(AttendanceFlagContext);
 	const staff = account.admin || canCoach(account, event.program);
 	const members = data.members.filter((member) => canRegister(member, event));
@@ -35,9 +37,9 @@ export const SessionPeopleContent = ({
 		const response = eventResponse(data, event.id, member.id);
 		return (
 			["present", "late"].includes(
-				effectiveAttendance(event, response, partId),
+				effectiveAttendance(event, response, partId, now),
 			) ||
-			(effectiveAttendance(event, response, partId) !== "absent" &&
+			(effectiveAttendance(event, response, partId, now) !== "absent" &&
 				response.response === "going" &&
 				participatesInPart(response, partId)) ||
 			flags?.flags.some(
@@ -101,6 +103,7 @@ export const SessionPeopleContent = ({
 																	event,
 																	response,
 																	partId,
+																	now,
 																)}
 																partId={partId}
 																disabled={event.cancelled}

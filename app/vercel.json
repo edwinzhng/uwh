@@ -17,11 +17,27 @@
 	],
 	"rewrites": [
 		{
+			"source": "/calendar.ics",
+			"destination": "https://brainy-albatross-874.convex.site/calendar.ics"
+		},
+		{
+			"source": "/public-calendar.ics",
+			"destination": "https://brainy-albatross-874.convex.site/public-calendar.ics"
+		},
+		{
 			"source": "/api/auth/:path*",
 			"destination": "https://brainy-albatross-874.convex.site/api/auth/:path*"
 		}
 	],
 	"headers": [
+		{
+			"source": "/calendar.ics",
+			"headers": [
+				{ "key": "Cache-Control", "value": "private, no-store" },
+				{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
+				{ "key": "Referrer-Policy", "value": "no-referrer" }
+			]
+		},
 		{
 			"source": "/api/auth/:path*",
 			"headers": [

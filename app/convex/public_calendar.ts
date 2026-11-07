@@ -1,7 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { v } from "convex/values";
 import {
-	calendarPartDescription,
+	calendarEventSlots,
 	reconcileCalendar,
 	renderCalendar,
 } from "../src/domain/calendar-export";
@@ -36,19 +36,14 @@ export const read = internalMutation({
 			.collect();
 		const current = rows
 			.filter((row) => !row.value.cancelled)
-			.map(({ value }) => ({
-				eventId: value.id,
-				title: value.title,
-				description: calendarPartDescription(value),
-				location: value.venue,
-				start: clubTimestamp(value.date, value.start, value.timeZone),
-				end: clubTimestamp(
-					value.endDate ?? value.date,
-					value.end,
-					value.timeZone,
-				),
-				status: "CONFIRMED" as const,
-			}));
+			.flatMap(({ value }) =>
+				calendarEventSlots(value).map((slot) => ({
+					...slot,
+					description: "",
+					location: value.venue,
+					status: "CONFIRMED" as const,
+				})),
+			);
 		const entries = reconcileCalendar(
 			previous.map((row) => row.value),
 			current,
