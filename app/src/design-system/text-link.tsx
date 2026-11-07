@@ -12,6 +12,7 @@ export const TextLink = ({
 	role = "link",
 	compact = false,
 	inline = false,
+	highlightOnHover = true,
 }: {
 	label: string;
 	onPress: () => void;
@@ -20,6 +21,7 @@ export const TextLink = ({
 	role?: "link" | "button";
 	compact?: boolean;
 	inline?: boolean;
+	highlightOnHover?: boolean;
 }): ReactElement => {
 	const theme = useTheme();
 	const [hovered, setHovered] = useState(false);
@@ -45,13 +47,15 @@ export const TextLink = ({
 				borderRadius: corners.item,
 				opacity: isDisabled ? geometry.disabledOpacity : 1,
 				backgroundColor:
-					pressed || hovered ? theme.background.hover : "transparent",
+					pressed || (hovered && highlightOnHover)
+						? theme.background.hover
+						: "transparent",
 				outlineColor: theme.focus,
 				outlineWidth: focused ? geometry.focus : 0,
 				outlineOffset: geometry.focus,
 			})}
 		>
-			<Text variant="small" tone="secondary">
+			<Text variant="small" tone="secondary" underline>
 				{label}
 			</Text>
 		</Pressable>

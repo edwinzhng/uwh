@@ -52,6 +52,7 @@ const AttendeesAction = ({ event, attendanceCount }: Props): ReactElement => {
 			<TextLink
 				compact
 				inline
+				highlightOnHover={false}
 				label={
 					attendanceCount === undefined
 						? "Attendees"

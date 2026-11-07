@@ -38,13 +38,10 @@ export const LocalAccountSignIn = (): ReactElement => {
 		if (!handoff || started.current) return;
 		started.current = true;
 		void auth
-			.signOut()
-			.then(() =>
-				auth.signIn("email-code", {
-					email: handoff.email,
-					code: handoff.code,
-				}),
-			)
+			.signIn("email-code", {
+				email: handoff.email,
+				code: handoff.code,
+			})
 			.then((result): void => {
 				if (!result.signingIn)
 					throw new Error("Local sign-in did not complete.");

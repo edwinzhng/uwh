@@ -34,7 +34,7 @@ export const buttonColors = (
 			theme.colorScales[variant === "rsvp-yes" ? "success" : "danger"];
 		return {
 			background: selected
-				? scale.subtle
+				? scale.muted
 				: interaction === "pressed"
 					? theme.background.pressed
 					: interaction === "hover"

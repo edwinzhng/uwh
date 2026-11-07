@@ -34,7 +34,7 @@
 - Capability: Read balancing ratings; Admin: Explicit coaching permission; Coach: Assigned roster; Player: No by default; Parent/guardian: No
 - Capability: Write private coaching notes; Admin: If assigned as coach; Coach: Assigned players/program; Player: No; Parent/guardian: No
 - Capability: Read published feedback; Admin: Explicit staff scope; Coach: Assigned players; Player: Own; Parent/guardian: Child if enabled
-- Capability: Propose goals and reflections; Admin: If assigned; Coach: Create/review; Player: Own; Parent/guardian: Read/support; no impersonation
+- Capability: Goals and reflections; Admin: If assigned; Coach: Set goals; Player: Save own goals directly and write own reflections; Parent/guardian: Read/support; no impersonation
 - Capability: Log fitness results; Admin: Assigned staff; Coach: Assigned group; Player: Own if allowed; Parent/guardian: Read child if allowed
 - Capability: View comparisons; Admin: Scoped and consent-aware; Coach: Scoped; Player: Own/private by default; Parent/guardian: Child/private by default
 - Capability: Complete questionnaire/interview; Admin: Excluded from current scope; Coach: Excluded; Player: Excluded; Parent/guardian: Excluded

@@ -61,6 +61,15 @@ try {
 		notes: "Synthetic swim result",
 		operationKey: crypto.randomUUID(),
 	};
+	for (const eventId of ["club-thu", "hockey-fri"])
+		await owner.client.mutation(api.club.apply, {
+			action: {
+				type: "attendance",
+				eventId,
+				personId: "sam",
+				attendance: "present",
+			},
+		});
 	await Promise.all([
 		owner.client.mutation(api.fitness.logResult, input),
 		owner.client.mutation(api.fitness.logResult, input),

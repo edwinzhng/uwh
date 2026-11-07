@@ -47,6 +47,7 @@ export const HouseholdEventCard = ({
 	const date = eventDateParts(event.date);
 	const time = eventTimeRange(event.start, event.end);
 	const reason = householdAttendanceReason(person, event);
+	const visibleReason = person.programs.length > 0 ? reason : undefined;
 	const current = eventResponse(data, event.id, person.id);
 	const signup = signupState(event, useEventNow(event));
 	const open = signup === "open" && !event.cancelled;
@@ -141,7 +142,7 @@ export const HouseholdEventCard = ({
 							<Text variant="small" tone="secondary">
 								{time}
 							</Text>
-							{past && !event.cancelled ? (
+							{past && !event.cancelled && (!reason || visibleReason) ? (
 								<Row gap="xs" wrap>
 									{(reason ? [reason] : pastStatus.labels).map((label) => (
 										<Badge
@@ -158,11 +159,14 @@ export const HouseholdEventCard = ({
 									hideLabel
 									quick
 								/>
-							) : reason && !past && !event.cancelled ? (
+							) : visibleReason && !past && !event.cancelled ? (
 								<Text variant="caption" tone="secondary">
-									{reason}
+									{visibleReason}
 								</Text>
-							) : signup === "scheduled" && !past && !event.cancelled ? (
+							) : signup === "scheduled" &&
+								!reason &&
+								!past &&
+								!event.cancelled ? (
 								<Text variant="caption" tone="secondary">
 									Not open yet
 								</Text>

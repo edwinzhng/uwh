@@ -25,6 +25,7 @@ export const SessionReflectionAction = ({
 				<Button
 					label="Reflect"
 					variant="secondary"
+					density="inline"
 					compact
 					accessibilityLabel={`Reflect on ${event.title} for ${person.name}`}
 					onPress={(): void =>

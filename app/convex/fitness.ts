@@ -11,6 +11,7 @@ import {
 	fitnessEntriesError,
 	fitnessTestNameError,
 } from "../src/domain/fitness-model";
+import { markedHereForFitness } from "../src/domain/fitness-quick-log";
 import { rankFitnessResults } from "../src/domain/fitness-ranking";
 import type { HomeFitnessSnapshot } from "../src/domain/home-summary";
 import type { PersonalFitnessRow } from "../src/domain/personal-fitness";
@@ -172,6 +173,61 @@ export const logContext = query({
 			practices,
 			members: members.slice(0, 500).map((row) => row.value),
 			limited: members.length > 500,
+		};
+	},
+});
+
+export const quickLogRoster = query({
+	args: { eventId: v.string(), testId: v.id("fitnessTests") },
+	handler: async (
+		ctx,
+		{ eventId, testId },
+	): Promise<{
+		presentIds: string[];
+		recordedIds: string[];
+	}> => {
+		const test = await testFor(ctx, testId);
+		const event = await ctx.db
+			.query("events")
+			.withIndex("by_club_and_key", (q) =>
+				q.eq("clubId", test.clubId).eq("value.id", eventId),
+			)
+			.unique();
+		if (
+			!event ||
+			event.value.cancelled ||
+			!practiceEvent(event.value) ||
+			test.archived
+		)
+			return { presentIds: [], recordedIds: [] };
+		const [responses, session] = await Promise.all([
+			ctx.db
+				.query("responses")
+				.withIndex("by_event", (q) =>
+					q.eq("clubId", test.clubId).eq("value.eventId", eventId),
+				)
+				.collect(),
+			ctx.db
+				.query("fitnessSessions")
+				.withIndex("by_test_date", (q) =>
+					q.eq("testId", testId).eq("date", event.value.date),
+				)
+				.unique(),
+		]);
+		const results =
+			session && (!session.eventId || session.eventId === eventId)
+				? await ctx.db
+						.query("fitnessResults")
+						.withIndex("by_session_person", (q) =>
+							q.eq("sessionId", session._id),
+						)
+						.take(500)
+				: [];
+		return {
+			presentIds: responses
+				.filter(({ value }) => markedHereForFitness(event.value, value))
+				.map(({ value }) => value.personId),
+			recordedIds: results.map((result) => result.personId),
 		};
 	},
 });
@@ -739,6 +795,16 @@ export const logResult = mutation({
 				"A result is already recorded. Open the test to edit it.",
 			);
 		}
+		const response = await ctx.db
+			.query("responses")
+			.withIndex("by_club_and_key", (q) =>
+				q
+					.eq("clubId", test.clubId)
+					.eq("value.id", `${args.eventId}:${args.personId}`),
+			)
+			.unique();
+		if (!markedHereForFitness(event.value, response?.value))
+			throw new Error("Mark this player Here before logging a swim result.");
 		if (session.resultCount >= 500)
 			throw new Error("A session supports up to 500 players.");
 		await ctx.db.insert("fitnessResults", {

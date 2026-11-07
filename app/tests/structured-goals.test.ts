@@ -24,6 +24,39 @@ const member = initialAppData.members.find(
 	(entry) => entry.id === player.personId,
 );
 if (!member) throw new Error("Member fixture unavailable");
+test("players can save their own goal directly and replace a pending request", () => {
+	const pending = reduceApp(initialAppData, player, {
+		type: "request-goal",
+		personId: member.id,
+		goal: "Old proposal",
+	});
+	const saved = reduceApp(pending, player, {
+		type: "set-goal",
+		personId: member.id,
+		goal: "New focus",
+		details,
+		expectedRevision: member.goalRevision ?? 0,
+	});
+	const updated = saved.members.find((entry) => entry.id === member.id);
+	expect(updated).toMatchObject({
+		goal: "New focus",
+		goalDetails: details,
+		steps: 0,
+	});
+	expect(updated?.pendingGoal).toBeUndefined();
+	expect(() =>
+		reduceApp(
+			saved,
+			{ ...player, personId: "unrelated" },
+			{
+				type: "set-goal",
+				personId: member.id,
+				goal: "Unauthorized change",
+			},
+		),
+	).toThrow("access");
+});
+
 test("a declined request invalidates an already-open request editor", () => {
 	const pending = reduceApp(initialAppData, player, {
 		type: "request-goal",

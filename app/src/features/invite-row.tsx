@@ -95,6 +95,7 @@ export const InviteRow = ({ invite }: { invite: Invite }): ReactElement => {
 														{
 															id: "copy",
 															label: "Copy invite link",
+															icon: "copy" as const,
 															onSelect: (): void => {
 																void task.run(async (): Promise<void> => {
 																	await Clipboard.setStringAsync(invite.url);
@@ -110,11 +111,13 @@ export const InviteRow = ({ invite }: { invite: Invite }): ReactElement => {
 											{
 												id: "resend",
 												label: "Resend",
+												icon: "arrowRight",
 												onSelect: (): void => manage("resend"),
 											},
 											{
 												id: "revoke",
 												label: "Revoke",
+												icon: "close",
 												tone: "danger",
 												onSelect: (): void => setRevoking(true),
 											},

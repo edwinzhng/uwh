@@ -7,7 +7,7 @@ export type ButtonProps = {
 	label: string;
 	count?: number;
 	collapseLabelOnNarrow?: boolean;
-	density?: "standard" | "filter";
+	density?: "standard" | "filter" | "inline";
 	roleTone?: RoleTone;
 	validationError?: string;
 	onInvalid?: (message: string) => void;

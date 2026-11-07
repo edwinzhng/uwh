@@ -64,18 +64,21 @@ export const FitnessWorkspace = ({
 							/>
 							<ActionMenu
 								label="Test options"
+								icon="more"
 								groups={[
 									{
 										id: "test",
 										items: [
 											{
 												id: "edit",
-												label: "Edit test",
+												label: "Edit",
+												icon: "edit",
 												onSelect: (): void => setEditing(true),
 											},
 											{
 												id: "archive",
-												label: test.archived ? "Restore test" : "Archive test",
+												label: test.archived ? "Restore" : "Archive",
+												icon: test.archived ? "reply" : "archive",
 												onSelect: (): void => setConfirm(true),
 											},
 										],

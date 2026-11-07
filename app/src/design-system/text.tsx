@@ -21,6 +21,7 @@ type Props = {
 	align?: "left" | "center";
 	selectable?: boolean;
 	italic?: boolean;
+	underline?: boolean;
 	weight?: "regular" | "medium" | "semibold";
 	lines?: 1 | 2 | 3;
 };
@@ -34,6 +35,7 @@ export const Text = ({
 	align = "left",
 	selectable,
 	italic = false,
+	underline = false,
 	weight,
 	lines,
 }: Props): ReactElement => {
@@ -68,6 +70,7 @@ export const Text = ({
 						compact && variant === "number" ? "heading" : (weight ?? family)
 					],
 				fontStyle: italic ? "italic" : "normal",
+				textDecorationLine: underline ? "underline" : undefined,
 				color:
 					tone === "onBrand"
 						? theme.brand.foreground

@@ -92,6 +92,12 @@ export const TeamPool = ({
 	const secondReferee = plan.referees?.find(
 		(entry) => entry.side === side && entry.role === "second",
 	);
+	const showCaptainRoles = Boolean(
+		captain || viceCaptain || onCaptainChange || onViceCaptainChange,
+	);
+	const showReferee = Boolean(referee || onRefereeChange);
+	const showSecondReferee = Boolean(secondReferee || onSecondRefereeChange);
+	const showRefereeRoles = showReferee || showSecondReferee;
 	const rolePeople = data.members
 		.filter(
 			(member) =>
@@ -164,59 +170,74 @@ export const TeamPool = ({
 		<PoolBoard
 			detail={<TeamStrength people={teamPeople} />}
 			summary={
-				<Row justify="between" gap="xs" align="start" wrap>
-					<Row gap="xs" align="start">
-						<TeamCaptain
-							dragScope={group}
-							side={side}
-							people={teamPeople}
-							personId={captain?.personId}
-							displayName={
-								captain ? displayNames.get(captain.personId) : undefined
-							}
-							onChange={onCaptainChange}
-						/>
-						<TeamCaptain
-							roleLabel="Vice Captain"
-							dragScope={group}
-							side={side}
-							people={teamPeople}
-							personId={viceCaptain?.personId}
-							displayName={
-								viceCaptain ? displayNames.get(viceCaptain.personId) : undefined
-							}
-							onChange={onViceCaptainChange}
-						/>
-					</Row>
-					<Row gap="xs" align="start">
-						<LineupRoleMenu
-							roleLabel="Ref"
-							dragScope={group}
-							label={`${side === "black" ? "Black" : "White"} referee`}
-							people={rolePeople}
-							personId={referee?.personId}
-							displayName={
-								referee ? displayNames.get(referee.personId) : undefined
-							}
-							onChange={onRefereeChange}
-						/>
-						{onSecondRefereeChange || secondReferee ? (
-							<LineupRoleMenu
-								roleLabel="2nd Ref"
-								dragScope={group}
-								label={`${side === "black" ? "Black" : "White"} second referee`}
-								people={rolePeople}
-								personId={secondReferee?.personId}
-								displayName={
-									secondReferee
-										? displayNames.get(secondReferee.personId)
-										: undefined
-								}
-								onChange={onSecondRefereeChange}
-							/>
+				showCaptainRoles || showRefereeRoles ? (
+					<Row
+						justify={showCaptainRoles ? "between" : "end"}
+						gap="xs"
+						align="start"
+						wrap
+					>
+						{showCaptainRoles ? (
+							<Row gap="xs" align="start">
+								<TeamCaptain
+									dragScope={group}
+									side={side}
+									people={teamPeople}
+									personId={captain?.personId}
+									displayName={
+										captain ? displayNames.get(captain.personId) : undefined
+									}
+									onChange={onCaptainChange}
+								/>
+								<TeamCaptain
+									roleLabel="Vice Captain"
+									dragScope={group}
+									side={side}
+									people={teamPeople}
+									personId={viceCaptain?.personId}
+									displayName={
+										viceCaptain
+											? displayNames.get(viceCaptain.personId)
+											: undefined
+									}
+									onChange={onViceCaptainChange}
+								/>
+							</Row>
+						) : undefined}
+						{showRefereeRoles ? (
+							<Row gap="xs" align="start">
+								{showReferee ? (
+									<LineupRoleMenu
+										roleLabel="Ref"
+										dragScope={group}
+										label={`${side === "black" ? "Black" : "White"} referee`}
+										people={rolePeople}
+										personId={referee?.personId}
+										displayName={
+											referee ? displayNames.get(referee.personId) : undefined
+										}
+										onChange={onRefereeChange}
+									/>
+								) : undefined}
+								{showSecondReferee ? (
+									<LineupRoleMenu
+										roleLabel="2nd Ref"
+										dragScope={group}
+										label={`${side === "black" ? "Black" : "White"} second referee`}
+										people={rolePeople}
+										personId={secondReferee?.personId}
+										displayName={
+											secondReferee
+												? displayNames.get(secondReferee.personId)
+												: undefined
+										}
+										onChange={onSecondRefereeChange}
+									/>
+								) : undefined}
+							</Row>
 						) : undefined}
 					</Row>
-				</Row>
+				) : undefined
 			}
 			key={formation}
 			side={side}

@@ -14,6 +14,12 @@ const playersHeightShare = 0.3;
 const playersMaxCenterShare = 0.6;
 const playersMargin = space.xl;
 
+const reservedPlayersSpace = (scale: number, height: number): number =>
+	Math.min(
+		playersHeightShare * height,
+		authBackdropPhoto.players.height * scale + playersMargin * 2,
+	);
+
 export type AuthBackdropGeometry = {
 	scale: number;
 	playersSpace: number;
@@ -44,7 +50,7 @@ export const useAuthBackdropGeometry = (): AuthBackdropGeometry => {
 	const scale = Math.max(fitScale, coverScale);
 	return {
 		scale,
-		playersSpace: players.height * scale + playersMargin * 2,
+		playersSpace: reservedPlayersSpace(scale, viewport.height),
 	};
 };
 
@@ -56,7 +62,7 @@ export const useAuthBackdropPlacement = (
 	const insets = useSafeAreaInsets();
 	const { players, width, height } = authBackdropPhoto;
 	const fallbackLogoTop =
-		insets.top + space.lg + players.height * scale + playersMargin * 2;
+		insets.top + space.lg + reservedPlayersSpace(scale, viewport.height);
 	const centerY = (insets.top + (logoTop ?? fallbackLogoTop)) / 2;
 	return {
 		left: viewport.width / 2 - (players.x + players.width / 2) * scale,

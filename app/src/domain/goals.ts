@@ -52,8 +52,9 @@ export const updateGoal = (
 	const allowed =
 		action.type === "request-goal"
 			? account.personId === member.id
-			: canCoachMember(account, member) &&
-				(action.type !== "review-goal" || account.personId !== member.id);
+			: action.type === "set-goal"
+				? account.personId === member.id || canCoachMember(account, member)
+				: account.personId !== member.id && canCoachMember(account, member);
 	if (!allowed) throw new Error("You don’t have access to this action.");
 	if (action.type === "review-goal") {
 		if (

@@ -52,6 +52,7 @@ export const FitnessResults = ({
 							/>
 							<ActionMenu
 								label="Session options"
+								icon="more"
 								isDisabled={dirty || task.busy}
 								groups={[
 									{
@@ -59,13 +60,15 @@ export const FitnessResults = ({
 										items: [
 											{
 												id: "edit",
-												label: "Edit session",
+												label: "Edit",
+												icon: "edit",
 												isDisabled: test.archived,
 												onSelect: (): void => setEditing(true),
 											},
 											{
 												id: "delete",
-												label: "Delete session",
+												label: "Delete",
+												icon: "trash",
 												tone: "danger",
 												onSelect: (): void => setDeleting(true),
 											},

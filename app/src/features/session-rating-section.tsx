@@ -40,7 +40,6 @@ export const SessionRatingSection = ({
 				entries.map((entry) => (
 					<SessionPerformanceCard
 						key={entry.id}
-						embedded
 						entry={entry}
 						report={report}
 						onEdit={(): void => onEdit(entry)}

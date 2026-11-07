@@ -17,22 +17,21 @@ export const SessionPerformanceCard = ({
 	entry,
 	onEdit,
 	report,
-	embedded = false,
 }: {
 	entry: SessionPerformanceEntry;
 	onEdit: () => void;
 	report: SessionPerformanceService["report"];
-	embedded?: boolean;
 }): ReactElement => {
 	const router = useRouter();
-	const Container = embedded ? Stack : Surface;
 	return (
-		<Container padding={embedded ? "none" : "sm"}>
+		<Surface density="compact">
 			<Stack gap="sm">
 				<Row justify="between" align="start">
 					<Stack gap="xxs" grow>
 						<Text variant="h4">{entry.eventTitle}</Text>
-						<Text variant="caption">{sessionRatingMetadata(entry)}</Text>
+						<Text variant="small" tone="secondary">
+							{sessionRatingMetadata(entry)}
+						</Text>
 					</Stack>
 					{entry.canEdit ? (
 						<IconButton
@@ -45,20 +44,21 @@ export const SessionPerformanceCard = ({
 				{entry.comments ? (
 					<Text variant="small">{entry.comments}</Text>
 				) : undefined}
-				<Row justify="between" align="end" wrap>
-					<Stack gap="none">
-						<Text variant="caption">Self-rating</Text>
-						<Text variant="number">
-							{entry.rating}
-							<Text variant="small">/10</Text>
+				<Row justify="between" gap="xs" wrap>
+					<Text variant="small" tone="secondary">
+						{entry.kind === "coach" ? "Coach rating" : "Self-rating"}
+						{" · "}
+						<Text variant="small" weight="semibold">
+							{entry.rating}/10
 						</Text>
-					</Stack>
+					</Text>
 					<Row gap="xs" wrap>
 						{entry.dateKind !== "recorded" ? (
 							<Button
 								label="Open session"
 								prefix="chevron"
 								variant="secondary"
+								compact
 								onPress={(): void =>
 									router.push({
 										pathname: "/session",
@@ -73,6 +73,6 @@ export const SessionPerformanceCard = ({
 					</Row>
 				</Row>
 			</Stack>
-		</Container>
+		</Surface>
 	);
 };

@@ -25,7 +25,8 @@ export const EventResponseRow = ({
 	return (
 		<View
 			style={{
-				paddingVertical: compact ? 0 : space.xxs,
+				paddingTop: compact && !divider ? 0 : space.xxs,
+				paddingBottom: space.xxs,
 				borderTopWidth: divider ? geometry.border : 0,
 				borderColor: theme.border,
 				borderRadius: 0,

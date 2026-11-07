@@ -53,6 +53,7 @@ export const ChatPollCard = ({
 										{
 											id: "close",
 											label: "Close poll",
+											icon: "stop",
 											tone: "danger",
 											onSelect: (): void => setClosing(true),
 										},

@@ -32,7 +32,7 @@ export const summary = query({
 			)
 			.collect();
 		const filtered = events.filter(
-			(event) => (event.value.seasonId ?? "2026-2027") === seasonId,
+			(event) => (event.value.seasonId ?? defaultSeasonId) === seasonId,
 		);
 		const loaded = await loadData(ctx, actor.clubId, {
 			select: {
@@ -69,7 +69,7 @@ export const home = query({
 			)
 			.collect();
 		const filtered = events.filter(
-			(event) => (event.value.seasonId ?? "2026-2027") === seasonId,
+			(event) => (event.value.seasonId ?? defaultSeasonId) === seasonId,
 		);
 		const loaded = await loadData(ctx, actor.clubId, {
 			select: {
@@ -77,7 +77,12 @@ export const home = query({
 			},
 			rows: { members: rows.members, events: filtered },
 		});
-		return homeAttendance(loaded.data, member, seasonId, now);
+		return homeAttendance(
+			loaded.data,
+			member,
+			seasonId,
+			Math.min(now, Date.now()),
+		);
 	},
 });
 

@@ -28,16 +28,19 @@ export const AttendanceFlagControl = ({
 						{
 							id: "addition",
 							label: "Late addition",
+							icon: "plus",
 							onSelect: (): void => context.set(personId, "addition", partId),
 						},
 						{
 							id: "cancellation",
 							label: "Late cancellation",
+							icon: "clock",
 							onSelect: (): void => context.set(personId, "cancellation"),
 						},
 						{
 							id: "clear",
 							label: "Clear flag",
+							icon: "close",
 							isDisabled: !flag,
 							onSelect: (): void => context.set(personId),
 						},

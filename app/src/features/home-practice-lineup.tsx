@@ -10,6 +10,7 @@ import {
 } from "../design-system";
 import { eventResponse } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
+import { canCreateEventLineup } from "../domain/event-lineups";
 import {
 	type HomeLineupAssignment,
 	homeLineupAssignments,
@@ -18,8 +19,10 @@ import {
 
 const AssignmentList = ({
 	assignments,
+	published,
 }: {
 	assignments: HomeLineupAssignment[];
+	published: boolean;
 }): ReactElement => (
 	<Stack gap="xs">
 		{assignments.length ? (
@@ -38,7 +41,7 @@ const AssignmentList = ({
 			))
 		) : (
 			<Text variant="small" tone="secondary">
-				Lineup not available.
+				{published ? "No lineup assignment" : "Lineup not published yet"}
 			</Text>
 		)}
 	</Stack>
@@ -51,12 +54,19 @@ const LiveLineup = ({
 	eventId: string;
 	personId: string;
 }): ReactElement | undefined => {
-	const assignments = useQuery(api.lineup.homeAssignments, { eventId });
-	usePageLoading(assignments === undefined);
-	return assignments === undefined ? undefined : (
-		<AssignmentList
-			assignments={assignments.filter((entry) => entry.personId === personId)}
-		/>
+	const assignments = useQuery(api.lineup.homeAssignments, { eventId })?.filter(
+		(entry) => entry.personId === personId,
+	);
+	const needsPublished = assignments?.length === 0;
+	const published = useQuery(
+		api.lineup.published,
+		needsPublished ? { eventId } : "skip",
+	);
+	const loading =
+		assignments === undefined || (needsPublished && published === undefined);
+	usePageLoading(loading);
+	return loading ? undefined : (
+		<AssignmentList assignments={assignments} published={published === true} />
 	);
 };
 
@@ -72,6 +82,12 @@ export const HomePracticeLineup = ({
 		<LiveLineup eventId={event.id} personId={personId} />
 	) : (
 		<AssignmentList
+			published={data.teams.some(
+				(plan) =>
+					plan.eventId === event.id &&
+					plan.published &&
+					canCreateEventLineup(event, plan.partId),
+			)}
 			assignments={homeLineupAssignments(
 				event,
 				data.teams,

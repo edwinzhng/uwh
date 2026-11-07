@@ -19,24 +19,28 @@ export const MemberProgress = ({
 		<Stack gap="section">
 			<Surface density="compact">
 				<Stack gap="sm">
-					<Row justify="between" wrap>
-						<Text variant="label">Current goal</Text>
+					<Row justify="between" align="start" gap="sm">
+						<Stack grow gap="xxs">
+							<Text variant="small" tone="secondary">
+								Current goal
+							</Text>
+							{member.goal ? (
+								<Text variant="h4">{member.goal}</Text>
+							) : (
+								<Text variant="small" tone="secondary">
+									Set a goal to give your training a focus.
+								</Text>
+							)}
+							{member.goalDetails ? (
+								<Text variant="small" tone="secondary">
+									{goalCategoryLabel(member.goalDetails)}
+								</Text>
+							) : undefined}
+						</Stack>
 						{coach || account.personId === member.id ? (
 							<GoalEditor key={member.id} member={member} />
 						) : undefined}
 					</Row>
-					{member.goalDetails ? (
-						<Text variant="caption">
-							{goalCategoryLabel(member.goalDetails)}
-						</Text>
-					) : undefined}
-					{member.goal ? (
-						<Text variant="h4">{member.goal}</Text>
-					) : (
-						<Text variant="small" tone="secondary">
-							Set a goal with your coach to give your training a focus.
-						</Text>
-					)}
 					{member.goalDetails?.remarks ? (
 						<Disclosure title="Coaching remarks">
 							<Text variant="small">{member.goalDetails.remarks}</Text>

@@ -1,13 +1,6 @@
 import { type ReactElement, useState } from "react";
 import type { HouseholdService } from "../backend/use-household";
-import {
-	ActionMenu,
-	IconButton,
-	ListItem,
-	Row,
-	Stack,
-	Text,
-} from "../design-system";
+import { ActionMenu, ListItem, Row, Stack, Text } from "../design-system";
 import type { HouseholdOption } from "../domain/household";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { useTask } from "./use-task";
@@ -35,6 +28,7 @@ export const HouseholdProfileRow = ({
 					{
 						id: "default",
 						label: "Use by default",
+						icon: "check" as const,
 						onSelect: (): void => {
 							void task.run(
 								async (): Promise<void> =>
@@ -49,6 +43,7 @@ export const HouseholdProfileRow = ({
 					{
 						id: "unlink",
 						label: "Unlink",
+						icon: "close" as const,
 						tone: "danger" as const,
 						onSelect: (): void => setUnlinking(true),
 					},
@@ -61,7 +56,6 @@ export const HouseholdProfileRow = ({
 				<Stack grow>
 					<ListItem
 						flush
-						showChevron={false}
 						title={profile.name}
 						description={description || undefined}
 						avatar={profile.name}
@@ -77,13 +71,6 @@ export const HouseholdProfileRow = ({
 						icon="more"
 						isDisabled={task.busy}
 						groups={[{ id: "profile", items }]}
-					/>
-				) : undefined}
-				{onEdit ? (
-					<IconButton
-						label={`Edit ${profile.name}`}
-						icon="chevron"
-						onPress={onEdit}
 					/>
 				) : undefined}
 			</Row>

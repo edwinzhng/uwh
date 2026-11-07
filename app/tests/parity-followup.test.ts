@@ -47,6 +47,21 @@ const input = {
 	notes: "Good turns",
 	operationKey: "log-one",
 };
+const attendedPractice = {
+	...initialAppData,
+	responses: [
+		...initialAppData.responses.filter(
+			(entry) =>
+				entry.eventId !== event.id || entry.personId !== input.personId,
+		),
+		{
+			eventId: event.id,
+			personId: input.personId,
+			response: "going",
+			attendance: "present",
+		} as const,
+	],
+};
 const player = {
 	...primaryAccount,
 	coachPrograms: [],
@@ -111,10 +126,26 @@ test("best direction is configurable and cannot be silently changed", (): void =
 	).toThrow("scoring direction");
 });
 test("poolside logging links practice and program, retries once, never overwrites", (): void => {
+	expect(() =>
+		logFitnessResult(
+			state,
+			primaryAccount,
+			{
+				...attendedPractice,
+				responses: attendedPractice.responses.map((entry) =>
+					entry.eventId === event.id && entry.personId === input.personId
+						? { ...entry, attendance: "unmarked" }
+						: entry,
+				),
+			},
+			input,
+			"session",
+		),
+	).toThrow("Mark this player Here");
 	const next = logFitnessResult(
 		state,
 		primaryAccount,
-		initialAppData,
+		attendedPractice,
 		input,
 		"session",
 	);
@@ -159,7 +190,7 @@ test("personal results respect self, family, coaching and unrelated boundaries",
 	const next = logFitnessResult(
 		state,
 		primaryAccount,
-		initialAppData,
+		attendedPractice,
 		input,
 		"session",
 	);

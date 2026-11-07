@@ -342,6 +342,21 @@ export const darkTheme: Theme = {
 	},
 };
 
+export const practiceBannerColors = {
+	light: {
+		start: "#D7F4E8",
+		end: "#E1EAFF",
+		label: "#216454",
+		border: "#8FB6AB",
+	},
+	dark: {
+		start: "#19443C",
+		end: "#233A50",
+		label: "#A0EBD4",
+		border: "#537F7A",
+	},
+} as const;
+
 export type SpaceToken = keyof typeof space;
 export type ElevationToken = keyof typeof elevation;
 export type TypographyVariant = keyof typeof typography;

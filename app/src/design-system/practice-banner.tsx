@@ -5,7 +5,14 @@ import { Text as NativeText, Pressable, View } from "react-native";
 import { Icon } from "./icon";
 import { Text } from "./text";
 import { useTheme } from "./theme";
-import { font, geometry, radius, space, typography } from "./tokens";
+import {
+	font,
+	geometry,
+	practiceBannerColors,
+	radius,
+	space,
+	typography,
+} from "./tokens";
 
 export const PracticeBanner = ({
 	label,
@@ -22,7 +29,7 @@ export const PracticeBanner = ({
 }): ReactElement => {
 	const theme = useTheme();
 	const [focused, setFocused] = useState(false);
-	const green = theme.mode === "dark" ? "#70E9BC" : "#00CB89";
+	const colors = practiceBannerColors[theme.mode];
 	return (
 		<Pressable
 			accessibilityRole="button"
@@ -36,7 +43,8 @@ export const PracticeBanner = ({
 				minHeight: geometry.touch + space.md,
 				borderRadius: radius.xl,
 				borderWidth: geometry.border,
-				borderColor: theme.border,
+				borderColor: colors.border,
+				backgroundColor: colors.start,
 				flexDirection: "row",
 				alignItems: "center",
 				gap: space.sm,
@@ -49,17 +57,13 @@ export const PracticeBanner = ({
 		>
 			<LinearGradient
 				pointerEvents="none"
-				colors={
-					theme.mode === "dark"
-						? ["#194E45", "#263D55"]
-						: ["#AEEDD6", "#D7E5FA"]
-				}
+				colors={[colors.start, colors.end]}
 				start={{ x: 0, y: 0 }}
 				end={{ x: 1, y: 0 }}
 				style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }}
 			/>
 			<Waves
-				color={green}
+				color={colors.label}
 				size={22}
 				strokeWidth={2}
 				style={{ position: "relative" }}
@@ -71,7 +75,7 @@ export const PracticeBanner = ({
 					style={{
 						...typography.overline,
 						fontFamily: font.semibold,
-						color: green,
+						color: colors.label,
 					}}
 				>
 					{label.toUpperCase()}
@@ -80,10 +84,10 @@ export const PracticeBanner = ({
 					{detail}
 				</Text>
 			</View>
-			<Icon name="chevron" size="sm" tone="secondary" />
 			<Text variant="caption" tone="secondary">
 				{attendance}
 			</Text>
+			<Icon name="chevron" size="sm" tone="secondary" />
 		</Pressable>
 	);
 };
