@@ -1,7 +1,12 @@
 import { expect, test } from "bun:test";
 import { initialAppData } from "../src/demo/app-data";
 import type { ClubEvent, Member } from "../src/domain/app-types";
-import { coachHomeStats } from "../src/domain/coach-home";
+import {
+	coachHomePlayers,
+	coachHomePracticeEnds,
+	coachingPracticeEnd,
+} from "../src/domain/coach-home";
+import { clubTimestamp } from "../src/domain/event-time";
 
 const member = (id: string): Member => ({
 	id,
@@ -51,13 +56,8 @@ test("coach home counts current players, known divisions and completed club prac
 		{ ...event, id: "social", kind: "social" },
 		{ ...event, id: "other-season", seasonId: "other" },
 	];
-	const stats = coachHomeStats(
-		people,
-		details,
-		events,
-		season,
-		Date.parse("2026-10-01T12:00:00Z"),
-	);
+	const stats = coachHomePlayers(people, details, season);
+	const practiceEnds = coachHomePracticeEnds(events, season);
 	expect(stats.players).toBe(3);
 	expect(stats.youth).toBe(1);
 	expect(stats.women).toBe(1);
@@ -68,6 +68,41 @@ test("coach home counts current players, known divisions and completed club prac
 	expect(
 		stats.divisions.find((entry) => entry.label === "Elite Men's")?.count,
 	).toBe(1);
-	expect(stats.practicesDone).toBe(1);
-	expect(stats.practicesTotal).toBe(2);
+	expect(
+		practiceEnds.filter((end) => end <= Date.parse("2026-10-01T12:00:00Z")),
+	).toHaveLength(1);
+	expect(practiceEnds).toHaveLength(2);
+});
+
+test("a coaching assignment ends with its last assigned practice part", (): void => {
+	const split: ClubEvent = {
+		...event,
+		parts: [
+			{
+				id: "training",
+				kind: "training",
+				title: "Training",
+				start: "19:00",
+				end: "19:30",
+			},
+			{
+				id: "hockey",
+				kind: "hockey",
+				title: "Hockey",
+				start: "19:30",
+				end: "20:00",
+			},
+		],
+	};
+	const assignment = {
+		coachId: "coach",
+		personId: "player",
+		name: "Coach",
+		durationMinutes: 30,
+		partIds: ["training"],
+	};
+	expect(coachingPracticeEnd(split, [assignment], "coach")).toBe(
+		clubTimestamp(event.date, "19:30"),
+	);
+	expect(coachingPracticeEnd(split, [assignment], "another")).toBeUndefined();
 });

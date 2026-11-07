@@ -1,4 +1,5 @@
 import type { ClubEvent, Member, Season } from "./app-types";
+import type { CoachingAssignment } from "./coaching-hours";
 import { clubTimestamp } from "./event-time";
 import { practiceEvent } from "./event-types";
 import {
@@ -9,27 +10,22 @@ import {
 import type { CoachingGender } from "./player-coaching";
 import { defaultSeasonId } from "./seasons";
 
-export type CoachHomeStats = {
+export type CoachHomePlayers = {
 	players: number;
 	youth: number;
 	women: number;
 	unknownDivisions: number;
 	divisions: { label: string; count: number }[];
-	practicesDone: number;
-	practicesTotal: number;
 };
-export const coachHomeStats = (
+export const coachHomePlayers = (
 	members: readonly Member[],
 	details: readonly {
 		personId: string;
 		birthDate?: string;
 		gender?: CoachingGender;
 	}[],
-	events: readonly ClubEvent[],
 	season: Season,
-	now: number,
-	timeZone?: string,
-): CoachHomeStats => {
+): CoachHomePlayers => {
 	const players = members.filter(
 		(member) =>
 			!member.archived && !member.mergedInto && member.programs.length > 0,
@@ -39,14 +35,6 @@ export const coachHomeStats = (
 		const detail = byPerson.get(member.id);
 		return fitnessDivision(detail?.birthDate, detail?.gender, season.start);
 	};
-	const practices = events.filter(
-		(event) =>
-			!event.cancelled &&
-			practiceEvent(event) &&
-			event.date >= season.start &&
-			event.date <= season.end &&
-			(event.seasonId ?? defaultSeasonId) === season.id,
-	);
 	return {
 		players: players.length,
 		youth: players.filter((player) => {
@@ -64,14 +52,47 @@ export const coachHomeStats = (
 			label,
 			count: players.filter((player) => divisionOf(player) === label).length,
 		})),
-		practicesDone: practices.filter(
-			(event) =>
-				clubTimestamp(
-					event.endDate ?? event.date,
-					event.end,
-					event.timeZone ?? timeZone,
-				) <= now,
-		).length,
-		practicesTotal: practices.length,
 	};
+};
+export const coachHomePracticeEnds = (
+	events: readonly ClubEvent[],
+	season: Season,
+	timeZone?: string,
+): number[] =>
+	events
+		.filter(
+			(event) =>
+				!event.cancelled &&
+				practiceEvent(event) &&
+				event.date >= season.start &&
+				event.date <= season.end &&
+				(event.seasonId ?? defaultSeasonId) === season.id,
+		)
+		.map((event) =>
+			clubTimestamp(
+				event.endDate ?? event.date,
+				event.end,
+				event.timeZone ?? timeZone,
+			),
+		);
+
+export const coachingPracticeEnd = (
+	event: ClubEvent,
+	assignments: readonly CoachingAssignment[],
+	coachId: string,
+	timeZone?: string,
+): number | undefined => {
+	const assigned = assignments.filter((entry) => entry.coachId === coachId);
+	if (!assigned.length) return undefined;
+	const zone = event.timeZone ?? timeZone;
+	if (!event.parts?.length)
+		return clubTimestamp(event.endDate ?? event.date, event.end, zone);
+	const ends = event.parts
+		.filter((part) =>
+			assigned.some(
+				(entry) => !entry.partIds || entry.partIds.includes(part.id),
+			),
+		)
+		.map((part) => clubTimestamp(event.date, part.end, zone));
+	return ends.length ? Math.max(...ends) : undefined;
 };

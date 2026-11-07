@@ -72,23 +72,15 @@ export const read = query({
 	args: { personId: v.string() },
 	handler: async (ctx, { personId }): Promise<MemberProfile> => {
 		const actor = await requireMember(ctx);
-		const [person, profile, coaching] = await Promise.all([
+		const [person, profile] = await Promise.all([
 			profilePerson(ctx, actor.clubId, personId),
 			profileRecord(ctx, actor.clubId, personId),
-			ctx.db
-				.query("playerCoaching")
-				.withIndex("by_club_person", (q) =>
-					q.eq("clubId", actor.clubId).eq("personId", personId),
-				)
-				.unique(),
 		]);
-		return memberProfileProjection(accountFor(actor), person.value, {
-			email: profile?.email ?? "",
-			phone: profile?.phone ?? "",
-			...profile,
-			revision: profile?.revision ?? 0,
-			competitionGender: profile?.competitionGender ?? coaching?.gender,
-		});
+		return memberProfileProjection(
+			accountFor(actor),
+			person.value,
+			profile ?? undefined,
+		);
 	},
 });
 export const save = mutation({

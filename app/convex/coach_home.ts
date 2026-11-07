@@ -1,139 +1,148 @@
 import { v } from "convex/values";
-import type { ClubEvent } from "../src/domain/app-types";
-import { type CoachHomeStats, coachHomeStats } from "../src/domain/coach-home";
-import { clubDate, clubTimestamp } from "../src/domain/event-time";
+import type { ClubEvent, Season } from "../src/domain/app-types";
+import {
+	type CoachHomePlayers,
+	coachHomePlayers,
+	coachHomePracticeEnds,
+	coachingPracticeEnd,
+} from "../src/domain/coach-home";
 import { practiceEvent } from "../src/domain/event-types";
 import { initialSeasons } from "../src/domain/seasons";
-import { query } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
+import { type QueryCtx, query } from "./_generated/server";
 import { effectiveEventCoaches } from "./coaching_schedule";
 import { requireMember } from "./identity";
 
-export const read = query({
-	args: { seasonId: v.string(), now: v.number() },
-	handler: async (
-		ctx,
-		{ seasonId, now },
-	): Promise<{
-		stats: CoachHomeStats;
-		nextPractice?: ClubEvent;
-		morePractices: boolean;
-	}> => {
-		const actor = await requireMember(ctx);
-		if (!actor.coachPrograms.length && !actor.admin)
-			throw new Error("Coach or admin access required.");
-		const club = await ctx.db.get(actor.clubId);
-		const season = (club?.seasons ?? initialSeasons).find(
-			(entry) => entry.id === seasonId,
-		);
-		if (!season) throw new Error("Season not found.");
-		const currentTime = Math.min(now, Date.now());
-		const [members, profiles, coaching, events, nextEvents] = await Promise.all(
-			[
-				ctx.db
-					.query("members")
-					.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
-					.take(501),
-				ctx.db
-					.query("memberProfiles")
-					.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
-					.take(501),
-				ctx.db
-					.query("playerCoaching")
-					.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
-					.take(501),
-				ctx.db
-					.query("events")
-					.withIndex("by_date", (q) =>
-						q
-							.eq("clubId", actor.clubId)
-							.gte("value.date", season.start)
-							.lte("value.date", season.end),
-					)
-					.take(2001),
-				ctx.db
-					.query("events")
-					.withIndex("by_date", (q) =>
-						q
-							.eq("clubId", actor.clubId)
-							.gte("value.date", clubDate(currentTime, club?.timeZone)),
-					)
-					.take(201),
-			],
-		);
+const requireStaff = async (ctx: QueryCtx): Promise<Doc<"memberships">> => {
+	const actor = await requireMember(ctx);
+	if (!actor.coachPrograms.length && !actor.admin)
+		throw new Error("Coach or admin access required.");
+	return actor;
+};
+const findSeason = (
+	club: Doc<"clubs"> | null,
+	seasonId: string,
+): Season | undefined =>
+	(club?.seasons ?? initialSeasons).find((entry) => entry.id === seasonId);
+
+export const players = query({
+	args: { seasonId: v.string() },
+	handler: async (ctx, { seasonId }): Promise<CoachHomePlayers | null> => {
+		const actor = await requireStaff(ctx);
+		const [club, members, profiles, coaching] = await Promise.all([
+			ctx.db.get(actor.clubId),
+			ctx.db
+				.query("members")
+				.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+				.take(501),
+			ctx.db
+				.query("memberProfiles")
+				.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+				.take(501),
+			ctx.db
+				.query("playerCoaching")
+				.withIndex("by_club", (q) => q.eq("clubId", actor.clubId))
+				.take(501),
+		]);
+		const season = findSeason(club, seasonId);
 		if (
+			!season ||
 			members.length > 500 ||
 			profiles.length > 500 ||
-			coaching.length > 500 ||
-			events.length > 2000
+			coaching.length > 500
 		)
-			throw new Error("Club statistics are unavailable for this club size.");
-		const genders = new Map(
+			return null;
+		const profileByPerson = new Map(
+			profiles.map((profile) => [profile.personId, profile]),
+		);
+		const genderByPerson = new Map(
 			coaching.map((entry) => [entry.personId, entry.gender]),
 		);
-		const details = profiles.map((entry) => ({
-			personId: entry.personId,
-			birthDate: entry.birthDate,
-			gender: entry.competitionGender ?? genders.get(entry.personId),
-		}));
-		const missingProfile = coaching
-			.filter(
-				(entry) =>
-					!profiles.some((profile) => profile.personId === entry.personId),
-			)
-			.map((entry) => ({ personId: entry.personId, gender: entry.gender }));
-		const stats = coachHomeStats(
+		return coachHomePlayers(
 			members.map((entry) => entry.value),
-			[...details, ...missingProfile],
-			events.map((entry) => entry.value),
+			members.map(({ value }) => {
+				const profile = profileByPerson.get(value.id);
+				return {
+					personId: value.id,
+					birthDate: profile?.birthDate,
+					gender: profile?.competitionGender ?? genderByPerson.get(value.id),
+				};
+			}),
 			season,
-			currentTime,
+		);
+	},
+});
+
+export const practiceEnds = query({
+	args: { seasonId: v.string() },
+	handler: async (ctx, { seasonId }): Promise<number[] | null> => {
+		const actor = await requireStaff(ctx);
+		const club = await ctx.db.get(actor.clubId);
+		const season = findSeason(club, seasonId);
+		if (!season) return null;
+		const events = await ctx.db
+			.query("events")
+			.withIndex("by_date", (q) =>
+				q
+					.eq("clubId", actor.clubId)
+					.gte("value.date", season.start)
+					.lte("value.date", season.end),
+			)
+			.take(2001);
+		if (events.length > 2000) return null;
+		return coachHomePracticeEnds(
+			events.map((row) => row.value),
+			season,
 			club?.timeZone,
 		);
-		const upcoming = nextEvents
-			.map((entry) => entry.value)
-			.filter(
-				(event) =>
-					!event.cancelled &&
-					practiceEvent(event) &&
-					clubTimestamp(
-						event.endDate ?? event.date,
-						event.end,
-						event.timeZone ?? club?.timeZone,
-					) > currentTime,
-			)
-			.sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
-		const matches = await Promise.all(
-			(actor.coachPrograms.length ? upcoming.slice(0, 80) : []).map(
-				async (event) => {
-					const { assignments } = await effectiveEventCoaches(
-						ctx,
-						actor.clubId,
-						event,
-					);
-					return assignments.some(
-						(assignment) =>
-							assignment.coachId === actor.userId &&
-							(!event.parts?.length ||
-								event.parts.some(
-									(part) =>
-										(!assignment.partIds ||
-											assignment.partIds.includes(part.id)) &&
-										clubTimestamp(
-											event.date,
-											part.end,
-											event.timeZone ?? club?.timeZone,
-										) > currentTime,
-								)),
-					)
-						? event
-						: undefined;
-				},
-			),
-		);
+	},
+});
+
+export const upcoming = query({
+	args: { day: v.string() },
+	handler: async (
+		ctx,
+		{ day },
+	): Promise<{
+		practices: { event: ClubEvent; endsAt: number }[];
+		morePractices: boolean;
+	}> => {
+		const actor = await requireStaff(ctx);
+		if (!actor.coachPrograms.length || !/^\d{4}-\d{2}-\d{2}$/.test(day))
+			return { practices: [], morePractices: false };
+		const [club, rows] = await Promise.all([
+			ctx.db.get(actor.clubId),
+			ctx.db
+				.query("events")
+				.withIndex("by_date", (q) =>
+					q.eq("clubId", actor.clubId).gte("value.date", day),
+				)
+				.take(201),
+		]);
+		const events = rows
+			.map((row) => row.value)
+			.filter((event) => !event.cancelled && practiceEvent(event));
+		const practices: { event: ClubEvent; endsAt: number }[] = [];
+		for (const event of events.slice(0, 80)) {
+			const { assignments } = await effectiveEventCoaches(
+				ctx,
+				actor.clubId,
+				event,
+			);
+			const endsAt = coachingPracticeEnd(
+				event,
+				assignments,
+				actor.userId,
+				club?.timeZone,
+			);
+			if (endsAt !== undefined) {
+				practices.push({ event, endsAt });
+				if (event.date > day) break;
+			}
+		}
 		return {
-			stats,
-			nextPractice: matches.find((event) => event !== undefined),
-			morePractices: upcoming.length > 80 || nextEvents.length > 200,
+			practices,
+			morePractices: events.length > 80 || rows.length > 200,
 		};
 	},
 });

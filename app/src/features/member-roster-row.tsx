@@ -45,7 +45,7 @@ const MemberRow = ({
 			}
 			action={
 				profile?.canEditCapNumber ? (
-					<MemberCapNumberEditor state={state} />
+					<MemberCapNumberEditor state={state} compactLabel />
 				) : undefined
 			}
 			onPress={(): void =>

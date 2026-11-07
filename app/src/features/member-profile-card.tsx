@@ -6,6 +6,7 @@ import type { Member } from "../domain/app-types";
 import { fitnessDivision } from "../domain/fitness-division";
 import { positionPreferenceLabel } from "../domain/position-preferences";
 import { ContentReport } from "./content-report";
+import { MemberCapNumberEditor } from "./member-cap-number-editor";
 import { MemberProfileEditor } from "./member-profile-editor";
 import { usePhotoUri } from "./use-photo-uri";
 import { useSeason } from "./use-season";
@@ -61,7 +62,12 @@ export const MemberProfileCard = ({
 						tone="secondary"
 					>{`Division: ${division ?? "Not set"}`}</Text>
 				) : undefined}
-				{profile?.canEdit ? <MemberProfileEditor state={state} /> : undefined}
+				{profile?.canEdit || profile?.canEditCapNumber ? (
+					<Row wrap gap="xs">
+						<MemberProfileEditor state={state} />
+						<MemberCapNumberEditor state={state} />
+					</Row>
+				) : undefined}
 				{profile?.contact?.phone ? (
 					<Text
 						variant="caption"
