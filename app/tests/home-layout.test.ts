@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
 	availableHomeCards,
+	homeCardDropTarget,
 	homeLayoutError,
 	resolveHomeLayout,
 } from "../src/domain/home-layout";
@@ -39,5 +40,33 @@ describe("home layouts", () => {
 		expect(homeLayoutError(["unknown"], [])).toBeDefined();
 		expect(homeLayoutError(["fitness"], ["practice"])).toBeDefined();
 		expect(homeLayoutError(["fitness"], ["fitness"])).toBeUndefined();
+	});
+
+	test("reorders in both directions using the current order and variable card heights", () => {
+		const heights = { practice: 180, announcement: 40, fitness: 90 };
+		expect(
+			homeCardDropTarget(
+				["practice", "announcement", "fitness"],
+				heights,
+				"practice",
+				120,
+			),
+		).toBe("announcement");
+		expect(
+			homeCardDropTarget(
+				["announcement", "practice", "fitness"],
+				heights,
+				"practice",
+				-120,
+			),
+		).toBe("announcement");
+		expect(
+			homeCardDropTarget(
+				["announcement", "practice", "fitness"],
+				heights,
+				"practice",
+				4,
+			),
+		).toBeUndefined();
 	});
 });

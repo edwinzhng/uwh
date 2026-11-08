@@ -8,23 +8,19 @@ import { Text } from "./text";
 import { useTheme } from "./theme";
 import { corners, font, geometry, space, typography } from "./tokens";
 
-type Person = { personId: string; name: string };
+type Person = { personId: string; name: string; displayName: string };
 type Team = {
 	label: string;
 	formation: string;
 	side: "black" | "white";
 	rows: {
 		id: string;
-		name: string;
-		personId?: string;
+		person?: Person;
 		positionLabel: string;
 		substitutes: Person[];
 	}[][];
-	roles: {
-		personId: string;
-		name: string;
-		role: "Captain" | "Vice Captain" | "Ref" | "2nd Ref";
-	}[];
+	reserves: Person[];
+	roles: (Person & { role: "Captain" | "Vice Captain" | "Ref" | "2nd Ref" })[];
 };
 export const LineupPreview = ({
 	groups,
@@ -109,16 +105,20 @@ export const LineupPreview = ({
 												}}
 											>
 												<Text variant="caption">{person.positionLabel}</Text>
-												{person.personId ? (
+												{person.person ? (
 													<>
 														<Avatar
-															name={person.name}
-															personId={person.personId}
+															name={person.person.name}
+															personId={person.person.personId}
 															initials
 															compact
 														/>
-														<Text variant="caption" lines={1}>
-															{person.name.split(" ").at(0)}
+														<Text
+															variant="caption"
+															lines={1}
+															accessibilityLabel={person.person.name}
+														>
+															{person.person.displayName}
 														</Text>
 													</>
 												) : (
@@ -138,8 +138,12 @@ export const LineupPreview = ({
 															initials
 															compact
 														/>
-														<Text variant="caption" lines={1}>
-															{sub.name.split(" ").at(0)}
+														<Text
+															variant="caption"
+															lines={1}
+															accessibilityLabel={sub.name}
+														>
+															{sub.displayName}
 														</Text>
 													</View>
 												))}
@@ -147,6 +151,18 @@ export const LineupPreview = ({
 										))}
 									</View>
 								))}
+								{team.reserves.length ? (
+									<Stack gap="xxs">
+										<Text variant="caption" tone="secondary">
+											Substitutes
+										</Text>
+										<Text variant="caption">
+											{team.reserves
+												.map((person) => person.displayName)
+												.join(", ")}
+										</Text>
+									</Stack>
+								) : undefined}
 								{team.roles.length ? (
 									<View
 										style={{
@@ -165,7 +181,7 @@ export const LineupPreview = ({
 												roleLabel={role.role}
 												personId={role.personId}
 												name={role.name}
-												displayName={role.name.split(" ").at(0)}
+												displayName={role.displayName}
 											/>
 										))}
 									</View>

@@ -70,3 +70,33 @@ export const homeLayoutError = (
 		? "Review your home cards and try again."
 		: undefined;
 };
+
+export const homeCardDropTarget = (
+	order: readonly HomeCardId[],
+	heights: Partial<Record<HomeCardId, number>>,
+	dragged: HomeCardId,
+	distance: number,
+): HomeCardId | undefined => {
+	if (Math.abs(distance) < 8) return undefined;
+	const centers = new Map<HomeCardId, number>();
+	let top = 0;
+	for (const id of order) {
+		const height = heights[id];
+		if (!height) return undefined;
+		centers.set(id, top + height / 2);
+		top += height;
+	}
+	const start = centers.get(dragged);
+	if (start === undefined) return undefined;
+	const destination = start + distance;
+	let target = dragged;
+	let nearest = Math.abs(distance);
+	for (const [id, center] of centers) {
+		const delta = Math.abs(destination - center);
+		if (delta < nearest) {
+			target = id;
+			nearest = delta;
+		}
+	}
+	return target === dragged ? undefined : target;
+};

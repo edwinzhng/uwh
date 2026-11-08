@@ -23,10 +23,11 @@ export const LineupRolePortrait = ({
 		<View style={{ alignItems: "center", minWidth: diameter + space.sm }}>
 			<Text
 				numberOfLines={1}
+				accessibilityLabel={roleLabel}
 				style={{
 					...typography.caption,
 					fontFamily: font.semibold,
-					color,
+					color: theme.text.primary,
 					marginBottom: space.xxs,
 				}}
 			>

@@ -25,8 +25,11 @@ import {
 	canCreateEventLineup,
 	practiceLineupPart,
 } from "../domain/event-lineups";
-import { lineupVisibleSides } from "../domain/lineup-visible-sides";
-import { type AgeGroup, formatTeams } from "../domain/player-coaching";
+import {
+	lineupVisibleGroups,
+	lineupVisibleSides,
+} from "../domain/lineup-visible-sides";
+import { formatTeams } from "../domain/player-coaching";
 import * as Clipboard from "../platform/clipboard";
 import { LineupEditor } from "./lineup-editor";
 import { TeamLineupPreview } from "./team-lineup-preview";
@@ -76,9 +79,7 @@ const TeamPanelContent = ({
 	const visibleSides = plan ? lineupVisibleSides(plan, playerPersonId) : [];
 	const stale =
 		plan && canCoach(account) ? lineupNeedsReview(data, plan) : false;
-	const groups: (AgeGroup | "combined")[] = plan?.separateYouth
-		? ["adult", "youth"]
-		: ["combined"];
+	const groups = plan ? lineupVisibleGroups(plan, data, playerPersonId) : [];
 	const copy = async (): Promise<void> => {
 		if (!plan) return;
 		try {
@@ -203,53 +204,31 @@ const TeamPanelContent = ({
 								</Text>
 							) : undefined}
 							<Stack>
-								{groups
-									.filter(
-										(group) =>
-											visibleSides.length > 0 &&
-											(!playerPersonId ||
-												group === "combined" ||
-												(plan.assignments?.find(
-													(entry) => entry.personId === playerPersonId,
-												)?.ageGroup ??
-													data.playerCoaching?.find(
-														(entry) => entry.personId === playerPersonId,
-													)?.ageGroup ??
-													(data.members
-														.find((member) => member.id === playerPersonId)
-														?.programs.includes("youth")
-														? "youth"
-														: "adult")) === group) &&
-											(group === "combined" ||
-												plan.assignments?.some(
-													(entry) => entry.ageGroup === group,
-												)),
-									)
-									.map((group) => (
-										<PoolBoardSection
-											key={group}
-											label={
-												group === "combined"
-													? undefined
-													: group === "adult"
-														? "Adults"
-														: "Youth"
-											}
-										>
-											<PoolBoardGroup>
-												<PoolBoardColumns>
-													{visibleSides.map((side) => (
-														<TeamPool
-															key={side}
-															plan={plan}
-															side={side}
-															group={group}
-														/>
-													))}
-												</PoolBoardColumns>
-											</PoolBoardGroup>
-										</PoolBoardSection>
-									))}
+								{groups.map((group) => (
+									<PoolBoardSection
+										key={group}
+										label={
+											group === "combined"
+												? undefined
+												: group === "adult"
+													? "Adults"
+													: "Youth"
+										}
+									>
+										<PoolBoardGroup>
+											<PoolBoardColumns>
+												{visibleSides.map((side) => (
+													<TeamPool
+														key={side}
+														plan={plan}
+														side={side}
+														group={group}
+													/>
+												))}
+											</PoolBoardColumns>
+										</PoolBoardGroup>
+									</PoolBoardSection>
+								))}
 							</Stack>
 						</>
 					) : (
@@ -321,7 +300,7 @@ const TeamPanelContent = ({
 				immersive={editable && Boolean(plan)}
 				preview={
 					plan?.published ? (
-						<TeamLineupPreview plan={plan} />
+						<TeamLineupPreview plan={plan} playerPersonId={playerPersonId} />
 					) : (
 						<Surface>
 							<EmptyState title="Teams not published" />

@@ -20,6 +20,7 @@ import {
 	lineupTeamPeople,
 } from "../domain/lineup";
 import { lineupDisplayNames } from "../domain/lineup-display-name";
+import { lineupPlayerGroup } from "../domain/lineup-visible-sides";
 import type { AgeGroup } from "../domain/player-coaching";
 import { TeamCaptain } from "./team-captain";
 import { TeamStrength } from "./team-strength";
@@ -56,14 +57,7 @@ export const TeamPool = ({
 	const formation =
 		side === "black" ? snapshot.blackFormation : snapshot.whiteFormation;
 	const inGroup = (id: string): boolean =>
-		group === "combined" ||
-		(plan.assignments?.find((entry) => entry.personId === id)?.ageGroup ??
-			data.playerCoaching?.find((entry) => entry.personId === id)?.ageGroup ??
-			(data.members
-				.find((member) => member.id === id)
-				?.programs.includes("youth")
-				? "youth"
-				: "adult")) === group;
+		group === "combined" || lineupPlayerGroup(plan, data, id) === group;
 	const displayNames = lineupDisplayNames(
 		[
 			...lineupPeople(snapshot).filter(inGroup),
@@ -87,10 +81,16 @@ export const TeamPool = ({
 	});
 	const teamPeople = lineupTeamPeople(snapshot, side).filter(inGroup);
 	const referee = plan.referees?.find(
-		(entry) => entry.side === side && !entry.role,
+		(entry) =>
+			entry.side === side &&
+			!entry.role &&
+			(onRefereeChange || inGroup(entry.personId)),
 	);
 	const secondReferee = plan.referees?.find(
-		(entry) => entry.side === side && entry.role === "second",
+		(entry) =>
+			entry.side === side &&
+			entry.role === "second" &&
+			(onSecondRefereeChange || inGroup(entry.personId)),
 	);
 	const showCaptainRoles = Boolean(
 		captain || viceCaptain || onCaptainChange || onViceCaptainChange,
@@ -126,15 +126,7 @@ export const TeamPool = ({
 						.filter(
 							(member) =>
 								!lineupPeople(snapshot).includes(member.id) &&
-								(group === "combined" ||
-									(plan.assignments?.find(
-										(entry) => entry.personId === member.id,
-									)?.ageGroup ??
-										data.playerCoaching?.find(
-											(entry) => entry.personId === member.id,
-										)?.ageGroup ??
-										(member.programs.includes("youth") ? "youth" : "adult")) ===
-										group),
+								inGroup(member.id),
 						)
 						.map((member) => ({
 							id: member.id,
