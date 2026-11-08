@@ -1,7 +1,7 @@
 import { useQuery } from "convex/react";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
-import { AppContext, useApp } from "../demo/app-state";
+import { AppContext, useActivePerson, useApp } from "../demo/app-state";
 import {
 	Button,
 	Dialog,
@@ -10,12 +10,14 @@ import {
 	Stack,
 	usePageLoading,
 } from "../design-system";
+import { canCoach } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import { practiceEvent } from "../domain/event-types";
 import { TeamLineupPreview } from "./team-lineup-preview";
 
 const EventPreviewContent = ({ event }: { event: ClubEvent }): ReactElement => {
-	const { data } = useApp();
+	const { data, account } = useApp();
+	const person = useActivePerson();
 	const plans = data.teams.filter(
 		(plan) => plan.eventId === event.id && plan.published,
 	);
@@ -25,6 +27,7 @@ const EventPreviewContent = ({ event }: { event: ClubEvent }): ReactElement => {
 				<TeamLineupPreview
 					key={`${plan.eventId}:${plan.partId ?? "all"}`}
 					plan={plan}
+					playerPersonId={canCoach(account) ? undefined : person.id}
 				/>
 			))}
 		</Stack>

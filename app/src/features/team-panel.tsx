@@ -19,14 +19,17 @@ import {
 	canCoach,
 	eventAttendees,
 	lineupNeedsReview,
-	memberName,
 } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import {
 	canCreateEventLineup,
 	practiceLineupPart,
 } from "../domain/event-lineups";
-import { type AgeGroup, formatTeams } from "../domain/player-coaching";
+import {
+	lineupVisibleGroups,
+	lineupVisibleSides,
+} from "../domain/lineup-visible-sides";
+import { formatTeams } from "../domain/player-coaching";
 import * as Clipboard from "../platform/clipboard";
 import { LineupEditor } from "./lineup-editor";
 import { TeamLineupPreview } from "./team-lineup-preview";
@@ -40,12 +43,14 @@ const TeamPanelContent = ({
 	readOnly = false,
 	showHeading = true,
 	inline = false,
+	playerPersonId,
 }: {
 	event: ClubEvent;
 	partId?: string;
 	readOnly?: boolean;
 	showHeading?: boolean;
 	inline?: boolean;
+	playerPersonId?: string;
 }): ReactElement | undefined => {
 	const { data, account } = useApp();
 	const { busy } = useAppStatus();
@@ -71,11 +76,10 @@ const TeamPanelContent = ({
 			entry.partId === partId &&
 			(!readOnly || entry.published),
 	);
+	const visibleSides = plan ? lineupVisibleSides(plan, playerPersonId) : [];
 	const stale =
 		plan && canCoach(account) ? lineupNeedsReview(data, plan) : false;
-	const groups: (AgeGroup | "combined")[] = plan?.separateYouth
-		? ["adult", "youth"]
-		: ["combined"];
+	const groups = plan ? lineupVisibleGroups(plan, data, playerPersonId) : [];
 	const copy = async (): Promise<void> => {
 		if (!plan) return;
 		try {
@@ -194,47 +198,38 @@ const TeamPanelContent = ({
 									/>
 								</Row>
 							) : undefined}
-							<Stack>
-								{groups
-									.filter(
-										(group) =>
-											group === "combined" ||
-											plan.assignments?.some(
-												(entry) => entry.ageGroup === group,
-											),
-									)
-									.map((group) => (
-										<PoolBoardSection
-											key={group}
-											label={
-												group === "combined"
-													? undefined
-													: group === "adult"
-														? "Adults"
-														: "Youth"
-											}
-										>
-											<PoolBoardGroup>
-												<PoolBoardColumns>
-													{(["black", "white"] as const).map((side) => (
-														<TeamPool
-															key={side}
-															plan={plan}
-															side={side}
-															group={group}
-														/>
-													))}
-												</PoolBoardColumns>
-											</PoolBoardGroup>
-										</PoolBoardSection>
-									))}
-							</Stack>
-							{plan.referees?.map((referee) => (
-								<Text key={referee.side} variant="small">
-									{referee.side === "black" ? "Black" : "White"} referee ·{" "}
-									{memberName(data, referee.personId)}
+							{playerPersonId && visibleSides.length === 0 ? (
+								<Text variant="small" tone="secondary">
+									You are not assigned to a team for this practice.
 								</Text>
-							))}
+							) : undefined}
+							<Stack>
+								{groups.map((group) => (
+									<PoolBoardSection
+										key={group}
+										label={
+											group === "combined"
+												? undefined
+												: group === "adult"
+													? "Adults"
+													: "Youth"
+										}
+									>
+										<PoolBoardGroup>
+											<PoolBoardColumns>
+												{visibleSides.map((side) => (
+													<TeamPool
+														key={side}
+														plan={plan}
+														side={side}
+														group={group}
+													/>
+												))}
+											</PoolBoardColumns>
+										</PoolBoardGroup>
+									</PoolBoardSection>
+								))}
+							</Stack>
 						</>
 					) : (
 						<Surface>
@@ -305,7 +300,7 @@ const TeamPanelContent = ({
 				immersive={editable && Boolean(plan)}
 				preview={
 					plan?.published ? (
-						<TeamLineupPreview plan={plan} />
+						<TeamLineupPreview plan={plan} playerPersonId={playerPersonId} />
 					) : (
 						<Surface>
 							<EmptyState title="Teams not published" />
@@ -327,12 +322,14 @@ export const TeamPanel = ({
 	readOnly = false,
 	showHeading = true,
 	inline = false,
+	playerPersonId,
 }: {
 	event: ClubEvent;
 	partId?: string;
 	readOnly?: boolean;
 	showHeading?: boolean;
 	inline?: boolean;
+	playerPersonId?: string;
 }): ReactElement => {
 	const { data } = useApp();
 	const selectedPart =
@@ -346,6 +343,7 @@ export const TeamPanel = ({
 				readOnly={readOnly}
 				showHeading={showHeading}
 				inline={inline}
+				playerPersonId={playerPersonId}
 			/>
 		</Stack>
 	);

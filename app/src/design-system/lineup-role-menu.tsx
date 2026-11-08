@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { Text, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { ActionMenu } from "./action-menu";
+import { LineupRolePortrait } from "./lineup-role-portrait";
 import { useTheme } from "./theme";
 import { corners, font, geometry, space, typography } from "./tokens";
 import { useLineupRoleDrop } from "./use-lineup-role-drop";
@@ -32,6 +33,16 @@ export const LineupRoleMenu = ({
 	const roleColor =
 		roleLabel === "Ref" || roleLabel === "2nd Ref" ? "#2766C9" : "#C63838";
 	const selected = people.find((person) => person.id === personId);
+	if (!onChange && personId && selected)
+		return (
+			<LineupRolePortrait
+				roleLabel={roleLabel}
+				personId={personId}
+				name={selected.name}
+				displayName={displayName}
+			/>
+		);
+
 	return (
 		<View
 			style={{

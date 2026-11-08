@@ -8,7 +8,6 @@ import {
 	Checkbox,
 	Dialog,
 	HomeCardFrame,
-	type HomeCardFramePosition,
 	List,
 	Row,
 	Stack,
@@ -21,6 +20,7 @@ import {
 	type HomeCardId,
 	type HomeLayout,
 	type HomeWorkspace,
+	homeCardDropTarget,
 	homeCards,
 	resolveHomeLayout,
 } from "../domain/home-layout";
@@ -92,9 +92,7 @@ const Dashboard = ({
 	const { data, account } = useApp();
 	const [draft, setDraft] = useState<HomeLayout>();
 	const [adding, setAdding] = useState(false);
-	const positions = useRef<Partial<Record<HomeCardId, HomeCardFramePosition>>>(
-		{},
-	);
+	const heights = useRef<Partial<Record<HomeCardId, number>>>({});
 	const task = useFormTask();
 	const layout = resolveHomeLayout(availableHomeCards(account, view), saved);
 	const practice = homeNextPractice(data, account, now);
@@ -129,7 +127,7 @@ const Dashboard = ({
 		(id) => !(draft ?? layout).hidden.includes(id),
 	);
 	const begin = (): void => {
-		if (!loading) setDraft(layout);
+		if (!loading && !draft) setDraft(layout);
 	};
 	const moveTo = (id: HomeCardId, targetId: HomeCardId): void =>
 		setDraft((current) => {
@@ -189,7 +187,7 @@ const Dashboard = ({
 			</Row>
 			{draft ? (
 				<Text variant="small" tone="secondary">
-					Drag the handle to rearrange cards. Tap − to remove a card.
+					Drag the handle or use the arrows to move a card. Tap − to remove it.
 				</Text>
 			) : undefined}
 			{task.error ? (
@@ -202,12 +200,13 @@ const Dashboard = ({
 					Loading home…
 				</Text>
 			) : (
-				<Stack gap="sm">
+				<Stack gap="none">
 					{visible.map((id, index) => (
 						<HomeCardFrame
 							key={id}
 							label={homeCards.find((card) => card.id === id)?.label ?? id}
 							editing={Boolean(draft)}
+							busy={task.busy}
 							canMoveUp={index > 0}
 							canMoveDown={index < visible.length - 1}
 							onEdit={begin}
@@ -222,27 +221,17 @@ const Dashboard = ({
 								const target = visible.at(index + direction);
 								if (target) moveTo(id, target);
 							}}
-							onPosition={(position): void => {
-								positions.current[id] = position;
+							onHeight={(height): void => {
+								heights.current[id] = height;
 							}}
 							onDragEnd={(distance): void => {
-								const from = positions.current[id];
-								if (!from || Math.abs(distance) < 8) return;
-								const destination = from.y + from.height / 2 + distance;
-								const target = visible.reduce<HomeCardId>(
-									(closest, candidate) => {
-										const a = positions.current[closest];
-										const b = positions.current[candidate];
-										return b &&
-											(!a ||
-												Math.abs(b.y + b.height / 2 - destination) <
-													Math.abs(a.y + a.height / 2 - destination))
-											? candidate
-											: closest;
-									},
+								const target = homeCardDropTarget(
+									visible,
+									heights.current,
 									id,
+									distance,
 								);
-								moveTo(id, target);
+								if (target) moveTo(id, target);
 							}}
 						>
 							{renderCard(id)}
