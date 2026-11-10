@@ -1,6 +1,13 @@
 import { type ReactElement, useState } from "react";
 import type { SessionPlanService } from "../backend/use-session-plan";
-import { Button, Dialog, Field, Stack, Text } from "../design-system";
+import {
+	AudienceLabel,
+	Button,
+	Dialog,
+	Field,
+	Stack,
+	Text,
+} from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
 import {
 	normalizeSessionPlan,
@@ -73,6 +80,11 @@ export const SessionPlanEditor = ({
 			}
 		>
 			<Stack>
+				{plan.published ? (
+					<AudienceLabel audience="players" label="Plan: players can see" />
+				) : (
+					<AudienceLabel audience="coaches" label="Plan: coaches only" />
+				)}
 				<SessionPlanBodyEditor
 					draft={draft}
 					onChange={(next): void => setDraft({ ...draft, ...next })}
@@ -80,6 +92,7 @@ export const SessionPlanEditor = ({
 					disabled={task.busy}
 					onBusyChange={setUploading}
 				/>
+				<AudienceLabel audience="coaches" label="Notes: coaches only" />
 				<Field
 					label="Private coaching notes"
 					rows={2}

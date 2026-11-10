@@ -41,6 +41,7 @@ export const eventsValue = v.object({
 	timeZone: v.optional(v.string()),
 	parts: v.optional(v.array(eventPartValue)),
 	public: v.optional(v.boolean()),
+	countdown: v.optional(v.boolean()),
 	exception: v.optional(v.boolean()),
 	editId: v.optional(v.string()),
 	seriesOrder: v.optional(v.number()),

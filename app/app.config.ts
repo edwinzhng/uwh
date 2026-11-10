@@ -51,6 +51,19 @@ const config: ExpoConfig = {
 	},
 	plugins: [
 		[
+			"expo-widgets",
+			{
+				widgets: [
+					{
+						name: "NextPractice",
+						displayName: "Next Practice",
+						description: "See your next practice and lineup.",
+						ios: { supportedFamilies: ["systemSmall", "systemMedium"] },
+					},
+				],
+			},
+		],
+		[
 			"expo-video",
 			{ supportsBackgroundPlayback: false, supportsPictureInPicture: false },
 		],
@@ -93,6 +106,12 @@ const config: ExpoConfig = {
 				dark: {
 					backgroundColor: "#080A0D",
 					image: "./assets/loading/loading-puck-dark.png",
+				},
+				ios: {
+					image: "./assets/loading/launch-pool.png",
+					resizeMode: "cover",
+					enableFullScreenImage_legacy: true,
+					dark: { image: "./assets/loading/launch-pool.png" },
 				},
 			},
 		],

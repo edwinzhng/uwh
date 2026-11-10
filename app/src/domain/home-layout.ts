@@ -2,6 +2,7 @@ import type { Account } from "./app-types";
 
 export const homeCards = [
 	{ id: "practice", label: "My next practice" },
+	{ id: "countdown", label: "Countdown" },
 	{ id: "announcement", label: "Announcements" },
 	{ id: "shoutouts", label: "Shoutouts" },
 	{ id: "season", label: "My season" },
@@ -26,6 +27,7 @@ export const availableHomeCards = (
 ): HomeCardId[] => {
 	const personal: HomeCardId[] = [
 		"practice",
+		"countdown",
 		"announcement",
 		"shoutouts",
 		"season",
@@ -45,14 +47,38 @@ export const availableHomeCards = (
 			]
 		: [...personal, ...(staff ? ["club_stats" as const] : [])];
 };
+const coachHomeCards: readonly HomeCardId[] = [
+	"club_stats",
+	"practice_progress",
+	"next_coaching",
+	"coach_tasks",
+	"coach_tools",
+];
+export const homeCardRole = (
+	id: HomeCardId,
+	account: Pick<Account, "coachPrograms">,
+): "coach" | "admin" | undefined =>
+	coachHomeCards.includes(id)
+		? account.coachPrograms.length > 0
+			? "coach"
+			: "admin"
+		: undefined;
 export const resolveHomeLayout = (
 	available: readonly HomeCardId[],
 	saved?: HomeLayout | null,
 ): HomeLayout => ({
-	order: [
-		...(saved?.order ?? []).filter((id) => available.includes(id)),
-		...available.filter((id) => !saved?.order.includes(id)),
-	],
+	order: available
+		.filter((id) => !saved?.order.includes(id))
+		.reduce<HomeCardId[]>(
+			(order, id) => {
+				const previous = available
+					.slice(0, available.indexOf(id))
+					.findLast((entry) => order.includes(entry));
+				const position = previous ? order.indexOf(previous) + 1 : 0;
+				return [...order.slice(0, position), id, ...order.slice(position)];
+			},
+			(saved?.order ?? []).filter((id) => available.includes(id)),
+		),
 	hidden: (saved?.hidden ?? []).filter((id) => available.includes(id)),
 	revision: saved?.revision ?? 0,
 });

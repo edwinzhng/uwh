@@ -1,8 +1,8 @@
 import { StatusBar } from "expo-status-bar";
 import { type ReactElement, useCallback, useState } from "react";
 import { useWindowDimensions, View } from "react-native";
-import { LoadingBackdrop } from "./loading-backdrop";
 import { loadingColors } from "./loading-colors";
+import { LoadingPoolBackdrop } from "./loading-pool-backdrop";
 import { LoadingPuck } from "./loading-puck";
 import { LoadingReveal } from "./loading-reveal";
 import { LoadingWordmark } from "./loading-wordmark";
@@ -10,7 +10,7 @@ import { space } from "./tokens";
 export const LoadingScreen = (): ReactElement => {
 	const [ready, setReady] = useState(false);
 	const onReady = useCallback((): void => setReady(true), []);
-	const { width } = useWindowDimensions();
+	const { width, height } = useWindowDimensions();
 	const size = Math.max(160, Math.min(width - space.md * 2, 320));
 	return (
 		<View
@@ -24,7 +24,7 @@ export const LoadingScreen = (): ReactElement => {
 			accessibilityLabel="Loading UWH Club"
 		>
 			<StatusBar style="light" />
-			<LoadingBackdrop />
+			<LoadingPoolBackdrop contentTop={(height - size) / 2} />
 			<View style={{ width: size, alignItems: "center", gap: space.sm }}>
 				<LoadingReveal ready={ready}>
 					<LoadingPuck size={size} appearance="dark" onReady={onReady} />

@@ -1,7 +1,6 @@
 import type { ReactElement } from "react";
 import { Text, View } from "react-native";
-import { rainbowPalette } from "./rainbow-palette";
-import type { RoleTone } from "./role-glow";
+import { type RoleTone, rolePalette } from "./role-glow";
 import type { RoleTabTreatment } from "./role-tab-treatment";
 import { useTheme } from "./theme";
 import { font, radius, space, typography } from "./tokens";
@@ -9,7 +8,7 @@ import { font, radius, space, typography } from "./tokens";
 type Props = { role: RoleTone; treatment: Exclude<RoleTabTreatment, "glow"> };
 export const RoleTabMarker = ({ role, treatment }: Props): ReactElement => {
 	const theme = useTheme();
-	const palette = rainbowPalette[role === "coach" ? "violet" : "blue"];
+	const palette = rolePalette(role);
 	if (treatment === "dot")
 		return (
 			<View

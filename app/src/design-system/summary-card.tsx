@@ -10,6 +10,8 @@ import {
 	HomeCardTreatmentContext,
 } from "./home-card-treatment";
 import { Icon, type IconName } from "./icon";
+import { roleGlow } from "./role-glow";
+import { useRoleTone } from "./role-scope";
 import { Text } from "./text";
 import { useTheme } from "./theme";
 import { ThemeScope } from "./theme-scope";
@@ -32,7 +34,7 @@ type Props = {
 	headerTexture?: "watercolor" | "watercolor-tonal";
 	treatment?: HomeCardTreatment;
 	variant?: "default" | "metric" | "section";
-	tone?: "default" | "brand" | "recognition";
+	tone?: "default" | "highlight" | "recognition";
 	metadata?: string;
 	children: ReactNode;
 	onPress?: () => void;
@@ -45,7 +47,11 @@ type Props = {
 export const SummaryCard = (props: Props): ReactElement => {
 	const treatment =
 		useContext(HomeCardTreatmentContext) ?? props.treatment ?? "current";
-	return treatment === "spotlight" && props.icon === "megaphone" ? (
+	return props.tone === "highlight" ? (
+		<ThemeScope appearance="dark">
+			<SummaryCardContent {...props} />
+		</ThemeScope>
+	) : treatment === "spotlight" && props.icon === "megaphone" ? (
 		<ThemeScope appearance="light">
 			<SummaryCardContent {...props} />
 		</ThemeScope>
@@ -70,8 +76,10 @@ const SummaryCardContent = ({
 	trailingAction,
 	borderStyle = "solid",
 	compact = false,
+	tone = "default",
 }: Props): ReactElement => {
 	const theme = useTheme();
+	const roleTone = useRoleTone();
 	const treatment =
 		useContext(HomeCardTreatmentContext) ?? explicitTreatment ?? "current";
 	const announcement = icon === "megaphone";
@@ -84,13 +92,16 @@ const SummaryCardContent = ({
 	const section = variant === "section";
 	const unmarked = borderStyle === "dashed" && !section;
 	const unmarkedColors = unmarkedCardColors[theme.mode];
-	const background = unmarked
-		? unmarkedColors.background
-		: theme.background.card;
+	const highlight = tone === "highlight";
+	const background = highlight
+		? theme.highlight.background
+		: unmarked
+			? unmarkedColors.background
+			: theme.background.card;
 	const interactiveBackground =
-		cardTreatment !== "current"
+		cardTreatment !== "current" && !highlight
 			? "transparent"
-			: pressed
+			: pressed && !highlight
 				? theme.background.pressed
 				: background;
 	const texture =
@@ -148,6 +159,9 @@ const SummaryCardContent = ({
 				outlineWidth: focused ? geometry.focus : 0,
 				outlineColor: theme.focus,
 				outlineOffset: geometry.focus,
+				...(roleTone && !section
+					? { boxShadow: roleGlow(roleTone, theme.mode) }
+					: {}),
 			}}
 		>
 			<View
@@ -156,11 +170,11 @@ const SummaryCardContent = ({
 					overflow: section ? "visible" : "hidden",
 					borderRadius: corners.panel,
 					borderWidth: section ? 0 : geometry.border,
-					borderColor: unmarked ? "transparent" : theme.border,
+					borderColor: unmarked || highlight ? "transparent" : theme.border,
 					backgroundColor: section ? "transparent" : background,
 				}}
 			>
-				{cardTreatment !== "current" && !section ? (
+				{cardTreatment !== "current" && !section && !highlight ? (
 					<HomeCardBackground
 						treatment={cardTreatment}
 						category={textureCategory}
@@ -193,7 +207,8 @@ const SummaryCardContent = ({
 						{cardTreatment === "current" &&
 						!headerTexture &&
 						!section &&
-						!unmarked ? (
+						!unmarked &&
+						!highlight ? (
 							<CardAtmosphere />
 						) : undefined}
 						{content}
@@ -212,7 +227,8 @@ const SummaryCardContent = ({
 						{cardTreatment === "current" &&
 						!headerTexture &&
 						!section &&
-						!unmarked ? (
+						!unmarked &&
+						!highlight ? (
 							<CardAtmosphere />
 						) : undefined}
 						{content}

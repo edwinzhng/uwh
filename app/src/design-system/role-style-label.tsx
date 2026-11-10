@@ -1,7 +1,6 @@
 import type { ReactElement } from "react";
 import { Text, View } from "react-native";
-import { rainbowPalette } from "./rainbow-palette";
-import type { RoleTone } from "./role-glow";
+import { type RoleTone, rolePalette } from "./role-glow";
 import { useTheme } from "./theme";
 import { font, radius, space, typography } from "./tokens";
 export const RoleStyleLabel = ({
@@ -10,7 +9,7 @@ export const RoleStyleLabel = ({
 	roleKind: RoleTone;
 }): ReactElement => {
 	const theme = useTheme();
-	const palette = rainbowPalette[roleKind === "coach" ? "violet" : "blue"];
+	const palette = rolePalette(roleKind);
 	return (
 		<View
 			style={{

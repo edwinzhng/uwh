@@ -12,7 +12,9 @@ test("demo practice programs use weekdays and Thursday/Sunday have one session w
 	for (const name of ["Thursday", "Sunday"]) {
 		const program = programs.find((entry) => entry.name === name);
 		const sessions = initialAppData.events.filter(
-			(event) => event.program === program?.id && event.kind !== "social",
+			(event) =>
+				event.program === program?.id &&
+				(event.kind === "training" || event.kind === "hockey"),
 		);
 		expect(sessions.length).toBeGreaterThan(0);
 		expect(new Set(sessions.map((event) => event.date)).size).toBe(

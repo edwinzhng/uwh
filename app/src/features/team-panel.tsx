@@ -9,6 +9,7 @@ import {
 	PoolBoardColumns,
 	PoolBoardGroup,
 	PoolBoardSection,
+	RoleScope,
 	Row,
 	SectionHeading,
 	Stack,
@@ -153,20 +154,22 @@ const TeamPanelContent = ({
 						<SectionHeading
 							action={
 								!readOnly && canCoach(account) ? (
-									<Row wrap>
-										{editable ? (
-											<Button
-												label="Generate teams"
-												prefix="users"
-												variant="secondary"
-												isDisabled={
-													busy ||
-													eventAttendees(data, event.id, partId).length < 2
-												}
-												onPress={(): void => setOptions(true)}
-											/>
-										) : undefined}
-									</Row>
+									<RoleScope tone="coach">
+										<Row wrap>
+											{editable ? (
+												<Button
+													label="Generate teams"
+													prefix="users"
+													variant="secondary"
+													isDisabled={
+														busy ||
+														eventAttendees(data, event.id, partId).length < 2
+													}
+													onPress={(): void => setOptions(true)}
+												/>
+											) : undefined}
+										</Row>
+									</RoleScope>
 								) : undefined
 							}
 						>
