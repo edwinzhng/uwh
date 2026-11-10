@@ -1,5 +1,12 @@
 import type { ReactElement } from "react";
-import { Button, Field, Select, Stack, Text } from "../design-system";
+import {
+	AudienceLabel,
+	Button,
+	Field,
+	Select,
+	Stack,
+	Text,
+} from "../design-system";
 import type { useFormTask } from "./use-form-task";
 import type { useSessionPerformanceForm } from "./use-session-performance-form";
 
@@ -30,6 +37,7 @@ export const SessionPerformanceFields = ({
 			maxLength={2000}
 			isDisabled={task.busy || form.readOnly}
 		/>
+		<AudienceLabel audience="personal" />
 		<Text variant="small" tone="secondary">
 			Visible to you, your linked guardians and club coaches.
 		</Text>

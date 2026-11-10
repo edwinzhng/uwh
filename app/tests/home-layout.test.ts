@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { countdownLabel, upcomingCountdowns } from "../src/domain/countdown";
 import {
 	availableHomeCards,
 	homeCardDropTarget,
@@ -22,7 +23,7 @@ describe("home layouts", () => {
 			availableHomeCards({ admin: false, coachPrograms: [] }, "personal"),
 		).not.toContain("club_stats");
 	});
-	test("preserves order and hidden cards while adding newly available cards", () => {
+	test("preserves order and hidden cards while slotting in newly available cards", () => {
 		expect(
 			resolveHomeLayout(["fitness", "shoutouts", "practice"], {
 				order: ["shoutouts", "fitness"],
@@ -30,7 +31,7 @@ describe("home layouts", () => {
 				revision: 2,
 			}),
 		).toEqual({
-			order: ["shoutouts", "fitness", "practice"],
+			order: ["shoutouts", "practice", "fitness"],
 			hidden: ["fitness"],
 			revision: 2,
 		});
@@ -69,4 +70,69 @@ describe("home layouts", () => {
 			),
 		).toBeUndefined();
 	});
+});
+
+test("countdown lists the next tagged events with days to go", (): void => {
+	const event = {
+		start: "09:00",
+		end: "10:00",
+		venue: "Pool",
+		program: "club",
+		kind: "tournament",
+		signup: "open",
+		description: "",
+		cancelled: false,
+	} as const;
+	const countdowns = upcomingCountdowns(
+		[
+			{
+				...event,
+				id: "worlds",
+				title: "Worlds",
+				date: "2027-07-01",
+				countdown: true,
+			},
+			{
+				...event,
+				id: "agm",
+				title: "AGM",
+				date: "2026-11-11",
+				countdown: true,
+			},
+			{ ...event, id: "practice", title: "Practice", date: "2026-11-12" },
+			{
+				...event,
+				id: "gone",
+				title: "Old",
+				date: "2026-11-01",
+				countdown: true,
+			},
+			{
+				...event,
+				id: "camp",
+				title: "Camp",
+				date: "2026-11-09",
+				endDate: "2026-11-11",
+				countdown: true,
+			},
+		],
+		"2026-11-10",
+	);
+	expect(
+		countdowns.map((entry) => [entry.event.id, countdownLabel(entry)]),
+	).toEqual([
+		["camp", "Happening now"],
+		["agm", "Tomorrow"],
+		["worlds", "233 days"],
+	]);
+});
+
+test("new home cards slot in next to their neighbours in saved layouts", (): void => {
+	expect(
+		resolveHomeLayout(["practice", "countdown", "announcement", "season"], {
+			order: ["season", "practice", "announcement"],
+			hidden: [],
+			revision: 2,
+		}).order,
+	).toEqual(["season", "practice", "countdown", "announcement"]);
 });

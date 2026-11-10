@@ -34,6 +34,7 @@ export const eventDraftValue = v.object({
 	timeZone: v.optional(v.string()),
 	parts: v.optional(v.array(eventPartValue)),
 	public: v.optional(v.boolean()),
+	countdown: v.optional(v.boolean()),
 	rebuild: v.optional(v.boolean()),
 	seasonId: v.optional(v.string()),
 	title: v.string(),

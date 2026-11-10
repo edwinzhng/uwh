@@ -126,8 +126,10 @@ export const editedOccurrences = (
 			(draft.signupCloses ?? "start") === previous.signupCloses
 				? event.closesAt + offset
 				: window.closesAt;
+		const { countdown: _previousCountdown, ...unchanged } = event;
 		const changed: ClubEvent = {
-			...event,
+			...unchanged,
+			...((draft.countdown ?? event.countdown) ? { countdown: true } : {}),
 			seriesId: scope === "following" ? followingSeriesId : event.seriesId,
 			timeZone,
 			public: draft.public ?? event.public ?? false,
@@ -245,6 +247,7 @@ export const eligibleResponses = (
 export const eventDraft = (event: ClubEvent): EventDraft => ({
 	timeZone: event.timeZone,
 	public: event.public ?? false,
+	countdown: event.countdown ?? false,
 	seasonId: event.seasonId ?? "2026-2027",
 	title: event.title,
 	date: event.date,

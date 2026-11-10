@@ -222,6 +222,7 @@ export const createOccurrences = (id: string, draft: EventDraft): ClubEvent[] =>
 			timeZone: draft.timeZone ?? defaultClubTimeZone,
 			parts: draft.parts,
 			public: draft.public ?? false,
+			...(draft.countdown ? { countdown: true } : {}),
 			seriesOrder: index,
 			seriesDate: date,
 			seasonId: draft.seasonId ?? defaultSeasonId,

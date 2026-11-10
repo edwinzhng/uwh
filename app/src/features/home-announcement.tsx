@@ -28,7 +28,7 @@ const AnnouncementContent = ({
 		<SummaryCard
 			title="Announcement"
 			compact
-			treatment="spotlight"
+			tone="highlight"
 			icon={featureIdentity.announcements.icon}
 			category="coral"
 			metadata={formatDate(notice.date)}

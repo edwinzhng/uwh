@@ -31,14 +31,12 @@ const toolRole = (tool: ClubTool): "coach" | "admin" | undefined =>
 			: undefined;
 export const ClubToolLayout = ({
 	tools,
-	grouped = false,
 	treatment,
 	registered,
 	active,
 	navigate,
 }: {
 	tools: ClubTool[];
-	grouped?: boolean;
 	treatment: ClubLayoutTreatment;
 	registered?: number;
 	active?: number;
@@ -66,7 +64,7 @@ export const ClubToolLayout = ({
 		<Surface padding="xxs">
 			<List>
 				{ordered.map((tool) => (
-					<RoleScope key={tool} tone={grouped ? undefined : toolRole(tool)}>
+					<RoleScope key={tool} tone={toolRole(tool)}>
 						<ListItem
 							title={clubToolLinks[tool].title}
 							icon={clubToolLinks[tool].icon}
@@ -89,7 +87,7 @@ export const ClubToolLayout = ({
 					key={tool}
 					fullWidth={treatment === "compact" && Boolean(stat(tool))}
 				>
-					<RoleScope tone={grouped ? undefined : toolRole(tool)}>
+					<RoleScope tone={toolRole(tool)}>
 						<ClubCardOption
 							title={clubToolLinks[tool].title}
 							icon={clubToolLinks[tool].icon}
@@ -112,7 +110,7 @@ export const ClubToolLayout = ({
 							treatment={
 								treatment === "color"
 									? tool === "members" || tool === "programs"
-										? "color-field"
+										? "stat"
 										: "hybrid"
 									: treatment === "scoreboard" && stat(tool)
 										? "corner"

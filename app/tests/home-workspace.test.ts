@@ -2,7 +2,11 @@ import { expect, test } from "bun:test";
 import { screenWorkspace } from "../src/backend/screen-workspace";
 import { initialAppData, primaryAccount } from "../src/demo/app-data";
 import { homeNextPractice } from "../src/domain/home-summary";
-import { homeView } from "../src/features/home-workspace-state";
+import {
+	canSwitchRoleView,
+	playerAccount,
+	roleView,
+} from "../src/features/home-workspace-state";
 
 const dispatch = (): Promise<boolean> => Promise.resolve(true);
 const scope = {
@@ -60,9 +64,22 @@ test("late workspace results cannot leak between clubs or signed-in accounts", (
 	).toBeUndefined();
 });
 
-test("home view honors route, saved selection and coach access", (): void => {
-	expect(homeView(true, "coaching", "personal")).toBe("coaching");
-	expect(homeView(true, "personal", "coaching")).toBe("personal");
-	expect(homeView(true, undefined, "coaching")).toBe("coaching");
-	expect(homeView(false, "coaching", "coaching")).toBe("personal");
+test("coaches can view the app as a player without losing staff access", (): void => {
+	const coach = {
+		id: "account-coach",
+		personId: "person-coach",
+		name: "Coach",
+		children: [],
+		coachPrograms: ["adult"],
+		admin: true,
+	};
+	expect(roleView(coach, undefined)).toBe("coaching");
+	expect(roleView(coach, "personal")).toBe("personal");
+	expect(roleView({ coachPrograms: [] }, "personal")).toBe("coaching");
+	expect(canSwitchRoleView({ coachPrograms: [] })).toBe(false);
+	expect(playerAccount(coach)).toEqual({
+		...coach,
+		coachPrograms: [],
+		admin: false,
+	});
 });

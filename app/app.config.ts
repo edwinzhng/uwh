@@ -107,6 +107,12 @@ const config: ExpoConfig = {
 					backgroundColor: "#080A0D",
 					image: "./assets/loading/loading-puck-dark.png",
 				},
+				ios: {
+					image: "./assets/loading/launch-pool.png",
+					resizeMode: "cover",
+					enableFullScreenImage_legacy: true,
+					dark: { image: "./assets/loading/launch-pool.png" },
+				},
 			},
 		],
 	],

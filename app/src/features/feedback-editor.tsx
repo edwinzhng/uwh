@@ -1,6 +1,14 @@
 import { type ReactElement, useRef, useState } from "react";
 import { newId, useApp, useAppStatus } from "../demo/app-state";
-import { Button, Dialog, Field, Row, Stack, Text } from "../design-system";
+import {
+	AudienceLabel,
+	Button,
+	Dialog,
+	Field,
+	Row,
+	Stack,
+	Text,
+} from "../design-system";
 import { memberName } from "../domain/app-rules";
 import type { CoachingFeedback } from "../domain/app-types";
 import { clubDate } from "../domain/event-time";
@@ -145,13 +153,15 @@ export const FeedbackEditor = ({
 									maxLength={10000}
 									isDisabled={busy}
 								/>
-								<Text variant="caption" tone="secondary">
-									{privateNote
-										? "Coaches only"
-										: audience
+								{privateNote ? (
+									<AudienceLabel audience="coaches" />
+								) : (
+									<Text variant="caption" tone="secondary">
+										{audience
 											? `Publishes to ${audience}.`
 											: "Loading recipients…"}
-								</Text>
+									</Text>
+								)}
 								{task.error ? (
 									<Text variant="small" tone="danger">
 										{task.error}

@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { SectionHeading, Stack, Surface } from "../design-system";
+import { RoleScope, SectionHeading, Stack, Surface } from "../design-system";
 import { canCoachMember } from "../domain/app-rules";
 import type { Member } from "../domain/app-types";
 import { FeedbackEditor } from "./feedback-editor";
@@ -32,12 +32,14 @@ export const MemberFeedback = ({
 							compactEmpty
 						/>
 						{coach ? (
-							<FeedbackList
-								personId={member.id}
-								visibility="private"
-								embedded
-								hideEmpty
-							/>
+							<RoleScope tone="coach">
+								<FeedbackList
+									personId={member.id}
+									visibility="private"
+									embedded
+									hideEmpty
+								/>
+							</RoleScope>
 						) : undefined}
 					</Surface>
 				</Stack>
