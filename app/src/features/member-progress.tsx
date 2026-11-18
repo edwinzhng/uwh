@@ -1,6 +1,13 @@
 import type { ReactElement } from "react";
 import { useApp } from "../demo/app-state";
-import { Disclosure, Row, Stack, Surface, Text } from "../design-system";
+import {
+	Disclosure,
+	RoleScope,
+	Row,
+	Stack,
+	Surface,
+	Text,
+} from "../design-system";
 import { canCoachMember } from "../domain/app-rules";
 import type { Member } from "../domain/app-types";
 import { goalCategoryLabel } from "../domain/goals";
@@ -38,7 +45,11 @@ export const MemberProgress = ({
 							) : undefined}
 						</Stack>
 						{coach || account.personId === member.id ? (
-							<GoalEditor key={member.id} member={member} />
+							<RoleScope
+								tone={account.personId === member.id ? undefined : "coach"}
+							>
+								<GoalEditor key={member.id} member={member} />
+							</RoleScope>
 						) : undefined}
 					</Row>
 					{member.goalDetails?.remarks ? (

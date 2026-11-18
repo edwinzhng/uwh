@@ -4,7 +4,7 @@ import { View } from "react-native";
 import { Button } from "./button";
 import { Icon } from "./icon";
 import { ListItem } from "./list-item";
-import { rainbowPalette } from "./rainbow-palette";
+import { rolePalette } from "./role-glow";
 import { RoleStyleLabel } from "./role-style-label";
 import {
 	type PreviewRole,
@@ -27,7 +27,7 @@ export const RoleStyleGroup = ({
 }): ReactElement => {
 	const theme = useTheme();
 	const sample = roleDestinations[roleKind];
-	const palette = rainbowPalette[roleKind === "coach" ? "violet" : "blue"];
+	const palette = rolePalette(roleKind);
 	const iconColor =
 		treatment === "badge"
 			? theme.mode === "dark"

@@ -33,11 +33,12 @@ describe("UWH Club app branding", () => {
 		).toBe(true);
 	});
 
-	test("keeps native launch dark in both device appearances", (): void => {
+	test("keeps native launch dark in both device appearances", async (): Promise<void> => {
 		const splash = config.plugins?.find(
 			(plugin) =>
 				Array.isArray(plugin) && plugin.at(0) === "expo-splash-screen",
 		);
+		const iosLaunchImage = "./assets/loading/launch-pool.png";
 		expect(splash).toEqual([
 			"expo-splash-screen",
 			{
@@ -49,8 +50,16 @@ describe("UWH Club app branding", () => {
 					backgroundColor: loadingColors.canvas,
 					image: "./assets/loading/loading-puck-dark.png",
 				},
+				ios: {
+					image: iosLaunchImage,
+					resizeMode: "cover",
+					enableFullScreenImage_legacy: true,
+					dark: { image: iosLaunchImage },
+				},
 			},
 		]);
+		const { width, height } = await imageGeometry(iosLaunchImage);
+		expect({ width, height }).toEqual({ width: 1206, height: 2622 });
 	});
 
 	test("declares existing correctly sized versioned PWA icons without old logo references", async (): Promise<void> => {

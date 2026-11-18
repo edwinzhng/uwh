@@ -8,6 +8,7 @@ import {
 	Dialog,
 	EmptyState,
 	NavigationCard,
+	RoleScope,
 	Stack,
 	Tabs,
 	Text,
@@ -89,6 +90,7 @@ export const ProgramsScreen = (): ReactElement => {
 				account.admin ? (
 					<Button
 						label={selected ? "Edit program" : "New program"}
+						roleTone="admin"
 						prefix="plus"
 						onPress={(): void => setEditing(selected ?? "new")}
 					/>
@@ -133,43 +135,45 @@ export const ProgramsScreen = (): ReactElement => {
 							}
 							accessory={
 								account.admin ? (
-									<ActionMenu
-										label={`Actions for ${program.name}`}
-										icon="more"
-										groups={[
-											{
-												id: "program",
-												items: [
-													{
-														id: "edit",
-														label: "Edit",
-														icon: "edit",
-														onSelect: (): void => setEditing(program),
-													},
-													{
-														id: "archive",
-														label: program.archived ? "Restore" : "Archive",
-														icon: program.archived ? "reply" : "archive",
-														onSelect: (): void => {
-															void archive(program);
+									<RoleScope tone="admin">
+										<ActionMenu
+											label={`Actions for ${program.name}`}
+											icon="more"
+											groups={[
+												{
+													id: "program",
+													items: [
+														{
+															id: "edit",
+															label: "Edit",
+															icon: "edit",
+															onSelect: (): void => setEditing(program),
 														},
-														isDisabled: task.busy,
-													},
-													{
-														id: "delete",
-														label: "Delete unused program",
-														icon: "trash",
-														tone: "danger",
-														onSelect: (): void => {
-															task.clear();
-															setDeleting(program);
+														{
+															id: "archive",
+															label: program.archived ? "Restore" : "Archive",
+															icon: program.archived ? "reply" : "archive",
+															onSelect: (): void => {
+																void archive(program);
+															},
+															isDisabled: task.busy,
 														},
-														isDisabled: task.busy,
-													},
-												],
-											},
-										]}
-									/>
+														{
+															id: "delete",
+															label: "Delete unused program",
+															icon: "trash",
+															tone: "danger",
+															onSelect: (): void => {
+																task.clear();
+																setDeleting(program);
+															},
+															isDisabled: task.busy,
+														},
+													],
+												},
+											]}
+										/>
+									</RoleScope>
 								) : undefined
 							}
 						/>

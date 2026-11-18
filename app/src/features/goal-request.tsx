@@ -1,6 +1,14 @@
 import type { ReactElement } from "react";
 import { useApp, useAppStatus } from "../demo/app-state";
-import { Badge, Button, Divider, Row, Stack, Text } from "../design-system";
+import {
+	Badge,
+	Button,
+	Divider,
+	RoleScope,
+	Row,
+	Stack,
+	Text,
+} from "../design-system";
 import { canCoachMember } from "../domain/app-rules";
 import type { Member } from "../domain/app-types";
 import { goalCategoryLabel } from "../domain/goals";
@@ -29,37 +37,39 @@ export const GoalRequest = ({
 				</Text>
 			) : undefined}
 			{canReview ? (
-				<Row>
-					<Button
-						label="Approve"
-						compact
-						isDisabled={busy}
-						onPress={(): void => {
-							void dispatch({
-								type: "review-goal",
-								personId: member.id,
-								goal,
-								approve: true,
-								requestRevision: member.pendingGoalRevision ?? 0,
-							});
-						}}
-					/>
-					<Button
-						label="Decline"
-						compact
-						variant="secondary"
-						isDisabled={busy}
-						onPress={(): void => {
-							void dispatch({
-								type: "review-goal",
-								personId: member.id,
-								goal,
-								approve: false,
-								requestRevision: member.pendingGoalRevision ?? 0,
-							});
-						}}
-					/>
-				</Row>
+				<RoleScope tone="coach">
+					<Row>
+						<Button
+							label="Approve"
+							compact
+							isDisabled={busy}
+							onPress={(): void => {
+								void dispatch({
+									type: "review-goal",
+									personId: member.id,
+									goal,
+									approve: true,
+									requestRevision: member.pendingGoalRevision ?? 0,
+								});
+							}}
+						/>
+						<Button
+							label="Decline"
+							compact
+							variant="secondary"
+							isDisabled={busy}
+							onPress={(): void => {
+								void dispatch({
+									type: "review-goal",
+									personId: member.id,
+									goal,
+									approve: false,
+									requestRevision: member.pendingGoalRevision ?? 0,
+								});
+							}}
+						/>
+					</Row>
+				</RoleScope>
 			) : undefined}
 		</Stack>
 	);

@@ -9,6 +9,7 @@ import {
 	Dialog,
 	HomeCardFrame,
 	List,
+	RoleScope,
 	Row,
 	Stack,
 	Text,
@@ -21,6 +22,7 @@ import {
 	type HomeLayout,
 	type HomeWorkspace,
 	homeCardDropTarget,
+	homeCardRole,
 	homeCards,
 	resolveHomeLayout,
 } from "../domain/home-layout";
@@ -30,6 +32,7 @@ import { CoachHomeCards } from "./coach-home-cards";
 import { CoachingHomeTasks } from "./coaching-home-tasks";
 import { HomeAnnouncement } from "./home-announcement";
 import { HomeAttendance } from "./home-attendance";
+import { HomeCountdown } from "./home-countdown";
 import { HomeFitness } from "./home-fitness";
 import { HomeHighlights } from "./home-highlights";
 import { HomeMessages } from "./home-messages";
@@ -103,6 +106,8 @@ const Dashboard = ({
 				return (
 					<HomePractice event={practice} responseNeeded={Boolean(pending)} />
 				);
+			case "countdown":
+				return <HomeCountdown />;
 			case "announcement":
 				return <HomeAnnouncement />;
 			case "shoutouts":
@@ -188,6 +193,7 @@ const Dashboard = ({
 			{draft ? (
 				<Text variant="small" tone="secondary">
 					Drag the handle or use the arrows to move a card. Tap − to remove it.
+					Only you see this layout.
 				</Text>
 			) : undefined}
 			{task.error ? (
@@ -234,7 +240,9 @@ const Dashboard = ({
 								if (target) moveTo(id, target);
 							}}
 						>
-							{renderCard(id)}
+							<RoleScope tone={homeCardRole(id, account)}>
+								{renderCard(id)}
+							</RoleScope>
 						</HomeCardFrame>
 					))}
 				</Stack>

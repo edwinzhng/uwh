@@ -2,6 +2,7 @@ import { type ReactElement, useState } from "react";
 import { friendlyError } from "../backend/errors";
 import { useApp, useAppStatus } from "../demo/app-state";
 import {
+	AudienceLabel,
 	Button,
 	LineupWorkspace,
 	PoolBoardColumns,
@@ -236,6 +237,18 @@ export const LineupEditor = ({
 								<Text variant="caption" tone="secondary">
 									{changed || task.busy ? "Saving…" : "Saved"}
 								</Text>
+							)}
+							{base.published && !base.draftLineup && !changed ? (
+								<AudienceLabel audience="players" />
+							) : (
+								<AudienceLabel
+									audience="coaches"
+									label={
+										base.published
+											? "Changes: coaches only"
+											: "Draft: coaches only"
+									}
+								/>
 							)}
 							<Button
 								label={

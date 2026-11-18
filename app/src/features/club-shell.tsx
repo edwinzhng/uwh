@@ -20,6 +20,7 @@ import {
 } from "../domain/page-navigation";
 import { FamilyMenu } from "./family-menu";
 import { NotificationsMenu } from "./notifications-menu";
+import { PlayerViewNotice } from "./player-view-notice";
 import { hasRouteBack, RouteBack } from "./route-back";
 
 type Props = {
@@ -74,6 +75,7 @@ export const ClubShell = ({
 		<LoadingScope>
 			<AppLayout
 				loading={Boolean(loading) || contentLoading}
+				roleTone={restrictedRole}
 				headerLayout={headerLayout}
 				primaryDestination={isPrimaryDestination(pathname)}
 				presentation={presentation}
@@ -104,6 +106,7 @@ export const ClubShell = ({
 				profile={<FamilyMenu />}
 				accessory={<NotificationsMenu />}
 			>
+				<PlayerViewNotice />
 				{error ? (
 					<Row justify="between" wrap>
 						<Text variant="small" tone="danger">

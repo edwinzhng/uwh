@@ -3,11 +3,13 @@ import { type ReactElement, useState } from "react";
 import { newId, useApp, useAppStatus } from "../demo/app-state";
 import {
 	Button,
+	Checkbox,
 	DatePicker,
 	Dialog,
 	Disclosure,
 	Field,
 	Grid,
+	List,
 	Row,
 	Select,
 	Stack,
@@ -476,6 +478,16 @@ export const EventEditor = ({
 								/>
 							)}
 						</Stack>
+						<List>
+							<Checkbox
+								label="Show a countdown on Home"
+								checked={Boolean(draft.countdown)}
+								isDisabled={task.busy}
+								onChange={(countdown): void =>
+									setDraft({ ...draft, countdown })
+								}
+							/>
+						</List>
 					</Stack>
 					<Disclosure
 						title="Registration & details"

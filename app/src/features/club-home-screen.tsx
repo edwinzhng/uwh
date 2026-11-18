@@ -42,7 +42,6 @@ export const ClubHomeScreen = (): ReactElement => {
 								) : undefined}
 								<ClubToolLayout
 									treatment="color"
-									grouped={group.title !== "Club"}
 									tools={[...group.tools].sort((a, b) =>
 										a === "equipment"
 											? -1

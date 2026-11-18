@@ -79,7 +79,6 @@ export const ClubLayoutOptionsScreen = (): ReactElement => {
 														) : undefined}
 														<ClubToolLayout
 															treatment={option.value}
-															grouped={index > 0}
 															tools={[...group.tools].sort((a, b) =>
 																clubToolLinks[a].title.localeCompare(
 																	clubToolLinks[b].title,

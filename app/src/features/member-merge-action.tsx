@@ -1,6 +1,13 @@
 import { type ReactElement, useState } from "react";
 import { useApp } from "../demo/app-state";
-import { Button, Checkbox, Dialog, List, Text } from "../design-system";
+import {
+	Button,
+	Checkbox,
+	Dialog,
+	List,
+	RoleScope,
+	Text,
+} from "../design-system";
 import type { Member } from "../domain/app-types";
 import { MemberMergeLive } from "./member-merge-live";
 import { MemberMergePreview } from "./member-merge-preview";
@@ -33,7 +40,7 @@ export const MemberMergeAction = ({
 		? { sourceId: member.id, targetId: target.id, fillEmptyProfile }
 		: undefined;
 	return (
-		<>
+		<RoleScope tone="admin">
 			<Button
 				label="Merge into active member"
 				variant="ghost"
@@ -92,6 +99,6 @@ export const MemberMergeAction = ({
 					)}
 				</List>
 			</Dialog>
-		</>
+		</RoleScope>
 	);
 };

@@ -4,6 +4,7 @@ import {
 	ContentRow,
 	Divider,
 	EmptyState,
+	RoleScope,
 	Row,
 	Stack,
 	Surface,
@@ -84,45 +85,53 @@ export const SessionPeopleContent = ({
 												}
 												headerAction={
 													staff && group.id === "going" ? (
-														<AttendanceFlagControl
-															personId={member.id}
-															name={member.name}
-															partId={partId}
-															disabled={event.cancelled}
-														/>
+														<RoleScope tone="coach">
+															<AttendanceFlagControl
+																personId={member.id}
+																name={member.name}
+																partId={partId}
+																disabled={event.cancelled}
+															/>
+														</RoleScope>
 													) : undefined
 												}
 												control={
 													<Row gap="xs" wrap>
 														{canCoach(account, event.program) ? (
-															<AttendanceControl
-																eventId={event.id}
-																personId={member.id}
-																name={member.name}
-																value={effectiveAttendance(
-																	event,
-																	response,
-																	partId,
-																	now,
-																)}
-																partId={partId}
-																disabled={event.cancelled}
-																onLateAddition={
-																	group.id === "others" && flags
-																		? (): void =>
-																				flags.set(member.id, "addition", partId)
-																		: undefined
-																}
-																onAbsent={
-																	flags?.flags.some(
-																		(flag) =>
-																			flag.personId === member.id &&
-																			flag.kind === "addition",
-																	)
-																		? (): void => flags.set(member.id)
-																		: undefined
-																}
-															/>
+															<RoleScope tone="coach">
+																<AttendanceControl
+																	eventId={event.id}
+																	personId={member.id}
+																	name={member.name}
+																	value={effectiveAttendance(
+																		event,
+																		response,
+																		partId,
+																		now,
+																	)}
+																	partId={partId}
+																	disabled={event.cancelled}
+																	onLateAddition={
+																		group.id === "others" && flags
+																			? (): void =>
+																					flags.set(
+																						member.id,
+																						"addition",
+																						partId,
+																					)
+																			: undefined
+																	}
+																	onAbsent={
+																		flags?.flags.some(
+																			(flag) =>
+																				flag.personId === member.id &&
+																				flag.kind === "addition",
+																		)
+																			? (): void => flags.set(member.id)
+																			: undefined
+																	}
+																/>
+															</RoleScope>
 														) : undefined}
 														{group.id === "going" ? (
 															<ShoutoutEditor

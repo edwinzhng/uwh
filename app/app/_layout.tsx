@@ -11,6 +11,7 @@ import {
 	PracticeWidgetBootstrap,
 	PracticeWidgetSync,
 } from "../src/features/practice-widget-sync";
+import { RoleViewScope } from "../src/features/role-view-scope";
 import { ScreenErrorBoundary } from "../src/features/screen-error-boundary";
 
 export const unstable_settings = {
@@ -40,9 +41,11 @@ const RootLayout = (): ReactElement => {
 						<InboxProvider>
 							<AvatarProvider>
 								<PracticeWidgetSync />
-								<AppNavigation>
-									<AppRouter renderScreen={renderScreen} />
-								</AppNavigation>
+								<RoleViewScope>
+									<AppNavigation>
+										<AppRouter renderScreen={renderScreen} />
+									</AppNavigation>
+								</RoleViewScope>
 							</AvatarProvider>
 						</InboxProvider>
 					</MessagingProvider>

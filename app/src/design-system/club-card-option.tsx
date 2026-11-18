@@ -23,7 +23,8 @@ export type ClubCardTreatment =
 	| "corner"
 	| "compact"
 	| "hybrid"
-	| "hybrid-watercolor";
+	| "hybrid-watercolor"
+	| "stat";
 export const ClubCardOption = ({
 	title,
 	icon,
@@ -50,6 +51,7 @@ export const ClubCardOption = ({
 		treatment === "color-field-row";
 	const compact = treatment === "compact" || hybrid;
 	const iconTile = treatment === "compact";
+	const statCard = treatment === "stat";
 	const stats = stat ? (
 		<View
 			style={{
@@ -59,8 +61,18 @@ export const ClubCardOption = ({
 				gap: space.xs,
 			}}
 		>
-			<Text variant={compact ? "h4" : "number"}>{stat.value}</Text>
-			<Text variant="caption" tone="secondary" lines={1}>
+			<Text
+				variant={compact ? "h4" : "number"}
+				tone={statCard ? "highlight" : "primary"}
+			>
+				{stat.value}
+			</Text>
+			<Text
+				variant={statCard ? "small" : "caption"}
+				tone={statCard ? "highlight" : "secondary"}
+				weight={statCard ? "medium" : undefined}
+				lines={1}
+			>
 				{stat.label}
 			</Text>
 		</View>
@@ -105,10 +117,12 @@ export const ClubCardOption = ({
 										? geometry.touch + space.lg
 										: treatment === "watercolor-bold"
 											? geometry.touch * 2 + space.xl
-											: geometry.touch * 2 + space.md,
-						padding: compact && !hybrid ? space.sm : space.xs,
+											: statCard
+												? geometry.touch * 2
+												: geometry.touch * 2 + space.md,
+						padding: (compact && !hybrid) || statCard ? space.sm : space.xs,
 						justifyContent: compact ? "center" : "flex-start",
-						borderWidth: stat ? 0 : geometry.border,
+						borderWidth: stat && !statCard ? 0 : geometry.border,
 						borderColor: theme.border,
 						borderRadius: corners.panel,
 						overflow: "hidden",

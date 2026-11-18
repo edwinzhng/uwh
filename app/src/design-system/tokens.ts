@@ -255,6 +255,11 @@ export const lightTheme: Theme = {
 	switchThumbOff: "#56644E",
 	neutral: { background: "#ECEFE9", foreground: "#111811" },
 	brand: { background: "#182018", foreground: palette.white },
+	highlight: {
+		background: "#0C874C",
+		foreground: palette.white,
+		text: "#0C874C",
+	},
 	success: {
 		background: lightColorScales.success.subtle,
 		foreground: lightColorScales.success.text,
@@ -323,6 +328,11 @@ export const darkTheme: Theme = {
 	switchThumbOff: "#B7C7A8",
 	neutral: { background: "#2B3528", foreground: "#EEF2D9" },
 	brand: { background: "#22342A", foreground: "#EEF2D9" },
+	highlight: {
+		background: "#0C874C",
+		foreground: palette.white,
+		text: "#4BE39A",
+	},
 	success: {
 		background: darkColorScales.success.subtle,
 		foreground: darkColorScales.success.text,
@@ -398,6 +408,7 @@ export type Theme = Record<
 	accent: ActionColors;
 	navigation: Record<"selected" | "hover" | "indicator" | "unread", string>;
 	dangerAction: ActionColors;
+	highlight: Record<"background" | "foreground" | "text", string>;
 } & Record<Kind, { background: string; foreground: string }>;
 
 type ActionColors = Record<

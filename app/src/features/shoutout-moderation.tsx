@@ -1,6 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { useApp, useAppStatus } from "../demo/app-state";
-import { ActionMenu } from "../design-system";
+import { ActionMenu, RoleScope } from "../design-system";
 import { ConfirmationDialog } from "./confirmation-dialog";
 
 export const ShoutoutModeration = ({
@@ -13,7 +13,7 @@ export const ShoutoutModeration = ({
 	const [confirming, setConfirming] = useState(false);
 	if (!account.admin) return undefined;
 	return (
-		<>
+		<RoleScope tone="admin">
 			<ActionMenu
 				label="Admin options"
 				accessibilityLabel="Shoutout admin options"
@@ -48,6 +48,6 @@ export const ShoutoutModeration = ({
 					onClose={(): void => setConfirming(false)}
 				/>
 			) : undefined}
-		</>
+		</RoleScope>
 	);
 };

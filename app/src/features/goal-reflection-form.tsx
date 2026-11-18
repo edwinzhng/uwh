@@ -1,6 +1,14 @@
 import { type ReactElement, useState } from "react";
 import type { GoalReflectionService } from "../backend/use-goal-reflections";
-import { Button, Dialog, Field, Select, Stack, Text } from "../design-system";
+import {
+	AudienceLabel,
+	Button,
+	Dialog,
+	Field,
+	Select,
+	Stack,
+	Text,
+} from "../design-system";
 import type { Member } from "../domain/app-types";
 import { validateGoalReflection } from "../domain/goal-reflections";
 import { useFormTask } from "./use-form-task";
@@ -86,6 +94,7 @@ export const GoalReflectionForm = ({
 					maxLength={1000}
 					isDisabled={task.busy}
 				/>
+				<AudienceLabel audience="personal" />
 				<Text variant="small" tone="secondary">
 					Shared with your coaches and linked guardians. Saving adds one goal
 					check-in.

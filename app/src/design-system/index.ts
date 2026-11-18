@@ -5,6 +5,7 @@ export { AppLayout } from "./app-layout";
 export { AppRouter } from "./app-router";
 export { AttendanceChart } from "./attendance-chart";
 export { AttendancePlayerRow } from "./attendance-player-row";
+export { type Audience, AudienceLabel } from "./audience-label";
 export { AuthLayout } from "./auth-layout";
 export { Avatar } from "./avatar";
 export { type AvatarPhoto, AvatarSourceContext } from "./avatar-source";

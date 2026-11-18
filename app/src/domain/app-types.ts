@@ -51,6 +51,7 @@ export type ClubEvent = {
 	timeZone?: string;
 	parts?: EventPart[];
 	public?: boolean;
+	countdown?: boolean;
 	exception?: boolean;
 	editId?: string;
 	seriesOrder?: number;
@@ -242,6 +243,7 @@ export type EventDraft = {
 	timeZone?: string;
 	parts?: EventPart[];
 	public?: boolean;
+	countdown?: boolean;
 	rebuild?: boolean;
 	seasonId?: string;
 	title: string;

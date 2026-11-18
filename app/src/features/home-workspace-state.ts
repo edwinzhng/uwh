@@ -1,16 +1,24 @@
 import { atom } from "jotai";
+import type { Account } from "../domain/app-types";
 
 export type HomeView = "personal" | "coaching";
 
-export const homeWorkspaceAtom = atom<Record<string, HomeView>>({});
+export const roleViewAtom = atom<Record<string, HomeView>>({});
 
-export const homeView = (
-	canCoach: boolean,
-	routeView: string | undefined,
+export const canSwitchRoleView = (
+	account: Pick<Account, "coachPrograms">,
+): boolean => account.coachPrograms.length > 0;
+
+export const roleView = (
+	account: Pick<Account, "coachPrograms">,
 	savedView: HomeView | undefined,
 ): HomeView =>
-	canCoach &&
-	(routeView === "coaching" ||
-		(routeView !== "personal" && savedView === "coaching"))
-		? "coaching"
-		: "personal";
+	canSwitchRoleView(account) && savedView === "personal"
+		? "personal"
+		: "coaching";
+
+export const playerAccount = (account: Account): Account => ({
+	...account,
+	coachPrograms: [],
+	admin: false,
+});

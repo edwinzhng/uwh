@@ -19,6 +19,8 @@ import { PageMaterialBackground } from "./page-material-background";
 import { PageReady } from "./page-ready";
 import { PageTitle } from "./page-title";
 import { PaginationScrollView as ScrollView } from "./pagination-scroll-view";
+import type { RoleTone } from "./role-glow";
+import { RolePageTint } from "./role-page-tint";
 import { Row } from "./row";
 import { Stack } from "./stack";
 import { Text } from "./text";
@@ -28,6 +30,7 @@ import { useKeyboardVisible } from "./use-keyboard-visible";
 
 type Props = {
 	loading?: boolean;
+	roleTone?: RoleTone;
 	children: ReactNode;
 	title?: string;
 	tabs?: ReactNode;
@@ -50,6 +53,7 @@ type Props = {
 };
 export const AppLayout = ({
 	loading,
+	roleTone,
 	children,
 	title,
 	tabs,
@@ -278,6 +282,7 @@ export const AppLayout = ({
 			<PageMaterialBackground
 				showGrid={route.name !== "messages" && route.name !== "conversation"}
 			/>
+			{roleTone ? <RolePageTint role={roleTone} /> : undefined}
 			{workspace && workspaceTitle ? <ChatBackdrop /> : undefined}
 			<KeyboardAvoidingView
 				behavior={Platform.OS === "ios" ? "padding" : undefined}

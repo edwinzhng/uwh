@@ -9,6 +9,7 @@ import {
 	Dialog,
 	EmptyState,
 	formatTimeLocation,
+	RoleScope,
 	Row,
 	SegmentedControl,
 	Stack,
@@ -152,48 +153,50 @@ export const EventScreen = (): ReactElement => {
 			}
 			action={
 				account.admin && event && !event.cancelled ? (
-					<ActionMenu
-						label="Event actions"
-						accessibilityLabel={`Actions for ${event.title}`}
-						icon="more"
-						isDisabled={busy}
-						groups={[
-							{
-								id: "edit",
-								label: "Admin",
-								items: [
-									{
-										id: "edit",
-										label: "Edit event",
-										icon: "edit",
-										onSelect: (): void => setEdit(true),
-									},
-									...(availableLoanPractice(event, Date.now(), data.timeZone)
-										? [
-												{
-													id: "loan",
-													label: "Loan equipment",
-													icon: "equipment" as const,
-													onSelect: (): void => setLoan(true),
-												},
-											]
-										: []),
-								],
-							},
-							{
-								id: "cancel",
-								items: [
-									{
-										id: "cancel",
-										label: "Cancel event",
-										icon: "close",
-										tone: "danger",
-										onSelect: (): void => setCancel(true),
-									},
-								],
-							},
-						]}
-					/>
+					<RoleScope tone="admin">
+						<ActionMenu
+							label="Event actions"
+							accessibilityLabel={`Actions for ${event.title}`}
+							icon="more"
+							isDisabled={busy}
+							groups={[
+								{
+									id: "edit",
+									label: "Admin",
+									items: [
+										{
+											id: "edit",
+											label: "Edit event",
+											icon: "edit",
+											onSelect: (): void => setEdit(true),
+										},
+										...(availableLoanPractice(event, Date.now(), data.timeZone)
+											? [
+													{
+														id: "loan",
+														label: "Loan equipment",
+														icon: "equipment" as const,
+														onSelect: (): void => setLoan(true),
+													},
+												]
+											: []),
+									],
+								},
+								{
+									id: "cancel",
+									items: [
+										{
+											id: "cancel",
+											label: "Cancel event",
+											icon: "close",
+											tone: "danger",
+											onSelect: (): void => setCancel(true),
+										},
+									],
+								},
+							]}
+						/>
+					</RoleScope>
 				) : undefined
 			}
 		>
@@ -233,7 +236,9 @@ export const EventScreen = (): ReactElement => {
 												<ResponseControl event={event} />
 												<SessionDiscussionButton event={event} />
 												{account.admin && event.seriesId ? (
-													<SessionGuestManager event={event} />
+													<RoleScope tone="admin">
+														<SessionGuestManager event={event} />
+													</RoleScope>
 												) : undefined}
 												{event.seriesId ? (
 													<SessionSeriesLink seriesId={event.seriesId} />
@@ -323,7 +328,7 @@ export const EventScreen = (): ReactElement => {
 					</Dialog>
 					{edit && account.admin ? (
 						<EventEditor
-							key={event.id}
+							key={`editor:${event.id}`}
 							event={event}
 							open
 							onClose={(): void => setEdit(false)}

@@ -8,6 +8,7 @@ import {
 	EmptyState,
 	Field,
 	LoadingContent,
+	RoleScope,
 	Row,
 	Select,
 	Stack,
@@ -90,56 +91,58 @@ export const SessionSeriesManager = ({
 				</Text>
 			)}
 			{account.admin ? (
-				<Disclosure
-					title={series ? "Series settings" : "Set up committed roster"}
-					summary={
-						series
-							? `${series.title} · ${capacity || "Unlimited"} places`
-							: undefined
-					}
-					defaultOpen={!series}
-					isDisabled={task.busy}
-				>
-					<Stack>
-						<Field
-							label="Series title"
-							value={title}
-							isDisabled={task.busy}
-							onValueChange={setTitle}
-						/>
-						<Field
-							label="Committed places (blank for unlimited)"
-							inputMode="numeric"
-							value={capacity}
-							isDisabled={task.busy}
-							onValueChange={setCapacity}
-						/>
-						<Button
-							label={
-								series ? "Save series settings" : "Enable committed roster"
-							}
-							isLoading={task.busy}
-							onPress={(): void => {
-								void task.submit(
-									() =>
-										!title.trim()
-											? "Enter a title."
-											: capacity &&
-													(!Number.isInteger(Number(capacity)) ||
-														Number(capacity) < 1)
-												? "Enter a positive capacity."
-												: undefined,
-									async () =>
-										controls.configure({
-											seriesId: series?.id ?? seriesId,
-											title,
-											capacity: capacity ? Number(capacity) : undefined,
-										}),
-								);
-							}}
-						/>
-					</Stack>
-				</Disclosure>
+				<RoleScope tone="admin">
+					<Disclosure
+						title={series ? "Series settings" : "Set up committed roster"}
+						summary={
+							series
+								? `${series.title} · ${capacity || "Unlimited"} places`
+								: undefined
+						}
+						defaultOpen={!series}
+						isDisabled={task.busy}
+					>
+						<Stack>
+							<Field
+								label="Series title"
+								value={title}
+								isDisabled={task.busy}
+								onValueChange={setTitle}
+							/>
+							<Field
+								label="Committed places (blank for unlimited)"
+								inputMode="numeric"
+								value={capacity}
+								isDisabled={task.busy}
+								onValueChange={setCapacity}
+							/>
+							<Button
+								label={
+									series ? "Save series settings" : "Enable committed roster"
+								}
+								isLoading={task.busy}
+								onPress={(): void => {
+									void task.submit(
+										() =>
+											!title.trim()
+												? "Enter a title."
+												: capacity &&
+														(!Number.isInteger(Number(capacity)) ||
+															Number(capacity) < 1)
+													? "Enter a positive capacity."
+													: undefined,
+										async () =>
+											controls.configure({
+												seriesId: series?.id ?? seriesId,
+												title,
+												capacity: capacity ? Number(capacity) : undefined,
+											}),
+									);
+								}}
+							/>
+						</Stack>
+					</Disclosure>
+				</RoleScope>
 			) : undefined}
 			{series ? (
 				<Disclosure title="Commitment" defaultOpen isDisabled={task.busy}>
@@ -247,6 +250,7 @@ export const SessionSeriesManager = ({
 								{account.admin ? (
 									<Button
 										label="Invite player to commit"
+										roleTone="admin"
 										variant="secondary"
 										isLoading={task.busy}
 										onPress={(): void => {

@@ -1,9 +1,10 @@
 import { useQuery } from "convex/react";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
-import { AppContext, useApp } from "../demo/app-state";
+import { useApp } from "../demo/app-state";
 import { Dialog, EmptyState, LoadingContent, TextLink } from "../design-system";
 import type { ClubEvent } from "../domain/app-types";
+import { RoleViewWorkspace } from "./role-view-scope";
 import { SessionPeople } from "./session-people";
 
 type Props = { event: ClubEvent; attendanceCount?: number };
@@ -37,11 +38,11 @@ const LiveParticipants = ({ eventId }: { eventId: string }): ReactElement => {
 		workspace.account.id !== app.account.id ? (
 		<UnavailableParticipants />
 	) : (
-		<AppContext.Provider
-			value={{ ...app, data: workspace.data, account: workspace.account }}
+		<RoleViewWorkspace
+			app={{ ...app, data: workspace.data, account: workspace.account }}
 		>
 			<SessionPeople event={event} />
-		</AppContext.Provider>
+		</RoleViewWorkspace>
 	);
 };
 const AttendeesAction = ({ event, attendanceCount }: Props): ReactElement => {

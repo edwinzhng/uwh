@@ -15,6 +15,8 @@ type Props = {
 		| "contrast"
 		| "onBrand"
 		| "brand"
+		| "highlight"
+		| "onHighlight"
 		| "success"
 		| "warning"
 		| "danger";
@@ -74,11 +76,17 @@ export const Text = ({
 				color:
 					tone === "onBrand"
 						? theme.brand.foreground
-						: tone === "brand"
-							? theme.colorScales.accent.text
-							: tone === "success" || tone === "warning" || tone === "danger"
-								? theme[tone].foreground
-								: theme.text[tone],
+						: tone === "highlight"
+							? theme.highlight.text
+							: tone === "onHighlight"
+								? theme.highlight.foreground
+								: tone === "brand"
+									? theme.colorScales.accent.text
+									: tone === "success" ||
+											tone === "warning" ||
+											tone === "danger"
+										? theme[tone].foreground
+										: theme.text[tone],
 				textAlign: align,
 			}}
 		>
