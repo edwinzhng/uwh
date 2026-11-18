@@ -1,6 +1,10 @@
 import { v } from "convex/values";
 import { reduceApp } from "../src/domain/app-reducer";
-import { eventResponse } from "../src/domain/app-rules";
+import {
+	canManagePerson,
+	canRegister,
+	eventResponse,
+} from "../src/domain/app-rules";
 import type { AppAction } from "../src/domain/app-types";
 import { signupState } from "../src/domain/event-time";
 import { practiceEvent } from "../src/domain/event-types";
@@ -33,11 +37,28 @@ export const respond = mutation({
 		await rejectMergedAliasAction(ctx, member.clubId, initial);
 		const { data, rows } = await actionData(ctx, member.clubId, initial);
 		const event = data.events.find((entry) => entry.id === input.eventId);
-		if (!event || !practiceEvent(event))
+		const person = data.members.find((entry) => entry.id === input.personId);
+		const account = accountFor(member);
+		if (
+			!event ||
+			!practiceEvent(event) ||
+			!person ||
+			!canManagePerson(account, person.id) ||
+			!canRegister(person, event)
+		)
 			throw new Error("Practice unavailable.");
-		if (Boolean(event.parts?.length) !== Boolean(input.partId))
+		if (
+			event.parts?.length
+				? !event.parts.some((part) => part.id === input.partId)
+				: input.partId !== undefined
+		)
 			throw new Error("Choose a practice section.");
 		const current = eventResponse(data, event.id, input.personId);
+		const prior = input.partId
+			? partResponse(current, input.partId)
+			: current.response;
+		if (current.seriesExpected || prior !== "unanswered")
+			return { response: prior };
 		const action: AppAction = input.partId
 			? {
 					...initial,
@@ -52,7 +73,7 @@ export const respond = mutation({
 				signup: signupState(entry, now),
 			})),
 		};
-		const next = reduceApp(currentData, accountFor(member), action);
+		const next = reduceApp(currentData, account, action);
 		await saveData(ctx, member.clubId, rows, next);
 		await notifyChanges(ctx, member.clubId, member.userId, data, next);
 		const saved = eventResponse(next, event.id, input.personId);

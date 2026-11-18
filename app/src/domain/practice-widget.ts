@@ -4,7 +4,7 @@ import { eventDateParts, eventTimeRange } from "./event-card-presentation";
 import { clubTimestamp, signupState } from "./event-time";
 import { practiceEvent } from "./event-types";
 import type { HomeLineupAssignment } from "./home-lineup";
-import { changedPartResponse, partResponse } from "./schedule-agenda";
+import { partResponse } from "./schedule-agenda";
 import { venueName } from "./venue";
 
 export type PracticeWidgetSnapshot =
@@ -264,9 +264,8 @@ export const practiceWidgetTimeline = (
 export type WidgetReplyRequest = {
 	eventId: string;
 	personId: string;
-	response: "going" | "unavailable" | "unanswered";
-	partIds?: string[];
-	declinedPartIds?: string[];
+	partId?: string;
+	going: boolean;
 };
 
 export const widgetReplyRequest = (
@@ -276,7 +275,7 @@ export const widgetReplyRequest = (
 	account: Account,
 	now: number,
 ): WidgetReplyRequest | undefined => {
-	const { event: eventId, person: personId, reply, replyPart } = params;
+	const { event: eventId, person: personId, reply, replyPart: partId } = params;
 	if (
 		replyKey === "" ||
 		params.widget !== replyKey ||
@@ -286,26 +285,15 @@ export const widgetReplyRequest = (
 	)
 		return undefined;
 	const snapshot = practiceWidgetSnapshot(data, account, personId, now);
-	const event = data.events.find((entry) => entry.id === eventId);
 	if (
-		!event ||
 		snapshot.kind !== "practice" ||
 		snapshot.eventId !== eventId ||
 		snapshot.signup !== "open" ||
-		snapshot.seriesExpected
+		snapshot.seriesExpected ||
+		!snapshot.parts.some(
+			(part) => part.id === partId && part.response === "unanswered",
+		)
 	)
 		return undefined;
-	const going = reply === "yes";
-	const current = eventResponse(data, eventId, personId);
-	if (!event.parts?.length)
-		return replyPart
-			? undefined
-			: { eventId, personId, response: going ? "going" : "unavailable" };
-	if (!replyPart || !event.parts.some((part) => part.id === replyPart))
-		return undefined;
-	return {
-		eventId,
-		personId,
-		...changedPartResponse(event, current, replyPart, going),
-	};
+	return { eventId, personId, partId, going: reply === "yes" };
 };

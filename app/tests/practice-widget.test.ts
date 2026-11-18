@@ -209,9 +209,8 @@ test("widget reply links only act with this device's key", (): void => {
 	expect(widgetReplyRequest(params, "key", unanswered, account, now)).toEqual({
 		eventId: "practice",
 		personId: "adult",
-		response: "going",
-		partIds: ["hockey"],
-		declinedPartIds: [],
+		partId: "hockey",
+		going: true,
 	});
 	expect(
 		widgetReplyRequest(params, "other", unanswered, account, now),

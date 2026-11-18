@@ -1,12 +1,13 @@
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { randomUUID } from "expo-crypto";
 import { parse, useURL } from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 import { useAtomValue } from "jotai";
-import { type ReactElement, useEffect, useState } from "react";
+import { type ReactElement, useEffect, useRef, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { selectedPersonAtom, useApp } from "../demo/app-state";
 import { canManagePerson } from "../domain/app-rules";
+import { householdDefault } from "../domain/household";
 import {
 	type PracticeWidgetEntry,
 	practiceWidgetSnapshot,
@@ -17,7 +18,6 @@ import {
 import { nativeFeatureAvailable } from "../platform/native-feature";
 
 const generation = { value: 0 };
-const handledReplyLinks = new Set<string>();
 const replyKeyName = "practice-widget-reply-key";
 const replyKeyPromise: { value?: Promise<string> } = {};
 
@@ -80,23 +80,26 @@ export const PracticeWidgetBootstrap = (): undefined => {
 	}, []);
 	return undefined;
 };
-const LiveWidget = (): ReactElement | undefined => {
-	const { account, dispatch } = useApp();
-	const selected = useAtomValue(selectedPersonAtom);
-	const personId = canManagePerson(account, selected)
-		? selected
-		: account.personId;
+const LiveWidget = ({
+	personId,
+}: {
+	personId: string;
+}): ReactElement | undefined => {
+	const { account } = useApp();
+	const respond = useMutation(api.practice_widget.respond);
+	const handledReply = useRef<string | undefined>(undefined);
 	const replyKey = useReplyKey();
 	const url = useURL();
 	const workspace = useQuery(api.club.current, { screen: "home" });
-	const nextPractice = workspace
-		? practiceWidgetSnapshot(
-				workspace.data,
-				workspace.account,
-				personId,
-				Date.now(),
-			)
-		: undefined;
+	const nextPractice =
+		workspace && workspace.account.id === account.id
+			? practiceWidgetSnapshot(
+					workspace.data,
+					workspace.account,
+					personId,
+					Date.now(),
+				)
+			: undefined;
 	const eventId =
 		nextPractice?.kind === "practice" ? nextPractice.eventId : undefined;
 	const assignments = useQuery(
@@ -105,8 +108,14 @@ const LiveWidget = (): ReactElement | undefined => {
 	);
 	useEffect((): (() => void) => publishSignedOut, []);
 	useEffect((): void => {
-		if (!url || !workspace || replyKey === undefined) return;
-		if (handledReplyLinks.has(url)) return;
+		if (
+			!url ||
+			!workspace ||
+			workspace.account.id !== account.id ||
+			replyKey === undefined ||
+			handledReply.current === url
+		)
+			return;
 		const request = widgetReplyRequest(
 			queryParams(url),
 			replyKey,
@@ -115,12 +124,15 @@ const LiveWidget = (): ReactElement | undefined => {
 			Date.now(),
 		);
 		if (!request) return;
-		handledReplyLinks.add(url);
-		void dispatch({ type: "respond", ...request });
-	}, [url, workspace, replyKey, dispatch]);
+		handledReply.current = url;
+		void respond(request).catch(() => {
+			if (handledReply.current === url) handledReply.current = undefined;
+		});
+	}, [url, workspace, replyKey, respond, account.id]);
 	useEffect((): void => {
 		if (
 			!workspace ||
+			workspace.account.id !== account.id ||
 			replyKey === undefined ||
 			(eventId && assignments === undefined)
 		)
@@ -135,12 +147,19 @@ const LiveWidget = (): ReactElement | undefined => {
 				eventId && assignments ? { eventId, assignments } : undefined,
 			),
 		);
-	}, [workspace, eventId, assignments, personId, replyKey]);
+	}, [workspace, eventId, assignments, personId, replyKey, account.id]);
 	return undefined;
 };
 export const PracticeWidgetSync = (): ReactElement | undefined => {
-	const { source } = useApp();
+	const { source, account, data } = useApp();
+	const selected = useAtomValue(selectedPersonAtom);
+	const personId = canManagePerson(account, selected)
+		? selected
+		: householdDefault(account, data.members);
 	return source === "convex" && nativeFeatureAvailable("ExpoWidgets") ? (
-		<LiveWidget />
+		<LiveWidget
+			key={JSON.stringify([account.id, personId])}
+			personId={personId}
+		/>
 	) : undefined;
 };
