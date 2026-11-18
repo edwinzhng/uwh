@@ -2,7 +2,8 @@ import { useIsFocused } from "expo-router";
 import { useAtomValue } from "jotai";
 import { type ReactElement, type ReactNode, useMemo, useRef } from "react";
 import { api } from "../../convex/_generated/api";
-import { AppContext, selectedPersonAtom, useApp } from "../demo/app-state";
+import { selectedPersonAtom, useApp } from "../demo/app-state";
+import { RoleViewWorkspace } from "../features/role-view-scope";
 import { screenWorkspace } from "./screen-workspace";
 import { useRetainedQuery } from "./use-retained-query";
 import { workspaceRequest } from "./workspace-request";
@@ -32,9 +33,9 @@ const LiveRouteWorkspace = ({
 		[workspace, workspaceId, accountId, dispatch],
 	);
 	return (
-		<AppContext value={value ?? { ...app, loading: true }}>
+		<RoleViewWorkspace app={value ?? { ...app, loading: true }}>
 			{children}
-		</AppContext>
+		</RoleViewWorkspace>
 	);
 };
 export const RouteWorkspace = ({

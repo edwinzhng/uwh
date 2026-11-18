@@ -73,7 +73,8 @@ export const resolveHomeLayout = (
 			(order, id) => {
 				const previous = available
 					.slice(0, available.indexOf(id))
-					.findLast((entry) => order.includes(entry));
+					.reverse()
+					.find((entry) => order.includes(entry));
 				const position = previous ? order.indexOf(previous) + 1 : 0;
 				return [...order.slice(0, position), id, ...order.slice(position)];
 			},

@@ -1,7 +1,7 @@
 import { useQuery } from "convex/react";
 import { type ReactElement, useState } from "react";
 import { api } from "../../convex/_generated/api";
-import { AppContext, useActivePerson, useApp } from "../demo/app-state";
+import { useActivePerson, useApp } from "../demo/app-state";
 import {
 	Button,
 	Dialog,
@@ -13,6 +13,7 @@ import {
 import { canCoach } from "../domain/app-rules";
 import type { ClubEvent } from "../domain/app-types";
 import { practiceEvent } from "../domain/event-types";
+import { RoleViewWorkspace } from "./role-view-scope";
 import { TeamLineupPreview } from "./team-lineup-preview";
 
 const EventPreviewContent = ({ event }: { event: ClubEvent }): ReactElement => {
@@ -44,17 +45,20 @@ const LiveEventPreview = ({ eventId }: { eventId: string }): ReactElement => {
 	const event = workspace?.data.events.find((entry) => entry.id === eventId);
 	return workspace === undefined ? (
 		<LoadingContent />
-	) : !workspace || !event || workspace.clubId !== app.workspaceId ? (
+	) : !workspace ||
+		!event ||
+		workspace.clubId !== app.workspaceId ||
+		workspace.account.id !== app.account.id ? (
 		<EmptyState
 			title="Event unavailable"
 			description="Close this preview and reopen the schedule."
 		/>
 	) : (
-		<AppContext.Provider
-			value={{ ...app, data: workspace.data, account: workspace.account }}
+		<RoleViewWorkspace
+			app={{ ...app, data: workspace.data, account: workspace.account }}
 		>
 			<EventPreviewContent event={event} />
-		</AppContext.Provider>
+		</RoleViewWorkspace>
 	);
 };
 const EventPreviewActionContent = ({

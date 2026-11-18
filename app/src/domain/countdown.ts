@@ -30,7 +30,7 @@ export const upcomingCountdowns = (
 				!event.cancelled &&
 				(event.endDate ?? event.date) >= today,
 		)
-		.toSorted((a, b) =>
+		.sort((a, b) =>
 			a.date === b.date
 				? a.start.localeCompare(b.start)
 				: a.date.localeCompare(b.date),

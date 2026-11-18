@@ -1,4 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
+import { upcomingCountdowns } from "../src/domain/countdown";
 import { clubDate, clubTimestamp } from "../src/domain/event-time";
 import { homeSchedule, relevantHouseholdEvent } from "../src/domain/home";
 import type { Doc } from "./_generated/dataModel";
@@ -86,6 +87,10 @@ export const homeEvents = async (
 	const ids = new Set([
 		...(coaching ? [coaching.value.id] : []),
 		...schedule.events.map((event) => event.id),
+		...upcomingCountdowns(
+			relevant.map((row) => row.value),
+			today.toString(),
+		).map(({ event }) => event.id),
 		...(schedule.nextTournament ? [schedule.nextTournament.id] : []),
 	]);
 	return active.filter((row) => ids.has(row.value.id));

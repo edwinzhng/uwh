@@ -32,6 +32,18 @@ const viewedApp = (app: AppContextValue, view: HomeView): AppContextValue => {
 	return { ...app, account, data: visibleAppData(app.data, account) };
 };
 
+export const RoleViewWorkspace = ({
+	app,
+	children,
+}: {
+	app: AppContextValue;
+	children: ReactNode;
+}): ReactElement => {
+	const view = useRoleViewChoice()?.value ?? "coaching";
+	const value = useMemo(() => viewedApp(app, view), [app, view]);
+	return <AppContext value={value}>{children}</AppContext>;
+};
+
 const ScopedApp = ({
 	app,
 	children,

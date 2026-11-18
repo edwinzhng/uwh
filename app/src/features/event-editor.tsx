@@ -9,6 +9,7 @@ import {
 	Disclosure,
 	Field,
 	Grid,
+	List,
 	Row,
 	Select,
 	Stack,
@@ -477,12 +478,16 @@ export const EventEditor = ({
 								/>
 							)}
 						</Stack>
-						<Checkbox
-							label="Show a countdown on Home"
-							checked={Boolean(draft.countdown)}
-							isDisabled={task.busy}
-							onChange={(countdown): void => setDraft({ ...draft, countdown })}
-						/>
+						<List>
+							<Checkbox
+								label="Show a countdown on Home"
+								checked={Boolean(draft.countdown)}
+								isDisabled={task.busy}
+								onChange={(countdown): void =>
+									setDraft({ ...draft, countdown })
+								}
+							/>
+						</List>
 					</Stack>
 					<Disclosure
 						title="Registration & details"

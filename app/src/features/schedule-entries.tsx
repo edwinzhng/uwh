@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { ScheduleEntry } from "../../convex/pages";
-import { AppContext, useApp } from "../demo/app-state";
+import { useApp } from "../demo/app-state";
+import { RoleViewWorkspace } from "./role-view-scope";
 import { ScheduleEvents } from "./schedule-events";
 
 export const AgendaEntries = ({
@@ -12,8 +13,8 @@ export const AgendaEntries = ({
 }): ReactElement => {
 	const app = useApp();
 	return (
-		<AppContext.Provider
-			value={{
+		<RoleViewWorkspace
+			app={{
 				...app,
 				data: {
 					...app.data,
@@ -26,6 +27,6 @@ export const AgendaEntries = ({
 				events={entries.map((entry) => entry.event)}
 				past={past}
 			/>
-		</AppContext.Provider>
+		</RoleViewWorkspace>
 	);
 };
