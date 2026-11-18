@@ -1,4 +1,3 @@
-import { useAuthToken } from "@convex-dev/auth/react";
 import { sha256 } from "@oslojs/crypto/sha2";
 import { useMutation, useQuery } from "convex/react";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
@@ -25,6 +24,7 @@ import {
 	createProfilePhotoService,
 	type ProfilePhotoService,
 } from "./profile-photo-service";
+import { useCurrentAuthToken } from "./use-current-auth-token";
 
 export type MemberProfileState = {
 	profile?: MemberProfile;
@@ -38,13 +38,16 @@ export const useLiveMemberProfile = (member: Member): MemberProfileState => {
 	const save = useMutation(api.member_profiles.save);
 	const saveCapNumber = useMutation(api.member_profiles.saveCapNumber);
 	const remove = useMutation(api.member_profile_photos.remove);
-	const token = useAuthToken() ?? undefined;
+	const { available, current } = useCurrentAuthToken();
 	const photos = useMemo(
 		() =>
-			createProfilePhotoService(token, async (photoId): Promise<void> => {
-				await remove({ photoId });
-			}),
-		[token, remove],
+			createProfilePhotoService(
+				available ? current : undefined,
+				async (photoId): Promise<void> => {
+					await remove({ photoId });
+				},
+			),
+		[available, current, remove],
 	);
 	return {
 		profile,

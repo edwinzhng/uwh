@@ -1,5 +1,6 @@
 import { imageLimits, imageMime, type MessageImage } from "../domain/messaging";
 import { readImageBytes } from "./image-bytes";
+import { createMediaMemoryCache } from "./media-memory-cache";
 
 export type ImageService = {
 	upload: (threadId: string, blob: Blob, name: string) => Promise<MessageImage>;
@@ -18,7 +19,7 @@ export const prepareImage = async (blob: Blob): Promise<Blob> => {
 };
 
 export const createImageService = (
-	token: string,
+	token: string | (() => string | undefined),
 	remove: (id: string) => Promise<void>,
 ): ImageService => {
 	const site =
@@ -27,19 +28,26 @@ export const createImageService = (
 			".convex.cloud",
 			".convex.site",
 		).replace(":3210", ":3211");
+	const cache = createMediaMemoryCache(10 * 1024 * 1024);
 	const request = async (
 		params: Record<string, string>,
 		options: RequestInit = {},
+		allowNotModified = false,
 	): Promise<Response> => {
-		if (!site) throw new Error("Photo storage is unavailable.");
+		const currentToken = typeof token === "function" ? token() : token;
+		if (!currentToken || !site)
+			throw new Error("Photo storage is unavailable.");
 		const response = await fetch(
 			`${site}/images?${new URLSearchParams(params)}`,
 			{
 				...options,
-				headers: { ...options.headers, Authorization: `Bearer ${token}` },
+				headers: {
+					...options.headers,
+					Authorization: `Bearer ${currentToken}`,
+				},
 			},
 		);
-		if (!response.ok) {
+		if (!response.ok && !(allowNotModified && response.status === 304)) {
 			const payload: { error?: string } = await response.json();
 			throw new Error(payload.error ?? "Could not load photo.");
 		}
@@ -58,9 +66,32 @@ export const createImageService = (
 			const image: MessageImage = await response.json();
 			return image;
 		},
-		load: async (id, signal): Promise<Blob> =>
-			(await request({ id }, { signal })).blob(),
-		remove,
+		load: async (id, signal): Promise<Blob> => {
+			const cached = cache.get(id);
+			try {
+				const response = await request(
+					{ id },
+					{
+						signal,
+						headers: cached ? { "If-None-Match": cached.etag } : undefined,
+					},
+					Boolean(cached),
+				);
+				if (response.status === 304 && cached) return cached.blob;
+				const blob = await response.blob();
+				const etag = response.headers.get("ETag");
+				if (etag) cache.put(id, { blob, etag });
+				else cache.remove(id);
+				return blob;
+			} catch (error) {
+				cache.remove(id);
+				throw error;
+			}
+		},
+		remove: async (id): Promise<void> => {
+			cache.remove(id);
+			await remove(id);
+		},
 	};
 };
 

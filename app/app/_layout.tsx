@@ -7,6 +7,10 @@ import { RouteWorkspace } from "../src/backend/route-workspace";
 import { AppRouter, DesignProvider } from "../src/design-system";
 import { AppNavigation } from "../src/features/app-navigation";
 import { AvatarProvider } from "../src/features/avatar-provider";
+import {
+	PracticeWidgetBootstrap,
+	PracticeWidgetSync,
+} from "../src/features/practice-widget-sync";
 import { ScreenErrorBoundary } from "../src/features/screen-error-boundary";
 
 export const unstable_settings = {
@@ -30,10 +34,12 @@ const RootLayout = (): ReactElement => {
 	return (
 		<Provider>
 			<DesignProvider>
+				<PracticeWidgetBootstrap />
 				<BackendProvider>
 					<MessagingProvider>
 						<InboxProvider>
 							<AvatarProvider>
+								<PracticeWidgetSync />
 								<AppNavigation>
 									<AppRouter renderScreen={renderScreen} />
 								</AppNavigation>

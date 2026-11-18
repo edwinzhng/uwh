@@ -1,13 +1,14 @@
 import { chatAttachmentMime } from "../src/domain/chat-attachment";
 import { imageLimits } from "../src/domain/messaging";
 import { internal } from "./_generated/api";
-import { httpAction } from "./_generated/server";
+import { type ActionCtx, httpAction } from "./_generated/server";
 import { actionUserId as getAuthUserId } from "./identity";
 import { boundedBlob } from "./request_body";
 
 const headers = {
 	"Access-Control-Allow-Origin": "*",
-	"Access-Control-Allow-Headers": "Authorization, Content-Type",
+	"Access-Control-Allow-Headers": "Authorization, Content-Type, If-None-Match",
+	"Access-Control-Expose-Headers": "ETag",
 	"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 	"Cache-Control": "no-store",
 	"X-Content-Type-Options": "nosniff",
@@ -60,7 +61,10 @@ export const upload = httpAction(async (ctx, request): Promise<Response> => {
 	}
 });
 
-export const download = httpAction(async (ctx, request): Promise<Response> => {
+export const downloadImage = async (
+	ctx: ActionCtx,
+	request: Request,
+): Promise<Response> => {
 	const userId = await getAuthUserId(ctx);
 	if (!userId) return failure("Sign in to view photos.", 401);
 	const imageId = new URL(request.url).searchParams.get("id") ?? "";
@@ -69,13 +73,21 @@ export const download = httpAction(async (ctx, request): Promise<Response> => {
 		imageId,
 	});
 	if (!image) return failure("Photo unavailable.", 404);
+	const etag = `"${image._id}"`;
+	if (request.headers.get("If-None-Match") === etag)
+		return new Response(null, {
+			status: 304,
+			headers: { ...headers, ETag: etag },
+		});
 	const blob = await ctx.storage.get(image.storageId);
 	if (!blob) return failure("Photo unavailable.", 404);
 	return new Response(blob, {
 		headers: {
 			...headers,
 			"Content-Type": image.mime,
+			ETag: etag,
 			"Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(image.name)}`,
 		},
 	});
-});
+};
+export const download = httpAction(downloadImage);

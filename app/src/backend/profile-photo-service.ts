@@ -4,7 +4,7 @@ export type ProfilePhotoService = {
 	remove: (id: string) => Promise<void>;
 };
 export const createProfilePhotoService = (
-	token: string | undefined,
+	token: string | undefined | (() => string | undefined),
 	remove: (id: string) => Promise<void>,
 ): ProfilePhotoService => {
 	const site =
@@ -17,12 +17,17 @@ export const createProfilePhotoService = (
 		params: Record<string, string>,
 		options: RequestInit = {},
 	): Promise<Response> => {
-		if (!token || !site) throw new Error("Sign in to use profile photos.");
+		const currentToken = typeof token === "function" ? token() : token;
+		if (!currentToken || !site)
+			throw new Error("Sign in to use profile photos.");
 		const response = await fetch(
 			`${site}/profiles/photo?${new URLSearchParams(params)}`,
 			{
 				...options,
-				headers: { ...options.headers, Authorization: `Bearer ${token}` },
+				headers: {
+					...options.headers,
+					Authorization: `Bearer ${currentToken}`,
+				},
 			},
 		);
 		if (!response.ok) {

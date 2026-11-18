@@ -1,9 +1,9 @@
-import { useAuthToken } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import { useAtomValue } from "jotai";
 import { type ReactElement, type ReactNode, useEffect, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import { createProfilePhotoService } from "../backend/profile-photo-service";
+import { useCurrentAuthToken } from "../backend/use-current-auth-token";
 import { useApp } from "../demo/app-state";
 import {
 	previewMemberProfiles,
@@ -50,14 +50,17 @@ const PhotoSource = ({
 };
 
 const LiveAvatars = ({ children }: { children: ReactNode }): ReactElement => {
-	const token = useAuthToken() ?? undefined;
+	const { available, current } = useCurrentAuthToken();
 	const photos = useQuery(api.member_profiles.avatars, {});
 	const load = useMemo(
 		() =>
-			createProfilePhotoService(token, async (): Promise<void> => {
-				throw new Error("Use the profile editor to remove a photo.");
-			}).load,
-		[token],
+			createProfilePhotoService(
+				available ? current : undefined,
+				async (): Promise<void> => {
+					throw new Error("Use the profile editor to remove a photo.");
+				},
+			).load,
+		[available, current],
 	);
 	return (
 		<PhotoSource photos={photos ?? []} load={load}>

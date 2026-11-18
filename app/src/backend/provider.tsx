@@ -1,8 +1,4 @@
-import {
-	ConvexAuthProvider,
-	useAuthActions,
-	useAuthToken,
-} from "@convex-dev/auth/react";
+import { ConvexAuthProvider, useAuthActions } from "@convex-dev/auth/react";
 import {
 	ConvexReactClient,
 	useAction,
@@ -60,6 +56,7 @@ import { installationId } from "./native-push";
 import { PushBridge } from "./push-bridge";
 import { signOutAfterPushCleanup } from "./push-lifecycle";
 import { tokenStorage } from "./token-storage";
+import { useCurrentAuthToken } from "./use-current-auth-token";
 import { useInvites } from "./use-invites";
 import { useRetainedQuery } from "./use-retained-query";
 import { useSocialAuth } from "./use-social-auth";
@@ -75,17 +72,9 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 	const auth = useAuthActions();
 	const invites = useInvites();
 	const social = useSocialAuth();
-	const token = useAuthToken();
+	const { available: tokenAvailable, current: currentToken } =
+		useCurrentAuthToken();
 	const removeImage = useMutation(api.images.remove);
-	const images = useMemo(
-		() =>
-			token
-				? createImageService(token, async (id): Promise<void> => {
-						await removeImage({ imageId: id });
-					})
-				: undefined,
-		[token, removeImage],
-	);
 	const path = usePathname();
 	const params = useGlobalSearchParams<{
 		id?: string;
@@ -106,6 +95,16 @@ const LiveBridge = ({ children }: { children: ReactNode }): ReactElement => {
 	const accountInfo = useQuery(
 		api.account.current,
 		isAuthenticated ? {} : "skip",
+	);
+	const accountId = accountInfo?.id;
+	const images = useMemo(
+		() =>
+			tokenAvailable && accountId
+				? createImageService(currentToken, async (id): Promise<void> => {
+						await removeImage({ imageId: id });
+					})
+				: undefined,
+		[tokenAvailable, accountId, currentToken, removeImage],
 	);
 	const previous = useRef<{
 		userId: string;

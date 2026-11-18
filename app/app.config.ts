@@ -51,6 +51,19 @@ const config: ExpoConfig = {
 	},
 	plugins: [
 		[
+			"expo-widgets",
+			{
+				widgets: [
+					{
+						name: "NextPractice",
+						displayName: "Next Practice",
+						description: "See your next practice and lineup.",
+						ios: { supportedFamilies: ["systemSmall", "systemMedium"] },
+					},
+				],
+			},
+		],
+		[
 			"expo-video",
 			{ supportsBackgroundPlayback: false, supportsPictureInPicture: false },
 		],

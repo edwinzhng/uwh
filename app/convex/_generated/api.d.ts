@@ -150,6 +150,7 @@ import type * as player_coaching from "../player_coaching.js";
 import type * as player_coaching_schema from "../player_coaching_schema.js";
 import type * as poll_access from "../poll_access.js";
 import type * as practice_cleanup from "../practice_cleanup.js";
+import type * as practice_widget from "../practice_widget.js";
 import type * as program_commands from "../program_commands.js";
 import type * as program_commands_schema from "../program_commands_schema.js";
 import type * as program_rsvp from "../program_rsvp.js";
@@ -366,6 +367,7 @@ declare const fullApi: ApiFromModules<{
   player_coaching_schema: typeof player_coaching_schema;
   poll_access: typeof poll_access;
   practice_cleanup: typeof practice_cleanup;
+  practice_widget: typeof practice_widget;
   program_commands: typeof program_commands;
   program_commands_schema: typeof program_commands_schema;
   program_rsvp: typeof program_rsvp;
